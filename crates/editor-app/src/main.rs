@@ -1,23 +1,44 @@
+mod worker;
+mod workflow;
 use adw::prelude::*;
-use hyprland_editor_core::{
-    catalogue, import, storage, Draft, Setting, Value, AUDITED_MAIN, BASELINE,
-};
+use hyprland_editor_core::{catalogue, storage, Draft, Setting, Value, AUDITED_MAIN, BASELINE};
 use std::{cell::RefCell, collections::BTreeMap, path::PathBuf, rc::Rc};
 
 type Shared = Rc<RefCell<State>>;
 struct State {
     catalogue: Vec<Setting>,
     draft: Draft,
-    undo: Vec<BTreeMap<String, Value>>,
+    undo: Vec<(String, Option<Value>)>,
     drafts: BTreeMap<String, Draft>,
     visible: Vec<Setting>,
+    sources: BTreeMap<String, hyprland_editor_core::lua::LuaDocument>,
+    active: Option<hyprland_editor_discovery::Snapshot>,
+    generation: u64,
+    saved: BTreeMap<String, BTreeMap<String, Value>>,
 }
 impl State {
-    fn remember(&mut self) {
+    fn dirty_version(&self, version: &str) -> bool {
+        let draft = if self.draft.version == version {
+            Some(&self.draft)
+        } else {
+            self.drafts.get(version)
+        };
+        draft.is_some_and(|d| {
+            self.saved
+                .get(version)
+                .map_or(!d.values.is_empty(), |saved| saved != &d.values)
+        })
+    }
+    fn dirty(&self) -> bool {
+        self.dirty_version(&self.draft.version) || self.drafts.keys().any(|v| self.dirty_version(v))
+    }
+    fn remember(&mut self, id: &str) {
+        self.generation += 1;
         if self.undo.len() == 32 {
             self.undo.remove(0);
         }
-        self.undo.push(self.draft.values.clone());
+        self.undo
+            .push((id.into(), self.draft.values.get(id).cloned()));
     }
 }
 fn human_name(id: &str) -> String {
@@ -273,9 +294,30 @@ fn detail(state: &Shared, panel: &gtk::Box, setting: &Setting, status: &gtk::Lab
         "View audited source",
     ));
     let current = state.borrow().draft.values.get(&setting.id).cloned();
-    if current.is_none() {
-        panel.append(&label("No draft override. Controls start from a decoded default when available; otherwise choose a value explicitly. The active compositor value is unknown."));
+    let observed = state
+        .borrow()
+        .active
+        .as_ref()
+        .filter(|a| a.version.as_deref() == Some(setting.version.as_str()))
+        .and_then(|a| a.values.get(&setting.id))
+        .cloned();
+    if let Some(observation) = &observed {
+        panel.append(&label(&observation.description));
+        let raw = serde_json::to_string(&observation.raw_current).unwrap_or_default();
+        let preview: String = raw.chars().take(2048).collect();
+        panel.append(&label(&format!(
+            "Observed value: {preview} · point-in-time snapshot; refresh to update"
+        )));
+        if observation.current.is_none() {
+            panel.append(&label(
+                "This live value has no certified normalization yet; the controls do not guess it.",
+            ));
+        }
     }
+    if current.is_none() {
+        panel.append(&label("No draft override. Controls start from a normalized snapshot when available, then a decoded default. Choose a value explicitly when neither is known."));
+    }
+    let current = current.or_else(|| observed.and_then(|o| o.current));
     let getter = form(setting, current, panel);
     let error = label("");
     error.add_css_class("error");
@@ -296,7 +338,7 @@ fn detail(state: &Shared, panel: &gtk::Box, setting: &Setting, status: &gtk::Lab
             Ok(v) => {
                 let mut state = s.borrow_mut();
                 if state.draft.values.get(&spec.id) != Some(&v) {
-                    state.remember();
+                    state.remember(&spec.id);
                     state.draft.values.insert(spec.id.clone(), v);
                 }
                 drop(state);
@@ -316,7 +358,7 @@ fn detail(state: &Shared, panel: &gtk::Box, setting: &Setting, status: &gtk::Lab
         };
         let mut state = s.borrow_mut();
         if state.draft.values.contains_key(&spec.id) {
-            state.remember();
+            state.remember(&spec.id);
             state.draft.values.remove(&spec.id);
         }
         drop(state);
@@ -371,6 +413,10 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
         undo: vec![],
         drafts: BTreeMap::new(),
         visible: vec![],
+        sources: BTreeMap::new(),
+        active: None,
+        generation: 0,
+        saved: BTreeMap::new(),
     }));
     let content = gtk::Box::new(gtk::Orientation::Vertical, 0);
     let header = adw::HeaderBar::new();
@@ -385,7 +431,7 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     header.pack_end(&review);
     header.pack_end(&save);
     header.pack_end(&coverage);
-    let banner=label("Draft workspace · Live detection, live apply and isolated preview are not implemented in this release.");
+    let banner=label("Draft workspace · Live inspection is read-only. Live apply and compositor preview remain unavailable.");
     banner.set_margin_start(16);
     banner.set_margin_end(16);
     banner.set_margin_bottom(8);
@@ -503,6 +549,7 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
                 .cloned()
                 .unwrap_or_else(|| Draft::new(name));
             s.undo.clear();
+            s.generation += 1;
         }
         if let Some(search) = search_c.upgrade() {
             refill(&s, &m, &search, v);
@@ -521,8 +568,13 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     let st = status.clone();
     undo.connect_clicked(move |_| {
         let mut state = s.borrow_mut();
-        if let Some(previous) = state.undo.pop() {
-            state.draft.values = previous;
+        if let Some((id, previous)) = state.undo.pop() {
+            if let Some(value) = previous {
+                state.draft.values.insert(id, value);
+            } else {
+                state.draft.values.remove(&id);
+            }
+            state.generation += 1;
         }
         let spec = state.visible.get(sel.selected() as usize).cloned();
         drop(state);
@@ -552,7 +604,14 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
                 storage::save_draft(&root, &state.draft, &state.catalogue)
             });
         match result {
-            Ok(path) => st.set_text(&format!("Private draft saved: {}", path.display())),
+            Ok(path) => {
+                let mut state = s.borrow_mut();
+                let version = state.draft.version.clone();
+                let values = state.draft.values.clone();
+                state.saved.insert(version, values);
+                drop(state);
+                st.set_text(&format!("Private draft saved: {}", path.display()));
+            }
             Err(e) => notice(&win, "Could not save draft", &e),
         }
     });
@@ -564,24 +623,23 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
             let dialog=adw::Window::builder().title("Review draft overrides").transient_for(&win).modal(true).default_width(720).default_height(560).build();let b=gtk::Box::new(gtk::Orientation::Vertical,12);b.set_margin_top(16);b.set_margin_bottom(16);b.set_margin_start(16);b.set_margin_end(16);b.append(&label("These are draft overrides, not a diff against the running compositor. Copying does not apply them."));let text=gtk::TextView::builder().editable(false).monospace(true).wrap_mode(gtk::WrapMode::WordChar).build();text.buffer().set_text(&lua);b.append(&gtk::ScrolledWindow::builder().child(&text).vexpand(true).build());let copy=gtk::Button::with_label("Copy reviewed Lua to clipboard");b.append(&copy);let w=dialog.downgrade();copy.connect_clicked(move |_|{if let Some(w)=w.upgrade(){w.clipboard().set_text(&lua);}});dialog.set_content(Some(&b));dialog.present();
         },Err(e)=>notice(&win,"Invalid draft",&e)}
     });
-    let s = state.clone();
-    let win = window.downgrade();
-    let st = status.clone();
-    let v = version.clone();
-    let sel = selection.clone();
-    let p = panel.clone();
-    open.connect_clicked(move |_|{
-        let Some(win) = win.upgrade() else { return; };
-        let dialog=gtk::FileDialog::builder().title("Import a draft JSON or legacy .conf file (never executed)").build();let s=s.clone();let win=win.clone();let st=st.clone();let v=v.clone();let sel=sel.clone();let p=p.clone();
-        dialog.open(Some(&win.clone()),None::<&gtk::gio::Cancellable>,move |result|{let Ok(file)=result else{return;};let Some(path)=file.path()else{notice(&win,"Local file required","Only local regular files can be imported.");return;};
-            let result=storage::read_document(&path).and_then(|text|{let catalogue=&s.borrow().catalogue;match path.extension().and_then(|s|s.to_str()) {
-                Some("json")=>Draft::from_json(&text,catalogue).map(|d|(d,"Validated draft loaded".to_string())),
-                Some("conf")=>import::legacy(&text,catalogue).map(|r|{let message=format!("Imported {} literal overrides; {} lines skipped; {} repeated keys. Includes and variables remain unresolved. Active values are unknown.",r.draft.values.len(),r.skipped.len(),r.duplicate_keys.len());(r.draft,message)}),
-                _=>Err("This release imports saved draft JSON or legacy .conf literals. Lua source import requires the planned syntax parser; it is never executed here.".into()),
-            }});
-            match result{Ok((draft,message))=>{v.set_selected(if draft.version==BASELINE{0}else{1});let mut state=s.borrow_mut();state.draft=draft;state.undo.clear();let spec=state.visible.get(sel.selected()as usize).cloned();drop(state);if let Some(spec)=spec{detail(&s,&p,&spec,&st);}st.set_text(&message);},Err(e)=>notice(&win,"Import rejected",&e)}
-        });
-    });
+    workflow::connect_import(
+        &open, &window, &state, &status, &version, &selection, &panel,
+    );
+    let actions = gtk::Box::new(gtk::Orientation::Horizontal, 12);
+    actions.set_margin_start(16);
+    actions.set_margin_end(16);
+    actions.set_margin_bottom(8);
+    let live = gtk::Button::with_label("Refresh live snapshot");
+    let source_copy = gtk::Button::with_label("Review edited source copy");
+    actions.append(&live);
+    actions.append(&source_copy);
+    let diagnostics = gtk::Button::with_label("Import diagnostics");
+    actions.append(&diagnostics);
+    content.insert_child_after(&actions, Some(&banner));
+    workflow::connect_live(&live, &window, &state, &status, &selection, &panel);
+    workflow::connect_source_copy(&source_copy, &window, &state);
+    workflow::connect_diagnostics(&diagnostics, &window, &state);
     let win = window.downgrade();
     coverage.connect_clicked(move |_|{
         let Some(win) = win.upgrade() else { return; };
@@ -590,10 +648,15 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
         let data:serde_json::Value=serde_json::from_str(include_str!("../../../data/features.json")).unwrap();let mut text=String::new();for feature in data.as_array().unwrap(){text.push_str(&format!("{}  ·  {}  ·  {}\n",feature["id"].as_str().unwrap_or("?"),feature["engine"].as_str().unwrap_or("?"),feature["version_membership"]));}
         let view=gtk::TextView::builder().editable(false).monospace(true).build();view.buffer().set_text(&text);b.append(&gtk::ScrolledWindow::builder().child(&view).vexpand(true).build());dialog.set_content(Some(&b));dialog.present();
     });
+    workflow::connect_close(&window, &state);
     window.present();
     window
 }
 fn main() {
+    if std::env::args().nth(1).as_deref() == Some("--lua-source-worker") {
+        worker::entry();
+        return;
+    }
     let app = adw::Application::builder()
         .application_id("io.github.aman696.HyprlandEditor")
         .build();
@@ -689,5 +752,10 @@ mod tests {
             texture.save_to_png(path).unwrap();
         }
         window.close();
+        assert!(
+            window.is_visible(),
+            "unsaved drafts must prevent immediate closure"
+        );
+        window.destroy();
     }
 }

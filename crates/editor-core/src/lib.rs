@@ -1,5 +1,6 @@
 //! Non-executing, version-scoped editing. This crate has no compositor IPC.
 pub mod import;
+pub mod lua;
 pub mod storage;
 
 use serde::{Deserialize, Serialize};

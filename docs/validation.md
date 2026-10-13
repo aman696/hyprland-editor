@@ -24,3 +24,13 @@ PSS apportions shared library pages and is the budget metric in the blueprint. T
 ## Remaining validation
 
 Hosted CI is configured to run build, core and graphical tests, formatting, strict lint and catalogue checks on Ubuntu 24.04. Its results must be assessed independently of this local record. Lossless Lua import, live state inspection, display recovery and preview isolation are not implemented and have no successful runtime certification claim.
+
+## Stage 0.2 validation
+
+The next planned foundation adds static Lua import/source copies and read-only scalar snapshots. Twenty-five core tests, four real parser-process tests, four Unix IPC fixture tests and one graphical test pass locally (34 in total), alongside strict Clippy, formatting and release build checks. The graphical test also verifies that unsaved edits prevent immediate closure. Parser probes confirm that filesystem opens and network sockets are denied after startup; an opaque command fixture cannot create its marker file.
+
+Read-only fixture tests check both allowed request strings, peer/process identity, socket replacement, malformed replies and absolute timeout behavior. The actual host compositor PID is not visible through this local sandbox's `/proc`, so a real host snapshot cannot be certified here. Attachment fails closed rather than bypassing process/peer checks. Real-compositor certification remains a separate milestone. Snapshot strings must be valid JSON; malformed upstream output is not heuristically repaired or replaced with Lua evaluation.
+
+A preliminary idle 0.2 release run measured **88,194 KiB PSS (86.1 MiB)** and **173,924 KiB RSS**, with zero recorded scheduler ticks over five seconds. It used the same Cairo/in-memory-settings setup as the initial sample, with one main workspace, no imported document or live snapshot, and no resident parser child. Shared-page accounting and startup variation make comparisons preliminary. Large imports, open source-review buffers and repeated editing need stress profiling.
+
+See [implementation status](implementation-status.md) for the exact scope, evidence and next gates. The earlier source/audit register has not been relabeled as certified functionality.
