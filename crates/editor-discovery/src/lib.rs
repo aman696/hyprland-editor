@@ -81,6 +81,10 @@ struct SocketId {
 struct ReadSession {
     path: PathBuf,
     socket: SocketId,
+    // Keep the filesystem inode allocated even if the socket is unlinked.
+    // A bare dev/inode tuple can be reused immediately on some filesystems.
+    _socket_pin: fs::File,
+    process_pin: fs::File,
     identity: SessionIdentity,
     executable: (u64, u64, u64, i64, i64),
 }
@@ -105,6 +109,31 @@ fn socket_id(path: &Path) -> Result<SocketId, String> {
         dev: m.dev(),
         ino: m.ino(),
     })
+}
+fn pin_socket(path: &Path) -> Result<(fs::File, SocketId), String> {
+    let path =
+        std::ffi::CString::new(path.as_os_str().as_bytes()).map_err(|_| "Invalid socket path")?;
+    // O_PATH holds the filesystem node without connecting to the compositor.
+    // SAFETY: path is NUL terminated and File exclusively owns a valid returned fd.
+    let fd = unsafe {
+        libc::open(
+            path.as_ptr(),
+            libc::O_PATH | libc::O_NOFOLLOW | libc::O_CLOEXEC,
+        )
+    };
+    if fd < 0 {
+        return Err(error());
+    }
+    let file = unsafe { fs::File::from_raw_fd(fd) };
+    let meta = file.metadata().map_err(|e| e.to_string())?;
+    if !meta.file_type().is_socket() || meta.uid() != unsafe { libc::geteuid() } {
+        return Err("Not an owned compositor socket".into());
+    }
+    let identity = SocketId {
+        dev: meta.dev(),
+        ino: meta.ino(),
+    };
+    Ok((file, identity))
 }
 fn start_ticks(pid: u32) -> Result<u64, String> {
     let stat = fs::read_to_string(format!("/proc/{pid}/stat"))
@@ -238,7 +267,7 @@ impl ReadSession {
             owned_dir(&dir)?;
         }
         let path = runtime.join("hypr").join(signature).join(".socket.sock");
-        let socket = socket_id(&path)?;
+        let (socket_pin, socket) = pin_socket(&path)?;
         // Hash the selected process before connecting: Hyprland handles short IPC
         // requests in its event loop, so an idle accepted connection could stall it.
         let lock_path = path.parent().unwrap().join("hyprland.lock");
@@ -266,6 +295,12 @@ impl ReadSession {
         if pid == 0 {
             return Err("Invalid compositor PID".into());
         }
+        // A pidfd keeps process lifetime distinct from a recycled numeric PID.
+        let fd = unsafe { libc::syscall(libc::SYS_pidfd_open, pid, 0_u32) };
+        if fd < 0 {
+            return Err("Cannot pin the compositor process lifetime".into());
+        }
+        let process_pin = unsafe { fs::File::from_raw_fd(fd as i32) };
         let uid = unsafe { libc::geteuid() };
         if fs::metadata(format!("/proc/{pid}"))
             .map_err(|_| "Compositor process is not visible in this environment")?
@@ -323,6 +358,8 @@ impl ReadSession {
         let session = Self {
             path,
             socket,
+            _socket_pin: socket_pin,
+            process_pin,
             identity,
             executable,
         };
@@ -330,6 +367,15 @@ impl ReadSession {
         Ok(session)
     }
     fn recheck(&self) -> Result<(), String> {
+        let mut process = libc::pollfd {
+            fd: self.process_pin.as_raw_fd(),
+            events: libc::POLLIN,
+            revents: 0,
+        };
+        let ready = unsafe { libc::poll(&mut process, 1, 0) };
+        if ready != 0 {
+            return Err("Pinned compositor process exited or became unverifiable".into());
+        }
         let meta = fs::metadata(format!("/proc/{}/exe", self.identity.pid))
             .map_err(|_| "Compositor executable changed")?;
         if (

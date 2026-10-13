@@ -14,7 +14,7 @@ A native GTK4/libadwaita workspace for making Hyprland configuration graphical, 
 - Import literal legacy `.conf` settings without executing commands, expanding variables or following `source` directives. Skipped lines and repeated keys are reported. This is a partial import, not an effective-state reader or source-preserving round trip.
 - Import a conservative static projection of Lua `hl.config` tables and restricted pure local expressions. A separate parser process has CPU/memory/time limits and denies filesystem, networking and process-creation syscalls after startup. No Lua is executed. Per-line import diagnostics explain the unresolved parts.
 - Prepare a copy of imported Lua with only changed, existing literal expressions replaced. Source hashes, spans, reparsing and semantic comparison guard the copy; comments and unaffected bytes remain intact. Adding/removing fields and editing derived expressions remain unsupported. Source files are never overwritten.
-- Read a manually refreshed scalar snapshot from the compositor selected by your session environment. Runtime directories, process lifetime, executable fingerprint, socket inode and peer credentials are checked. Only `j/version` and `j/descriptions` can be sent. Exact audited commits receive typed observations; unsupported formats stay raw or unknown.
+- Read a manually refreshed scalar snapshot from the compositor selected by your session environment. Runtime directories, held process lifetime, executable fingerprint, held socket-node identity and peer credentials are checked. Only `j/version` and `j/descriptions` can be sent. Exact audited commits receive typed observations; unsupported formats stay raw or unknown.
 - Save independent versioned JSON drafts in `$XDG_STATE_HOME/hyprland-editor` (normally `~/.local/state/hyprland-editor`) and reopen them.
 - Inspect the 1,453 source-audited feature contracts and the engineering blueprint.
 
@@ -26,7 +26,7 @@ Saving a draft never targets `hyprland.conf` or `hyprland.lua`. The application 
 
 ## Build and run
 
-Linux, Rust 1.90, GTK >= 4.12 and libadwaita >= 1.5 are required. No web server, browser runtime, background daemon or root access is required.
+Linux (pidfd support for inspection, close_range/seccomp support for Lua workers), Rust 1.90, GTK >= 4.12 and libadwaita >= 1.5 are required. No web server, browser runtime, background daemon or root access is required.
 
 On Ubuntu 24.04:
 

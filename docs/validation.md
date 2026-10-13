@@ -34,3 +34,5 @@ Read-only fixture tests check both allowed request strings, peer/process identit
 A preliminary idle 0.2 release run measured **88,194 KiB PSS (86.1 MiB)** and **173,924 KiB RSS**, with zero recorded scheduler ticks over five seconds. It used the same Cairo/in-memory-settings setup as the initial sample, with one main workspace, no imported document or live snapshot, and no resident parser child. Shared-page accounting and startup variation make comparisons preliminary. Large imports, open source-review buffers and repeated editing need stress profiling.
 
 See [implementation status](implementation-status.md) for the exact scope, evidence and next gates. The earlier source/audit register has not been relabeled as certified functionality.
+
+Hosted Ubuntu testing exposed immediate socket-inode reuse in the replacement fixture. The repair holds an `O_PATH` descriptor to the original socket node for the entire read session and pins the process with a pidfd. A replacement cannot reuse that pinned filesystem inode; process-exit checks do not rely solely on recycled PID numbers. This change is covered by the original replacement fixture and rechecked in hosted CI.
