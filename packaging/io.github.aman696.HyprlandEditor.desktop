@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Hyprland Editor
+Comment=Edit independent Hyprland configuration drafts
+Exec=hyprland-editor
+Icon=io.github.aman696.HyprlandEditor
+Terminal=false
+Categories=Settings;DesktopSettings;
+Keywords=Hyprland;Wayland;Configuration;
+StartupNotify=true

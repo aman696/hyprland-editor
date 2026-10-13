@@ -1,0 +1,8 @@
+{
+  "baseline": "efb50993780079460b0cbed1363e2166a2de1d9f",
+  "audited_main": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+  "wiki": "fde84d41b9a7154a5d211cfb1de50d5910791231",
+  "date": "2026-10-12",
+  "inventory_sha256": "7edff8d2405b86dbb9eb0e59087fd789f2a41efd21dd0af45a4fdea0a5f23323",
+  "certification": "Source-audited catalogue; not runtime-certified. audited-main is an exact commit, not the latest upstream release."
+}

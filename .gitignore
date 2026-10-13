@@ -1,0 +1,4 @@
+/target/
+/.dev/
+*.swp
+*.draft.json

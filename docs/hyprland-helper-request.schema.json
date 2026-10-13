@@ -1,0 +1,720 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:hyprland-editor:helper-request:v1",
+  "title": "Hyprland editor private helper request \u2014 design v1",
+  "description": "Closed request shapes. Endpoint roles, nonce authentication, plan authorization, size/depth limits, peer identity, descriptor validation and semantic overflow checks are required separately. No arbitrary paths, shell or Lua source are accepted here.",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "protocol_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "generation": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,19})$",
+          "description": "Checked u64 conversion additionally required by receiver."
+        },
+        "op": {
+          "const": "parse"
+        },
+        "document_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "source_fd_index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 15,
+          "description": "Index in a separately transferred, role-authorized descriptor list."
+        },
+        "source_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "language": {
+          "enum": [
+            "lua",
+            "hyprlang",
+            "component"
+          ]
+        },
+        "pack": {
+          "type": "string",
+          "enum": [
+            "baseline-efb50993780079460b0cbed1363e2166a2de1d9f",
+            "current-6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7"
+          ]
+        }
+      },
+      "required": [
+        "protocol_version",
+        "request_id",
+        "generation",
+        "op",
+        "document_id",
+        "source_fd_index",
+        "source_hash",
+        "language",
+        "pack"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "protocol_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "generation": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,19})$",
+          "description": "Checked u64 conversion additionally required by receiver."
+        },
+        "op": {
+          "const": "validate"
+        },
+        "job_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "bundle_fd_index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 15,
+          "description": "Index in a separately transferred, role-authorized descriptor list."
+        },
+        "bundle_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "mode": {
+          "enum": [
+            "static",
+            "isolated-parser"
+          ]
+        },
+        "pack": {
+          "type": "string",
+          "enum": [
+            "baseline-efb50993780079460b0cbed1363e2166a2de1d9f",
+            "current-6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7"
+          ]
+        }
+      },
+      "required": [
+        "protocol_version",
+        "request_id",
+        "generation",
+        "op",
+        "job_id",
+        "bundle_fd_index",
+        "bundle_hash",
+        "mode",
+        "pack"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "protocol_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "generation": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,19})$",
+          "description": "Checked u64 conversion additionally required by receiver."
+        },
+        "op": {
+          "const": "preview_start"
+        },
+        "lab_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "projection_fd_index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 15,
+          "description": "Index in a separately transferred, role-authorized descriptor list."
+        },
+        "projection_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "profile": {
+          "enum": [
+            "software-headless",
+            "trusted-rendernode"
+          ]
+        },
+        "pack": {
+          "type": "string",
+          "enum": [
+            "baseline-efb50993780079460b0cbed1363e2166a2de1d9f",
+            "current-6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7"
+          ]
+        }
+      },
+      "required": [
+        "protocol_version",
+        "request_id",
+        "generation",
+        "op",
+        "lab_id",
+        "projection_fd_index",
+        "projection_hash",
+        "profile",
+        "pack"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "protocol_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "generation": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,19})$",
+          "description": "Checked u64 conversion additionally required by receiver."
+        },
+        "op": {
+          "const": "preview_input"
+        },
+        "lab_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "lab_epoch": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,19})$",
+          "description": "Checked u64 conversion additionally required by receiver."
+        },
+        "sequence": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,19})$",
+          "description": "Checked u64 conversion additionally required by receiver."
+        },
+        "event": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "pointer_absolute"
+                },
+                "x": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "y": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              },
+              "required": [
+                "kind",
+                "x",
+                "y"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "scroll"
+                },
+                "horizontal": {
+                  "type": "number",
+                  "minimum": -1000,
+                  "maximum": 1000
+                },
+                "vertical": {
+                  "type": "number",
+                  "minimum": -1000,
+                  "maximum": 1000
+                }
+              },
+              "required": [
+                "kind",
+                "horizontal",
+                "vertical"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "key"
+                },
+                "keycode": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 767
+                },
+                "pressed": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "kind",
+                "keycode",
+                "pressed"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "button"
+                },
+                "button": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 767
+                },
+                "pressed": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "kind",
+                "button",
+                "pressed"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "release_all"
+                }
+              },
+              "required": [
+                "kind"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "required": [
+        "protocol_version",
+        "request_id",
+        "generation",
+        "op",
+        "lab_id",
+        "lab_epoch",
+        "sequence",
+        "event"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "protocol_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "generation": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,19})$",
+          "description": "Checked u64 conversion additionally required by receiver."
+        },
+        "op": {
+          "const": "preview_stop"
+        },
+        "lab_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "lab_epoch": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,19})$",
+          "description": "Checked u64 conversion additionally required by receiver."
+        }
+      },
+      "required": [
+        "protocol_version",
+        "request_id",
+        "generation",
+        "op",
+        "lab_id",
+        "lab_epoch"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "protocol_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "generation": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,19})$",
+          "description": "Checked u64 conversion additionally required by receiver."
+        },
+        "op": {
+          "const": "commit"
+        },
+        "plan_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "plan_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "review_nonce": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "protocol_version",
+        "request_id",
+        "generation",
+        "op",
+        "plan_id",
+        "plan_digest",
+        "review_nonce"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "protocol_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "generation": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,19})$",
+          "description": "Checked u64 conversion additionally required by receiver."
+        },
+        "op": {
+          "const": "recovery_arm"
+        },
+        "plan_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "plan_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "recovery_nonce": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "deadline_ms": {
+          "type": "integer",
+          "minimum": 10000,
+          "maximum": 60000
+        }
+      },
+      "required": [
+        "protocol_version",
+        "request_id",
+        "generation",
+        "op",
+        "plan_id",
+        "plan_digest",
+        "recovery_nonce",
+        "deadline_ms"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "protocol_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "generation": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,19})$",
+          "description": "Checked u64 conversion additionally required by receiver."
+        },
+        "op": {
+          "const": "recovery_keep"
+        },
+        "plan_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "plan_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "recovery_nonce": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "protocol_version",
+        "request_id",
+        "generation",
+        "op",
+        "plan_id",
+        "plan_digest",
+        "recovery_nonce"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "protocol_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "generation": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,19})$",
+          "description": "Checked u64 conversion additionally required by receiver."
+        },
+        "op": {
+          "const": "recovery_revert"
+        },
+        "plan_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "plan_digest": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "recovery_nonce": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "protocol_version",
+        "request_id",
+        "generation",
+        "op",
+        "plan_id",
+        "plan_digest",
+        "recovery_nonce"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "protocol_version": {
+          "type": "integer",
+          "const": 1
+        },
+        "request_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "generation": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]{0,19})$",
+          "description": "Checked u64 conversion additionally required by receiver."
+        },
+        "op": {
+          "const": "status"
+        },
+        "resource_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        }
+      },
+      "required": [
+        "protocol_version",
+        "request_id",
+        "generation",
+        "op",
+        "resource_id"
+      ],
+      "additionalProperties": false
+    }
+  ],
+  "examples": [
+    {
+      "protocol_version": 1,
+      "request_id": "11111111-1111-4111-8111-111111111111",
+      "generation": "1",
+      "op": "parse",
+      "document_id": "11111111-1111-4111-8111-111111111111",
+      "source_fd_index": 0,
+      "source_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "language": "lua",
+      "pack": "baseline-efb50993780079460b0cbed1363e2166a2de1d9f"
+    },
+    {
+      "protocol_version": 1,
+      "request_id": "11111111-1111-4111-8111-111111111111",
+      "generation": "1",
+      "op": "validate",
+      "job_id": "11111111-1111-4111-8111-111111111111",
+      "bundle_fd_index": 0,
+      "bundle_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "mode": "isolated-parser",
+      "pack": "baseline-efb50993780079460b0cbed1363e2166a2de1d9f"
+    },
+    {
+      "protocol_version": 1,
+      "request_id": "11111111-1111-4111-8111-111111111111",
+      "generation": "1",
+      "op": "preview_start",
+      "lab_id": "11111111-1111-4111-8111-111111111111",
+      "projection_fd_index": 0,
+      "projection_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "profile": "software-headless",
+      "pack": "current-6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7"
+    },
+    {
+      "protocol_version": 1,
+      "request_id": "11111111-1111-4111-8111-111111111111",
+      "generation": "1",
+      "op": "preview_input",
+      "lab_id": "11111111-1111-4111-8111-111111111111",
+      "lab_epoch": "1",
+      "sequence": "2",
+      "event": {
+        "kind": "pointer_absolute",
+        "x": 0.2,
+        "y": 0.4
+      }
+    },
+    {
+      "protocol_version": 1,
+      "request_id": "11111111-1111-4111-8111-111111111111",
+      "generation": "1",
+      "op": "preview_input",
+      "lab_id": "11111111-1111-4111-8111-111111111111",
+      "lab_epoch": "1",
+      "sequence": "3",
+      "event": {
+        "kind": "key",
+        "keycode": 30,
+        "pressed": true
+      }
+    },
+    {
+      "protocol_version": 1,
+      "request_id": "11111111-1111-4111-8111-111111111111",
+      "generation": "1",
+      "op": "preview_input",
+      "lab_id": "11111111-1111-4111-8111-111111111111",
+      "lab_epoch": "1",
+      "sequence": "4",
+      "event": {
+        "kind": "release_all"
+      }
+    },
+    {
+      "protocol_version": 1,
+      "request_id": "11111111-1111-4111-8111-111111111111",
+      "generation": "1",
+      "op": "preview_stop",
+      "lab_id": "11111111-1111-4111-8111-111111111111",
+      "lab_epoch": "1"
+    },
+    {
+      "protocol_version": 1,
+      "request_id": "11111111-1111-4111-8111-111111111111",
+      "generation": "1",
+      "op": "commit",
+      "plan_id": "11111111-1111-4111-8111-111111111111",
+      "plan_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "review_nonce": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "protocol_version": 1,
+      "request_id": "11111111-1111-4111-8111-111111111111",
+      "generation": "1",
+      "op": "recovery_arm",
+      "plan_id": "11111111-1111-4111-8111-111111111111",
+      "plan_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "recovery_nonce": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "deadline_ms": 30000
+    },
+    {
+      "protocol_version": 1,
+      "request_id": "11111111-1111-4111-8111-111111111111",
+      "generation": "1",
+      "op": "recovery_keep",
+      "plan_id": "11111111-1111-4111-8111-111111111111",
+      "plan_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "recovery_nonce": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "protocol_version": 1,
+      "request_id": "11111111-1111-4111-8111-111111111111",
+      "generation": "1",
+      "op": "recovery_revert",
+      "plan_id": "11111111-1111-4111-8111-111111111111",
+      "plan_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "recovery_nonce": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "protocol_version": 1,
+      "request_id": "11111111-1111-4111-8111-111111111111",
+      "generation": "1",
+      "op": "status",
+      "resource_id": "11111111-1111-4111-8111-111111111111"
+    }
+  ]
+}
