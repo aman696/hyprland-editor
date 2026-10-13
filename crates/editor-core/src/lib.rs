@@ -16,12 +16,12 @@ pub const AUDITED_MAIN: &str = "audited-main";
 pub const BASELINE_COMMIT: &str = "efb50993780079460b0cbed1363e2166a2de1d9f";
 pub const AUDITED_MAIN_COMMIT: &str = "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7";
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Bounds {
     pub min: Option<f64>,
     pub max: Option<f64>,
 }
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Setting {
     pub id: String,
     pub version: String,

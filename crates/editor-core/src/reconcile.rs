@@ -44,6 +44,7 @@ pub struct Plan {
     base_pin: String,
     incoming_pin: String,
     draft_pin: String,
+    schema_pin: String,
     partial: bool,
 }
 fn fingerprint<T: serde::Serialize>(data: &T) -> Result<String, String> {
@@ -57,6 +58,21 @@ fn document_pin(doc: &LuaDocument, catalogue: &[Setting]) -> Result<String, Stri
     }
     doc.report.draft.validate(catalogue)?;
     fingerprint(&doc.report)
+}
+fn schema_pin(catalogue: &[Setting], version: &str) -> Result<String, String> {
+    let mut pack: Vec<_> = catalogue.iter().filter(|s| s.version == version).collect();
+    pack.sort_by(|a, b| a.id.cmp(&b.id));
+    if pack.is_empty()
+        || pack.len() > 512
+        || pack.windows(2).any(|p| p[0].id == p[1].id)
+        || pack.iter().any(|s| {
+            s.bounds.min.is_some_and(|n| !n.is_finite())
+                || s.bounds.max.is_some_and(|n| !n.is_finite())
+        })
+    {
+        return Err("Catalogue has duplicate settings or invalid schema bounds".into());
+    }
+    fingerprint(&pack)
 }
 fn partial(doc: &LuaDocument) -> bool {
     doc.report.opaque_effects || !doc.report.diagnostics.is_empty()
@@ -149,6 +165,7 @@ pub fn prepare(
         base_pin,
         incoming_pin,
         draft_pin: fingerprint(draft)?,
+        schema_pin: schema_pin(catalogue, &draft.version)?,
         partial: partial(base) || partial(incoming),
     })
 }
@@ -170,6 +187,11 @@ impl Plan {
         catalogue: &[Setting],
     ) -> Result<Draft, String> {
         draft.validate(catalogue)?;
+        if self.schema_pin != schema_pin(catalogue, &draft.version)? {
+            return Err(
+                "Catalogue changed since this review; compare again with the current schema".into(),
+            );
+        }
         if self.base_pin != document_pin(base, catalogue)?
             || self.incoming_pin != document_pin(incoming, catalogue)?
             || self.draft_pin != fingerprint(draft)?
@@ -369,5 +391,31 @@ mod tests {
         assert!(plan
             .resolve(&base, &draft, &incoming, &choices, true, &c)
             .is_err());
+    }
+    #[test]
+    fn changed_schema_duplicates_and_nonfinite_bounds_do_not_reuse_a_review() {
+        let mut c = catalogue();
+        let base = doc("hl.config{general={border_size=2}}");
+        let incoming = doc("hl.config{general={border_size=3}}");
+        let draft = base.report.draft.clone();
+        let plan = prepare(&base, &draft, &incoming, &c).unwrap();
+        c.iter_mut()
+            .find(|s| s.version == BASELINE && s.id == "general:border_size")
+            .unwrap()
+            .bounds
+            .max = Some(21.);
+        assert!(plan
+            .resolve(&base, &draft, &incoming, &BTreeMap::new(), false, &c)
+            .unwrap_err()
+            .contains("Catalogue changed"));
+        c.iter_mut()
+            .find(|s| s.version == BASELINE && s.id == "general:border_size")
+            .unwrap()
+            .bounds
+            .max = Some(f64::NAN);
+        assert!(prepare(&base, &draft, &incoming, &c).is_err());
+        let mut c = catalogue();
+        c.push(c[0].clone());
+        assert!(prepare(&base, &draft, &incoming, &c).is_err());
     }
 }
