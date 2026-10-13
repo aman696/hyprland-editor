@@ -62,3 +62,11 @@ The completion-register consistency check tracks all 1,453 full feature contract
 A source-review regression covers calls hidden in ignored, positional, oversized and nested table fields. Those expressions can affect runtime bindings even when their keys are outside the catalogue. They now mark the source opaque and prevent subsequent API calls from being treated as statically trusted. A real restricted-worker fixture confirms an embedded command stays inert and the later declaration is not falsely imported.
 
 The finalized 0.3 foundation passes 34 core tests, five restricted-parser process tests, three real-application reopening tests, four IPC fixture tests and one explicit native graphical workflow (47 in total), plus formatting, strict Clippy, catalogue generation, completion-register consistency and release build checks locally. Hosted checks are recorded separately for the published revision.
+
+## Explicit symlink source capture
+
+Selected Lua/legacy sources now record symlink chains and resolved leaf identity without following config includes. Six path fixtures cover relative/absolute/directory links, non-UTF-8 targets, cycles, broken links, linked FIFOs, procfs links, trailing-slash semantics and replaced link targets with identical bytes. A workspace fixture deletes the recorded link and target before reopening its saved snapshot. A display fixture checks escaping of newlines, bidi controls, literal backslashes and invalid UTF-8 bytes.
+
+All import readers inspect an `O_PATH` node before opening a regular inode for I/O; workspace/value-draft paths still refuse final-component symlinks. This does not certify hostile concurrent directory mutation, generated-file managers, dependency authorization or remote/FUSE I/O deadlines.
+
+This revision passes 42 core tests, five restricted-parser process tests, three real-application reopening tests, four IPC fixture tests and one explicit native graphical workflow (55 total), plus formatting, strict Clippy, metadata/register consistency and release build checks locally. These checks use synthetic fixtures and an isolated display; no live configuration is modified. Hosted results belong to the exact published commit.

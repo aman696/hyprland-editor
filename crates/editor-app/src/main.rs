@@ -185,6 +185,19 @@ fn detail(state: &Shared, panel: &gtk::Box, setting: &Setting, status: &gtk::Lab
             "Recorded source: {}",
             origin.display_path()
         )));
+        if let Some(resolved) = &origin.resolved_path {
+            details.append(&label(&format!(
+                "Resolved target: {}",
+                hyprland_editor_core::source::display_path_bytes(resolved)
+            )));
+        }
+        for link in &origin.links {
+            details.append(&label(&format!(
+                "Recorded link: {} → {}",
+                hyprland_editor_core::source::display_path_bytes(&link.encountered_path),
+                hyprland_editor_core::source::display_path_bytes(&link.target)
+            )));
+        }
         details.append(&label(&format!("Source revision: {}", origin.sha256)));
         details.append(&label(&format!(
             "Recorded ownership: {:?} (not write authorization)",

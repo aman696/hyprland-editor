@@ -2,6 +2,7 @@
 pub mod import;
 pub mod lua;
 pub mod source;
+pub mod source_path;
 pub mod storage;
 pub mod workspace;
 

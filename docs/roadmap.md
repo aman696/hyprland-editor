@@ -3,7 +3,7 @@
 | Area | Audited inventory | Implemented in 0.3 | Next gate |
 | --- | --- | --- | --- |
 | Scalar settings | 353 baseline / 402 audited-main | All nine type families have draft controls; literal bounds; source links; separate observed values | Runtime descriptions, richer help, enumerations and dependency validation |
-| Imported configuration | Legacy and Lua source grammars audited | Legacy literals; resource/syscall-restricted static Lua projection; guarded copies of existing literals; private source-backed `.hye` snapshots; old JSON imports | Lossless multi-file/include graph, symlink/generated ownership, changed-source reconciliation, richer scope analysis |
+| Imported configuration | Legacy and Lua source grammars audited | Legacy literals; resource/syscall-restricted static Lua projection; guarded copies of existing literals; private source-backed `.hye` snapshots; explicit symlink-chain capture; old JSON imports | Lossless multi-file/include graph, generated ownership, changed-source reconciliation, richer scope analysis |
 | Effective state | Runtime descriptions and object schemas audited | Session/process/socket identity checks; manual descriptions snapshot; unsupported formats explicitly unknown | Event invalidation, more live codecs, multi-instance choice, real-compositor certification |
 | Monitors, devices, workspaces | Structured fields audited | Feature inventory only | Typed structured models, cross-field validation, graphical editors |
 | Rules, bindings, animations | Versioned parsers and handlers audited | Feature inventory only | Dedicated controls, codecs, matcher semantics, replay fixtures |

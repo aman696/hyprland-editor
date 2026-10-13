@@ -67,7 +67,14 @@ fn read_import(
         return Ok(Imported { draft:workspace.draft,source,origin,saved_json:true,
             message:format!("Saved draft reopened with {diagnostics} source diagnostics. Source snapshots were reparsed; recorded original paths were not opened. Desktop state is separate.") });
     }
-    let captured = storage::read_source(&path)?;
+    let captured = if path
+        .extension()
+        .is_some_and(|extension| extension == "lua" || extension == "conf")
+    {
+        hyprland_editor_core::source_path::read_selected(&path)?
+    } else {
+        storage::read_source(&path)?
+    };
     match path.extension().and_then(|s|s.to_str()) {
         Some("json")=>Draft::from_json(&captured.content,&catalogue).map(|draft|Imported{draft,source:None,origin:None,message:"Validated value-only draft loaded".into(),saved_json:true}),
         Some("conf")=>import::legacy(&captured.content,&catalogue).map(|r|Imported{message:format!("Imported {} literal overrides; {} lines skipped; {} repeated keys. Includes and variables remain unresolved. Active state is separate.",r.draft.values.len(),r.skipped.len(),r.duplicate_keys.len()),draft:r.draft,source:None,origin:None,saved_json:false}),
@@ -352,7 +359,7 @@ pub(super) fn connect_reattach(
             let Some(button)=button.upgrade()else{return;};button.set_sensitive(false);
             let button=button.downgrade();let win=win.downgrade();
             background(move||{
-                let captured=storage::read_source(&path)?;
+                let captured=hyprland_editor_core::source_path::read_selected(&path)?;
                 let comparison=origin.compare_selected(&captured)?;
                 let doc=parse_source(captured.content,version,&catalogue)?;
                 Ok((comparison,doc,captured.identity))
@@ -362,7 +369,8 @@ pub(super) fn connect_reattach(
                 if state.borrow().generation!=generation {notice(&win,"Draft changed","Select the source again to verify the current draft.");return;}
                 let (comparison,doc,origin)=match result {Ok(value)=>value,Err(error)=>{notice(&win,"Source not attached",&error);return;}};
                 let old_path=state.borrow().source_origins.get(&doc.report.draft.version).map(SourceIdentity::display_path).unwrap_or_default();
-                let review=format!("Saved path: {old_path}\nSelected path: {}\nRevision SHA-256: {}\nSelected device/inode: {}/{}\nOwner UID: {} · mode {:o}\n\nThe bytes are identical, but source identity or metadata changed. Attaching updates recorded evidence only. Configuration files and desktop settings are not changed.",origin.display_path(),origin.sha256,origin.device,origin.inode,origin.owner,origin.mode & 0o777);
+                let resolved=origin.resolved_path.as_deref().map(hyprland_editor_core::source::display_path_bytes).unwrap_or_else(||"Not recorded".into());
+                let review=format!("Saved path: {old_path}\nSelected path: {}\nResolved target: {resolved}\nRecorded symlinks: {}\nRevision SHA-256: {}\nSelected device/inode: {}/{}\nOwner UID: {} · mode {:o}\n\nThe bytes are identical, but source identity or metadata changed. Attaching updates recorded evidence only. Configuration files and desktop settings are not changed.",origin.display_path(),origin.links.len(),origin.sha256,origin.device,origin.inode,origin.owner,origin.mode & 0o777);
                 let apply=move||{
                     if state.borrow().generation!=generation{return;}
                     let mut s=state.borrow_mut();let version=s.draft.version.clone();

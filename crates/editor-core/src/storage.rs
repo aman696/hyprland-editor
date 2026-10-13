@@ -46,17 +46,48 @@ pub(crate) fn read_bounded(
     limit: usize,
 ) -> Result<(String, std::fs::Metadata), String> {
     let p = c_path(path)?;
-    // NONBLOCK prevents a malicious FIFO/device import from hanging the UI.
+    // Inspect the node without opening a FIFO/device for I/O.
     let fd = unsafe {
         libc::open(
             p.as_ptr(),
-            libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NOFOLLOW | libc::O_NONBLOCK,
+            libc::O_PATH | libc::O_CLOEXEC | libc::O_NOFOLLOW,
+        )
+    };
+    if fd < 0 {
+        return Err(io_error());
+    }
+    let node = unsafe { File::from_raw_fd(fd) };
+    read_regular_node(&node, limit)
+}
+pub(crate) fn read_regular_node(
+    node: &File,
+    limit: usize,
+) -> Result<(String, std::fs::Metadata), String> {
+    let meta = node.metadata().map_err(|e| e.to_string())?;
+    if !meta.is_file() || meta.len() > limit as u64 {
+        return Err(format!(
+            "Select a regular file no larger than {limit} bytes"
+        ));
+    }
+    // Only reopen our held regular inode; do not resolve the caller's path again.
+    let descriptor = CString::new(format!("/proc/self/fd/{}", node.as_raw_fd())).unwrap();
+    let fd = unsafe {
+        libc::open(
+            descriptor.as_ptr(),
+            libc::O_RDONLY | libc::O_CLOEXEC | libc::O_NONBLOCK,
         )
     };
     if fd < 0 {
         return Err(io_error());
     }
     let file = unsafe { File::from_raw_fd(fd) };
+    let opened = file.metadata().map_err(|e| e.to_string())?;
+    if opened.dev() != meta.dev() || opened.ino() != meta.ino() {
+        return Err("File identity changed during descriptor reopen".into());
+    }
+    read_opened(file, limit)
+}
+fn read_opened(file: File, limit: usize) -> Result<(String, std::fs::Metadata), String> {
     let meta = file.metadata().map_err(|e| e.to_string())?;
     if !meta.is_file() || meta.len() > limit as u64 {
         return Err(format!(
@@ -72,7 +103,8 @@ pub(crate) fn read_bounded(
         return Err("File grew beyond the document limit while reading".into());
     }
     let after = file.metadata().map_err(|e| e.to_string())?;
-    if meta.len() != after.len()
+    if after.nlink() == 0
+        || meta.len() != after.len()
         || meta.mtime() != after.mtime()
         || meta.mtime_nsec() != after.mtime_nsec()
         || meta.ctime() != after.ctime()

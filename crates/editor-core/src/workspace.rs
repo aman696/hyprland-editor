@@ -243,4 +243,23 @@ mod tests {
         assert!(read(&link, &catalogue()).is_err());
         fs::remove_dir_all(root).unwrap();
     }
+    #[test]
+    fn symlink_source_evidence_round_trips_without_reopening_the_link_or_target() {
+        let root = folder();
+        fs::write(root.join("target.lua"), "-- target\n").unwrap();
+        symlink("target.lua", root.join("entry.lua")).unwrap();
+        let source = crate::source_path::read_selected(&root.join("entry.lua")).unwrap();
+        let snapshot =
+            Workspace::new(Draft::new(BASELINE)).with_root(source.content, source.identity);
+        let saved = save(&root, &snapshot, &catalogue()).unwrap();
+        fs::remove_file(root.join("target.lua")).unwrap();
+        fs::remove_file(root.join("entry.lua")).unwrap();
+        let restored = read(&saved, &catalogue()).unwrap();
+        assert_eq!(
+            restored.root().unwrap().origin,
+            snapshot.root().unwrap().origin
+        );
+        assert_eq!(restored.root().unwrap().content, "-- target\n");
+        fs::remove_dir_all(root).unwrap();
+    }
 }

@@ -26,7 +26,7 @@ The [machine-readable register](completion-register.json) retains every contract
 
 - **scalar draft forms**: initial values for 755 forms; not full per-field conformance, runtime activation or accessibility certification.
 - **static Lua and parser isolation**: restricted source projection and existing literals; no include/scope completeness or preview isolation proof.
-- **private source-backed draft snapshots**: single Lua root in GUI; no include graph, changed-revision merge, checkpoint journal or watched-path certification.
+- **private source-backed draft snapshots**: single Lua root and explicit symlink-chain evidence in GUI; no generated ownership or include graph, changed-revision merge, checkpoint journal or watched-path certification.
 - **read-only selected-session inspection**: version/descriptions fixtures; no actual host compositor certificate, other inspectors or event subscription.
 
 ## Maintaining the register
