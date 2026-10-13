@@ -42,16 +42,22 @@
         "crates/editor-core/src/source.rs",
         "crates/editor-core/src/source_path.rs",
         "crates/editor-core/src/workspace.rs",
-        "crates/editor-app/src/workflow.rs"
+        "crates/editor-core/src/reconcile.rs",
+        "crates/editor-app/src/workflow.rs",
+        "crates/editor-app/src/reconciliation.rs",
+        "crates/editor-app/src/history.rs"
       ],
       "test_references": [
         "application_reparses_snapshot_and_preserves_edits_without_opening_recorded_paths",
         "application_rejects_bad_hash_forged_reports_and_syntax_in_saved_source",
         "test_source_persistence",
         "relative_absolute_and_parent_links_preserve_targets_and_chain",
-        "identical_bytes_through_a_replaced_link_change_recorded_identity"
+        "identical_bytes_through_a_replaced_link_change_recorded_identity",
+        "conflicting_edit_and_delete_require_explicit_choices",
+        "application_compares_changed_and_opaque_sources_with_restricted_parser_and_no_writes",
+        "test_review"
       ],
-      "limits": "single Lua root and explicit symlink-chain evidence in GUI; no generated ownership or include graph, changed-revision merge, checkpoint journal or watched-path certification"
+      "limits": "single Lua root, symlink-chain evidence and reviewed static revision reconciliation; no generated ownership/include graph, multi-file merge, persistent history/checkpoint journal or watched-path certification"
     },
     {
       "area": "read-only selected-session inspection",

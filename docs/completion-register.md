@@ -26,11 +26,11 @@ The [machine-readable register](completion-register.json) retains every contract
 
 - **scalar draft forms**: initial values for 755 forms; not full per-field conformance, runtime activation or accessibility certification.
 - **static Lua and parser isolation**: restricted source projection and existing literals; no include/scope completeness or preview isolation proof.
-- **private source-backed draft snapshots**: single Lua root and explicit symlink-chain evidence in GUI; no generated ownership or include graph, changed-revision merge, checkpoint journal or watched-path certification.
+- **private source-backed draft snapshots**: single Lua root, symlink-chain evidence and reviewed static revision reconciliation; no generated ownership/include graph, multi-file merge, persistent history/checkpoint journal or watched-path certification.
 - **read-only selected-session inspection**: version/descriptions fixtures; no actual host compositor certificate, other inspectors or event subscription.
 
 ## Maintaining the register
 
 Run `python3 scripts/implementation_report.py` after changing the audit manifest or blueprint. CI runs `--check` to reject drift. This check only proves register consistency with the pinned audit; it does not certify upstream completeness, feature behavior or release safety. Future certification records must bind an exact source/schema/binary/profile identity to requirement-specific execution results before a full contract advances beyond Specified.
 
-The source persistence milestone does not close E03/E05: lossless include/symlink graphs, changed-revision conflict handling, actual watched-path isolation, source insertion/deletion and recovery still need implementation and verification. Green ordinary tests cannot substitute for those gates.
+The source persistence milestone does not close E03/E05: lossless include/symlink graphs, full multi-file changed-revision conflict handling, actual watched-path isolation, source insertion/deletion and recovery still need implementation and verification. Green ordinary tests cannot substitute for those gates.

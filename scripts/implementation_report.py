@@ -99,9 +99,9 @@ def build():
         {"area": "static Lua and parser isolation", "code": ["crates/editor-core/src/lua.rs", "crates/editor-app/src/worker.rs"],
          "test_references": ["filesystem_and_network_are_denied", "opaque_commands_cannot_create_files"],
          "limits": "restricted source projection and existing literals; no include/scope completeness or preview isolation proof"},
-        {"area": "private source-backed draft snapshots", "code": ["crates/editor-core/src/source.rs", "crates/editor-core/src/source_path.rs", "crates/editor-core/src/workspace.rs", "crates/editor-app/src/workflow.rs"],
-         "test_references": ["application_reparses_snapshot_and_preserves_edits_without_opening_recorded_paths", "application_rejects_bad_hash_forged_reports_and_syntax_in_saved_source", "test_source_persistence", "relative_absolute_and_parent_links_preserve_targets_and_chain", "identical_bytes_through_a_replaced_link_change_recorded_identity"],
-         "limits": "single Lua root and explicit symlink-chain evidence in GUI; no generated ownership or include graph, changed-revision merge, checkpoint journal or watched-path certification"},
+        {"area": "private source-backed draft snapshots", "code": ["crates/editor-core/src/source.rs", "crates/editor-core/src/source_path.rs", "crates/editor-core/src/workspace.rs", "crates/editor-core/src/reconcile.rs", "crates/editor-app/src/workflow.rs", "crates/editor-app/src/reconciliation.rs", "crates/editor-app/src/history.rs"],
+         "test_references": ["application_reparses_snapshot_and_preserves_edits_without_opening_recorded_paths", "application_rejects_bad_hash_forged_reports_and_syntax_in_saved_source", "test_source_persistence", "relative_absolute_and_parent_links_preserve_targets_and_chain", "identical_bytes_through_a_replaced_link_change_recorded_identity", "conflicting_edit_and_delete_require_explicit_choices", "application_compares_changed_and_opaque_sources_with_restricted_parser_and_no_writes", "test_review"],
+         "limits": "single Lua root, symlink-chain evidence and reviewed static revision reconciliation; no generated ownership/include graph, multi-file merge, persistent history/checkpoint journal or watched-path certification"},
         {"area": "read-only selected-session inspection", "code": ["crates/editor-discovery/src/lib.rs"],
          "test_references": ["selected_session_only_uses_fixed_read_queries", "rejects_path_injection_symlinks_and_replaced_session"],
          "limits": "version/descriptions fixtures; no actual host compositor certificate, other inspectors or event subscription"},
@@ -151,7 +151,7 @@ The [machine-readable register](completion-register.json) retains every contract
 
 Run `python3 scripts/implementation_report.py` after changing the audit manifest or blueprint. CI runs `--check` to reject drift. This check only proves register consistency with the pinned audit; it does not certify upstream completeness, feature behavior or release safety. Future certification records must bind an exact source/schema/binary/profile identity to requirement-specific execution results before a full contract advances beyond Specified.
 
-The source persistence milestone does not close E03/E05: lossless include/symlink graphs, changed-revision conflict handling, actual watched-path isolation, source insertion/deletion and recovery still need implementation and verification. Green ordinary tests cannot substitute for those gates.
+The source persistence milestone does not close E03/E05: lossless include/symlink graphs, full multi-file changed-revision conflict handling, actual watched-path isolation, source insertion/deletion and recovery still need implementation and verification. Green ordinary tests cannot substitute for those gates.
 """
     return text
 

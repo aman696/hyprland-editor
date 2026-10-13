@@ -53,7 +53,10 @@ pub fn value_text(value: &Value) -> String {
             if v.is_empty() {
                 "Empty".into()
             } else {
-                v.chars().take(80).collect()
+                hyprland_editor_core::source::display_path_bytes(v.as_bytes())
+                    .chars()
+                    .take(128)
+                    .collect()
             }
         }
         Value::Int(v) => v.to_string(),
@@ -116,6 +119,10 @@ pub fn menu_model() -> gtk::gio::Menu {
     inspect.append(Some("Refresh Desktop Values"), Some("win.read-live"));
     inspect.append(Some("Review Source Copy…"), Some("win.source-copy"));
     inspect.append(Some("Verify Source File…"), Some("win.reattach-source"));
+    inspect.append(
+        Some("Compare Changed Source…"),
+        Some("win.reconcile-source"),
+    );
     inspect.append(Some("Import Diagnostics"), Some("win.diagnostics"));
     menu.append_section(None, &inspect);
     let tools = gtk::gio::Menu::new();

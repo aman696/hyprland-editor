@@ -10,7 +10,7 @@ use hyprland_editor_core::{
     Draft, Setting, BASELINE,
 };
 use std::{path::PathBuf, sync::mpsc, time::Duration};
-fn background<T: Send + 'static>(
+pub(super) fn background<T: Send + 'static>(
     work: impl FnOnce() -> Result<T, String> + Send + 'static,
     finish: impl FnOnce(Result<T, String>) + 'static,
 ) {
@@ -86,7 +86,7 @@ fn read_import(
         },_=>Err("Select saved .hye workspace, draft JSON, legacy .conf or Lua .lua source".into()),
     }
 }
-fn parse_source(
+pub(super) fn parse_source(
     source: String,
     version: String,
     catalogue: &[Setting],
@@ -114,6 +114,21 @@ pub(super) fn check_workspace(path: PathBuf) -> Result<serde_json::Value, String
         "source_diagnostics":imported.source.as_ref().map_or(0,|s|s.report.diagnostics.len()),
         "runtime_verified":false,"original_paths_opened":false}),
     )
+}
+pub(super) fn source_workspace(
+    path: PathBuf,
+) -> Result<(Draft, LuaDocument, SourceIdentity), String> {
+    if path.extension().is_none_or(|extension| extension != "hye") {
+        return Err("Comparison requires a saved .hye workspace".into());
+    }
+    let imported = read_import(path, hyprland_editor_core::catalogue(), BASELINE.into())?;
+    Ok((
+        imported.draft,
+        imported
+            .source
+            .ok_or("Workspace has no Lua source snapshot")?,
+        imported.origin.ok_or("Workspace has no source identity")?,
+    ))
 }
 
 pub(super) fn connect_save(
@@ -283,7 +298,7 @@ pub(super) fn connect_source_copy(
     button.connect_clicked(move|button|{
         let Some(window)=win.upgrade()else{return;};let s=state.borrow();let Some(doc)=s.sources.get(&s.draft.version).cloned()else{drop(s);notice(&window,"Lua source required","Import a Lua source file first. JSON drafts and legacy imports have no Lua source spans to preserve.");return;};
         let draft=s.draft.clone();let generation=s.generation;drop(s);let state=state.clone();let win=window.downgrade();let button=button.downgrade();if let Some(button)=button.upgrade(){button.set_sensitive(false);}
-        background(move||worker::run(worker::Request::Copy{source:doc.source,report:doc.report,draft}),move|result|{
+        background(move||worker::run(worker::Request::Copy{source:doc.source.clone(),report:doc.report.clone(),draft}),move|result|{
             if let Some(button)=button.upgrade(){button.set_sensitive(true);}let Some(win)=win.upgrade()else{return;};if state.borrow().generation!=generation{notice(&win,"Draft changed","The draft changed while the source copy was prepared. Review again to use the current edits.");return;}
             match result{Ok(worker::Response::Copy(source))=>review_copy(&win,source),Ok(_)=>notice(&win,"Invalid parser response","The worker did not return a source copy."),Err(e)=>notice(&win,"Cannot prepare source copy",&e)}
         });
@@ -315,7 +330,8 @@ fn apply_import(
         s.source_origins.remove(&imported.draft.version);
     }
     if let Some(doc) = imported.source {
-        s.sources.insert(imported.draft.version.clone(), doc);
+        s.sources
+            .insert(imported.draft.version.clone(), std::sync::Arc::new(doc));
     } else {
         s.sources.remove(&imported.draft.version);
     }
@@ -371,10 +387,12 @@ pub(super) fn connect_reattach(
                 let old_path=state.borrow().source_origins.get(&doc.report.draft.version).map(SourceIdentity::display_path).unwrap_or_default();
                 let resolved=origin.resolved_path.as_deref().map(hyprland_editor_core::source::display_path_bytes).unwrap_or_else(||"Not recorded".into());
                 let review=format!("Saved path: {old_path}\nSelected path: {}\nResolved target: {resolved}\nRecorded symlinks: {}\nRevision SHA-256: {}\nSelected device/inode: {}/{}\nOwner UID: {} · mode {:o}\n\nThe bytes are identical, but source identity or metadata changed. Attaching updates recorded evidence only. Configuration files and desktop settings are not changed.",origin.display_path(),origin.links.len(),origin.sha256,origin.device,origin.inode,origin.owner,origin.mode & 0o777);
+                let error_win=win.downgrade();
                 let apply=move||{
-                    if state.borrow().generation!=generation{return;}
-                    let mut s=state.borrow_mut();let version=s.draft.version.clone();
-                    s.sources.insert(version.clone(),doc);s.source_origins.insert(version,origin);s.generation+=1;
+                    let Some(win)=error_win.upgrade()else{return;};
+                    if state.borrow().generation!=generation{notice(&win,"Draft changed","Select and review the current source again.");return;}
+                    let mut s=state.borrow_mut();let draft=s.draft.clone();
+                    if let Err(error)=s.replace_source(std::sync::Arc::new(doc),origin,draft) {drop(s);notice(&win,"Source not attached",&error);return;}
                     drop(s);super::summary(&state,&status);
                     status.set_tooltip_text(Some("Source bytes verified through an explicitly selected file. No configuration was written or applied."));
                 };
@@ -504,7 +522,7 @@ pub(super) fn test_source_persistence(window: &adw::ApplicationWindow) {
     {
         let mut s = state.borrow_mut();
         s.source_origins.insert(BASELINE.into(), captured.identity);
-        s.remember("general:border_size");
+        s.remember("general:border_size").unwrap();
         s.draft.values.insert(
             "general:border_size".into(),
             hyprland_editor_core::Value::Int(7),
@@ -513,7 +531,7 @@ pub(super) fn test_source_persistence(window: &adw::ApplicationWindow) {
     button.emit_clicked();
     {
         let mut s = state.borrow_mut();
-        s.remember("general:border_size");
+        s.remember("general:border_size").unwrap();
         s.draft.values.insert(
             "general:border_size".into(),
             hyprland_editor_core::Value::Int(9),

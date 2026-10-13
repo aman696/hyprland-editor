@@ -60,6 +60,22 @@ fn real_worker_imports_and_prepares_a_preserved_copy() {
     assert_eq!(copy["Copy"], source.replace("= 2", "= 5"));
 }
 #[test]
+fn empty_statements_are_inert_in_the_actual_restricted_parser() {
+    let source =
+        ";local n=2;;hl.config{general={border_size=n}};;hl.config{decoration={rounding=n+1}};";
+    let parsed = request(json!({"Parse":{"source":source,"version":"0.56.2"}}));
+    assert_eq!(parsed["Parsed"]["opaque_effects"], false);
+    assert_eq!(parsed["Parsed"]["diagnostics"], json!([]));
+    assert_eq!(
+        parsed["Parsed"]["draft"]["values"]["general:border_size"]["value"],
+        2
+    );
+    assert_eq!(
+        parsed["Parsed"]["draft"]["values"]["decoration:rounding"]["value"],
+        3
+    );
+}
+#[test]
 fn opaque_commands_cannot_create_files() {
     let marker = std::env::temp_dir().join(format!(
         "hyprland-editor-must-not-create-{}",

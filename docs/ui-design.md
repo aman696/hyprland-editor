@@ -21,7 +21,7 @@ Add to Draft / Update Draft is the suggested action in a setting editor. Remove 
 | Ctrl+F | Search settings, returning to the list when collapsed |
 | Ctrl+O | Import configuration |
 | Ctrl+S | Save the independent draft |
-| Ctrl+Z | Undo a staged field change |
+| Ctrl+Z | Undo a staged field or accepted source change |
 | Ctrl+Enter | Review the draft |
 
 Names and feedback use the [HIG writing guidance](https://developer.gnome.org/hig/guidelines/writing-style.html). Raw setting keys remain discoverable without appearing as the main title. Curated explanations currently cover common appearance/input settings; other entries have a short generic prompt unless a matching desktop snapshot supplies a description. This is not a claim of complete user-oriented documentation for every scalar.
@@ -45,3 +45,9 @@ A new surface must keep its commands reachable at narrow widths, expose validati
 The native graphical test constructs and validates all 755 version-specific scalar forms, then exercises menu action routing, version changes, staged removal/undo, category and search filtering, disabled Review state, collapsed navigation/reopening and unsaved-close protection. In an isolated Xvfb display it also resizes to 360 pixels and checks that all nine control families fit the allocated width. Checked-in screenshots show the actual native workspace and narrow editor, not a mockup. See [validation](validation.md).
 
 This is an engineering and visual review, not a completed usability study with external users.
+
+## Changed-source comparison
+
+The main menu opens a focused comparison after explicit source selection. A compact page selector switches between setting changes, previous file and selected file. A searchable setting selector marks rows requiring a choice; only one row creates its result control. Automatic independent changes are visible and can be overridden. Unresolved incoming absence has no remove/adopt option. Partial projections require an acknowledgement before acceptance. File identity remains in a collapsed, height-bounded disclosure. Acceptance changes only the private in-memory draft/snapshot; Undo restores both. Native tests cover conflict and partial acknowledgement controls at a 360-pixel window request.
+
+![Narrow source revision comparison](screenshots/source-comparison.png)

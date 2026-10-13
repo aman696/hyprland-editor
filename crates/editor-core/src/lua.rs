@@ -511,7 +511,7 @@ impl Projection<'_> {
     }
     fn statement(&mut self, node: Node<'_>) -> Result<(), String> {
         match node.kind() {
-            "comment" | "hash_bang_line" => {}
+            "comment" | "hash_bang_line" | "empty_statement" => {}
             "variable_declaration" => {
                 let children = named(node);
                 let Some(first) = children.first() else {
@@ -751,6 +751,16 @@ impl LuaDocument {
 mod tests {
     use super::*;
     use crate::catalogue;
+    #[test]
+    fn empty_statements_do_not_invalidate_pure_locals_or_api_calls() {
+        let source =
+            ";local n=2;;hl.config{general={border_size=n}};;hl.config{decoration={rounding=n+1}};";
+        let report = parse(source, BASELINE, &catalogue()).unwrap();
+        assert!(!report.opaque_effects);
+        assert!(report.diagnostics.is_empty());
+        assert_eq!(report.draft.values["general:border_size"], Value::Int(2));
+        assert_eq!(report.draft.values["decoration:rounding"], Value::Int(3));
+    }
     #[test]
     fn unknown_field_calls_cannot_make_later_api_bindings_look_trusted() {
         for unknown in [

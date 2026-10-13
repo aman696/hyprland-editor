@@ -26,9 +26,11 @@ fn folder() -> PathBuf {
     root
 }
 fn run(path: &Path) -> (bool, String, String) {
+    run_args(&["--check-workspace".into(), path.as_os_str().to_os_string()])
+}
+fn run_args(args: &[std::ffi::OsString]) -> (bool, String, String) {
     let mut child = Command::new(env!("CARGO_BIN_EXE_hyprland-editor"))
-        .arg("--check-workspace")
-        .arg(path)
+        .args(args)
         .env_clear()
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
@@ -143,5 +145,65 @@ fn application_rejects_bad_hash_forged_reports_and_syntax_in_saved_source() {
     let (success, _, error) = run(&malformed);
     assert!(!success);
     assert!(error.contains("syntax"));
+    fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn application_compares_changed_and_opaque_sources_with_restricted_parser_and_no_writes() {
+    let root = folder();
+    let old = "hl.config{general={border_size=2},decoration={rounding=3}}";
+    let mut snapshot = fixture(&root, old);
+    snapshot
+        .draft
+        .values
+        .insert("decoration:rounding".into(), Value::Int(3));
+    // A recorded path is never used as the comparison input.
+    snapshot.sources[0].origin.selected_path = b"/definitely-not-an-input.lua".to_vec();
+    let saved = workspace::save(&root, &snapshot, &catalogue()).unwrap();
+    fs::remove_file(root.join("original.lua")).unwrap();
+    let selected = root.join("changed.lua");
+    let marker = root.join("must-not-create");
+    let run_comparison = || {
+        let (success, output, error) = run_args(&[
+            "--check-source-comparison".into(),
+            saved.as_os_str().to_os_string(),
+            selected.as_os_str().to_os_string(),
+        ]);
+        assert!(success, "{error}");
+        serde_json::from_str::<serde_json::Value>(&output).unwrap()
+    };
+    let changed = "hl.config{general={border_size=7},decoration={rounding=4}}";
+    fs::write(&selected, changed).unwrap();
+    let report = run_comparison();
+    assert_eq!(report["partial_projection"], false);
+    let rows = report["rows"].as_array().unwrap();
+    assert_eq!(rows.len(), 2);
+    assert!(rows
+        .iter()
+        .any(|r| r["setting"] == "general:border_size" && r["requires_choice"] == true));
+    assert!(rows
+        .iter()
+        .any(|r| r["setting"] == "decoration:rounding" && r["automatic"] == "use_selected_file"));
+    let opaque = format!(
+        "os.execute('touch {}'); hl.config{{general={{border_size=7}}}}",
+        marker.display()
+    );
+    fs::write(&selected, &opaque).unwrap();
+    let report = run_comparison();
+    assert_eq!(report["partial_projection"], true);
+    assert!(!marker.exists());
+    assert!(report["rows"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .all(|r| r["requires_choice"] == true && r["selected_value_available"] == false));
+    assert_eq!(report["original_paths_opened"], false);
+    assert_eq!(report["files_written"], false);
+    assert_eq!(report["runtime_verified"], false);
+    assert_eq!(fs::read_to_string(&selected).unwrap(), opaque);
+    assert_eq!(
+        fs::read(&saved).unwrap(),
+        snapshot.to_json(&catalogue()).unwrap()
+    );
     fs::remove_dir_all(root).unwrap();
 }

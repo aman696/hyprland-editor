@@ -1,6 +1,7 @@
 //! Non-executing, version-scoped editing. This crate has no compositor IPC.
 pub mod import;
 pub mod lua;
+pub mod reconcile;
 pub mod source;
 pub mod source_path;
 pub mod storage;

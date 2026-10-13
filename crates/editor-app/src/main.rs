@@ -1,5 +1,7 @@
 mod controls;
+mod history;
 mod presentation;
+mod reconciliation;
 mod worker;
 mod workflow;
 use adw::prelude::*;
@@ -7,17 +9,17 @@ use controls::form;
 use hyprland_editor_core::{
     catalogue, source::SourceIdentity, Draft, Setting, Value, AUDITED_MAIN, BASELINE,
 };
-use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
+use std::{cell::RefCell, collections::BTreeMap, rc::Rc, sync::Arc};
 
 type Shared = Rc<RefCell<State>>;
 struct State {
     catalogue: Vec<Setting>,
     draft: Draft,
-    undo: Vec<(String, Option<Value>)>,
+    undo: history::History,
     drafts: BTreeMap<String, Draft>,
     visible: Vec<Setting>,
     category: Option<String>,
-    sources: BTreeMap<String, hyprland_editor_core::lua::LuaDocument>,
+    sources: BTreeMap<String, Arc<hyprland_editor_core::lua::LuaDocument>>,
     source_origins: BTreeMap<String, SourceIdentity>,
     saved_source_origins: BTreeMap<String, Option<SourceIdentity>>,
     active: Option<hyprland_editor_discovery::Snapshot>,
@@ -46,13 +48,71 @@ impl State {
     fn dirty(&self) -> bool {
         self.dirty_version(&self.draft.version) || self.drafts.keys().any(|v| self.dirty_version(v))
     }
-    fn remember(&mut self, id: &str) {
+    fn remember(&mut self, id: &str) -> Result<(), String> {
+        self.undo.field(id, self.draft.values.get(id).cloned())?;
         self.generation += 1;
-        if self.undo.len() == 32 {
-            self.undo.remove(0);
+        Ok(())
+    }
+    fn replace_source(
+        &mut self,
+        document: Arc<hyprland_editor_core::lua::LuaDocument>,
+        origin: SourceIdentity,
+        draft: Draft,
+    ) -> Result<(), String> {
+        draft.validate(&self.catalogue)?;
+        origin.validate(&document.source)?;
+        if draft.version != self.draft.version || document.report.draft.version != draft.version {
+            return Err("Source revision belongs to a different snapshot".into());
         }
-        self.undo
-            .push((id.into(), self.draft.values.get(id).cloned()));
+        let version = self.draft.version.clone();
+        let old_doc = self
+            .sources
+            .get(&version)
+            .cloned()
+            .ok_or("Source snapshot missing")?;
+        let old_origin = self
+            .source_origins
+            .get(&version)
+            .cloned()
+            .ok_or("Source identity missing")?;
+        self.undo.source(&self.draft, &draft, old_doc, old_origin)?;
+        self.sources.insert(version.clone(), document);
+        self.source_origins.insert(version, origin);
+        self.draft = draft;
+        self.generation += 1;
+        Ok(())
+    }
+    fn undo_last(&mut self) {
+        let Some(operation) = self.undo.pop() else {
+            return;
+        };
+        match operation {
+            history::Undo::Field { id, previous } => {
+                if let Some(value) = previous {
+                    self.draft.values.insert(id, value);
+                } else {
+                    self.draft.values.remove(&id);
+                }
+            }
+            history::Undo::Source {
+                changes,
+                document,
+                origin,
+                ..
+            } => {
+                for (id, previous) in changes {
+                    if let Some(value) = previous {
+                        self.draft.values.insert(id, value);
+                    } else {
+                        self.draft.values.remove(&id);
+                    }
+                }
+                let version = self.draft.version.clone();
+                self.sources.insert(version.clone(), document);
+                self.source_origins.insert(version, origin);
+            }
+        }
+        self.generation += 1;
     }
 }
 fn human_name(id: &str) -> String {
@@ -231,7 +291,12 @@ fn detail(state: &Shared, panel: &gtk::Box, setting: &Setting, status: &gtk::Lab
             Ok(v) => {
                 let mut state = s.borrow_mut();
                 if state.draft.values.get(&spec.id) != Some(&v) {
-                    state.remember(&spec.id);
+                    if let Err(error) = state.remember(&spec.id) {
+                        message.add_css_class("error");
+                        message.set_text(&error);
+                        message.set_visible(true);
+                        return;
+                    }
                     state.draft.values.insert(spec.id.clone(), v);
                 }
                 drop(state);
@@ -264,7 +329,11 @@ fn detail(state: &Shared, panel: &gtk::Box, setting: &Setting, status: &gtk::Lab
         };
         let mut state = s.borrow_mut();
         if state.draft.values.contains_key(&spec.id) {
-            state.remember(&spec.id);
+            if let Err(error) = state.remember(&spec.id) {
+                drop(state);
+                st.set_text(&error);
+                return;
+            }
             state.draft.values.remove(&spec.id);
         }
         drop(state);
@@ -319,7 +388,7 @@ fn initial_state() -> Shared {
     Rc::new(RefCell::new(State {
         catalogue: catalogue(),
         draft: Draft::new(BASELINE),
-        undo: vec![],
+        undo: history::History::default(),
         drafts: BTreeMap::new(),
         visible: vec![],
         category: None,
@@ -624,14 +693,7 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     let st = status.clone();
     undo.connect_clicked(move |_| {
         let mut state = s.borrow_mut();
-        if let Some((id, previous)) = state.undo.pop() {
-            if let Some(value) = previous {
-                state.draft.values.insert(id, value);
-            } else {
-                state.draft.values.remove(&id);
-            }
-            state.generation += 1;
-        }
+        state.undo_last();
         let spec = state.visible.get(sel.selected() as usize).cloned();
         drop(state);
         if let Some(spec) = spec {
@@ -655,10 +717,12 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     let source_copy = gtk::Button::with_label("Review Source Copy");
     let diagnostics = gtk::Button::with_label("Import Diagnostics");
     let reattach = gtk::Button::with_label("Verify Source File");
+    let reconcile = gtk::Button::with_label("Compare Changed Source");
     workflow::connect_live(&live, &window, &state, &status, &selection, &panel);
     workflow::connect_source_copy(&source_copy, &window, &state);
     workflow::connect_diagnostics(&diagnostics, &window, &state);
     workflow::connect_reattach(&reattach, &window, &state, &status);
+    reconciliation::connect(&reconcile, &window, &state, &status, &selection, &panel);
     for (name, button) in [
         ("import", &open),
         ("save-draft", &save),
@@ -669,6 +733,7 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
         ("source-copy", &source_copy),
         ("diagnostics", &diagnostics),
         ("reattach-source", &reattach),
+        ("reconcile-source", &reconcile),
     ] {
         presentation::bridge(&window, name, button);
     }
@@ -715,6 +780,24 @@ fn main() {
             .nth(2)
             .ok_or_else(|| "Specify a saved .hye workspace".to_string())
             .and_then(|path| workflow::check_workspace(path.into()));
+        match result {
+            Ok(report) => println!("{}", report),
+            Err(error) => {
+                eprintln!("{}", error.chars().take(1024).collect::<String>());
+                std::process::exit(1);
+            }
+        }
+        return;
+    }
+    if std::env::args_os().nth(1).as_deref()
+        == Some(std::ffi::OsStr::new("--check-source-comparison"))
+    {
+        let args: Vec<_> = std::env::args_os().skip(2).collect();
+        let result = if args.len() == 2 {
+            reconciliation::check(args[0].clone().into(), args[1].clone().into())
+        } else {
+            Err("Specify a saved .hye workspace and an explicitly selected Lua source".into())
+        };
         match result {
             Ok(report) => println!("{}", report),
             Err(error) => {
@@ -965,6 +1048,7 @@ mod tests {
             .any(|w| w.is::<gtk::TextView>()));
         review.destroy();
         workflow::test_source_persistence(&window);
+        reconciliation::test_review(&window);
         window.close();
         assert!(
             window.is_visible(),
