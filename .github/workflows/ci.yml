@@ -20,6 +20,6 @@ jobs:
       - run: python3 scripts/generate_catalogue.py --check
       - run: cargo test --locked --workspace
       - name: Native graphical smoke test
-        run: xvfb-run -a env GDK_BACKEND=x11 GSK_RENDERER=cairo GSETTINGS_BACKEND=memory cargo test --locked -p hyprland-editor -- --ignored --test-threads=1
+        run: xvfb-run -a env GDK_BACKEND=x11 GSK_RENDERER=cairo GSETTINGS_BACKEND=memory HYPRLAND_EDITOR_TEST_EXACT_RESIZE=1 cargo test --locked -p hyprland-editor -- --ignored --test-threads=1
       - run: cargo clippy --locked --workspace --all-targets -- -D warnings
       - run: cargo build --locked --release

@@ -8,7 +8,8 @@ A native GTK4/libadwaita workspace for making Hyprland configuration graphical, 
 
 ## Available now
 
-- Browse and search every audited scalar: 353 for **0.56.2**, 402 for **audited-main**, an exact development commit. Switch snapshots without losing their separate in-memory drafts.
+- Browse by category and search readable names or original setting keys for every audited scalar: 353 for **0.56.2**, 402 for **audited-main**, an exact development commit. Switch snapshots without losing their separate in-memory drafts.
+- Adaptive sidebar navigation, focused value cards, expandable technical details, a main menu and keyboard shortcuts. The layout follows the [GNOME HIG](https://developer.gnome.org/hig/principles.html); see the [UI design rules](docs/ui-design.md).
 - Graphical switches, number controls, text fields, color pickers, gradient stops, coordinates, four-sided gaps and font weights.
 - Stage validated overrides, remove them, undo up to 32 field changes, and review generated Lua before copying it. Unsaved drafts require explicit confirmation before closure or replacement.
 - Import literal legacy `.conf` settings without executing commands, expanding variables or following `source` directives. Skipped lines and repeated keys are reported. This is a partial import, not an effective-state reader or source-preserving round trip.

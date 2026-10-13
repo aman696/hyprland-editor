@@ -1,6 +1,9 @@
+mod controls;
+mod presentation;
 mod worker;
 mod workflow;
 use adw::prelude::*;
+use controls::form;
 use hyprland_editor_core::{catalogue, storage, Draft, Setting, Value, AUDITED_MAIN, BASELINE};
 use std::{cell::RefCell, collections::BTreeMap, path::PathBuf, rc::Rc};
 
@@ -11,6 +14,7 @@ struct State {
     undo: Vec<(String, Option<Value>)>,
     drafts: BTreeMap<String, Draft>,
     visible: Vec<Setting>,
+    category: Option<String>,
     sources: BTreeMap<String, hyprland_editor_core::lua::LuaDocument>,
     active: Option<hyprland_editor_discovery::Snapshot>,
     generation: u64,
@@ -42,50 +46,34 @@ impl State {
     }
 }
 fn human_name(id: &str) -> String {
-    let text = id.rsplit(':').next().unwrap_or(id).replace(['_', '.'], " ");
-    let mut chars = text.chars();
-    chars
-        .next()
-        .map(|c| c.to_uppercase().collect::<String>() + chars.as_str())
-        .unwrap_or_default()
+    presentation::setting_name(id)
 }
+
 fn label(text: &str) -> gtk::Label {
     gtk::Label::builder()
         .label(text)
         .wrap(true)
+        .wrap_mode(gtk::pango::WrapMode::WordChar)
         .xalign(0.)
         .selectable(true)
         .build()
 }
-fn spin(value: f64, min: f64, max: f64, digits: u32) -> gtk::SpinButton {
-    let w = gtk::SpinButton::with_range(min, max, if digits == 0 { 1. } else { 0.1 });
-    w.set_digits(digits);
-    w.set_value(value);
-    w
-}
-fn color_button(color: u32) -> gtk::ColorDialogButton {
-    let dialog = gtk::ColorDialog::builder().with_alpha(true).build();
-    let b = gtk::ColorDialogButton::new(Some(dialog));
-    b.set_rgba(&gtk::gdk::RGBA::new(
-        ((color >> 16) & 255) as f32 / 255.,
-        ((color >> 8) & 255) as f32 / 255.,
-        (color & 255) as f32 / 255.,
-        (color >> 24) as f32 / 255.,
-    ));
-    b
-}
-fn color_value(b: &gtk::ColorDialogButton) -> u32 {
-    let c = b.rgba();
-    let byte = |x: f32| (x.clamp(0., 1.) * 255.).round() as u32;
-    (byte(c.alpha()) << 24) | (byte(c.red()) << 16) | (byte(c.green()) << 8) | byte(c.blue())
-}
+
 fn summary(state: &Shared, status: &gtk::Label) {
     let s = state.borrow();
     status.set_text(&format!(
-        "{} · {} draft values · {} undo steps",
-        s.draft.version,
+        "{} {} in draft · {}",
         s.draft.values.len(),
-        s.undo.len()
+        if s.draft.values.len() == 1 {
+            "setting"
+        } else {
+            "settings"
+        },
+        if s.dirty_version(&s.draft.version) {
+            "Unsaved changes"
+        } else {
+            "Saved"
+        }
     ));
 }
 fn notice(window: &adw::ApplicationWindow, title: &str, body: &str) {
@@ -95,204 +83,16 @@ fn notice(window: &adw::ApplicationWindow, title: &str, body: &str) {
     dialog.present();
 }
 
-fn form(
-    setting: &Setting,
-    value: Option<Value>,
-    box_: &gtk::Box,
-) -> Box<dyn Fn() -> Result<Value, String>> {
-    let value = value.or_else(|| setting.known_default());
-    match setting.kind.as_str() {
-        "Bool" => {
-            let w = gtk::Switch::builder()
-                .halign(gtk::Align::Start)
-                .active(matches!(value, Some(Value::Bool(true))))
-                .build();
-            box_.append(&w);
-            Box::new(move || Ok(Value::Bool(w.is_active())))
-        }
-        "Int" => {
-            let v = if let Some(Value::Int(v)) = value {
-                v as f64
-            } else {
-                0.
-            };
-            let w = spin(
-                v,
-                setting.bounds.min.unwrap_or(-2_147_483_648.),
-                setting.bounds.max.unwrap_or(2_147_483_647.),
-                0,
-            );
-            box_.append(&w);
-            Box::new(move || {
-                w.update();
-                Ok(Value::Int(w.value() as i64))
-            })
-        }
-        "Float" => {
-            let v = if let Some(Value::Float(v)) = value {
-                v
-            } else {
-                0.
-            };
-            let w = spin(
-                v,
-                setting.bounds.min.unwrap_or(-1_000_000.),
-                setting.bounds.max.unwrap_or(1_000_000.),
-                6,
-            );
-            box_.append(&w);
-            Box::new(move || {
-                w.update();
-                Ok(Value::Float(w.value()))
-            })
-        }
-        "String" => {
-            let v = if let Some(Value::String(v)) = value {
-                v
-            } else {
-                String::new()
-            };
-            let w = gtk::Entry::builder().text(v).max_length(4096).build();
-            box_.append(&w);
-            Box::new(move || Ok(Value::String(w.text().into())))
-        }
-        "Color" => {
-            let v = if let Some(Value::Color(v)) = value {
-                v
-            } else {
-                0xff000000
-            };
-            let w = color_button(v);
-            box_.append(&w);
-            Box::new(move || Ok(Value::Color(color_value(&w))))
-        }
-        "FontWeight" => {
-            let v = if let Some(Value::FontWeight(v)) = value {
-                v
-            } else {
-                400
-            };
-            let w = spin(v.into(), 0., 65535., 0);
-            box_.append(&w);
-            Box::new(move || {
-                w.update();
-                Ok(Value::FontWeight(w.value() as u16))
-            })
-        }
-        "Vec2" => {
-            let v = if let Some(Value::Vec2(v)) = value {
-                v
-            } else {
-                [0.; 2]
-            };
-            let mut fields = vec![];
-            for (i, n) in v.into_iter().enumerate() {
-                box_.append(&label(if i == 0 { "X" } else { "Y" }));
-                let w = spin(n, -1_000_000., 1_000_000., 6);
-                box_.append(&w);
-                fields.push(w);
-            }
-            Box::new(move || {
-                for f in &fields {
-                    f.update();
-                }
-                Ok(Value::Vec2([fields[0].value(), fields[1].value()]))
-            })
-        }
-        "CssGap" => {
-            let v = if let Some(Value::CssGap(v)) = value {
-                v
-            } else {
-                [0; 4]
-            };
-            let mut fields = vec![];
-            for (name, n) in ["Top", "Right", "Bottom", "Left"].into_iter().zip(v) {
-                box_.append(&label(name));
-                let w = spin(n as f64, 0., 100_000., 0);
-                box_.append(&w);
-                fields.push(w);
-            }
-            Box::new(move || {
-                for f in &fields {
-                    f.update();
-                }
-                Ok(Value::CssGap(std::array::from_fn(|i| {
-                    fields[i].value() as i64
-                })))
-            })
-        }
-        "Gradient" => {
-            let (colors, angle) = if let Some(Value::Gradient { colors, angle }) = value {
-                (colors, angle)
-            } else {
-                (vec![0xff000000], 0.)
-            };
-            let stops = gtk::Box::new(gtk::Orientation::Horizontal, 8);
-            stops.set_halign(gtk::Align::Start);
-            let fields = Rc::new(RefCell::new(Vec::new()));
-            for color in colors {
-                let w = color_button(color);
-                stops.append(&w);
-                fields.borrow_mut().push(w);
-            }
-            box_.append(&label("Colors (left to right)"));
-            box_.append(&stops);
-            let actions = gtk::Box::new(gtk::Orientation::Horizontal, 8);
-            let add = gtk::Button::with_label("Add color");
-            let remove = gtk::Button::with_label("Remove last color");
-            actions.append(&add);
-            actions.append(&remove);
-            box_.append(&actions);
-            let f = fields.clone();
-            let b = stops.clone();
-            add.connect_clicked(move |_| {
-                if f.borrow().len() < 32 {
-                    let w = color_button(0xffffffff);
-                    b.append(&w);
-                    f.borrow_mut().push(w);
-                }
-            });
-            let f = fields.clone();
-            remove.connect_clicked(move |_| {
-                if f.borrow().len() > 1 {
-                    let w = f.borrow_mut().pop().unwrap();
-                    stops.remove(&w);
-                }
-            });
-            box_.append(&label("Angle in degrees"));
-            let angle = spin(angle, -36000., 36000., 2);
-            box_.append(&angle);
-            Box::new(move || {
-                angle.update();
-                Ok(Value::Gradient {
-                    colors: fields.borrow().iter().map(color_value).collect(),
-                    angle: angle.value(),
-                })
-            })
-        }
-        _ => Box::new(|| Err("No editor for this type".into())),
-    }
-}
 fn detail(state: &Shared, panel: &gtk::Box, setting: &Setting, status: &gtk::Label) {
     while let Some(child) = panel.first_child() {
         panel.remove(&child);
     }
+    let context = label(&presentation::context(&setting.id));
+    context.add_css_class("dim-label");
+    panel.append(&context);
     let title = label(&human_name(&setting.id));
-    title.add_css_class("title-2");
+    title.add_css_class("title-1");
     panel.append(&title);
-    panel.append(&label(&setting.id));
-    panel.append(&label(&format!(
-        "{} · snapshot {}",
-        setting.kind, setting.version
-    )));
-    panel.append(&label(&format!(
-        "Upstream default expression: {}",
-        setting.default_expression
-    )));
-    panel.append(&gtk::LinkButton::with_label(
-        &setting.source,
-        "View audited source",
-    ));
     let current = state.borrow().draft.values.get(&setting.id).cloned();
     let observed = state
         .borrow()
@@ -301,36 +101,92 @@ fn detail(state: &Shared, panel: &gtk::Box, setting: &Setting, status: &gtk::Lab
         .filter(|a| a.version.as_deref() == Some(setting.version.as_str()))
         .and_then(|a| a.values.get(&setting.id))
         .cloned();
-    if let Some(observation) = &observed {
-        panel.append(&label(&observation.description));
-        let raw = serde_json::to_string(&observation.raw_current).unwrap_or_default();
-        let preview: String = raw.chars().take(2048).collect();
-        panel.append(&label(&format!(
-            "Observed value: {preview} · point-in-time snapshot; refresh to update"
-        )));
-        if observation.current.is_none() {
-            panel.append(&label(
-                "This live value has no certified normalization yet; the controls do not guess it.",
-            ));
-        }
-    }
-    if current.is_none() {
-        panel.append(&label("No draft override. Controls start from a normalized snapshot when available, then a decoded default. Choose a value explicitly when neither is known."));
-    }
-    let current = current.or_else(|| observed.and_then(|o| o.current));
-    let getter = form(setting, current, panel);
-    let error = label("");
-    error.add_css_class("error");
-    panel.append(&error);
-    let stage = gtk::Button::with_label("Stage value in draft");
+    let description = observed
+        .as_ref()
+        .map(|o| o.description.as_str())
+        .filter(|d| !d.is_empty())
+        .unwrap_or(presentation::help(setting));
+    let description: String = description.chars().take(320).collect();
+    let help = label(&description);
+    help.add_css_class("dim-label");
+    panel.append(&help);
+    let group = adw::PreferencesGroup::new();
+    group.set_title("Draft Value");
+    let card = gtk::Box::new(gtk::Orientation::Vertical, 16);
+    card.add_css_class("card");
+    let fields = gtk::Box::new(gtk::Orientation::Vertical, 12);
+    fields.set_margin_top(16);
+    fields.set_margin_bottom(16);
+    fields.set_margin_start(16);
+    fields.set_margin_end(16);
+    let initial = current
+        .clone()
+        .or_else(|| observed.as_ref().and_then(|o| o.current.clone()));
+    let getter = form(setting, initial, &fields);
+    card.append(&fields);
+    group.add(&card);
+    let origin = if current.is_some() {
+        "This value is in the draft".into()
+    } else if observed.as_ref().is_some_and(|o| o.current.is_some()) {
+        "Starting from the desktop snapshot".into()
+    } else if let Some(value) = setting.known_default() {
+        format!("Default: {}", presentation::value_text(&value))
+    } else {
+        "Default unavailable. Choose a value explicitly.".into()
+    };
+    group.set_description(Some(&origin));
+    panel.append(&group);
+    let message = label("");
+    message.set_visible(false);
+    panel.append(&message);
+    let actions = gtk::Box::new(gtk::Orientation::Horizontal, 12);
+    actions.set_halign(gtk::Align::End);
+    let unset = gtk::Button::with_label("Remove Override");
+    unset.add_css_class("flat");
+    unset.set_visible(current.is_some());
+    actions.append(&unset);
+    let stage = gtk::Button::with_label(if current.is_some() {
+        "Update Draft"
+    } else {
+        "Add to Draft"
+    });
     stage.add_css_class("suggested-action");
-    panel.append(&stage);
-    let unset = gtk::Button::with_label("Remove draft override");
-    panel.append(&unset);
+    actions.append(&stage);
+    panel.append(&actions);
+    let advanced = gtk::Expander::builder()
+        .label("Technical Details")
+        .margin_top(8)
+        .build();
+    let details = gtk::Box::new(gtk::Orientation::Vertical, 8);
+    details.set_margin_top(12);
+    details.append(&label(&format!("Setting: {}", setting.id)));
+    details.append(&label(&format!(
+        "Type: {} · Version: {}",
+        setting.kind, setting.version
+    )));
+    details.append(&label(&format!(
+        "Default expression: {}",
+        setting.default_expression
+    )));
+    if let Some(observation) = observed {
+        let raw = serde_json::to_string(&observation.raw_current).unwrap_or_default();
+        let raw: String = raw.chars().take(2048).collect();
+        details.append(&label(&format!("Desktop snapshot: {raw}")));
+        details.append(&label(
+            "Snapshot values may be stale. Refresh them from the menu.",
+        ));
+    }
+    let source = gtk::LinkButton::with_label(&setting.source, "View Audited Source");
+    source.set_halign(gtk::Align::Start);
+    details.append(&source);
+    advanced.set_child(Some(&details));
+    panel.append(&advanced);
     let s = state.clone();
     let spec = setting.clone();
     let st = status.clone();
-    stage.connect_clicked(move |_| {
+    let reset = unset.downgrade();
+    let group = group.downgrade();
+    stage.connect_clicked(move |button| {
         match getter().and_then(|v| {
             spec.validate(&v)?;
             Ok(v)
@@ -342,10 +198,23 @@ fn detail(state: &Shared, panel: &gtk::Box, setting: &Setting, status: &gtk::Lab
                     state.draft.values.insert(spec.id.clone(), v);
                 }
                 drop(state);
-                error.set_text("Value staged. Your running desktop has not been changed.");
+                message.remove_css_class("error");
+                message.set_text("Draft updated");
+                if let Some(group) = group.upgrade() {
+                    group.set_description(Some("This value is in the draft"));
+                }
+                message.set_visible(true);
+                button.set_label("Update Draft");
+                if let Some(reset) = reset.upgrade() {
+                    reset.set_visible(true);
+                }
                 summary(&s, &st);
             }
-            Err(e) => error.set_text(&e),
+            Err(e) => {
+                message.add_css_class("error");
+                message.set_text(&e);
+                message.set_visible(true);
+            }
         }
     });
     let s = state.clone();
@@ -366,6 +235,7 @@ fn detail(state: &Shared, panel: &gtk::Box, setting: &Setting, status: &gtk::Lab
         detail(&s, &p, &spec, &st);
     });
 }
+
 fn refill(
     state: &Shared,
     model: &gtk::StringList,
@@ -379,26 +249,34 @@ fn refill(
     };
     let query = search.text().to_lowercase();
     let mut s = state.borrow_mut();
+    let version_changed = s.visible.first().is_some_and(|x| x.version != selected);
     s.visible = s
         .catalogue
         .iter()
-        .filter(|x| x.version == selected && x.id.to_lowercase().contains(&query))
+        .filter(|x| {
+            x.version == selected
+                && s.category
+                    .as_ref()
+                    .is_none_or(|cat| x.id.split(':').next() == Some(cat.as_str()))
+                && (x.id.to_lowercase().contains(&query)
+                    || human_name(&x.id).to_lowercase().contains(&query)
+                    || presentation::context(&x.id).to_lowercase().contains(&query))
+        })
         .cloned()
         .collect();
-    let labels: Vec<String> = s
-        .visible
-        .iter()
-        .map(|x| {
-            format!(
-                "{} · {}",
-                human_name(&x.id),
-                x.id.split(':').next().unwrap_or("General")
-            )
-        })
-        .collect();
+    let labels: Vec<String> = s.visible.iter().map(|x| x.id.clone()).collect();
     drop(s);
     let labels: Vec<&str> = labels.iter().map(String::as_str).collect();
-    model.splice(0, model.n_items(), &labels);
+    // SearchEntry can report the same query twice; keep the selected editor alive.
+    if version_changed
+        || model.n_items() as usize != labels.len()
+        || labels
+            .iter()
+            .enumerate()
+            .any(|(i, id)| model.string(i as u32).as_deref() != Some(*id))
+    {
+        model.splice(0, model.n_items(), &labels);
+    }
 }
 fn build(app: &adw::Application) -> adw::ApplicationWindow {
     let window = adw::ApplicationWindow::builder()
@@ -413,42 +291,61 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
         undo: vec![],
         drafts: BTreeMap::new(),
         visible: vec![],
+        category: None,
         sources: BTreeMap::new(),
         active: None,
         generation: 0,
         saved: BTreeMap::new(),
     }));
-    let content = gtk::Box::new(gtk::Orientation::Vertical, 0);
-    let header = adw::HeaderBar::new();
-    content.append(&header);
-    let open = gtk::Button::with_label("Import");
-    let save = gtk::Button::with_label("Save draft");
-    let review = gtk::Button::with_label("Review / copy Lua");
-    let undo = gtk::Button::with_label("Undo");
-    let coverage = gtk::Button::with_label("Feature coverage");
-    header.pack_start(&open);
-    header.pack_start(&undo);
-    header.pack_end(&review);
-    header.pack_end(&save);
-    header.pack_end(&coverage);
-    let banner=label("Draft workspace · Live inspection is read-only. Live apply and compositor preview remain unavailable.");
-    banner.set_margin_start(16);
-    banner.set_margin_end(16);
-    banner.set_margin_bottom(8);
-    content.append(&banner);
-    let toolbar = gtk::Box::new(gtk::Orientation::Horizontal, 12);
-    toolbar.set_margin_start(16);
-    toolbar.set_margin_end(16);
-    toolbar.set_margin_bottom(8);
-    let search = gtk::SearchEntry::builder()
-        .placeholder_text("Search every scalar setting…")
-        .hexpand(true)
+    let open = gtk::Button::builder()
+        .icon_name("document-open-symbolic")
+        .tooltip_text("Import Configuration (Ctrl+O)")
         .build();
-    let version =
-        gtk::DropDown::from_strings(&["Hyprland 0.56.2 (353)", "Audited main commit (402)"]);
-    toolbar.append(&search);
-    toolbar.append(&version);
-    content.append(&toolbar);
+    let save = gtk::Button::with_label("Save Draft");
+    let review = gtk::Button::with_label("Review Draft");
+    review.set_tooltip_text(Some("Review and Export Draft (Ctrl+Return)"));
+    let review_child = gtk::Box::new(gtk::Orientation::Horizontal, 6);
+    review_child.append(&gtk::Image::from_icon_name("document-properties-symbolic"));
+    let review_label = gtk::Label::new(Some("Review Draft"));
+    review_child.append(&review_label);
+    review.update_property(&[gtk::accessible::Property::Label("Review Draft")]);
+    review.set_child(Some(&review_child));
+    let undo = gtk::Button::with_label("Undo");
+    let coverage = gtk::Button::with_label("Feature Coverage");
+    undo.set_sensitive(false);
+    review.set_sensitive(false);
+    let version = gtk::DropDown::from_strings(&["Hyprland 0.56.2", "Development Snapshot"]);
+    version.set_widget_name("compatibility-version");
+    let search = gtk::SearchEntry::builder()
+        .placeholder_text("Search settings")
+        .build();
+    search.set_widget_name("settings-search");
+    let mut categories: Vec<String> = state
+        .borrow()
+        .catalogue
+        .iter()
+        .map(|s| s.id.split(':').next().unwrap().into())
+        .collect();
+    categories.sort_by_key(|c| presentation::category_name(c));
+    categories.dedup();
+    let mut names = vec!["All Settings".into()];
+    names.extend(categories.iter().map(|c| presentation::category_name(c)));
+    let refs: Vec<&str> = names.iter().map(String::as_str).collect();
+    let category = gtk::DropDown::from_strings(&refs);
+    category.set_widget_name("category-filter");
+    category.set_tooltip_text(Some("Filter by Category"));
+    let sidebar_box = gtk::Box::new(gtk::Orientation::Vertical, 0);
+    let sidebar_header = adw::HeaderBar::new();
+    sidebar_header.pack_start(&open);
+    sidebar_box.append(&sidebar_header);
+    let filters = gtk::Box::new(gtk::Orientation::Vertical, 8);
+    filters.set_margin_start(12);
+    filters.set_margin_end(12);
+    filters.set_margin_top(8);
+    filters.set_margin_bottom(12);
+    filters.append(&search);
+    filters.append(&category);
+    sidebar_box.append(&filters);
     let model = gtk::StringList::new(&[]);
     let selection = gtk::SingleSelection::new(Some(model.clone()));
     selection.set_autoselect(false);
@@ -456,60 +353,156 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     let factory = gtk::SignalListItemFactory::new();
     factory.connect_setup(|_, item| {
         let item = item.downcast_ref::<gtk::ListItem>().unwrap();
-        let row = label("");
-        row.set_selectable(false);
-        row.set_margin_top(8);
-        row.set_margin_bottom(8);
-        row.set_margin_start(12);
-        row.set_margin_end(12);
+        let row = gtk::Box::new(gtk::Orientation::Vertical, 4);
+        row.set_margin_top(10);
+        row.set_margin_bottom(10);
+        row.set_margin_start(16);
+        row.set_margin_end(16);
+        let name = gtk::Label::builder()
+            .xalign(0.)
+            .ellipsize(gtk::pango::EllipsizeMode::End)
+            .build();
+        let context = gtk::Label::builder()
+            .xalign(0.)
+            .ellipsize(gtk::pango::EllipsizeMode::End)
+            .build();
+        context.add_css_class("caption");
+        context.add_css_class("dim-label");
+        row.append(&name);
+        row.append(&context);
         item.set_child(Some(&row));
     });
     factory.connect_bind(|_, item| {
         let item = item.downcast_ref::<gtk::ListItem>().unwrap();
-        let text = item.item().and_downcast::<gtk::StringObject>().unwrap();
-        item.child()
+        let id = item
+            .item()
+            .and_downcast::<gtk::StringObject>()
+            .unwrap()
+            .string();
+        let row = item.child().and_downcast::<gtk::Box>().unwrap();
+        let first = row.first_child().and_downcast::<gtk::Label>().unwrap();
+        first.set_text(&human_name(&id));
+        first.set_tooltip_text(Some(&human_name(&id)));
+        first
+            .next_sibling()
             .and_downcast::<gtk::Label>()
             .unwrap()
-            .set_text(&text.string());
+            .set_text(&presentation::context(&id));
     });
     let list = gtk::ListView::new(Some(selection.clone()), Some(factory));
-    let sidebar = gtk::ScrolledWindow::builder()
+    list.add_css_class("navigation-sidebar");
+    list.set_single_click_activate(true);
+    let list_scroll = gtk::ScrolledWindow::builder()
         .child(&list)
-        .min_content_width(340)
-        .build();
-    let panel = gtk::Box::new(gtk::Orientation::Vertical, 12);
-    panel.set_margin_start(24);
-    panel.set_margin_end(24);
-    panel.set_margin_top(20);
-    panel.set_margin_bottom(20);
-    panel.append(&label("Choose a setting to edit a draft override."));
-    let detail_scroll = gtk::ScrolledWindow::builder()
-        .child(&panel)
-        .min_content_width(420)
-        .hexpand(true)
-        .build();
-    let split = gtk::Paned::builder()
-        .orientation(gtk::Orientation::Horizontal)
-        .start_child(&sidebar)
-        .end_child(&detail_scroll)
-        .position(340)
-        .resize_start_child(false)
-        .shrink_start_child(false)
-        .shrink_end_child(false)
+        .hscrollbar_policy(gtk::PolicyType::Never)
         .vexpand(true)
         .build();
-    content.append(&split);
-    let status = label("");
-    status.set_margin_start(16);
-    status.set_margin_top(8);
-    status.set_margin_bottom(8);
+    let no_results = label("No matching settings. Try another search or category.");
+    no_results.set_margin_start(16);
+    no_results.set_margin_end(16);
+    no_results.set_margin_top(16);
+    no_results.add_css_class("dim-label");
+    sidebar_box.append(&no_results);
+    let empty_label = no_results.downgrade();
+    model.connect_items_changed(move |model, _, _, _| {
+        if let Some(label) = empty_label.upgrade() {
+            label.set_visible(model.n_items() == 0);
+        }
+    });
+    sidebar_box.append(&list_scroll);
+    let scope = gtk::Label::builder()
+        .label("Hyprland 0.56.2 · Draft Mode")
+        .margin_top(12)
+        .margin_bottom(12)
+        .margin_start(12)
+        .margin_end(12)
+        .ellipsize(gtk::pango::EllipsizeMode::End)
+        .build();
+    scope.add_css_class("caption");
+    scope.add_css_class("dim-label");
+    sidebar_box.append(&scope);
+    let content = gtk::Box::new(gtk::Orientation::Vertical, 0);
+    let header = adw::HeaderBar::new();
+    content.append(&header);
+    let panel = gtk::Box::new(gtk::Orientation::Vertical, 24);
+    panel.set_margin_start(24);
+    panel.set_margin_end(24);
+    panel.set_margin_top(32);
+    panel.set_margin_bottom(32);
+    presentation::empty(
+        &panel,
+        "Choose a Setting",
+        "Search or select a setting to start editing a draft.",
+    );
+    let clamp = adw::Clamp::builder()
+        .child(&panel)
+        .maximum_size(660)
+        .tightening_threshold(500)
+        .build();
+    let detail_scroll = gtk::ScrolledWindow::builder()
+        .child(&clamp)
+        .hscrollbar_policy(gtk::PolicyType::Never)
+        .vexpand(true)
+        .build();
+    content.append(&detail_scroll);
+    let status = gtk::Label::builder()
+        .xalign(0.)
+        .margin_start(24)
+        .margin_end(24)
+        .margin_top(10)
+        .margin_bottom(10)
+        .ellipsize(gtk::pango::EllipsizeMode::End)
+        .build();
+    status.add_css_class("caption");
+    status.add_css_class("dim-label");
     content.append(&status);
-    window.set_content(Some(&content));
+    let sidebar_page = adw::NavigationPage::new(&sidebar_box, "Hyprland Editor");
+    let content_page = adw::NavigationPage::new(&content, "Settings");
+    let split = adw::NavigationSplitView::builder()
+        .sidebar(&sidebar_page)
+        .content(&content_page)
+        .min_sidebar_width(250.)
+        .max_sidebar_width(300.)
+        .sidebar_width_fraction(0.28)
+        .show_content(false)
+        .build();
+    let menu = presentation::menu_model();
+    let menu_button = presentation::menu_button(&menu);
+    header.pack_end(&menu_button);
+    header.pack_end(&review);
+    let sidebar_menu = presentation::menu_button(&menu);
+    sidebar_menu.set_visible(false);
+    sidebar_header.pack_end(&sidebar_menu);
+    let breakpoint =
+        adw::Breakpoint::new(adw::BreakpointCondition::parse("max-width: 700sp").unwrap());
+    breakpoint.add_setters(&[(&split, "collapsed", true)]);
+    breakpoint.add_setters(&[(&sidebar_menu, "visible", true)]);
+    breakpoint.add_setters(&[(&review_label, "visible", false)]);
+    window.add_breakpoint(breakpoint);
+    window.set_size_request(360, 480);
+    window.set_content(Some(&split));
+    presentation::bind_feedback(&status, &state, &undo, &review, &scope);
+    presentation::connect_compatibility(&window, &version);
     refill(&state, &model, &search, &version);
     summary(&state, &status);
     let s = state.clone();
+    let m = model.clone();
+    let q = search.downgrade();
+    let v = version.downgrade();
+    category.connect_selected_notify(move |category| {
+        s.borrow_mut().category = if category.selected() == 0 {
+            None
+        } else {
+            categories.get(category.selected() as usize - 1).cloned()
+        };
+        if let (Some(q), Some(v)) = (q.upgrade(), v.upgrade()) {
+            refill(&s, &m, &q, &v);
+        }
+    });
+    let s = state.clone();
     let p = panel.clone();
     let st = status.clone();
+    let nav = split.downgrade();
     selection.connect_selected_notify(move |selection| {
         let setting = s
             .borrow()
@@ -518,6 +511,28 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
             .cloned();
         if let Some(setting) = setting {
             detail(&s, &p, &setting, &st);
+            if let Some(nav) = nav.upgrade() {
+                nav.set_show_content(true);
+            }
+        } else if s.borrow().visible.is_empty() {
+            presentation::empty(
+                &p,
+                "No Matching Settings",
+                "Try another search or category.",
+            );
+        } else {
+            presentation::empty(
+                &p,
+                "Choose a Setting",
+                "Search or select a setting to start editing a draft.",
+            );
+        }
+    });
+    // Reopening the selected row after Back must not depend on selection changing.
+    let nav = split.downgrade();
+    list.connect_activate(move |_, _| {
+        if let Some(nav) = nav.upgrade() {
+            nav.set_show_content(true);
         }
     });
     let s = state.clone();
@@ -554,12 +569,11 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
         if let Some(search) = search_c.upgrade() {
             refill(&s, &m, &search, v);
         }
-        while let Some(child) = p.first_child() {
-            p.remove(&child);
-        }
-        p.append(&label(
-            "Choose a setting. Drafts for each snapshot are kept separately in this workspace.",
-        ));
+        presentation::empty(
+            &p,
+            "Choose a Setting",
+            "Each Hyprland version keeps a separate draft.",
+        );
         summary(&s, &st);
     });
     let s = state.clone();
@@ -626,20 +640,45 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     workflow::connect_import(
         &open, &window, &state, &status, &version, &selection, &panel,
     );
-    let actions = gtk::Box::new(gtk::Orientation::Horizontal, 12);
-    actions.set_margin_start(16);
-    actions.set_margin_end(16);
-    actions.set_margin_bottom(8);
-    let live = gtk::Button::with_label("Refresh live snapshot");
-    let source_copy = gtk::Button::with_label("Review edited source copy");
-    actions.append(&live);
-    actions.append(&source_copy);
-    let diagnostics = gtk::Button::with_label("Import diagnostics");
-    actions.append(&diagnostics);
-    content.insert_child_after(&actions, Some(&banner));
+    let live = gtk::Button::with_label("Refresh Desktop Values");
+    let source_copy = gtk::Button::with_label("Review Source Copy");
+    let diagnostics = gtk::Button::with_label("Import Diagnostics");
     workflow::connect_live(&live, &window, &state, &status, &selection, &panel);
     workflow::connect_source_copy(&source_copy, &window, &state);
     workflow::connect_diagnostics(&diagnostics, &window, &state);
+    for (name, button) in [
+        ("import", &open),
+        ("save-draft", &save),
+        ("review", &review),
+        ("undo", &undo),
+        ("coverage", &coverage),
+        ("read-live", &live),
+        ("source-copy", &source_copy),
+        ("diagnostics", &diagnostics),
+    ] {
+        presentation::bridge(&window, name, button);
+    }
+    let mode = gtk::gio::SimpleAction::new("draft-mode", None);
+    let win = window.downgrade();
+    mode.connect_activate(move|_,_|{if let Some(win)=win.upgrade(){notice(&win,"Draft Mode","Changes stay in editor drafts. Desktop inspection is read-only. Applying changes and compositor preview are not available in this release.");}});
+    window.add_action(&mode);
+    app.set_accels_for_action("win.import", &["<Primary>o"]);
+    app.set_accels_for_action("win.save-draft", &["<Primary>s"]);
+    app.set_accels_for_action("win.undo", &["<Primary>z"]);
+    app.set_accels_for_action("win.review", &["<Primary>Return"]);
+    let focus = gtk::gio::SimpleAction::new("search", None);
+    let search_focus = search.downgrade();
+    let nav = split.downgrade();
+    focus.connect_activate(move |_, _| {
+        if let Some(nav) = nav.upgrade() {
+            nav.set_show_content(false);
+        }
+        if let Some(search) = search_focus.upgrade() {
+            search.grab_focus();
+        }
+    });
+    window.add_action(&focus);
+    app.set_accels_for_action("win.search", &["<Primary>f"]);
     let win = window.downgrade();
     coverage.connect_clicked(move |_|{
         let Some(win) = win.upgrade() else { return; };
@@ -719,38 +758,184 @@ mod tests {
         let selection = list.model().and_downcast::<gtk::SingleSelection>().unwrap();
         assert_eq!(selection.n_items(), 353);
         selection.set_selected(0);
-        click(&window, "Stage value in draft");
-        let dropdown = widgets
-            .iter()
-            .find_map(|w| w.clone().downcast::<gtk::DropDown>().ok())
+        assert!(!window.lookup_action("review").unwrap().is_enabled());
+        click(&window, "Add to Draft");
+        assert!(window.lookup_action("review").unwrap().is_enabled());
+        window
+            .lookup_action("compatibility")
+            .unwrap()
+            .activate(None);
+        let dialog = gtk::Window::list_toplevels()
+            .into_iter()
+            .filter_map(|w| w.downcast::<gtk::Window>().ok())
+            .find(|w| w.title().as_deref() == Some("Hyprland Version"))
+            .unwrap();
+        let dropdown = descendants(dialog.upcast_ref())
+            .into_iter()
+            .find(|w| w.widget_name() == "version-picker")
+            .unwrap()
+            .downcast::<gtk::DropDown>()
             .unwrap();
         dropdown.set_selected(1);
         assert_eq!(selection.n_items(), 402);
+        assert!(!window.lookup_action("review").unwrap().is_enabled());
         dropdown.set_selected(0);
+        dialog.destroy();
         selection.set_selected(0);
-        click(&window, "Remove draft override");
-        click(&window, "Undo");
+        click(&window, "Remove Override");
+        window.lookup_action("undo").unwrap().activate(None);
         let labels: Vec<String> = descendants(window.upcast_ref())
             .iter()
             .filter_map(|w| w.clone().downcast::<gtk::Label>().ok())
             .map(|l| l.text().into())
             .collect();
-        assert!(labels.iter().any(|s| s.contains("1 draft values")));
+        assert!(labels.iter().any(|s| s.contains("1 setting in draft")));
+        let advanced = descendants(window.upcast_ref())
+            .into_iter()
+            .find_map(|w| w.downcast::<gtk::Expander>().ok())
+            .unwrap();
+        assert!(!advanced.is_expanded());
+        let category = widgets
+            .iter()
+            .find(|w| w.widget_name() == "category-filter")
+            .unwrap()
+            .clone()
+            .downcast::<gtk::DropDown>()
+            .unwrap();
+        category.set_selected(1);
+        assert!(selection.n_items() > 0 && selection.n_items() < 353);
+        category.set_selected(0);
+        assert_eq!(selection.n_items(), 353);
+        let search = widgets
+            .iter()
+            .find(|w| w.widget_name() == "settings-search")
+            .unwrap()
+            .clone()
+            .downcast::<gtk::SearchEntry>()
+            .unwrap();
+        search.set_text("rounding");
+        search.emit_by_name::<()>("search-changed", &[]);
+        assert!(selection.n_items() > 0 && selection.n_items() < 353);
+        search.set_text("no-such-setting-test");
+        search.emit_by_name::<()>("search-changed", &[]);
+        assert_eq!(selection.n_items(), 0);
+        search.set_text("border size");
+        search.emit_by_name::<()>("search-changed", &[]);
+        assert_eq!(selection.n_items(), 1);
+        selection.set_selected(0);
+        search.set_text("");
+        search.emit_by_name::<()>("search-changed", &[]);
+        let category_model = category.model().unwrap();
+        let general = (0..category_model.n_items())
+            .find(|i| {
+                category_model
+                    .item(*i)
+                    .and_downcast::<gtk::StringObject>()
+                    .is_some_and(|s| s.string() == "General")
+            })
+            .unwrap();
+        category.set_selected(general);
+        let border = (0..selection.n_items())
+            .find(|i| {
+                selection
+                    .item(*i)
+                    .and_downcast::<gtk::StringObject>()
+                    .is_some_and(|s| s.string() == "general:border_size")
+            })
+            .unwrap();
+        selection.set_selected(border);
+        let split = window
+            .content()
+            .and_downcast::<adw::NavigationSplitView>()
+            .unwrap();
         let context = gtk::glib::MainContext::default();
-        for _ in 0..50 {
-            while context.pending() {
-                context.iteration(false);
+        let settle = || {
+            for _ in 0..50 {
+                while context.pending() {
+                    context.iteration(false);
+                }
+                std::thread::sleep(std::time::Duration::from_millis(10));
             }
-            std::thread::sleep(std::time::Duration::from_millis(10));
-        }
-        if let Ok(path) = std::env::var("HYPRLAND_EDITOR_TEST_CAPTURE") {
+        };
+        settle();
+        let capture = |path: &str| {
             let paintable = gtk::WidgetPaintable::new(Some(&window));
             let snapshot = gtk::Snapshot::new();
             paintable.snapshot(&snapshot, window.width() as f64, window.height() as f64);
             let node = snapshot.to_node().expect("rendered window");
-            let texture = window.renderer().unwrap().render_texture(&node, None);
-            texture.save_to_png(path).unwrap();
+            window
+                .renderer()
+                .unwrap()
+                .render_texture(&node, None)
+                .save_to_png(path)
+                .unwrap();
+        };
+        if let Ok(path) = std::env::var("HYPRLAND_EDITOR_TEST_CAPTURE") {
+            capture(&path);
         }
+        // Exercise adaptive navigation even when a tiling compositor controls the width.
+        split.set_collapsed(true);
+        settle();
+        assert!(split.shows_content());
+        window.lookup_action("search").unwrap().activate(None);
+        settle();
+        assert!(!split.shows_content());
+        list.emit_by_name::<()>("activate", &[&selection.selected()]);
+        settle();
+        assert!(split.shows_content(), "selected row must reopen after Back");
+        split.set_collapsed(false);
+        // Xvfb permits exact resizing, whereas a tiled surface may ignore the request.
+        if std::env::var_os("HYPRLAND_EDITOR_TEST_EXACT_RESIZE").is_some() {
+            window.set_default_size(360, 720);
+            settle();
+            assert!(
+                split.is_collapsed(),
+                "narrow windows must use one-page navigation"
+            );
+            assert!(
+                window.width() <= 360,
+                "controls must not force a wider window"
+            );
+            if let Ok(path) = std::env::var("HYPRLAND_EDITOR_TEST_CAPTURE") {
+                capture(&format!("{path}.narrow.png"));
+            }
+        }
+        if std::env::var_os("HYPRLAND_EDITOR_TEST_EXACT_RESIZE").is_some() {
+            category.set_selected(0);
+            let mut kinds = std::collections::BTreeSet::new();
+            for setting in catalogue().into_iter().filter(|s| s.version == BASELINE) {
+                if !kinds.insert(setting.kind.clone()) {
+                    continue;
+                }
+                let index = (0..selection.n_items())
+                    .find(|i| {
+                        selection
+                            .item(*i)
+                            .and_downcast::<gtk::StringObject>()
+                            .is_some_and(|s| s.string() == setting.id)
+                    })
+                    .unwrap();
+                selection.set_selected(index);
+                settle();
+                let (minimum, _, _, _) = split.measure(gtk::Orientation::Horizontal, -1);
+                assert!(
+                    minimum <= split.width(),
+                    "{} form needs {minimum}px, only {} available",
+                    setting.kind,
+                    split.width()
+                );
+            }
+        }
+        window.lookup_action("review").unwrap().activate(None);
+        let review = gtk::Window::list_toplevels()
+            .into_iter()
+            .filter_map(|w| w.downcast::<gtk::Window>().ok())
+            .find(|w| w.title().as_deref() == Some("Review draft overrides"))
+            .unwrap();
+        assert!(descendants(review.upcast_ref())
+            .iter()
+            .any(|w| w.is::<gtk::TextView>()));
+        review.destroy();
         window.close();
         assert!(
             window.is_visible(),
