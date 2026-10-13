@@ -1,5 +1,6 @@
 mod controls;
 mod history;
+mod monitors;
 mod presentation;
 mod reconciliation;
 mod worker;
@@ -25,6 +26,8 @@ struct State {
     active: Option<hyprland_editor_discovery::Snapshot>,
     generation: u64,
     saved: BTreeMap<String, BTreeMap<String, Value>>,
+    monitors: BTreeMap<String, Vec<hyprland_editor_core::monitor::Rule>>,
+    saved_monitors: BTreeMap<String, Vec<hyprland_editor_core::monitor::Rule>>,
 }
 impl State {
     fn dirty_version(&self, version: &str) -> bool {
@@ -43,7 +46,13 @@ impl State {
                 .saved_source_origins
                 .get(version)
                 .and_then(Option::as_ref);
-        values_changed || source_changed
+        let monitors = self.monitors.get(version).map(Vec::as_slice).unwrap_or(&[]);
+        let saved_monitors = self
+            .saved_monitors
+            .get(version)
+            .map(Vec::as_slice)
+            .unwrap_or(&[]);
+        values_changed || source_changed || monitors != saved_monitors
     }
     fn dirty(&self) -> bool {
         self.dirty_version(&self.draft.version) || self.drafts.keys().any(|v| self.dirty_version(v))
@@ -111,8 +120,29 @@ impl State {
                 self.sources.insert(version.clone(), document);
                 self.source_origins.insert(version, origin);
             }
+            history::Undo::Monitors { previous, .. } => {
+                self.monitors.insert(self.draft.version.clone(), previous);
+            }
         }
         self.generation += 1;
+    }
+    fn replace_monitors(
+        &mut self,
+        rules: Vec<hyprland_editor_core::monitor::Rule>,
+    ) -> Result<(), String> {
+        hyprland_editor_core::monitor::validate(&rules, &self.draft.version)?;
+        let before = self
+            .monitors
+            .get(&self.draft.version)
+            .cloned()
+            .unwrap_or_default();
+        if before == rules {
+            return Ok(());
+        }
+        self.undo.monitors(before)?;
+        self.monitors.insert(self.draft.version.clone(), rules);
+        self.generation += 1;
+        Ok(())
     }
 }
 fn human_name(id: &str) -> String {
@@ -132,13 +162,17 @@ fn label(text: &str) -> gtk::Label {
 fn summary(state: &Shared, status: &gtk::Label) {
     let s = state.borrow();
     status.set_text(&format!(
-        "{} {} in draft · {}",
+        "{} {} in draft{} · {}",
         s.draft.values.len(),
         if s.draft.values.len() == 1 {
             "setting"
         } else {
             "settings"
         },
+        s.monitors
+            .get(&s.draft.version)
+            .filter(|m| !m.is_empty())
+            .map_or(String::new(), |m| format!(" · {} monitor rules", m.len())),
         if s.dirty_version(&s.draft.version) {
             "Unsaved changes"
         } else {
@@ -398,6 +432,8 @@ fn initial_state() -> Shared {
         active: None,
         generation: 0,
         saved: BTreeMap::new(),
+        monitors: BTreeMap::new(),
+        saved_monitors: BTreeMap::new(),
     }))
 }
 fn build(app: &adw::Application) -> adw::ApplicationWindow {
@@ -706,7 +742,7 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     let win = window.downgrade();
     review.connect_clicked(move |_|{
         let Some(win) = win.upgrade() else { return; };
-        let state=s.borrow();match state.draft.export_lua(&state.catalogue){Ok(lua)=>{
+        let state=s.borrow();let rules=state.monitors.get(&state.draft.version).map(Vec::as_slice).unwrap_or(&[]);let result=state.draft.export_lua(&state.catalogue).and_then(|mut text| { if !rules.is_empty() { text.push_str(&hyprland_editor_core::monitor::export_lua(rules,&state.draft.version)?); } Ok(text) });match result{Ok(lua)=>{
             let dialog=adw::Window::builder().title("Review draft overrides").transient_for(&win).modal(true).default_width(720).default_height(560).build();let b=gtk::Box::new(gtk::Orientation::Vertical,12);b.set_margin_top(16);b.set_margin_bottom(16);b.set_margin_start(16);b.set_margin_end(16);b.append(&label("These are draft overrides, not a diff against the running compositor. Copying does not apply them."));let text=gtk::TextView::builder().editable(false).monospace(true).wrap_mode(gtk::WrapMode::WordChar).build();text.buffer().set_text(&lua);b.append(&gtk::ScrolledWindow::builder().child(&text).vexpand(true).build());let copy=gtk::Button::with_label("Copy reviewed Lua to clipboard");b.append(&copy);let w=dialog.downgrade();copy.connect_clicked(move |_|{if let Some(w)=w.upgrade(){w.clipboard().set_text(&lua);}});dialog.set_content(Some(&b));dialog.present();
         },Err(e)=>notice(&win,"Invalid draft",&e)}
     });
@@ -718,11 +754,13 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     let diagnostics = gtk::Button::with_label("Import Diagnostics");
     let reattach = gtk::Button::with_label("Verify Source File");
     let reconcile = gtk::Button::with_label("Compare Changed Source");
+    let monitor_editor = gtk::Button::with_label("Edit Monitors");
     workflow::connect_live(&live, &window, &state, &status, &selection, &panel);
     workflow::connect_source_copy(&source_copy, &window, &state);
     workflow::connect_diagnostics(&diagnostics, &window, &state);
     workflow::connect_reattach(&reattach, &window, &state, &status);
     reconciliation::connect(&reconcile, &window, &state, &status, &selection, &panel);
+    monitors::connect(&monitor_editor, &window, &state, &status);
     for (name, button) in [
         ("import", &open),
         ("save-draft", &save),
@@ -734,6 +772,7 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
         ("diagnostics", &diagnostics),
         ("reattach-source", &reattach),
         ("reconcile-source", &reconcile),
+        ("monitors", &monitor_editor),
     ] {
         presentation::bridge(&window, name, button);
     }
@@ -1049,6 +1088,7 @@ mod tests {
         review.destroy();
         workflow::test_source_persistence(&window);
         reconciliation::test_review(&window);
+        monitors::test_editor(&window);
         window.close();
         assert!(
             window.is_visible(),

@@ -19,6 +19,10 @@ pub(super) enum Undo {
         origin: SourceIdentity,
         document_bytes: usize,
     },
+    Monitors {
+        previous: Vec<hyprland_editor_core::monitor::Rule>,
+        retained_bytes: usize,
+    },
 }
 fn value_bytes(value: &Value) -> usize {
     match value {
@@ -44,12 +48,31 @@ fn origin_bytes(origin: &SourceIdentity) -> usize {
             .map(|l| l.encountered_path.capacity() + l.target.capacity())
             .sum::<usize>()
 }
+fn monitor_bytes(rules: &Vec<hyprland_editor_core::monitor::Rule>) -> usize {
+    rules.capacity() * size_of::<hyprland_editor_core::monitor::Rule>()
+        + rules
+            .iter()
+            .map(|r| {
+                512 + r.id.capacity()
+                    + match &r.output {
+                        hyprland_editor_core::monitor::Output::Fallback => 0,
+                        hyprland_editor_core::monitor::Output::Connector(s)
+                        | hyprland_editor_core::monitor::Output::Description(s) => s.capacity(),
+                    }
+                    + r.fields
+                        .iter()
+                        .map(|(k, v)| 256 + size_of::<Value>() + k.capacity() + value_bytes(v))
+                        .sum::<usize>()
+            })
+            .sum::<usize>()
+}
 fn document_bytes(doc: &LuaDocument) -> usize {
     let r = &doc.report;
     // Include Arc headers and conservative slack for partly filled B-tree nodes.
     size_of::<LuaDocument>()
         + 1056
         + doc.source.capacity()
+        + monitor_bytes(&r.monitors)
         + r.source_sha256.capacity()
         + r.draft.version.capacity()
         + r.draft
@@ -82,6 +105,7 @@ impl Undo {
                         + changes_bytes(changes)
                         + origin_bytes(origin)
                 }
+                Self::Monitors { retained_bytes, .. } => *retained_bytes,
             }
     }
 }
@@ -144,6 +168,16 @@ impl History {
         self.push(Undo::Field {
             id: id.into(),
             previous,
+        })
+    }
+    pub fn monitors(
+        &mut self,
+        previous: Vec<hyprland_editor_core::monitor::Rule>,
+    ) -> Result<(), String> {
+        let retained_bytes = monitor_bytes(&previous);
+        self.push(Undo::Monitors {
+            previous,
+            retained_bytes,
         })
     }
     pub fn source(
@@ -244,6 +278,24 @@ mod tests {
             vec![("general:border_size".into(), Some(Value::Int(2)))]
         );
         std::fs::remove_dir_all(root).unwrap();
+    }
+    #[test]
+    fn monitor_inverse_preserves_rules_and_accounts_for_allocated_text_capacity() {
+        let mut history = History::default();
+        let rule = hyprland_editor_core::monitor::Rule::new("inverse");
+        history.monitors(vec![rule.clone()]).unwrap();
+        let Undo::Monitors { previous, .. } = history.pop().unwrap() else {
+            panic!("monitor inverse")
+        };
+        assert_eq!(previous, vec![rule]);
+        history.field("kept", None).unwrap();
+        let mut oversized = hyprland_editor_core::monitor::Rule::new("too-large");
+        oversized.fields.insert(
+            "mirror".into(),
+            Value::String(String::with_capacity(MAX_BYTES + 1)),
+        );
+        assert!(history.monitors(vec![oversized]).is_err());
+        assert!(matches!(history.pop(),Some(Undo::Field {id,..})if id=="kept"));
     }
     #[test]
     fn oversized_inverse_is_refused_without_discarding_existing_history() {

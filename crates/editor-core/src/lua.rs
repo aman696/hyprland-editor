@@ -29,6 +29,8 @@ pub struct Declaration {
 pub struct LuaReport {
     pub source_sha256: String,
     pub draft: Draft,
+    #[serde(default)]
+    pub monitors: Vec<crate::monitor::Rule>,
     pub declarations: Vec<Declaration>,
     pub diagnostics: Vec<Diagnostic>,
     pub opaque_effects: bool,
@@ -273,12 +275,12 @@ fn evaluate(
                     array_index += 1;
                     key
                 };
-                // Literal Lua table fields use the last write for the exact key.
-                if let Some(old) = out.iter_mut().find(|(k, _)| *k == key) {
-                    *old = (key, value);
-                } else {
-                    out.push((key, value));
+                // Keep ambiguous duplicate constructor fields unresolved, including
+                // tables reached through pure local variables.
+                if out.iter().any(|(k, _)| *k == key) {
+                    return None;
                 }
+                out.push((key, value));
             }
             Expr::Table(out)
         }
@@ -509,6 +511,111 @@ impl Projection<'_> {
             self.diagnostic(node,"Unknown setting expression may change bindings; subsequent API calls remain unresolved");
         }
     }
+    fn monitor(&mut self, node: Node<'_>) -> Result<(), String> {
+        let args = node
+            .child_by_field_name("arguments")
+            .map(named)
+            .unwrap_or_default();
+        let parsed = (|| -> Result<crate::monitor::Rule, String> {
+            if args.len() != 1 || args[0].kind() != "table_constructor" {
+                return Err("Monitor call needs a static table".into());
+            }
+            let Some(Expr::Table(entries)) = evaluate(args[0], self.source, &self.env, 0) else {
+                return Err("Monitor expression is unresolved; it was not executed".into());
+            };
+            let mut rule = crate::monitor::Rule::new(&format!(
+                "source-monitor-{}",
+                self.report.monitors.len()
+            ));
+            let mut seen = std::collections::BTreeSet::new();
+            let fields = crate::monitor::catalogue(&self.report.draft.version);
+            let mut output_present = false;
+            for (key, expr) in entries {
+                let Key::Name(key) = key else {
+                    return Err("Monitor key must be a field name".into());
+                };
+                if !seen.insert(key.clone()) {
+                    return Err("Duplicate monitor field is ambiguous".into());
+                }
+                if key == "output" {
+                    let Expr::Text(output) = expr else {
+                        return Err("Monitor output must be a static string".into());
+                    };
+                    rule.output = if output.is_empty() {
+                        crate::monitor::Output::Fallback
+                    } else if let Some(name) = output.strip_prefix("desc:") {
+                        crate::monitor::Output::Description(name.into())
+                    } else {
+                        crate::monitor::Output::Connector(output)
+                    };
+                    output_present = true;
+                } else {
+                    let setting = fields
+                        .iter()
+                        .find(|s| s.lua_key == key)
+                        .ok_or("Monitor field is outside the audited snapshot")?;
+                    // Unlike scalar gaps, monitor reserved areas permit signed values.
+                    let value = if setting.kind == "CssGap" {
+                        match expr {
+                            Expr::Table(ref sides) => {
+                                let mut gaps = [0; 4];
+                                if sides.iter().any(|(key,_)| !matches!(key,Key::Name(n) if ["top","right","bottom","left"].contains(&n.as_str()))) {
+                                    return Err("Unknown reserved-area side".into());
+                                }
+                                let mut side_keys = std::collections::BTreeSet::new();
+                                if sides
+                                    .iter()
+                                    .any(|(key, _)| !side_keys.insert(format!("{key:?}")))
+                                {
+                                    return Err("Duplicate reserved-area side".into());
+                                }
+                                for (i, name) in
+                                    ["top", "right", "bottom", "left"].iter().enumerate()
+                                {
+                                    if let Some(v) = member(sides, name) {
+                                        gaps[i] =
+                                            integer(v).ok_or("Reserved area needs integers")?;
+                                    }
+                                }
+                                Value::CssGap(gaps)
+                            }
+                            expr => Value::CssGap(
+                                [integer(&expr).ok_or("Reserved area needs integers")?; 4],
+                            ),
+                        }
+                    } else {
+                        typed(setting, expr).ok_or("Monitor field has an invalid type or value")?
+                    };
+                    rule.fields.insert(key, value);
+                }
+            }
+            if !output_present {
+                return Err("Monitor output selector is missing".into());
+            }
+            rule.validate(&self.report.draft.version)?;
+            Ok(rule)
+        })();
+        match parsed {
+            Ok(rule) => {
+                if self.report.monitors.len() >= crate::monitor::MAX_RULES {
+                    return Err("Too many monitor declarations".into());
+                }
+                self.report.monitors.push(rule);
+            }
+            Err(error) => {
+                self.report.opaque_effects = true;
+                self.diagnostic(node, &error);
+                // Unknown evaluation can change the binding. Do not infer later calls.
+                if args
+                    .iter()
+                    .any(|n| evaluate(*n, self.source, &self.env, 0).is_none())
+                {
+                    self.api_available = false;
+                }
+            }
+        }
+        Ok(())
+    }
     fn statement(&mut self, node: Node<'_>) -> Result<(), String> {
         match node.kind() {
             "comment" | "hash_bang_line" | "empty_statement" => {}
@@ -566,7 +673,9 @@ impl Projection<'_> {
                 let Some(name) = node.child_by_field_name("name") else {
                     return Ok(());
                 };
-                if text(name, self.source) == "hl.config" && self.api_available {
+                if text(name, self.source) == "hl.monitor" && self.api_available {
+                    self.monitor(node)?;
+                } else if text(name, self.source) == "hl.config" && self.api_available {
                     let args = node
                         .child_by_field_name("arguments")
                         .map(named)
@@ -656,6 +765,7 @@ pub fn parse(source: &str, version: &str, catalogue: &[Setting]) -> Result<LuaRe
         report: LuaReport {
             source_sha256: source_hash(source),
             draft: Draft::new(version),
+            monitors: vec![],
             declarations: vec![],
             diagnostics: vec![],
             opaque_effects: false,
@@ -683,6 +793,12 @@ impl LuaDocument {
             return Err("Invalid or stale parser report".into());
         }
         report.draft.validate(catalogue)?;
+        for rule in &report.monitors {
+            rule.validate(&report.draft.version)?;
+        }
+        if report.monitors.len() > crate::monitor::MAX_RULES {
+            return Err("Too many reported monitors".into());
+        }
         for d in &report.declarations {
             if d.span.start >= d.span.end
                 || !source.is_char_boundary(d.span.start)

@@ -1,6 +1,7 @@
 //! Non-executing, version-scoped editing. This crate has no compositor IPC.
 pub mod import;
 pub mod lua;
+pub mod monitor;
 pub mod reconcile;
 pub mod source;
 pub mod source_path;
@@ -109,7 +110,11 @@ impl Setting {
         match self.kind.as_str() {
             "Bool" => raw.parse().ok().map(Value::Bool),
             "Int" => raw.parse().ok().map(Value::Int),
-            "Float" => raw.trim_end_matches('f').parse().ok().map(Value::Float),
+            "Float" => raw
+                .trim_end_matches(['f', 'F'])
+                .parse()
+                .ok()
+                .map(Value::Float),
             "String" if raw == "STRVAL_EMPTY" => Some(Value::String(String::new())),
             "String" => serde_json::from_str::<String>(raw).ok().map(Value::String),
             "CssGap" => raw.parse::<i64>().ok().map(|n| Value::CssGap([n; 4])),

@@ -1,0 +1,26 @@
+# Monitor draft editor — 0.5
+
+Open **Menu → Edit Monitors**. This milestone supplies graphical controls for every monitor field in the checked-in source audit: 22 names (including the `reserved_area` alias), plus the output selector, for Hyprland 0.56.2 and audited-main. The exact commits remain in the audit register; `scripts/generate_catalogue.py --check` verifies the 44 field records against those pinned contracts.
+
+Create ordered rules, choose fallback/connector/description matching, select one field and enable **Set This Field**, then **Update Monitor Draft**. Disabling a field and updating removes that field from the declaration; it does not force the upstream default. Expand Output Match when changing its selector. Rules support add, duplicate, reorder, remove and shared bounded undo. Separate version drafts survive snapshot switching; switching clears transient undo as in the scalar editor.
+
+| Area | Graphical controls |
+| --- | --- |
+| Mode | Preferred, highest refresh/resolution, maximum width, dimensions with optional refresh, modeline clock/eight timings/sync polarities |
+| Arrangement | Nine automatic directions or signed X/Y, automatic/numeric scale, eight transforms, mirror target selection/name, disabled |
+| Color | All nine audited color modes; bit depth; transfer function aliases; SDR brightness/saturation/min/max luminance; HDR and wide-color overrides; HDR luminance metadata |
+| Space/profile | Four signed reserved-area sides, either alias spelling; ICC path entry/file picker |
+
+The diagram shows logical dimensions for explicit resolution and scale, including rotation. Automatic/unknown values use schematic sizes and positions. Dragging is enabled only for explicit size, scale and position; dropping changes draft coordinates and can be undone. Drawing runs when the model/window changes, with no periodic polling. Overlap is allowed. The diagram does not simulate rendering, determine hardware modes or validate a display arrangement against connected devices.
+
+**Save Draft** stores rules with the scalar draft and optional source snapshot in a private `.hye` file, using the existing atomic storage checks and exact schema hashes. Reopening validates the monitor schema and reparses source bytes in the restricted worker without opening recorded original paths. Older scalar-only workspaces remain readable. Older app versions reject workspaces containing the new monitor fields; no backward migration is claimed.
+
+Static, top-level `hl.monitor` literal tables and supported pure expressions can be imported without executing Lua. Output matching, declaration order and only explicit fields are retained. Duplicated table keys, conflicting aliases, unsupported fields and unresolved expressions produce diagnostics; arbitrary calls, includes, callbacks and branches remain opaque. Earlier projected declarations are not an effective-state guarantee once opaque code is encountered. Legacy `.conf` monitor declarations are not imported yet. Export produces ordered, quoted `hl.monitor` declarations; **Review Draft** includes monitors alongside scalar overrides. Explicit clipboard copying never applies anything and the exported fragment must not replace a full configuration.
+
+Validation covers typed values, finite positive dimensions/refresh, numeric scale ≥ 0.25, transform and source-declared bounds, modeline timing order, selectors, duplicate identities and literal mirror cycles. Repeated rules for the same output remain ordered declarations; this editor does not resolve hardware matching or inherited effective rule state. A later explicit empty mirror removes an earlier edge for cycle validation. Reserved areas accept signed values, unlike scalar gaps. The two reserved spellings cannot coexist in a single rule.
+
+The pinned upstream parser does not recognize its interlace flag after lowercasing it; the builder therefore does not offer interlace. Modeline fractional-clock behavior and all hardware outcomes remain unverified against a running compositor. Choosing an ICC file stores its path; contents, color correctness and HDR capability are not certified.
+
+Monitor source-span insertion, mutation, removal and changed-source reconciliation remain unimplemented. The existing source comparison merges scalar settings while retaining monitor drafts unchanged and explains that limitation. Preparing a scalar source copy is blocked when its monitor declarations differ from the monitor draft, so monitor edits cannot be silently left out. Monitor draft review/export remains available.
+
+No hardware monitor query, live apply, rollback/recovery, nested compositor preview or physical-display certificate is included in this milestone. These remain explicit requirements in the original blueprint and completion register.

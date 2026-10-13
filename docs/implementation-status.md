@@ -27,6 +27,12 @@ A reviewed three-way comparison now combines clear independent declaration chang
 
 Acceptance is an in-memory reducer with source-aware undo. Inverse operations retain only changed values and share immutable source snapshots. Rolling history caps at 1,000 operations or an estimated 8 MiB retained data, rejects oversized inverses before mutation, and drops oldest entries; persistent checkpoint/spill history is not implemented. Core comparison, history-budget, restricted-process comparison and narrow native workflow tests supply evidence for this single-root behavior. They do not close E03/E05 or S08 as full multi-file/live transaction contracts.
 
+## Monitor draft milestone in 0.5
+
+The focused monitor editor covers the output selector and 22 fields for both pinned snapshots. Ordered CRUD, unset fields, bounded undo, static Lua import/export, graphical mode/position builders, private persistence and schematic dragging are implemented. These are draft capabilities: hardware discovery, actual available-mode validation, effective rule resolution, monitor source-span edits/reconciliation, ICC decoding, recovery and isolated compositor preview remain open. See [the monitor scope](monitor-editor.md). No full MONITOR contract is certified by this milestone.
+
+Following the user’s request for visible delivery, the next implementation priority is devices, followed by bindings, rules and animations. Each milestone must have working controls, private saved drafts, meaningful tests and explicit limitations. The original source, preview, recovery, packaging, resource and security obligations below remain required; this changes delivery order, not project scope.
+
 ## Next implementation order
 
 1. **Finish source ownership and persistence.** Extend the single-root source manifest to a lossless authorized dependency graph, generated ownership and multi-file changed-revision reconciliation. Preserve metadata and stable document identities across profiles; extend diagnostics to include graphs. Implement include authorization and dependency graphs without executing imports. Add insertion/deletion codecs only with comment/trivia preservation and conflict tests.

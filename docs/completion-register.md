@@ -24,6 +24,7 @@ The [machine-readable register](completion-register.json) retains every contract
 
 ## Current foundations and limits
 
+- **monitor draft editor**: 22 versioned field controls and output selector, ordered drafts, explicit logical geometry, static Lua import/export and private saved snapshots; no hardware detection, effective rule resolution, source-span mutation/reconciliation, ICC decoding, monitor recovery, live apply or compositor preview certification.
 - **scalar draft forms**: initial values for 755 forms; not full per-field conformance, runtime activation or accessibility certification.
 - **static Lua and parser isolation**: restricted source projection and existing literals; no include/scope completeness or preview isolation proof.
 - **private source-backed draft snapshots**: single Lua root, symlink-chain evidence and reviewed static revision reconciliation; no generated ownership/include graph, multi-file merge, persistent history/checkpoint journal or watched-path certification.

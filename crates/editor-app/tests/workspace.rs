@@ -207,3 +207,30 @@ fn application_compares_changed_and_opaque_sources_with_restricted_parser_and_no
     );
     fs::remove_dir_all(root).unwrap();
 }
+
+#[test]
+fn monitor_drafts_survive_actual_application_reopen_without_replacing_them_with_source() {
+    use hyprland_editor_core::monitor::{Output, Rule};
+    let root = folder();
+    let source = "hl.monitor{output='DP-1',mode='1920x1080@60'}";
+    let mut rule = Rule::new("edited-monitor");
+    rule.output = Output::Connector("DP-1".into());
+    rule.fields.insert(
+        "mode".into(),
+        hyprland_editor_core::Value::String("2560x1440@144".into()),
+    );
+    let snapshot = fixture(&root, source).with_monitors(vec![rule.clone()]);
+    let path = workspace::save(&root, &snapshot, &catalogue()).unwrap();
+    fs::remove_file(root.join("original.lua")).unwrap();
+    let (success, output, error) = run(&path);
+    assert!(success, "{error}");
+    let report: serde_json::Value = serde_json::from_str(&output).unwrap();
+    assert_eq!(report["monitor_rules"], 1);
+    assert_eq!(report["source_reparsed"], true);
+    assert_eq!(report["runtime_verified"], false);
+    assert_eq!(
+        workspace::read(&path, &catalogue()).unwrap().monitors,
+        vec![rule]
+    );
+    fs::remove_dir_all(root).unwrap();
+}

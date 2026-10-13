@@ -110,3 +110,24 @@ fn invalid_and_oversized_source_fail_without_partial_import() {
     let result = request(json!({"Parse":{"source":"x".repeat(1024*1024+1),"version":"0.56.2"}}));
     assert!(result["Error"].as_str().unwrap().contains("1 MiB"));
 }
+
+#[test]
+fn actual_restricted_worker_projects_monitors_and_keeps_unknown_calls_inert() {
+    let source="hl.monitor{output='DP-1',mode='2560x1440@144',scale='1.25',position='-2048x0',reserved={top=-5}};hl.config{general={border_size=2}}";
+    let parsed = request(json!({"Parse":{"source":source,"version":"0.56.2"}}));
+    assert_eq!(parsed["Parsed"]["monitors"][0]["output"]["name"], "DP-1");
+    assert_eq!(
+        parsed["Parsed"]["monitors"][0]["fields"]["reserved"]["value"],
+        json!([-5, 0, 0, 0])
+    );
+    assert_eq!(parsed["Parsed"]["opaque_effects"], false);
+    let marker = std::env::temp_dir().join(format!("monitor-inert-{}", std::process::id()));
+    let source = format!(
+        "hl.monitor{{output='DP-1',mode=os.execute('touch {}')}};hl.monitor{{output='DP-2'}}",
+        marker.display()
+    );
+    let parsed = request(json!({"Parse":{"source":source,"version":"0.56.2"}}));
+    assert_eq!(parsed["Parsed"]["opaque_effects"], true);
+    assert_eq!(parsed["Parsed"]["monitors"], json!([]));
+    assert!(!marker.exists());
+}

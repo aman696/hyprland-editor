@@ -80,7 +80,7 @@ def build():
             "required_codec": feature["codec"], "required_tests": feature["tests_required"],
             "coverage_state": "Specified", "complete": False,
             "foundation": "typed scalar form and initial-value smoke check; full per-field semantics remain unproven"
-                if feature["kind"] == "scalar" else "no dedicated feature implementation yet",
+                if feature["kind"] == "scalar" else "typed monitor draft forms, static Lua projection, schema-pinned persistence and diagram; runtime/hardware/source editing unproven" if feature["engine"] == "MONITOR" else "no dedicated feature implementation yet",
             "activation_certified": False, "preview_certified": False,
         })
     sections = numbered_sections(BLUEPRINT)
@@ -93,6 +93,9 @@ def build():
         "classification": "pending", "complete": False}
         for index, row in enumerate(contracts["documentation_candidates"], 1)]
     foundations = [
+        {"area": "monitor draft editor", "code": ["crates/editor-core/src/monitor.rs", "crates/editor-app/src/monitors.rs", "data/monitors.json"],
+         "test_references": ["every_audited_monitor_field_has_a_typed_export_and_static_import", "test_editor", "monitor_drafts_survive_actual_application_reopen_without_replacing_them_with_source", "actual_restricted_worker_projects_monitors_and_keeps_unknown_calls_inert"],
+         "limits": "22 versioned field controls and output selector, ordered drafts, explicit logical geometry, static Lua import/export and private saved snapshots; no hardware detection, effective rule resolution, source-span mutation/reconciliation, ICC decoding, monitor recovery, live apply or compositor preview certification"},
         {"area": "scalar draft forms", "code": ["crates/editor-app/src/controls.rs", "crates/editor-core/src/lib.rs"],
          "test_references": ["tests::native_forms_and_draft_workflow", "lua::tests::exported_drafts_round_trip_all_types"],
          "limits": "initial values for 755 forms; not full per-field conformance, runtime activation or accessibility certification"},

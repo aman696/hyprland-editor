@@ -13,6 +13,21 @@
   },
   "foundations": [
     {
+      "area": "monitor draft editor",
+      "code": [
+        "crates/editor-core/src/monitor.rs",
+        "crates/editor-app/src/monitors.rs",
+        "data/monitors.json"
+      ],
+      "test_references": [
+        "every_audited_monitor_field_has_a_typed_export_and_static_import",
+        "test_editor",
+        "monitor_drafts_survive_actual_application_reopen_without_replacing_them_with_source",
+        "actual_restricted_worker_projects_monitors_and_keeps_unknown_calls_inert"
+      ],
+      "limits": "22 versioned field controls and output selector, ordered drafts, explicit logical geometry, static Lua import/export and private saved snapshots; no hardware detection, effective rule resolution, source-span mutation/reconciliation, ICC decoding, monitor recovery, live apply or compositor preview certification"
+    },
+    {
       "area": "scalar draft forms",
       "code": [
         "crates/editor-app/src/controls.rs",
@@ -10010,7 +10025,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed monitor draft forms, static Lua projection, schema-pinned persistence and diagram; runtime/hardware/source editing unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10033,7 +10048,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed monitor draft forms, static Lua projection, schema-pinned persistence and diagram; runtime/hardware/source editing unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10056,7 +10071,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed monitor draft forms, static Lua projection, schema-pinned persistence and diagram; runtime/hardware/source editing unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10079,7 +10094,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed monitor draft forms, static Lua projection, schema-pinned persistence and diagram; runtime/hardware/source editing unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10102,7 +10117,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed monitor draft forms, static Lua projection, schema-pinned persistence and diagram; runtime/hardware/source editing unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10125,7 +10140,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed monitor draft forms, static Lua projection, schema-pinned persistence and diagram; runtime/hardware/source editing unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10148,7 +10163,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed monitor draft forms, static Lua projection, schema-pinned persistence and diagram; runtime/hardware/source editing unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10171,7 +10186,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed monitor draft forms, static Lua projection, schema-pinned persistence and diagram; runtime/hardware/source editing unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10194,7 +10209,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed monitor draft forms, static Lua projection, schema-pinned persistence and diagram; runtime/hardware/source editing unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10217,7 +10232,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed monitor draft forms, static Lua projection, schema-pinned persistence and diagram; runtime/hardware/source editing unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10240,7 +10255,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed monitor draft forms, static Lua projection, schema-pinned persistence and diagram; runtime/hardware/source editing unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10263,7 +10278,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed monitor draft forms, static Lua projection, schema-pinned persistence and diagram; runtime/hardware/source editing unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10286,7 +10301,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed monitor draft forms, static Lua projection, schema-pinned persistence and diagram; runtime/hardware/source editing unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10309,7 +10324,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed monitor draft forms, static Lua projection, schema-pinned persistence and diagram; runtime/hardware/source editing unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10332,7 +10347,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed monitor draft forms, static Lua projection, schema-pinned persistence and diagram; runtime/hardware/source editing unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10355,7 +10370,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed monitor draft forms, static Lua projection, schema-pinned persistence and diagram; runtime/hardware/source editing unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10378,7 +10393,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed monitor draft forms, static Lua projection, schema-pinned persistence and diagram; runtime/hardware/source editing unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10401,7 +10416,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed monitor draft forms, static Lua projection, schema-pinned persistence and diagram; runtime/hardware/source editing unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10424,7 +10439,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed monitor draft forms, static Lua projection, schema-pinned persistence and diagram; runtime/hardware/source editing unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10447,7 +10462,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed monitor draft forms, static Lua projection, schema-pinned persistence and diagram; runtime/hardware/source editing unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10470,7 +10485,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed monitor draft forms, static Lua projection, schema-pinned persistence and diagram; runtime/hardware/source editing unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10493,7 +10508,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed monitor draft forms, static Lua projection, schema-pinned persistence and diagram; runtime/hardware/source editing unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -13442,7 +13457,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed monitor draft forms, static Lua projection, schema-pinned persistence and diagram; runtime/hardware/source editing unproven",
       "activation_certified": false,
       "preview_certified": false
     },

@@ -53,6 +53,10 @@ pub struct Workspace {
     pub draft: Draft,
     pub root_source: Option<String>,
     pub sources: Vec<SourceSnapshot>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub monitors: Vec<crate::monitor::Rule>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub monitor_schema_sha256: Option<String>,
 }
 impl Workspace {
     pub fn new(draft: Draft) -> Self {
@@ -62,6 +66,8 @@ impl Workspace {
             draft,
             root_source: None,
             sources: vec![],
+            monitors: vec![],
+            monitor_schema_sha256: None,
         }
     }
     pub fn with_root(mut self, content: String, origin: SourceIdentity) -> Self {
@@ -79,6 +85,17 @@ impl Workspace {
             return Err("Unsupported workspace format or source count".into());
         }
         self.draft.validate(catalogue)?;
+        crate::monitor::validate(&self.monitors, &self.draft.version)?;
+        let monitor_hash = crate::monitor::schema_hash();
+        if (!self.monitors.is_empty()
+            && self.monitor_schema_sha256.as_deref() != Some(&monitor_hash))
+            || self
+                .monitor_schema_sha256
+                .as_ref()
+                .is_some_and(|hash| *hash != monitor_hash)
+        {
+            return Err("Monitor draft schema differs from the audited fields".into());
+        }
         if self.schema != SchemaPin::for_version(&self.draft.version) {
             return Err("Workspace schema differs from this exact audited pack; an explicit migration is required".into());
         }
@@ -131,6 +148,11 @@ impl Workspace {
         self.root_source
             .as_deref()
             .and_then(|id| self.sources.iter().find(|s| s.id == id))
+    }
+    pub fn with_monitors(mut self, monitors: Vec<crate::monitor::Rule>) -> Self {
+        self.monitor_schema_sha256 = (!monitors.is_empty()).then(crate::monitor::schema_hash);
+        self.monitors = monitors;
+        self
     }
 }
 pub fn save(
