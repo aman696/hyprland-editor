@@ -426,6 +426,9 @@ impl Projection<'_> {
         }
         for field in named(node) {
             let Some(key_node) = field.child_by_field_name("name") else {
+                if let Some(value) = field.child_by_field_name("value") {
+                    self.ignored_expression(value);
+                }
                 self.diagnostic(field, "Non-string configuration key ignored");
                 continue;
             };
@@ -442,6 +445,9 @@ impl Projection<'_> {
                 continue;
             };
             if key.len() > 256 {
+                if let Some(value) = field.child_by_field_name("value") {
+                    self.ignored_expression(value);
+                }
                 self.diagnostic(field, "Configuration key is too long");
                 continue;
             }
@@ -489,9 +495,19 @@ impl Projection<'_> {
                 self.fields(value_node, &full, depth + 1)?;
             } else {
                 self.diagnostic(field, "Setting is outside the selected catalogue");
+                // Ignoring a key does not make its expression inert at runtime. Lua
+                // evaluates all table values, including calls behind unknown keys.
+                self.ignored_expression(value_node);
             }
         }
         Ok(())
+    }
+    fn ignored_expression(&mut self, node: Node<'_>) {
+        if evaluate(node, self.source, &self.env, 0).is_none() {
+            self.report.opaque_effects = true;
+            self.api_available = false;
+            self.diagnostic(node,"Unknown setting expression may change bindings; subsequent API calls remain unresolved");
+        }
     }
     fn statement(&mut self, node: Node<'_>) -> Result<(), String> {
         match node.kind() {
@@ -735,6 +751,28 @@ impl LuaDocument {
 mod tests {
     use super::*;
     use crate::catalogue;
+    #[test]
+    fn unknown_field_calls_cannot_make_later_api_bindings_look_trusted() {
+        for unknown in [
+            "unknown=untrusted()".to_string(),
+            "untrusted()".to_string(),
+            format!("['{}']=untrusted()", "x".repeat(257)),
+            "unknown={untrusted()}".into(),
+        ] {
+            let source=format!("hl.config{{{unknown},general={{border_size=2}}}}\nhl.config{{general={{border_size=7}}}}");
+            let report = parse(&source, BASELINE, &catalogue()).unwrap();
+            assert!(report.opaque_effects, "{unknown}");
+            assert_eq!(report.draft.values["general:border_size"], Value::Int(2));
+            assert!(report
+                .diagnostics
+                .iter()
+                .any(|d| d.message.contains("Unknown setting expression")));
+            assert!(!report
+                .declarations
+                .iter()
+                .any(|d| d.value == Some(Value::Int(7))));
+        }
+    }
     #[test]
     fn import_nested_literals_and_pure_locals() {
         let r=parse("local n = 2 + 3\nhl.config({general={border_size=n, gaps_in={top=4,left=6}}, input={kb_layout='us'}})",BASELINE,&catalogue()).unwrap();

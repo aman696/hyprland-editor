@@ -75,6 +75,19 @@ fn opaque_commands_cannot_create_files() {
     assert_eq!(result["Parsed"]["draft"]["values"], json!({}));
 }
 #[test]
+fn calls_in_ignored_fields_are_inert_and_invalidate_later_api_trust() {
+    let marker =
+        std::env::temp_dir().join(format!("he-ignored-must-not-create-{}", std::process::id()));
+    let source=format!("hl.config{{unknown=os.execute('touch {}'),general={{border_size=2}}}}\nhl.config{{general={{border_size=7}}}}",marker.display());
+    let result = request(json!({"Parse":{"source":source,"version":"0.56.2"}}));
+    assert_eq!(result["Parsed"]["opaque_effects"], true);
+    assert_eq!(
+        result["Parsed"]["draft"]["values"]["general:border_size"]["value"],
+        2
+    );
+    assert!(!marker.exists());
+}
+#[test]
 fn invalid_and_oversized_source_fail_without_partial_import() {
     let result = request(json!({"Parse":{"source":"hl.config({","version":"0.56.2"}}));
     assert!(result["Error"].as_str().unwrap().contains("syntax"));

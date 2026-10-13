@@ -1,7 +1,9 @@
 //! Non-executing, version-scoped editing. This crate has no compositor IPC.
 pub mod import;
 pub mod lua;
+pub mod source;
 pub mod storage;
+pub mod workspace;
 
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -9,6 +11,8 @@ use std::collections::BTreeMap;
 pub const MAX_DOCUMENT_BYTES: usize = 1_048_576;
 pub const BASELINE: &str = "0.56.2";
 pub const AUDITED_MAIN: &str = "audited-main";
+pub const BASELINE_COMMIT: &str = "efb50993780079460b0cbed1363e2166a2de1d9f";
+pub const AUDITED_MAIN_COMMIT: &str = "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7";
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Bounds {
@@ -192,7 +196,36 @@ impl Value {
 pub struct Draft {
     pub format: u32,
     pub version: String,
+    #[serde(deserialize_with = "unique_values")]
     pub values: BTreeMap<String, Value>,
+}
+fn unique_values<'de, D: serde::Deserializer<'de>>(
+    decoder: D,
+) -> Result<BTreeMap<String, Value>, D::Error> {
+    struct Values;
+    impl<'de> serde::de::Visitor<'de> for Values {
+        type Value = BTreeMap<String, Value>;
+        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+            formatter.write_str("a bounded map of unique draft setting IDs")
+        }
+        fn visit_map<M: serde::de::MapAccess<'de>>(
+            self,
+            mut map: M,
+        ) -> Result<Self::Value, M::Error> {
+            use serde::de::Error;
+            let mut values = BTreeMap::new();
+            while let Some((key, value)) = map.next_entry::<String, Value>()? {
+                if key.len() > 256 || values.len() >= 512 {
+                    return Err(M::Error::custom("draft setting map exceeds its limits"));
+                }
+                if values.insert(key, value).is_some() {
+                    return Err(M::Error::custom("duplicate draft setting ID"));
+                }
+            }
+            Ok(values)
+        }
+    }
+    decoder.deserialize_map(Values)
 }
 impl Draft {
     pub fn new(version: &str) -> Self {
@@ -248,6 +281,13 @@ impl Draft {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn rejects_duplicate_draft_keys_instead_of_silently_replacing_values() {
+        let json = r#"{"format":1,"version":"0.56.2","values":{"general:border_size":{"type":"Int","value":2},"general:border_size":{"type":"Int","value":5}}}"#;
+        assert!(Draft::from_json(json, &catalogue())
+            .unwrap_err()
+            .contains("duplicate"));
+    }
     fn border() -> Setting {
         catalogue()
             .into_iter()

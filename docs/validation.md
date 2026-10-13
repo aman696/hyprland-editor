@@ -50,3 +50,15 @@ A verified, privately extracted Xvfb package supplies an isolated display for lo
 The screenshots use the inherited native theme and Cairo renderer. A full accessibility review, translated/large-text layouts and user usability study remain outstanding.
 
 A single idle release-build sample of the redesigned empty workspace on that isolated Xvfb display measured **91,768 KiB PSS (89.6 MiB)** and **175,848 KiB RSS (171.7 MiB)**, with zero scheduler ticks recorded over five seconds. It used Cairo and an in-memory settings backend, sampled two seconds after startup. This is a preliminary observation, not a memory ceiling; the display backend also differs from the earlier desktop sample.
+
+## Source persistence foundation (0.3)
+
+The source-backed workspace path adds six core storage/identity tests, one duplicate-draft-key test and three real-application reopening tests. The application tests execute the actual binary with its restricted parser child: a recorded original path can point to a FIFO without being opened, saved opaque commands cannot create a marker, source snapshots are reparsed, edits survive reopening, and bad hashes, forged report fields and syntax errors are rejected. A mismatched exact catalogue fingerprint is rejected by core validation rather than silently migrated.
+
+The native workflow additionally imports a synthetic source model, saves its draft and identity to a private fixture directory, checks that an identity change is unsaved, and verifies that a save started before a later edit cannot clear that newer edit. All fixtures use synthetic files; no user configuration is an input or output. Native layout checks continue to cover all 755 initial forms and all nine families at narrow width.
+
+The completion-register consistency check tracks all 1,453 full feature contracts, 756 documentation candidates, 24 blueprint sections, 12 work orders, 24 security gates, nine stages and ten shared model invariants. That mechanical check is not a conformance certificate. Watched-path isolation, lossless include/symlink graphs, full source operations, runtime parser certification, preview, hardware recovery and the other outstanding obligations remain unverified.
+
+A source-review regression covers calls hidden in ignored, positional, oversized and nested table fields. Those expressions can affect runtime bindings even when their keys are outside the catalogue. They now mark the source opaque and prevent subsequent API calls from being treated as statically trusted. A real restricted-worker fixture confirms an embedded command stays inert and the later declaration is not falsely imported.
+
+The finalized 0.3 foundation passes 34 core tests, five restricted-parser process tests, three real-application reopening tests, four IPC fixture tests and one explicit native graphical workflow (47 in total), plus formatting, strict Clippy, catalogue generation, completion-register consistency and release build checks locally. Hosted checks are recorded separately for the published revision.

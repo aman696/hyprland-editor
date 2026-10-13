@@ -1,5 +1,5 @@
 //! Linux descriptor-relative storage; no config paths are writable through this API.
-use crate::{Draft, Setting, MAX_DOCUMENT_BYTES};
+use crate::{source::SourceIdentity, Draft, Setting, MAX_DOCUMENT_BYTES};
 use std::{
     ffi::CString,
     fs::File,
@@ -33,6 +33,18 @@ fn open_dir(path: &Path) -> Result<File, String> {
     Ok(unsafe { File::from_raw_fd(fd) })
 }
 pub fn read_document(path: &Path) -> Result<String, String> {
+    read_source(path).map(|source| source.content)
+}
+/// Capture the identity and bytes from the same descriptor, not a separate path stat.
+pub fn read_source(path: &Path) -> Result<crate::source::CapturedSource, String> {
+    let (content, meta) = read_bounded(path, MAX_DOCUMENT_BYTES)?;
+    let identity = SourceIdentity::captured(path, &meta, &content)?;
+    Ok(crate::source::CapturedSource { content, identity })
+}
+pub(crate) fn read_bounded(
+    path: &Path,
+    limit: usize,
+) -> Result<(String, std::fs::Metadata), String> {
     let p = c_path(path)?;
     // NONBLOCK prevents a malicious FIFO/device import from hanging the UI.
     let fd = unsafe {
@@ -46,17 +58,32 @@ pub fn read_document(path: &Path) -> Result<String, String> {
     }
     let file = unsafe { File::from_raw_fd(fd) };
     let meta = file.metadata().map_err(|e| e.to_string())?;
-    if !meta.is_file() || meta.len() > MAX_DOCUMENT_BYTES as u64 {
-        return Err("Select a regular file smaller than 1 MiB".into());
+    if !meta.is_file() || meta.len() > limit as u64 {
+        return Err(format!(
+            "Select a regular file no larger than {limit} bytes"
+        ));
     }
     let mut bytes = vec![];
-    file.take(MAX_DOCUMENT_BYTES as u64 + 1)
+    (&file)
+        .take(limit as u64 + 1)
         .read_to_end(&mut bytes)
         .map_err(|e| e.to_string())?;
-    if bytes.len() > MAX_DOCUMENT_BYTES {
-        return Err("File grew beyond 1 MiB while reading".into());
+    if bytes.len() > limit {
+        return Err("File grew beyond the document limit while reading".into());
     }
-    String::from_utf8(bytes).map_err(|_| "Configuration must be UTF-8".into())
+    let after = file.metadata().map_err(|e| e.to_string())?;
+    if meta.len() != after.len()
+        || meta.mtime() != after.mtime()
+        || meta.mtime_nsec() != after.mtime_nsec()
+        || meta.ctime() != after.ctime()
+        || meta.ctime_nsec() != after.ctime_nsec()
+        || bytes.len() as u64 != after.len()
+    {
+        return Err("File changed while reading; retry from a stable revision".into());
+    }
+    let content =
+        String::from_utf8(bytes).map_err(|_| "Configuration must be UTF-8".to_string())?;
+    Ok((content, after))
 }
 pub fn save_draft(
     state_root: &Path,
@@ -67,6 +94,21 @@ pub fn save_draft(
     let json = serde_json::to_vec_pretty(draft).map_err(|e| e.to_string())?;
     if json.len() > MAX_DOCUMENT_BYTES {
         return Err("Draft exceeds 1 MiB".into());
+    }
+    save_private(state_root, &json, "draft", "json")
+}
+/// A fixed app directory and immutable, generated names; no caller-supplied target path.
+pub(crate) fn save_private(
+    state_root: &Path,
+    bytes: &[u8],
+    prefix: &str,
+    extension: &str,
+) -> Result<PathBuf, String> {
+    if !state_root.is_absolute()
+        || !["draft", "workspace"].contains(&prefix)
+        || !["json", "hye"].contains(&extension)
+    {
+        return Err("Invalid private storage request".into());
     }
     let base = open_dir(state_root)?;
     let meta = base.metadata().map_err(|e| e.to_string())?;
@@ -97,7 +139,7 @@ pub fn save_draft(
         .duration_since(UNIX_EPOCH)
         .map_err(|e| e.to_string())?
         .as_nanos();
-    let filename = format!("draft-{stamp}-{}.json", std::process::id());
+    let filename = format!("{prefix}-{stamp}-{}.{}", std::process::id(), extension);
     let final_name = CString::new(filename.clone()).unwrap();
     let temp = CString::new(format!(".{filename}.tmp")).unwrap();
     let fd = unsafe {
@@ -113,7 +155,7 @@ pub fn save_draft(
     }
     let mut file = unsafe { File::from_raw_fd(fd) };
     let result = (|| {
-        file.write_all(&json).map_err(|e| e.to_string())?;
+        file.write_all(bytes).map_err(|e| e.to_string())?;
         file.sync_all().map_err(|e| e.to_string())?;
         // A link publishes atomically and fails if the destination already exists.
         if unsafe {
@@ -128,10 +170,20 @@ pub fn save_draft(
         {
             return Err(io_error());
         }
+        // Remove the temporary name before syncing the directory, including its unlink.
+        if unsafe { libc::unlinkat(dir.as_raw_fd(), temp.as_ptr(), 0) } < 0 {
+            return Err(io_error());
+        }
         dir.sync_all().map_err(|e| e.to_string())?;
+        // A first save must also persist the app directory's entry in its parent.
+        if ret == 0 {
+            base.sync_all().map_err(|e| e.to_string())?;
+        }
         Ok(state_root.join("hyprland-editor").join(filename))
     })();
-    unsafe { libc::unlinkat(dir.as_raw_fd(), temp.as_ptr(), 0) };
+    if result.is_err() {
+        unsafe { libc::unlinkat(dir.as_raw_fd(), temp.as_ptr(), 0) };
+    }
     result
 }
 #[cfg(test)]

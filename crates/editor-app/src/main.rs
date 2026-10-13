@@ -4,8 +4,10 @@ mod worker;
 mod workflow;
 use adw::prelude::*;
 use controls::form;
-use hyprland_editor_core::{catalogue, storage, Draft, Setting, Value, AUDITED_MAIN, BASELINE};
-use std::{cell::RefCell, collections::BTreeMap, path::PathBuf, rc::Rc};
+use hyprland_editor_core::{
+    catalogue, source::SourceIdentity, Draft, Setting, Value, AUDITED_MAIN, BASELINE,
+};
+use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
 
 type Shared = Rc<RefCell<State>>;
 struct State {
@@ -16,6 +18,8 @@ struct State {
     visible: Vec<Setting>,
     category: Option<String>,
     sources: BTreeMap<String, hyprland_editor_core::lua::LuaDocument>,
+    source_origins: BTreeMap<String, SourceIdentity>,
+    saved_source_origins: BTreeMap<String, Option<SourceIdentity>>,
     active: Option<hyprland_editor_discovery::Snapshot>,
     generation: u64,
     saved: BTreeMap<String, BTreeMap<String, Value>>,
@@ -27,11 +31,17 @@ impl State {
         } else {
             self.drafts.get(version)
         };
-        draft.is_some_and(|d| {
+        let values_changed = draft.is_some_and(|d| {
             self.saved
                 .get(version)
                 .map_or(!d.values.is_empty(), |saved| saved != &d.values)
-        })
+        });
+        let source_changed = self.source_origins.get(version)
+            != self
+                .saved_source_origins
+                .get(version)
+                .and_then(Option::as_ref);
+        values_changed || source_changed
     }
     fn dirty(&self) -> bool {
         self.dirty_version(&self.draft.version) || self.drafts.keys().any(|v| self.dirty_version(v))
@@ -77,7 +87,9 @@ fn summary(state: &Shared, status: &gtk::Label) {
     ));
 }
 fn notice(window: &adw::ApplicationWindow, title: &str, body: &str) {
-    let dialog = adw::MessageDialog::new(Some(window), Some(title), Some(body));
+    // Error text may contain untrusted JSON keys; bound it before constructing GTK labels.
+    let bounded: String = body.chars().take(4096).collect();
+    let dialog = adw::MessageDialog::new(Some(window), Some(title), Some(&bounded));
     dialog.add_response("close", "Close");
     dialog.set_close_response("close");
     dialog.present();
@@ -168,6 +180,18 @@ fn detail(state: &Shared, panel: &gtk::Box, setting: &Setting, status: &gtk::Lab
         "Default expression: {}",
         setting.default_expression
     )));
+    if let Some(origin) = state.borrow().source_origins.get(&setting.version) {
+        details.append(&label(&format!(
+            "Recorded source: {}",
+            origin.display_path()
+        )));
+        details.append(&label(&format!("Source revision: {}", origin.sha256)));
+        details.append(&label(&format!(
+            "Recorded ownership: {:?} (not write authorization)",
+            origin.recorded_ownership
+        )));
+        details.append(&label("The editor uses a private source snapshot. Verify Source File checks an explicitly selected original or identical copy."));
+    }
     if let Some(observation) = observed {
         let raw = serde_json::to_string(&observation.raw_current).unwrap_or_default();
         let raw: String = raw.chars().take(2048).collect();
@@ -278,14 +302,8 @@ fn refill(
         model.splice(0, model.n_items(), &labels);
     }
 }
-fn build(app: &adw::Application) -> adw::ApplicationWindow {
-    let window = adw::ApplicationWindow::builder()
-        .application(app)
-        .title("Hyprland Editor · Draft workspace")
-        .default_width(1100)
-        .default_height(760)
-        .build();
-    let state = Rc::new(RefCell::new(State {
+fn initial_state() -> Shared {
+    Rc::new(RefCell::new(State {
         catalogue: catalogue(),
         draft: Draft::new(BASELINE),
         undo: vec![],
@@ -293,10 +311,21 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
         visible: vec![],
         category: None,
         sources: BTreeMap::new(),
+        source_origins: BTreeMap::new(),
+        saved_source_origins: BTreeMap::new(),
         active: None,
         generation: 0,
         saved: BTreeMap::new(),
-    }));
+    }))
+}
+fn build(app: &adw::Application) -> adw::ApplicationWindow {
+    let window = adw::ApplicationWindow::builder()
+        .application(app)
+        .title("Hyprland Editor · Draft workspace")
+        .default_width(1100)
+        .default_height(760)
+        .build();
+    let state = initial_state();
     let open = gtk::Button::builder()
         .icon_name("document-open-symbolic")
         .tooltip_text("Import Configuration (Ctrl+O)")
@@ -597,38 +626,7 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
         }
         summary(&s, &st);
     });
-    let s = state.clone();
-    let win = window.downgrade();
-    let st = status.clone();
-    save.connect_clicked(move |_| {
-        let Some(win) = win.upgrade() else {
-            return;
-        };
-        let root = std::env::var_os("XDG_STATE_HOME")
-            .map(PathBuf::from)
-            .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".local/state")));
-        let result = root
-            .ok_or_else(|| "Cannot find a user state directory".into())
-            .and_then(|root| {
-                if !root.is_absolute() {
-                    return Err("State directory must be absolute".into());
-                }
-                std::fs::create_dir_all(&root).map_err(|e| e.to_string())?;
-                let state = s.borrow();
-                storage::save_draft(&root, &state.draft, &state.catalogue)
-            });
-        match result {
-            Ok(path) => {
-                let mut state = s.borrow_mut();
-                let version = state.draft.version.clone();
-                let values = state.draft.values.clone();
-                state.saved.insert(version, values);
-                drop(state);
-                st.set_text(&format!("Private draft saved: {}", path.display()));
-            }
-            Err(e) => notice(&win, "Could not save draft", &e),
-        }
-    });
+    workflow::connect_save(&save, &window, &state, &status);
     let s = state.clone();
     let win = window.downgrade();
     review.connect_clicked(move |_|{
@@ -643,9 +641,11 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     let live = gtk::Button::with_label("Refresh Desktop Values");
     let source_copy = gtk::Button::with_label("Review Source Copy");
     let diagnostics = gtk::Button::with_label("Import Diagnostics");
+    let reattach = gtk::Button::with_label("Verify Source File");
     workflow::connect_live(&live, &window, &state, &status, &selection, &panel);
     workflow::connect_source_copy(&source_copy, &window, &state);
     workflow::connect_diagnostics(&diagnostics, &window, &state);
+    workflow::connect_reattach(&reattach, &window, &state, &status);
     for (name, button) in [
         ("import", &open),
         ("save-draft", &save),
@@ -655,6 +655,7 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
         ("read-live", &live),
         ("source-copy", &source_copy),
         ("diagnostics", &diagnostics),
+        ("reattach-source", &reattach),
     ] {
         presentation::bridge(&window, name, button);
     }
@@ -692,8 +693,22 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     window
 }
 fn main() {
-    if std::env::args().nth(1).as_deref() == Some("--lua-source-worker") {
+    if std::env::args_os().nth(1).as_deref() == Some(std::ffi::OsStr::new("--lua-source-worker")) {
         worker::entry();
+        return;
+    }
+    if std::env::args_os().nth(1).as_deref() == Some(std::ffi::OsStr::new("--check-workspace")) {
+        let result = std::env::args_os()
+            .nth(2)
+            .ok_or_else(|| "Specify a saved .hye workspace".to_string())
+            .and_then(|path| workflow::check_workspace(path.into()));
+        match result {
+            Ok(report) => println!("{}", report),
+            Err(error) => {
+                eprintln!("{}", error.chars().take(1024).collect::<String>());
+                std::process::exit(1);
+            }
+        }
         return;
     }
     let app = adw::Application::builder()
@@ -936,6 +951,7 @@ mod tests {
             .iter()
             .any(|w| w.is::<gtk::TextView>()));
         review.destroy();
+        workflow::test_source_persistence(&window);
         window.close();
         assert!(
             window.is_visible(),

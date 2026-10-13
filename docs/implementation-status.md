@@ -1,6 +1,6 @@
 # Execution plan and acceptance gates
 
-The existing engineering blueprint remains the design authority. This register maps it to the code and tracks the next concrete steps. A checked design requirement is not an implemented feature or runtime certificate.
+The existing engineering blueprint remains the design authority. This register maps it to the code and tracks the next concrete steps. A checked design requirement is not an implemented feature or runtime certificate. The [full completion register](completion-register.md) tracks every original contract and gate without shrinking the goal to the available foundations.
 
 ## Completed foundation in 0.2
 
@@ -13,9 +13,15 @@ The existing engineering blueprint remains the design authority. This register m
 | Section 11: discovery | Fixed version/descriptions queries; owned runtime/lock/socket, peer PID/UID, held pidfd/start ticks, executable fingerprint and held socket-node identity | Real Unix-socket fixtures for allowed requests, replacement, malformed data and timeouts | Selected environment session only; manual refresh; real host compositor unavailable to local test sandbox; gradients remain raw |
 | Section 4: asynchronous state | Background import/inspection/copy; draft generations discard obsolete parser results; explicit guards for unsaved edits | Native graphical workflow; parser process integration tests | No background persistence/checkpoint journal yet |
 
+## Source persistence foundation in 0.3
+
+Private `.hye` workspaces now retain value drafts, exact source/catalogue pins, imported Lua bytes, source hashes and descriptor-derived file metadata. Reopening uses the restricted parser again and does not access recorded original paths. Explicit file selection can verify the same revision or review an identical relocated copy; a changed revision is refused. Source identity participates in dirty-state guards. Storage is asynchronous and generation checks prevent a late save from clearing newer edits. Duplicate draft IDs are rejected, and errors are bounded before GTK display.
+
+Core fixtures cover immutable private save/restore, deleted originals, hash tampering, unsupported schema pins, duplicate IDs/unknown fields, bounds, symlinks and byte-safe names. Real-application checks exercise restricted-worker reparse, inert opaque code and rejection of bad source/snapshots. The graphical workflow exercises source-backed saving and edits made during a save. These tests do **not** certify watched-path isolation or full E03/E05: the multi-file graph, symlink/generated ownership, changed-revision merge, insertion/deletion and crash/recovery gates remain open.
+
 ## Next implementation order
 
-1. **Finish source ownership and persistence.** Store source manifests independently from active configuration; record device/inode/hash; support reattaching saved value drafts to a reviewed source revision; extend diagnostics to include graphs. Implement include authorization and dependency graphs without executing imports. Add insertion/deletion codecs only with comment/trivia preservation and conflict tests.
+1. **Finish source ownership and persistence.** Extend the single-root source manifest to a lossless authorized dependency graph, symlink/generated ownership and reviewed changed-revision reconciliation. Preserve metadata and stable document identities across profiles; extend diagnostics to include graphs. Implement include authorization and dependency graphs without executing imports. Add insertion/deletion codecs only with comment/trivia preservation and conflict tests.
 2. **Finish effective-state inspection.** Test against exact, isolated real Hyprland builds; certify complex live codecs; read monitors/devices/workspaces/rules/actions through explicitly whitelisted adapters; add an instance chooser and one bounded event subscription. Unknown opaque/plugin state remains unknown. Do not extend the reader into eval/repl or a generic command transport.
 3. **Build structured feature editors.** Use the existing per-feature contracts for monitors, devices, workspaces, match/effect rules, bindings/submaps, animation curves/styles, gestures and layout messages. Each control needs version membership, typed validation, unset behavior, canonical serialization, meaningful boundary tests and provenance.
 4. **Prove isolated validation and preview.** Prototype software rendering and private compositor transport in a separate supervisor. Require filesystem/bus/runtime/input isolation, bounded resources and teardown tests. A failed probe disables preview; never use the host compositor as a fallback. Source-derived scene projection excludes opaque native code and arbitrary Lua.
