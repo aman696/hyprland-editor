@@ -27,7 +27,7 @@ Hosted CI is configured to run build, core and graphical tests, formatting, stri
 
 ## Stage 0.2 validation
 
-The next planned foundation adds static Lua import/source copies and read-only scalar snapshots. Twenty-five core tests, four real parser-process tests, four Unix IPC fixture tests and one graphical test pass locally (34 in total), alongside strict Clippy, formatting and release build checks. The graphical test also verifies that unsaved edits prevent immediate closure. Parser probes confirm that filesystem opens and network sockets are denied after startup; an opaque command fixture cannot create its marker file.
+The next planned foundation adds static Lua import/source copies and read-only scalar snapshots. Twenty-six core tests, four real parser-process tests, four Unix IPC fixture tests and one graphical test pass locally (35 in total), alongside strict Clippy, formatting and release build checks. The graphical test also verifies that unsaved edits prevent immediate closure. Parser probes confirm that filesystem opens and network sockets are denied after startup; an opaque command fixture cannot create its marker file.
 
 Read-only fixture tests check both allowed request strings, peer/process identity, socket replacement, malformed replies and absolute timeout behavior. The actual host compositor PID is not visible through this local sandbox's `/proc`, so a real host snapshot cannot be certified here. Attachment fails closed rather than bypassing process/peer checks. Real-compositor certification remains a separate milestone. Snapshot strings must be valid JSON; malformed upstream output is not heuristically repaired or replaced with Lua evaluation.
 

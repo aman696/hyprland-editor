@@ -85,13 +85,24 @@ fn decode_string(raw: &str) -> Option<String> {
         }
         let delimiter = format!("]{}]", &raw[1..second]);
         let content = raw.get(second + 1..)?.strip_suffix(&delimiter)?;
-        return Some(
-            content
-                .strip_prefix("\r\n")
-                .or_else(|| content.strip_prefix('\n'))
-                .unwrap_or(content)
-                .into(),
-        );
+        // Lua converts CR, LF, CRLF and LFCR into one LF per newline.
+        // Normalize in one pass: chained replacements mishandle CRLFCR.
+        let mut chars = content.chars().peekable();
+        let mut normalized = String::new();
+        while let Some(c) = chars.next() {
+            if c == '\r' || c == '\n' {
+                if chars
+                    .peek()
+                    .is_some_and(|next| (*next == '\r' || *next == '\n') && *next != c)
+                {
+                    chars.next();
+                }
+                normalized.push('\n');
+            } else {
+                normalized.push(c);
+            }
+        }
+        return Some(normalized.strip_prefix('\n').unwrap_or(&normalized).into());
     }
     let quote = raw.as_bytes().first()?;
     if ![b'\'', b'"'].contains(quote) || raw.as_bytes().last()? != quote {
@@ -820,6 +831,25 @@ mod tests {
         )
         .unwrap();
         assert!(r.draft.values.is_empty());
+    }
+    #[test]
+    fn long_strings_normalize_lua_newlines_without_changing_source_bytes() {
+        let c = catalogue();
+        let source="-- Unicode ✓\r\nhl.config({['input.kb_options']=[=[\r\na\r\nb\n\rc\r\n\rd]=],['general.border_size']=2})";
+        let report = parse(source, BASELINE, &c).unwrap();
+        assert_eq!(
+            report.draft.values["input:kb_options"],
+            Value::String("a\nb\nc\n\nd".into())
+        );
+        let doc = LuaDocument::from_report(source.into(), report, &c).unwrap();
+        let mut draft = doc.report.draft.clone();
+        draft
+            .values
+            .insert("general:border_size".into(), Value::Int(4));
+        assert_eq!(
+            doc.edited_copy(&draft, &c).unwrap(),
+            source.replace("=2", "=4")
+        );
     }
     #[test]
     fn quoted_and_long_strings() {
