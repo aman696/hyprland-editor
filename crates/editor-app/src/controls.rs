@@ -16,7 +16,7 @@ fn spin(value: f64, min: f64, max: f64, digits: u32) -> gtk::SpinButton {
     });
     w
 }
-fn color_button(color: u32) -> gtk::ColorDialogButton {
+pub(super) fn color_button(color: u32) -> gtk::ColorDialogButton {
     let dialog = gtk::ColorDialog::builder().with_alpha(true).build();
     let b = gtk::ColorDialogButton::new(Some(dialog));
     b.set_rgba(&gtk::gdk::RGBA::new(
@@ -27,7 +27,7 @@ fn color_button(color: u32) -> gtk::ColorDialogButton {
     ));
     b
 }
-fn color_value(b: &gtk::ColorDialogButton) -> u32 {
+pub(super) fn color_value(b: &gtk::ColorDialogButton) -> u32 {
     let c = b.rgba();
     let byte = |x: f32| (x.clamp(0., 1.) * 255.).round() as u32;
     (byte(c.alpha()) << 24) | (byte(c.red()) << 16) | (byte(c.green()) << 8) | byte(c.blue())

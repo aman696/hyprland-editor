@@ -1,0 +1,154 @@
+{
+  "format": "hye-rule-codec-provenance-1",
+  "source_files": [
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/desktop/rule/windowRule/WindowRule.cpp",
+      "git_blob": "a3f885831108a597d4c315846911a8d323d6faa7",
+      "sha256": "7034c3325fee476cb501266af67999534ca36cf2841d83c9940db96d116d1f78",
+      "repo": "hyprwm/Hyprland"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/desktop/rule/windowRule/WindowRule.hpp",
+      "git_blob": "3701ae35f7f6d2311aef08a7d53b3e62f6fc8815",
+      "sha256": "12cf28cc2aab0126a52ed61b7dcabd77ec6aebb643846883cd4d439e1603853a",
+      "repo": "hyprwm/Hyprland"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/desktop/rule/windowRule/WindowRule.cpp",
+      "git_blob": "805d407b28e32d897cf52fc451687b909627d05f",
+      "sha256": "c129e83bd9f76fdeaea1ef1d4dc63eab8aa49e89f34600500c3e835c2db09123",
+      "repo": "hyprwm/Hyprland"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/desktop/rule/windowRule/WindowRule.hpp",
+      "git_blob": "f1ea00d54f7a4db2c119dffcf19c69d61e748dca",
+      "sha256": "7f58a7e3822c9463c738f9effe8cbd4f8b472116f570ae5d361e120df4738ab8",
+      "repo": "hyprwm/Hyprland"
+    },
+    {
+      "repo": "hyprwm/Hyprland",
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/desktop/types/OverridableVar.hpp",
+      "git_blob": "0d0689f50e97285f286ecbd1e62b3c91b89a0bcc",
+      "sha256": "4d111c95b15133ca8f6f8a579fe36f9652a7298d031c45d84d83576670c06501"
+    },
+    {
+      "repo": "hyprwm/Hyprland",
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/shared/parserUtils/ParserUtils.cpp",
+      "git_blob": "dec0bb2e18aef2477c0060c8ccf33012fba6f62a",
+      "sha256": "86f21b761695571fc17f5a2ad68ddd30bf06d06d4d6a47ab443dc89ca511c2c0"
+    },
+    {
+      "repo": "hyprwm/Hyprland",
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/desktop/view/window/WindowGroupMembership.cpp",
+      "git_blob": "cd65b81a398a0e6b0529cb1f2662efc717352cfb",
+      "sha256": "93f919cd7a577c8177eb3a6503844b13d2520b469f644b42956b1a70a174fd91"
+    },
+    {
+      "repo": "hyprwm/Hyprland",
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/desktop/view/window/WindowGroupMembership.hpp",
+      "git_blob": "0c30516cab545888bfb9cddc1d2c746056e749b6",
+      "sha256": "8df0cd545c68db9ca5865088bfab01bad13440f2a00a30d75520f4cad8c545f6"
+    },
+    {
+      "repo": "hyprwm/Hyprland",
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/desktop/types/OverridableVar.hpp",
+      "git_blob": "0d0689f50e97285f286ecbd1e62b3c91b89a0bcc",
+      "sha256": "4d111c95b15133ca8f6f8a579fe36f9652a7298d031c45d84d83576670c06501"
+    },
+    {
+      "repo": "hyprwm/Hyprland",
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/shared/parserUtils/ParserUtils.cpp",
+      "git_blob": "dec0bb2e18aef2477c0060c8ccf33012fba6f62a",
+      "sha256": "86f21b761695571fc17f5a2ad68ddd30bf06d06d4d6a47ab443dc89ca511c2c0"
+    },
+    {
+      "repo": "hyprwm/hyprutils",
+      "version": "hyprutils",
+      "commit": "a21e87b878e72ee5dfd375899e8b2ad0d0c4c0e1",
+      "path": "include/hyprutils/string/Numeric.hpp",
+      "git_blob": "1b8d9f55fca0de27a660a315e6cff244adcad587",
+      "sha256": "10ea1058b6c121236bade00d630918cfb3f1f3362e6d02de6241b3af8d4d1ad7"
+    },
+    {
+      "repo": "hyprwm/hyprutils",
+      "version": "hyprutils",
+      "commit": "a21e87b878e72ee5dfd375899e8b2ad0d0c4c0e1",
+      "path": "include/hyprutils/string/VarList.hpp",
+      "git_blob": "21c76f8020abe5e1b9036abd9466ff90f69cb5fb",
+      "sha256": "9ad2fcbd5de691166b7db95de09b6bd054c9b4313deb3187e84c914dab74fc43"
+    },
+    {
+      "repo": "hyprwm/hyprutils",
+      "version": "hyprutils",
+      "commit": "a21e87b878e72ee5dfd375899e8b2ad0d0c4c0e1",
+      "path": "include/hyprutils/string/VarList2.hpp",
+      "git_blob": "db3c43753dae3c12721e86ff0b50894fad7ce63f",
+      "sha256": "0e484df50ec18ef432c319a4d3249dfc3ddf25bb990a836ebcdd597a441f2179"
+    },
+    {
+      "repo": "hyprwm/hyprutils",
+      "version": "hyprutils",
+      "commit": "a21e87b878e72ee5dfd375899e8b2ad0d0c4c0e1",
+      "path": "include/hyprutils/string/String.hpp",
+      "git_blob": "cc99f6d8df7122d242c85dd733974ef26577d6de",
+      "sha256": "41d7f7138dc6a9b17b9b98a5545dae4e500312883080cffd8f262612b062a358"
+    },
+    {
+      "repo": "hyprwm/hyprutils",
+      "version": "hyprutils",
+      "commit": "a21e87b878e72ee5dfd375899e8b2ad0d0c4c0e1",
+      "path": "src/string/VarList.cpp",
+      "git_blob": "48508ba80e20a79a5881555dcb2ca53755a85aac",
+      "sha256": "b02df8d688519366e7f20de5c3c44d21c3832316e8262ced0d295e129b166a36"
+    },
+    {
+      "repo": "hyprwm/hyprutils",
+      "version": "hyprutils",
+      "commit": "a21e87b878e72ee5dfd375899e8b2ad0d0c4c0e1",
+      "path": "src/string/VarList2.cpp",
+      "git_blob": "473469483cf44e9786b1b5d63b7866a385202c5e",
+      "sha256": "b8cacea741b2d6260ad6618be00e37bc01c4d092e655a7557f7cfbadb76cf26d"
+    },
+    {
+      "repo": "hyprwm/hyprutils",
+      "version": "hyprutils",
+      "commit": "a21e87b878e72ee5dfd375899e8b2ad0d0c4c0e1",
+      "path": "src/string/String.cpp",
+      "git_blob": "d657e375744e84cc8da8022ffb69ea20cebdbf01",
+      "sha256": "a92c131a45f41918388eece78f225dbeab7791bb3cd2d3761d840aefa1527bac"
+    },
+    {
+      "repo": "hyprwm/Hyprland",
+      "version": "baseline",
+      "path": "src/desktop/view/Window.cpp",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "git_blob": "8836f73bec037dc22351b2ecc12235d64a20966e",
+      "sha256": "d735d454cc4b7983f19626514d310669047da46780c509ffae68ccf072211ded"
+    }
+  ],
+  "limits": [
+    "Primitive parser probes bind Hyprland snapshots to Hyprutils v0.14.2 on the compiler profile used. They do not prove all supported dependency profiles.",
+    "Renderer color/gradient objects are inert fixtures; no compositor, window state, plugin or hardware is executed.",
+    "Escaped list forms and non-finite/out-of-range numeric/color forms remain original literals; the structured decoder does not certify them."
+  ]
+}

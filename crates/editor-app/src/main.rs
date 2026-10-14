@@ -7,6 +7,7 @@ mod history;
 mod monitors;
 mod presentation;
 mod reconciliation;
+mod rule_forms;
 mod rules;
 mod selector_forms;
 mod worker;
@@ -1294,6 +1295,7 @@ mod tests {
         bindings::test_editor(&window);
         workspaces::test_editor(&window);
         rules::test_editor(&window);
+        rule_forms::test_forms();
         window.close();
         assert!(
             window.is_visible(),
