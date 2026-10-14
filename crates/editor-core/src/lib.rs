@@ -10,6 +10,8 @@ pub mod source;
 pub mod source_path;
 pub mod storage;
 pub mod workspace;
+pub mod workspace_rule;
+pub mod workspace_selector;
 pub mod xkb;
 
 use serde::{Deserialize, Serialize};

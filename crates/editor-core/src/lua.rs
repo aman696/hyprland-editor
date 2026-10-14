@@ -35,6 +35,8 @@ pub struct LuaReport {
     pub devices: Vec<crate::device::Spec>,
     #[serde(default)]
     pub bindings: crate::binding::Draft,
+    #[serde(default)]
+    pub workspace_rules: Vec<crate::workspace_rule::Rule>,
     pub declarations: Vec<Declaration>,
     pub diagnostics: Vec<Diagnostic>,
     pub opaque_effects: bool,
@@ -680,6 +682,95 @@ impl Projection<'_> {
         }
         Ok(())
     }
+    fn workspace_rule(&mut self, node: Node<'_>) -> Result<(), String> {
+        let args = node
+            .child_by_field_name("arguments")
+            .map(named)
+            .unwrap_or_default();
+        let parsed = (|| -> Result<crate::workspace_rule::Rule, String> {
+            if args.len() != 1 {
+                return Err("Workspace rule needs one static table".into());
+            }
+            let Some(Expr::Table(entries)) = evaluate(args[0], self.source, &self.env, 0) else {
+                return Err("Workspace rule expression is unresolved".into());
+            };
+            let mut rule = crate::workspace_rule::Rule::new(&format!(
+                "source-workspace-{}",
+                self.report.workspace_rules.len()
+            ));
+            let mut selector_present = false;
+            let fields = crate::workspace_rule::catalogue(&self.report.draft.version);
+            for (key, value) in entries {
+                let Key::Name(key) = key else {
+                    return Err("Workspace rule needs named fields".into());
+                };
+                match key.as_str() {
+                    "workspace" => {
+                        let Expr::Text(v) = value else {
+                            return Err("Workspace selector needs a static string".into());
+                        };
+                        rule.selector = v;
+                        selector_present = true;
+                    }
+                    "enabled" => match value {
+                        Expr::Bool(v) => rule.enabled = Some(v),
+                        Expr::Nil => {}
+                        _ => return Err("Enabled needs a bool or unset".into()),
+                    },
+                    "layout_opts" => {
+                        let Expr::Table(options) = value else {
+                            return Err("Layout options need a literal table".into());
+                        };
+                        for (key, value) in options {
+                            let Key::Name(key) = key else {
+                                return Err("Layout option names must be strings".into());
+                            };
+                            let value = match value {
+                                Expr::Bool(v) => Value::Bool(v),
+                                Expr::Int(v) => Value::Int(v),
+                                Expr::Float(v) => Value::Float(v),
+                                Expr::Text(v) => Value::String(v),
+                                _ => return Err("Layout options need literal scalar values".into()),
+                            };
+                            rule.layout_options.insert(key, value);
+                        }
+                    }
+                    _ => {
+                        let setting = fields
+                            .iter()
+                            .find(|s| s.lua_key == key)
+                            .ok_or("Unknown audited workspace field")?;
+                        let value = typed(setting, value).ok_or("Invalid workspace field value")?;
+                        rule.fields.insert(key, value);
+                    }
+                }
+            }
+            if !selector_present {
+                return Err("Workspace selector field is required".into());
+            }
+            rule.validate(&self.report.draft.version)?;
+            Ok(rule)
+        })();
+        match parsed {
+            Ok(rule) => {
+                if self.report.workspace_rules.len() >= crate::workspace_rule::MAX_RULES {
+                    return Err("Too many workspace declarations".into());
+                }
+                self.report.workspace_rules.push(rule);
+            }
+            Err(e) => {
+                self.report.opaque_effects = true;
+                self.diagnostic(node, &e);
+                if args
+                    .iter()
+                    .any(|n| evaluate(*n, self.source, &self.env, 0).is_none())
+                {
+                    self.api_available = false;
+                }
+            }
+        }
+        Ok(())
+    }
     fn action(&self, node: Node<'_>, at_load: bool) -> Result<crate::action::Action, String> {
         if node.kind() == "identifier" {
             if let Some(Expr::Action(a)) = self.env.get(text(node, self.source)) {
@@ -1070,6 +1161,8 @@ impl Projection<'_> {
                     self.binding(node)?;
                 } else if text(name, self.source) == "hl.define_submap" && self.api_available {
                     self.submap(node)?;
+                } else if text(name, self.source) == "hl.workspace_rule" && self.api_available {
+                    self.workspace_rule(node)?;
                 } else if text(name, self.source) == "hl.device" && self.api_available {
                     self.device(node)?;
                 } else if text(name, self.source) == "hl.monitor" && self.api_available {
@@ -1167,6 +1260,7 @@ pub fn parse(source: &str, version: &str, catalogue: &[Setting]) -> Result<LuaRe
             monitors: vec![],
             devices: vec![],
             bindings: crate::binding::Draft::default(),
+            workspace_rules: vec![],
             declarations: vec![],
             diagnostics: vec![],
             opaque_effects: false,
@@ -1180,6 +1274,7 @@ pub fn parse(source: &str, version: &str, catalogue: &[Setting]) -> Result<LuaRe
     }
     p.report.draft.validate(catalogue)?;
     p.report.bindings.validate(version)?;
+    crate::workspace_rule::validate(&p.report.workspace_rules, version)?;
     Ok(p.report)
 }
 impl LuaDocument {
@@ -1198,6 +1293,7 @@ impl LuaDocument {
         report.draft.validate(catalogue)?;
         crate::device::validate(&report.devices, &report.draft.version)?;
         report.bindings.validate(&report.draft.version)?;
+        crate::workspace_rule::validate(&report.workspace_rules, &report.draft.version)?;
         for rule in &report.monitors {
             rule.validate(&report.draft.version)?;
         }

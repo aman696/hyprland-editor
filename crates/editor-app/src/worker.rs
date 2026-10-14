@@ -31,7 +31,7 @@ pub enum Request {
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub enum Response {
-    Parsed(LuaReport),
+    Parsed(Box<LuaReport>),
     Registry(hyprland_editor_core::xkb::Registry),
     Copy(String),
     Probe {
@@ -157,7 +157,7 @@ pub fn entry() {
                 hyprland_editor_core::xkb::parse(&xml).map(Response::Registry)
             }
             Request::Parse { source, version } => {
-                lua::parse(&source, &version, &c).map(Response::Parsed)
+                lua::parse(&source, &version, &c).map(|report| Response::Parsed(Box::new(report)))
             }
             Request::Copy {
                 source,

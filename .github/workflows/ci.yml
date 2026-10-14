@@ -19,6 +19,7 @@ jobs:
       - run: python3 scripts/check_catalogue.py
       - run: python3 scripts/generate_catalogue.py --check
       - run: python3 scripts/generate_actions.py --check
+      - run: python3 scripts/workspace_source_probe.py
       - run: python3 scripts/implementation_report.py --check
       - run: cargo test --locked --workspace
       - name: Native graphical smoke test

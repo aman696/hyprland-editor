@@ -291,3 +291,31 @@ fn application_reopens_pinned_binding_graph_and_rejects_tampering() {
     assert!(!run(&path).0);
     fs::remove_dir_all(root).unwrap();
 }
+
+#[test]
+fn workspace_declarations_survive_application_reopen_and_schema_tampering_is_refused() {
+    let root = folder();
+    let source="hl.workspace_rule{workspace='name:work',persistent=true,layout='master',layout_opts={orientation='center'}}";
+    let rules = lua::parse(source, BASELINE, &catalogue())
+        .unwrap()
+        .workspace_rules;
+    let snapshot = fixture(&root, source).with_workspace_rules(rules.clone());
+    let path = workspace::save(&root, &snapshot, &catalogue()).unwrap();
+    fs::remove_file(root.join("original.lua")).unwrap();
+    let (success, output, error) = run(&path);
+    assert!(success, "{error}");
+    let report: serde_json::Value = serde_json::from_str(&output).unwrap();
+    assert_eq!(report["workspace_rules"], 1);
+    assert_eq!(report["original_paths_opened"], false);
+    assert_eq!(
+        workspace::read(&path, &catalogue())
+            .unwrap()
+            .workspace_rules,
+        rules
+    );
+    let mut value: serde_json::Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+    value["workspace_schema_sha256"] = serde_json::json!("tampered");
+    fs::write(&path, serde_json::to_vec(&value).unwrap()).unwrap();
+    assert!(!run(&path).0);
+    fs::remove_dir_all(root).unwrap();
+}

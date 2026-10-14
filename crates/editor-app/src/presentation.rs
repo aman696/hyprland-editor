@@ -120,6 +120,7 @@ pub fn menu_model() -> gtk::gio::Menu {
     files.append(Some("Edit Monitors…"), Some("win.monitors"));
     files.append(Some("Edit Devices…"), Some("win.devices"));
     files.append(Some("Edit Bindings…"), Some("win.bindings"));
+    files.append(Some("Edit Workspaces…"), Some("win.workspaces"));
     menu.append_section(None, &files);
     let inspect = gtk::gio::Menu::new();
     inspect.append(Some("Refresh Desktop Values"), Some("win.read-live"));
@@ -218,6 +219,9 @@ pub fn bind_feedback(
         if let Some(r) = r.upgrade() {
             r.set_sensitive(
                 !s.draft.values.is_empty()
+                    || s.workspace_rules
+                        .get(&s.draft.version)
+                        .is_some_and(|r| !r.is_empty())
                     || s.monitors
                         .get(&s.draft.version)
                         .is_some_and(|m| !m.is_empty())

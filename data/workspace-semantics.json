@@ -1,0 +1,112 @@
+{
+  "format": "hyprland-editor-workspace-semantics-1",
+  "source_files": [
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/shared/workspace/WorkspaceRule.cpp",
+      "git_blob": "2b01b2e9d3249084f9ffd4c5b226c385f00410d0",
+      "sha256": "96e1cc448847b03e7f48dc7e1c2bc4ed6c192fcf7c11c608b33f5760f7788f96"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/shared/workspace/WorkspaceRule.hpp",
+      "git_blob": "709ada36ed24c668d76281ff5894db871ea47c87",
+      "sha256": "924caa92a66b414ad852c793b61fe987c2f1a6286962e6622d495ff98a1227ab"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/shared/workspace/WorkspaceRuleManager.cpp",
+      "git_blob": "0a9a74d8af0bbb7cb4390d9d954e92ab2d87fb8a",
+      "sha256": "06e8dcbaea83e51710bd372a8f264ad3d07bbe061b9720bbe456811451c02d10"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/layout/algorithm/tiled/master/MasterAlgorithm.cpp",
+      "git_blob": "90ebdebf2fa91ac83b290cf08768ad1fcbc32c31",
+      "sha256": "ad3494f7292fbd717c1e9ab608e0b2fbd488cc85e88763317c563162c9e978df"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/layout/algorithm/tiled/scrolling/ScrollingAlgorithm.cpp",
+      "git_blob": "4aa118548cf4269fc2e7eb914b1fcfd997b99cd6",
+      "sha256": "96e24178f2f5c73f754354118c21793739b70fefc300ecd094b07917bf7485bc"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/shared/workspace/WorkspaceRule.cpp",
+      "git_blob": "7ef02adf35b540ab5c58f105bdcb7ecbb998623e",
+      "sha256": "b20685cd20dea1f889a51258b7f618726039e669d18b6220ae33afa486ddbfb0"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/shared/workspace/WorkspaceRule.hpp",
+      "git_blob": "3ad7458e3b62a332664adb74cb9ee2f3da4fdbd1",
+      "sha256": "7e360380ac7de3071107ebb08ed77f0631f132dcb27aa4ee60f971c05aaa43ce"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/shared/workspace/WorkspaceRuleManager.cpp",
+      "git_blob": "b99187d2d6a532f8c5b15eba52f9d7b0c7b6dc2d",
+      "sha256": "0573429954252e8291e184bdd093bf7bd6345a972ce925dfdd570e60ee552d9b"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/layout/algorithm/tiled/master/MasterAlgorithm.cpp",
+      "git_blob": "7e166e57cdb28a4b30b5d45b5cbbf29dbaf05065",
+      "sha256": "576631e765679da4c5369ce1153226f7a92ae630e71b3407db2daa2947ecffd3"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/layout/algorithm/tiled/scrolling/ScrollingAlgorithm.cpp",
+      "git_blob": "1db1c44f39e562df952f0a66b825e7804c824f83",
+      "sha256": "8c3bb402bffbdf80a0f968c62d99e917786c1097a8cd745fd86a1583172a6cf0"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/workspace/filter/WorkspaceFilter.cpp",
+      "git_blob": "598f639ebb78af9edddf0b20f2183abcf76cbc6b",
+      "sha256": "cce829c36fcfff747b470d04c903228f9f2967be54aeb7fc72726721e0ca8b96"
+    }
+  ],
+  "rules": {
+    "same_selector": "merge into first enabled declaration, retaining its enabled state",
+    "empty_monitor": "does not replace prior monitor",
+    "options": "merge keys; imported bool/number/string values stringify in the upstream handler",
+    "default_workspace": "first enabled default matching monitor",
+    "filter_context": "existing workspaces; not action/navigation grammar"
+  },
+  "layout_options": {
+    "master.orientation": [
+      "left",
+      "top",
+      "right",
+      "bottom",
+      "center",
+      ""
+    ],
+    "scrolling.direction": [
+      "right",
+      "left",
+      "up",
+      "down",
+      ""
+    ]
+  },
+  "limits": {
+    "rules": 1024,
+    "options_per_rule": 128,
+    "filter_clauses": 32,
+    "serialized_bytes": 1048576
+  }
+}

@@ -45,6 +45,12 @@ The binding editor supplies chord builders and focused recording, all audited fl
 
 Specialized selector/message/shortcut and visual workflow builders, effective runtime conflicts/device intersections, source codecs, actual compositor conformance, gestures, live apply/recovery and isolated preview remain required. No full BIND contract is certified. Rules/workspaces and animations/gestures are the next visible editors; all original source, discovery, security, resource and release requirements remain open.
 
+## Workspace draft milestone in 0.8
+
+The workspace editor supplies all 15 audited field controls, address/static-filter builders, enabled/unset state, layout choices and retained typed options, ordered CRUD/undo, static Lua projection and private schema-pinned persistence. Source-extracted C++ probes check literal consolidation and first-default ordering on inert data. See [workspace scope](workspace-editor.md).
+
+Complete versioned monitor/action selectors, custom-option authoring/layout messages, visual layouts, animation/command workflows, source codecs, effective discovery, parser/hardware conformance and preview/apply/recovery remain required. No full WORKSPACE contract is certified. Rule and animation/gesture editors remain next alongside those shared codecs.
+
 ## Next implementation order
 
 1. **Finish source ownership and persistence.** Extend the single-root source manifest to a lossless authorized dependency graph, generated ownership and multi-file changed-revision reconciliation. Preserve metadata and stable document identities across profiles; extend diagnostics to include graphs. Implement include authorization and dependency graphs without executing imports. Add insertion/deletion codecs only with comment/trivia preservation and conflict tests.

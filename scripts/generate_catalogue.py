@@ -49,7 +49,8 @@ def structured(engine, prefix, expected):
     return result
 monitors = structured('MONITOR', 'monitor', 22)
 devices = structured('DEVICE', 'device', 43)
-for name, data in [('scalars.json', rows), ('features.json', features), ('monitors.json', monitors), ('devices.json', devices)]:
+workspaces = structured('WORKSPACE', 'workspace', 15)
+for name, data in [('scalars.json', rows), ('features.json', features), ('monitors.json', monitors), ('devices.json', devices), ('workspaces.json', workspaces)]:
     path = root / 'data' / name
     content = json.dumps(data, indent=2) + '\n'
     if check:
