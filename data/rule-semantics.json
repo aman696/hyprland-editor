@@ -1,0 +1,173 @@
+{
+  "format": "hye-rule-semantics-1",
+  "source_files": [
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/lua/bindings/LuaBindingsConfigRules.cpp",
+      "git_blob": "8095b170ae7160d71281f7a9970e7cbd4c3151bb",
+      "sha256": "157c3e45b364f3e41b6fd7cf13fd19e7477e8c03a6a75c6c46fde5e2b5715be9"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/lua/bindings/LuaBindingsInternal.cpp",
+      "git_blob": "01604a92e2093e3ce972339e7938f94766bfb995",
+      "sha256": "5f6534641d58073bbcbd3e004b168659d497072596cf10c9f2b189c55c2233e9"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/lua/bindings/LuaBindingsInternal.hpp",
+      "git_blob": "102ed7f3b20f5c7d6abbcfbc837e720584e6cbb1",
+      "sha256": "83630401a5b3d2cd99ec42705a7b70b0fdd73ddb3989c561a4316d15d72f0edd"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/desktop/rule/Rule.cpp",
+      "git_blob": "331c47ff7ff63890c2ff98294229cb7eab6cada7",
+      "sha256": "257687efd814cb714024c14e2952adb26e1e7a1f5907d20aa6aaea1e4c098e2e"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/desktop/rule/RuleWithEffects.hpp",
+      "git_blob": "17805e9be7f66fbaee28e66412c45582f5d8c87e",
+      "sha256": "0c9d2b181c7ce3d219dacc77e1b143593c6b6ac6ef63ea8611ee78850b22a55a"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/desktop/rule/layerRule/LayerRule.cpp",
+      "git_blob": "11cdd70261b1261a17b447a90b7b4649f22e6b5e",
+      "sha256": "f3e05eafeed061471fee843842db18127b905d2847faa738e763f4355f3c9bca"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/desktop/rule/matchEngine/RegexMatchEngine.cpp",
+      "git_blob": "14e30af199477dd2fcf620877c95b1d73599a8c9",
+      "sha256": "8ca655336cd111df1136be76bbdf91bd6830e7e8891df4bb8c766f1e55a3a282"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/desktop/rule/windowRule/WindowRule.cpp",
+      "git_blob": "a3f885831108a597d4c315846911a8d323d6faa7",
+      "sha256": "7034c3325fee476cb501266af67999534ca36cf2841d83c9940db96d116d1f78"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/lua/bindings/LuaBindingsConfigRules.cpp",
+      "git_blob": "cc6108ff9d186bf3192282f9527a03328f6601e2",
+      "sha256": "789b1425c25b5a26c82f25e4d5d0b8176a6f56481573fc6e658662d1de7ea5ae"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/lua/bindings/LuaBindingsInternal.cpp",
+      "git_blob": "0efebd607cc12d70621ccf47fa2f6bc667c88bba",
+      "sha256": "896a8a793a5373baa64c66ff0dac986a3ba2a5c90e3f71c466b841f95f5d3a16"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/lua/bindings/LuaBindingsInternal.hpp",
+      "git_blob": "1841ec99ec9edd4a9a96fd7230f9ecb778ba52ed",
+      "sha256": "574774a61671cb9864c73662f5ba8bd9899d38635a32dfcd8dd6c398c4279790"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/desktop/rule/Rule.cpp",
+      "git_blob": "bb407715ecfe9df4dce3187949a3a7e365508358",
+      "sha256": "e781b7462196af6ab6d0a3a450f5366db62e8771f586e36b381d8940908fef75"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/desktop/rule/RuleWithEffects.hpp",
+      "git_blob": "17805e9be7f66fbaee28e66412c45582f5d8c87e",
+      "sha256": "0c9d2b181c7ce3d219dacc77e1b143593c6b6ac6ef63ea8611ee78850b22a55a"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/desktop/rule/layerRule/LayerRule.cpp",
+      "git_blob": "fc571c1c722574109fd5cc5ee3e79dd0009c3f19",
+      "sha256": "1990b5d5c48f6e489a92e0ec029c40072f4b7746baf7b493dff163f71054dad7"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/desktop/rule/matchEngine/RegexMatchEngine.cpp",
+      "git_blob": "14e30af199477dd2fcf620877c95b1d73599a8c9",
+      "sha256": "8ca655336cd111df1136be76bbdf91bd6830e7e8891df4bb8c766f1e55a3a282"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/desktop/rule/windowRule/WindowRule.cpp",
+      "git_blob": "805d407b28e32d897cf52fc451687b909627d05f",
+      "sha256": "c129e83bd9f76fdeaea1ef1d4dc63eab8aa49e89f34600500c3e835c2db09123"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/lua/types/LuaConfigExpressionVec2.cpp",
+      "git_blob": "baabf02f91319086bf87ff7203798b875d8a67d6",
+      "sha256": "ae6cc63e2b869ad8a66f7993db33645455abee76f0e9271d0841357a3cd3991b"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/lua/types/LuaConfigGradient.cpp",
+      "git_blob": "cc936509c571b506cdcef7486232571371bf7470",
+      "sha256": "74b29d474a2f43aba8c2e01bec2f61a9772efd795362e1e7bdaa875eddc3826b"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/helpers/math/Expression.cpp",
+      "git_blob": "2289b85e990fac8534781ea755638b9860f84ee6",
+      "sha256": "0b1703f207881e17d4b594f39db289276b47cc2744848299d0743d8b8c7a6477"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/lua/types/LuaConfigExpressionVec2.cpp",
+      "git_blob": "baabf02f91319086bf87ff7203798b875d8a67d6",
+      "sha256": "ae6cc63e2b869ad8a66f7993db33645455abee76f0e9271d0841357a3cd3991b"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/lua/types/LuaConfigGradient.cpp",
+      "git_blob": "cc936509c571b506cdcef7486232571371bf7470",
+      "sha256": "74b29d474a2f43aba8c2e01bec2f61a9772efd795362e1e7bdaa875eddc3826b"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/helpers/math/Expression.cpp",
+      "git_blob": "2e0d13221d89072fd21f8f21e765bdf3acf63965",
+      "sha256": "c211c63ae2c1247cbbf6998367fc8bc1a36218239e0ba52fc218b5f345841103"
+    }
+  ],
+  "behavior": {
+    "declaration_order": "Rule registration keeps the first named declaration position. Anonymous and empty-name declarations create new rules.",
+    "named_reuse": "Each call resets enabled (default true), replaces supplied predicates and appends effect groups. Omitted predicates and prior effects remain.",
+    "table_order": "lua_next iteration within one call is unspecified; no effect-order guarantee within a table.",
+    "empty_conditions": "canMatch requires enabled and at least one predicate.",
+    "regex": "RE2 FullMatch; negative: prefix inverts a valid match. Invalid patterns are reported, never interpreted as a successful negation.",
+    "geometry": "String split at first ASCII whitespace or two string/number axes; empty string clears; no expression evaluation in editor.",
+    "border": "Typed gradient or legacy active/inactive text fallback; string preservation is not a color parser certificate."
+  },
+  "limits": [
+    "Literal projection only; no plugin effect pack, effective window/layer inspection or runtime matching.",
+    "No compositor activation, isolated preview, source rule insertion/deletion or live recovery certificate.",
+    "No muParser geometry evaluation or complete specialized effect-string semantic codec yet."
+  ]
+}

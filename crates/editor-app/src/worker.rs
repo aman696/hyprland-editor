@@ -26,6 +26,7 @@ pub enum Request {
     ParseRegistry {
         xml: String,
     },
+    CheckRegex(hyprland_editor_core::regex::Sample),
     Probe,
 }
 #[derive(Serialize, Deserialize)]
@@ -34,6 +35,7 @@ pub enum Response {
     Parsed(Box<LuaReport>),
     Registry(hyprland_editor_core::xkb::Registry),
     Copy(String),
+    RegexMatch(bool),
     Probe {
         file_denied: bool,
         network_denied: bool,
@@ -166,6 +168,9 @@ pub fn entry() {
             } => LuaDocument::from_report(source, *report, &c)?
                 .edited_copy(&draft, &c)
                 .map(Response::Copy),
+            Request::CheckRegex(sample) => {
+                hyprland_editor_core::regex::check(&sample).map(Response::RegexMatch)
+            }
             Request::Probe => {
                 let file = unsafe { libc::open(c"/etc/passwd".as_ptr(), libc::O_RDONLY) };
                 let file_denied =
@@ -196,7 +201,30 @@ pub fn run(request: Request) -> Result<Response, String> {
     if bytes.len() > MAX_ENVELOPE {
         return Err("Parser request exceeds 4 MiB".into());
     }
+    #[cfg(not(test))]
     let exe = "/proc/self/exe";
+    // Rust's test harness owns main(), so it cannot accept the worker CLI switch.
+    // Native tests execute the normal Cargo-built application through a held FD.
+    // This adapter exists only in test builds; production always pins self above.
+    #[cfg(test)]
+    let held_test_executable = {
+        use std::os::unix::fs::OpenOptionsExt;
+        let path = std::env::current_exe().map_err(|e| e.to_string())?;
+        let target = path
+            .parent()
+            .and_then(std::path::Path::parent)
+            .ok_or("Test executable is outside the Cargo target layout")?;
+        std::fs::OpenOptions::new()
+            .read(true)
+            .custom_flags(libc::O_NOFOLLOW)
+            .open(target.join("hyprland-editor"))
+            .map_err(|e| format!("Build the application before native worker tests: {e}"))?
+    };
+    #[cfg(test)]
+    let exe = {
+        use std::os::fd::AsRawFd;
+        format!("/proc/self/fd/{}", held_test_executable.as_raw_fd())
+    };
     let mut child = Command::new(exe)
         .arg("--lua-source-worker")
         .env_clear()

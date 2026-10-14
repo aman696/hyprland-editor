@@ -6,6 +6,8 @@ pub mod import;
 pub mod lua;
 pub mod monitor;
 pub mod reconcile;
+pub mod regex;
+pub mod rule;
 pub mod source;
 pub mod source_path;
 pub mod storage;

@@ -12,7 +12,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Native dependencies
-        run: sudo apt-get update && sudo apt-get install -y libgtk-4-dev libadwaita-1-dev libxkbcommon-dev pkg-config xvfb
+        run: sudo apt-get update && sudo apt-get install -y libgtk-4-dev libadwaita-1-dev libxkbcommon-dev libre2-dev liblua5.4-dev pkg-config xvfb
       - name: Pinned toolchain
         run: rustup toolchain install 1.90.0 --profile minimal --component rustfmt --component clippy
       - run: cargo fmt --all --check
@@ -20,6 +20,7 @@ jobs:
       - run: python3 scripts/generate_catalogue.py --check
       - run: python3 scripts/generate_actions.py --check
       - run: python3 scripts/workspace_source_probe.py
+      - run: python3 scripts/rule_source_probe.py
       - run: python3 scripts/implementation_report.py --check
       - run: cargo test --locked --workspace
       - name: Native graphical smoke test

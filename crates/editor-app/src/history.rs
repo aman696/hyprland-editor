@@ -19,6 +19,10 @@ pub(super) enum Undo {
         origin: SourceIdentity,
         document_bytes: usize,
     },
+    Rules {
+        previous: Vec<hyprland_editor_core::rule::Rule>,
+        retained_bytes: usize,
+    },
     Workspaces {
         previous: Vec<hyprland_editor_core::workspace_rule::Rule>,
         retained_bytes: usize,
@@ -93,6 +97,37 @@ fn workspace_bytes(rules: &Vec<hyprland_editor_core::workspace_rule::Rule>) -> u
             })
             .sum::<usize>()
 }
+fn rule_bytes(rules: &Vec<hyprland_editor_core::rule::Rule>) -> usize {
+    use hyprland_editor_core::rule::{EffectValue, Geometry};
+    rules.capacity() * size_of::<hyprland_editor_core::rule::Rule>()
+        + rules
+            .iter()
+            .map(|r| {
+                r.id.capacity()
+                    + r.name.as_ref().map_or(0, String::capacity)
+                    + r.predicates.capacity() * size_of::<hyprland_editor_core::rule::Predicate>()
+                    + r.predicates
+                        .iter()
+                        .map(|p| p.property.capacity() + value_bytes(&p.value))
+                        .sum::<usize>()
+                    + r.effects.capacity() * size_of::<hyprland_editor_core::rule::Effect>()
+                    + r.effects
+                        .iter()
+                        .map(|e| {
+                            e.key.capacity()
+                                + match &e.value {
+                                    EffectValue::Literal(v) => value_bytes(v),
+                                    EffectValue::BorderText(s) => s.capacity(),
+                                    EffectValue::Geometry(Geometry::Text(s)) => s.capacity(),
+                                    EffectValue::Geometry(Geometry::Axes(v)) => {
+                                        v.iter().map(value_bytes).sum()
+                                    }
+                                }
+                        })
+                        .sum::<usize>()
+            })
+            .sum::<usize>()
+}
 fn device_bytes(specs: &Vec<hyprland_editor_core::device::Spec>) -> usize {
     specs.capacity() * size_of::<hyprland_editor_core::device::Spec>()
         + specs
@@ -157,6 +192,7 @@ fn document_bytes(doc: &LuaDocument) -> usize {
         + device_bytes(&r.devices)
         + bindings_bytes(&r.bindings)
         + workspace_bytes(&r.workspace_rules)
+        + rule_bytes(&r.rules)
         + r.source_sha256.capacity()
         + r.draft.version.capacity()
         + r.draft
@@ -189,9 +225,9 @@ impl Undo {
                         + changes_bytes(changes)
                         + origin_bytes(origin)
                 }
-                Self::Bindings { retained_bytes, .. } | Self::Workspaces { retained_bytes, .. } => {
-                    *retained_bytes
-                }
+                Self::Rules { retained_bytes, .. }
+                | Self::Bindings { retained_bytes, .. }
+                | Self::Workspaces { retained_bytes, .. } => *retained_bytes,
                 Self::Monitors { retained_bytes, .. } | Self::Devices { retained_bytes, .. } => {
                     *retained_bytes
                 }
@@ -203,6 +239,13 @@ pub(super) struct History {
     entries: VecDeque<Undo>,
 }
 impl History {
+    pub fn rules(&mut self, previous: Vec<hyprland_editor_core::rule::Rule>) -> Result<(), String> {
+        let retained_bytes = rule_bytes(&previous);
+        self.push(Undo::Rules {
+            previous,
+            retained_bytes,
+        })
+    }
     pub fn is_empty(&self) -> bool {
         self.entries.is_empty()
     }

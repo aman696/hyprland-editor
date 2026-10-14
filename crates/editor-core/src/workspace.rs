@@ -65,6 +65,10 @@ pub struct Workspace {
     pub bindings: crate::binding::Draft,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub workspace_rules: Vec<crate::workspace_rule::Rule>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub rules: Vec<crate::rule::Rule>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rule_schema_sha256: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub workspace_schema_sha256: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -84,6 +88,8 @@ impl Workspace {
             device_schema_sha256: None,
             bindings: Default::default(),
             workspace_rules: vec![],
+            rules: vec![],
+            rule_schema_sha256: None,
             workspace_schema_sha256: None,
             binding_schema_sha256: None,
         }
@@ -103,6 +109,16 @@ impl Workspace {
             return Err("Unsupported workspace format or source count".into());
         }
         self.draft.validate(catalogue)?;
+        crate::rule::validate(&self.rules, &self.draft.version)?;
+        let rule_hash = crate::rule::schema_hash();
+        if (!self.rules.is_empty() && self.rule_schema_sha256.as_deref() != Some(&rule_hash))
+            || self
+                .rule_schema_sha256
+                .as_ref()
+                .is_some_and(|h| *h != rule_hash)
+        {
+            return Err("Window/layer rule schema differs from the selected audited pack".into());
+        }
         crate::monitor::validate(&self.monitors, &self.draft.version)?;
         crate::device::validate(&self.devices, &self.draft.version)?;
         let device_hash = crate::device::schema_hash();
@@ -198,6 +214,11 @@ impl Workspace {
         self.root_source
             .as_deref()
             .and_then(|id| self.sources.iter().find(|s| s.id == id))
+    }
+    pub fn with_rules(mut self, rules: Vec<crate::rule::Rule>) -> Self {
+        self.rule_schema_sha256 = (!rules.is_empty()).then(crate::rule::schema_hash);
+        self.rules = rules;
+        self
     }
     pub fn with_workspace_rules(mut self, rules: Vec<crate::workspace_rule::Rule>) -> Self {
         self.workspace_schema_sha256 = (!rules.is_empty()).then(crate::workspace_rule::schema_hash);

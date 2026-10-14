@@ -50,7 +50,22 @@ def structured(engine, prefix, expected):
 monitors = structured('MONITOR', 'monitor', 22)
 devices = structured('DEVICE', 'device', 43)
 workspaces = structured('WORKSPACE', 'workspace', 15)
-for name, data in [('scalars.json', rows), ('features.json', features), ('monitors.json', monitors), ('devices.json', devices), ('workspaces.json', workspaces)]:
+def rule_fields(prefix, baseline_count, current_count):
+    result=[]
+    for feature in features:
+        if not feature['id'].startswith('field:'+prefix+':'):continue
+        for source_name,source in feature['source_versions'].items():
+            version={'baseline':'0.56.2','current':'audited-main'}[source_name]
+            parts=source['constructor_cpp'].split(', ') if source['type'] in ('Int','Float') else [source['constructor_cpp']]
+            bounds={'min':None,'max':None}
+            for key,value in zip(('min','max'),parts[1:3]):bounds[key]=float(value.rstrip('fF'))
+            result.append(dict(id=prefix+':'+source['name'],version=version,kind=source['type'],lua_key=source['name'],default_expression=parts[0],bounds=bounds,source=source['source']))
+    assert sum(r['version']=='0.56.2' for r in result)==baseline_count
+    assert sum(r['version']=='audited-main' for r in result)==current_count
+    return result
+window_effects=rule_fields('window_rule_effect',57,60)
+layer_effects=rule_fields('layer_rule_effect',10,10)
+for name, data in [('scalars.json', rows), ('features.json', features), ('monitors.json', monitors), ('devices.json', devices), ('workspaces.json', workspaces), ('window-effects.json', window_effects), ('layer-effects.json', layer_effects)]:
     path = root / 'data' / name
     content = json.dumps(data, indent=2) + '\n'
     if check:

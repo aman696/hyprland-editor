@@ -319,3 +319,29 @@ fn workspace_declarations_survive_application_reopen_and_schema_tampering_is_ref
     assert!(!run(&path).0);
     fs::remove_dir_all(root).unwrap();
 }
+
+#[test]
+fn rule_declarations_survive_application_reopen_without_accessing_original_and_refuse_schema_tampering(
+) {
+    let root = folder();
+    let source="hl.window_rule{name='test',enabled=false,match={class='foo'},move={'monitor_w - window_w',20}};hl.window_rule{name='test',center=true};hl.layer_rule{match={namespace='panel'},blur=false}";
+    let rules = lua::parse(source, BASELINE, &catalogue()).unwrap().rules;
+    let path = workspace::save(
+        &root,
+        &fixture(&root, source).with_rules(rules.clone()),
+        &catalogue(),
+    )
+    .unwrap();
+    fs::remove_file(root.join("original.lua")).unwrap();
+    let (success, output, error) = run(&path);
+    assert!(success, "{error}");
+    let report: serde_json::Value = serde_json::from_str(&output).unwrap();
+    assert_eq!(report["match_effect_rules"], 3);
+    assert_eq!(report["original_paths_opened"], false);
+    assert_eq!(workspace::read(&path, &catalogue()).unwrap().rules, rules);
+    let mut value: serde_json::Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+    value["rule_schema_sha256"] = serde_json::json!("tampered");
+    fs::write(&path, serde_json::to_vec(&value).unwrap()).unwrap();
+    assert!(!run(&path).0);
+    fs::remove_dir_all(root).unwrap();
+}

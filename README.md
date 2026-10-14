@@ -2,7 +2,7 @@
 
 A native GTK4/libadwaita workspace for making Hyprland configuration graphical, with a versioned catalogue and a safety-first editing core. The long-term goal is complete configuration coverage, including rules, monitors, bindings, animations, devices and isolated preview.
 
-**Status: experimental 0.8 editor. This is the first working slice, not a complete Hyprland configuration manager.** Its live inspector is read-only. It does not apply changes to the running compositor.
+**Status: experimental 0.9 editor. This is the first working slice, not a complete Hyprland configuration manager.** Its live inspector is read-only. It does not apply changes to the running compositor.
 
 ![Native draft workspace](docs/screenshots/draft-workspace.png)
 
@@ -24,32 +24,34 @@ A native GTK4/libadwaita workspace for making Hyprland configuration graphical, 
 - Import a conservative static projection of Lua `hl.config`, `hl.monitor`, `hl.device`, `hl.bind`, `hl.define_submap` and `hl.workspace_rule` declarations and restricted pure local expressions. A separate parser process has CPU/memory/time limits and denies filesystem, networking and process-creation syscalls after startup. No Lua is executed. Per-line import diagnostics explain the unresolved parts.
 - Prepare a copy of imported Lua with only changed, existing literal expressions replaced. Source hashes, spans, reparsing and semantic comparison guard the copy; comments and unaffected bytes remain intact. Adding/removing fields and editing derived expressions remain unsupported. Source files are never overwritten.
 - Read a manually refreshed scalar snapshot from the compositor selected by your session environment. Runtime directories, held process lifetime, executable fingerprint, held socket-node identity and peer credentials are checked. Only `j/version` and `j/descriptions` can be sent. Exact audited commits receive typed observations; unsupported formats stay raw or unknown.
-- Save private `.hye` workspaces in `$XDG_STATE_HOME/hyprland-editor` (normally `~/.local/state/hyprland-editor`), including scalar, monitor, device, binding and workspace drafts, exact upstream/catalogue identity and an imported Lua source snapshot. Reopening reparses snapshot bytes in the restricted worker; it never reopens recorded original paths or trusts saved parser spans. Value-only JSON drafts remain importable.
+- Save private `.hye` workspaces in `$XDG_STATE_HOME/hyprland-editor` (normally `~/.local/state/hyprland-editor`), including scalar, monitor, device, binding, workspace and window/layer rule drafts, exact upstream/catalogue identity and an imported Lua source snapshot. Reopening reparses snapshot bytes in the restricted worker; it never reopens recorded original paths or trusts saved parser spans. Value-only JSON drafts remain importable.
 - Select Lua/legacy source files through bounded symlink-chain resolution; record resolved targets and link identities without executing config includes. Saved snapshots retain this evidence without accessing recorded paths.
 - Verify an explicitly selected original source or identical relocated copy. The editor checks descriptor-derived device/inode/owner/mode/timestamps, link-chain identity and SHA-256; changed content is rejected. Recorded ownership is provenance, not permission to overwrite a file. Source identity changes require saving, and late saves cannot mark newer edits as saved.
 - Compare an explicitly selected changed Lua file against the imported snapshot and your draft. Independent scalar declaration changes merge; conflicting edits/deletions require a choice. Incomplete projections require explicit acknowledgement and never infer a missing value as unset. Review both source texts, accept the captured revision into memory, and undo its source identity and changed values together. No original file is written.
 - Inspect the 1,453 source-audited feature contracts and the engineering blueprint.
 
+- Edit window/layer rule declarations with all 57/60 audited window effects, ten layer effects, consumed conditions, exact-text/regex sample matching, geometry inputs, named accumulation findings and explicit ordering. Save/reopen drafts, duplicate, remove, reorder and undo. Specialized string/geometry/border builders and runtime conformance remain in progress. See [rule scope](docs/rule-editor.md).
+
 ## Not available yet
 
-Complete Lua interpretation/include graphs, source-field insertion/deletion, multi-file/source dependency graphs and reconciliation, event-based live refresh, multi-instance selection, rules/animations and other structured editors, complete workspace/layout/workflow codecs, complete binding selectors/workflows and live behavior, device hardware inspection and source editing, monitor hardware inspection and source editing, plugins, live apply, display recovery, sandboxed compositor preview, distribution packages and release certification. Unknown defaults stay visibly unresolved. Bounds are literal source metadata, not a guarantee that combinations are valid on your system. Hardware behavior has not been tested.
+Complete Lua interpretation/include graphs, source-field insertion/deletion, multi-file/source dependency graphs and reconciliation, event-based live refresh, multi-instance selection, complete rule semantics/builders, animations/gestures and other structured editors, complete workspace/layout/workflow codecs, complete binding selectors/workflows and live behavior, device hardware inspection and source editing, monitor hardware inspection and source editing, plugins, live apply, display recovery, sandboxed compositor preview, distribution packages and release certification. Unknown defaults stay visibly unresolved. Bounds are literal source metadata, not a guarantee that combinations are valid on your system. Hardware behavior has not been tested.
 
 Saved workspaces contain the full imported Lua source and path/ownership evidence; keep them private when sharing reproductions. Saving a draft never targets `hyprland.conf` or `hyprland.lua`. The application has no config publication API. If your own configuration explicitly watches the app's independent state directory, choose a separate state root before running it. Draft export contains only overrides and must not replace your full configuration. Source-copy export contains preserved imported text, including opaque statements, and needs separate review before any manual integration.
 
 ## Build and run
 
-Linux (pidfd support for inspection, close_range/seccomp support for Lua workers), Rust 1.90, GTK >= 4.12 libadwaita >= 1.5 and libxkbcommon are required. No web server, browser runtime, background daemon or root access is required.
+Linux (pidfd support for inspection, close_range/seccomp support for Lua workers), Rust 1.90, GTK >= 4.12 libadwaita >= 1.5 libxkbcommon, RE2 and a C++17 compiler are required. No web server, browser runtime, background daemon or root access is required.
 
 On Ubuntu 24.04:
 
 ```sh
-sudo apt install build-essential pkg-config libgtk-4-dev libadwaita-1-dev libxkbcommon-dev
+sudo apt install build-essential pkg-config libgtk-4-dev libadwaita-1-dev libxkbcommon-dev libre2-dev
 ```
 
 On Arch Linux:
 
 ```sh
-sudo pacman -S --needed rust pkgconf gtk4 libadwaita libxkbcommon
+sudo pacman -S --needed rust pkgconf gtk4 libadwaita libxkbcommon re2 gcc
 ```
 
 From the repository, using a working Rust toolchain:
