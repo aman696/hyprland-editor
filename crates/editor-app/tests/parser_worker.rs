@@ -196,3 +196,18 @@ fn binding_actions_remain_inert_in_actual_restricted_worker_and_preserve_timing(
     assert_eq!(parsed["Parsed"]["bindings"]["binds"], json!([]));
     assert!(!marker.exists());
 }
+
+#[test]
+fn actual_restricted_worker_projects_workspace_rules_without_running_empty_hooks() {
+    let marker =
+        std::env::temp_dir().join(format!("he-workspace-never-run-{}", std::process::id()));
+    let source=format!("hl.workspace_rule{{workspace='name:work',enabled=false,layout='master',layout_opts={{orientation='center',custom=false}},on_created_empty='touch {}'}}",marker.display());
+    let parsed = request(json!({"Parse":{"source":source,"version":"0.56.2"}}));
+    assert_eq!(parsed["Parsed"]["opaque_effects"], false, "{parsed}");
+    assert_eq!(parsed["Parsed"]["workspace_rules"][0]["enabled"], false);
+    assert_eq!(
+        parsed["Parsed"]["workspace_rules"][0]["layout_options"]["custom"]["value"],
+        false
+    );
+    assert!(!marker.exists());
+}

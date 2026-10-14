@@ -63,6 +63,10 @@ pub struct Workspace {
     pub device_schema_sha256: Option<String>,
     #[serde(default, skip_serializing_if = "crate::binding::Draft::is_empty")]
     pub bindings: crate::binding::Draft,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub workspace_rules: Vec<crate::workspace_rule::Rule>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub workspace_schema_sha256: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub binding_schema_sha256: Option<String>,
 }
@@ -79,6 +83,8 @@ impl Workspace {
             devices: vec![],
             device_schema_sha256: None,
             bindings: Default::default(),
+            workspace_rules: vec![],
+            workspace_schema_sha256: None,
             binding_schema_sha256: None,
         }
     }
@@ -107,6 +113,17 @@ impl Workspace {
                 .is_some_and(|h| *h != device_hash)
         {
             return Err("Device schema differs from the audited fields".into());
+        }
+        crate::workspace_rule::validate(&self.workspace_rules, &self.draft.version)?;
+        let workspace_hash = crate::workspace_rule::schema_hash();
+        if (!self.workspace_rules.is_empty()
+            && self.workspace_schema_sha256.as_deref() != Some(&workspace_hash))
+            || self
+                .workspace_schema_sha256
+                .as_ref()
+                .is_some_and(|h| *h != workspace_hash)
+        {
+            return Err("Workspace-rule schema differs from the audited fields".into());
         }
         self.bindings.validate(&self.draft.version)?;
         let binding_hash = crate::binding::schema_hash();
@@ -181,6 +198,11 @@ impl Workspace {
         self.root_source
             .as_deref()
             .and_then(|id| self.sources.iter().find(|s| s.id == id))
+    }
+    pub fn with_workspace_rules(mut self, rules: Vec<crate::workspace_rule::Rule>) -> Self {
+        self.workspace_schema_sha256 = (!rules.is_empty()).then(crate::workspace_rule::schema_hash);
+        self.workspace_rules = rules;
+        self
     }
     pub fn with_bindings(mut self, bindings: crate::binding::Draft) -> Self {
         self.binding_schema_sha256 = (!bindings.is_empty()).then(crate::binding::schema_hash);

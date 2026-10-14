@@ -24,6 +24,7 @@ The [machine-readable register](completion-register.json) retains every contract
 
 ## Current foundations and limits
 
+- **workspace draft editor**: 15 field controls, addresses/static filter clauses, enabled/unset, layout choices and retained options, source consolidation findings, private persistence and undo; no complete selector/layout/workflow codecs, source editing, live creation/matching, apply/recovery or preview certification.
 - **binding/submap draft editor**: 51/52 public dispatcher constructor forms, chords/flags, focused recording, literal submap rename/duplication and escape drafts, static findings, private persistence and inverse undo; no complete selector/workflow builders, effective conflicts/device intersections, source editing, live delivery, apply/recovery or compositor preview certification.
 - **device draft editor**: 43 fields and name selector, author category hints, linked XKB choices from installed metadata, numeric acceleration/scroll builders, ordered drafts and private persistence; no hardware capability discovery, effective global/default merge, tag-to-bind analysis, keyboard compilation, source editing, live input recovery or activation/preview certificates.
 - **monitor draft editor**: 22 versioned field controls and output selector, ordered drafts, explicit logical geometry, static Lua import/export and private saved snapshots; no hardware detection, effective rule resolution, source-span mutation/reconciliation, ICC decoding, monitor recovery, live apply or compositor preview certification.

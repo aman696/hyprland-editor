@@ -1,6 +1,6 @@
 # Third-party provenance
 
-`data/scalars.json`, `data/monitors.json`, `data/devices.json`, `data/actions.json`, `data/bindings.json` and `data/features.json` record source-derived setting names, types, literal bounds, default expressions, interfaces and factual audit results. Their source URLs point to exact Hyprland commits. No upstream implementation code is compiled into this project. Documentation contains original audit/engineering analysis and links to upstream materials.
+`data/scalars.json`, `data/monitors.json`, `data/devices.json`, `data/actions.json`, `data/bindings.json`, `data/workspaces.json`, `data/workspace-semantics.json` and `data/features.json` record source-derived setting names, types, literal bounds, default expressions, interfaces and factual audit results. Their source URLs point to exact Hyprland commits. No upstream implementation code is compiled into this project. Documentation contains original audit/engineering analysis and links to upstream materials.
 
 Hyprland is an independent project by its contributors, distributed under BSD-3-Clause; its wiki has its own licensing terms. This project is not affiliated with or endorsed by Hyprland. Source-derived default-expression fragments and interface names are retained only as metadata for interoperability. Upstream material remains subject to its original license; the MIT project license does not relicense upstream code or documentation.
 
@@ -11,3 +11,5 @@ The pinned Tree-sitter runtime (0.27.1) and Lua grammar (0.5.0) are MIT licensed
 The pinned quick-xml parser (0.38.4) is an MIT licensed dependency. Its checksum is recorded in Cargo.lock. Installed XKB registry choices are read locally on explicit request and are not redistributed; the repository includes only a small original synthetic XML fixture for tests. The keyboard registry parser does not resolve external DTDs/entities or compile a keymap.
 
 The app links the system libxkbcommon for pure keysym-name validation; its stable `xkb_keysym_from_name` API is used with case-insensitive lookup. No keymap is compiled and no input device is opened by this lookup. libxkbcommon has its own license notices; distributors must retain the notices from their system library package.
+
+The optional workspace source-conformance probe downloads reviewed, hash-pinned Hyprland functions into temporary test fixtures. Those functions retain their upstream BSD-3-Clause provenance and are not linked into the application or bundled in this repository. The fixture tests literal consolidation/default ordering using mock data, not compositor execution.

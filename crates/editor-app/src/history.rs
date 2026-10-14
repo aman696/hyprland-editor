@@ -19,6 +19,10 @@ pub(super) enum Undo {
         origin: SourceIdentity,
         document_bytes: usize,
     },
+    Workspaces {
+        previous: Vec<hyprland_editor_core::workspace_rule::Rule>,
+        retained_bytes: usize,
+    },
     Bindings {
         inverse: hyprland_editor_core::binding::Inverse,
         retained_bytes: usize,
@@ -69,6 +73,21 @@ fn monitor_bytes(rules: &Vec<hyprland_editor_core::monitor::Rule>) -> usize {
                     }
                     + r.fields
                         .iter()
+                        .map(|(k, v)| 256 + size_of::<Value>() + k.capacity() + value_bytes(v))
+                        .sum::<usize>()
+            })
+            .sum::<usize>()
+}
+fn workspace_bytes(rules: &Vec<hyprland_editor_core::workspace_rule::Rule>) -> usize {
+    rules.capacity() * size_of::<hyprland_editor_core::workspace_rule::Rule>()
+        + rules
+            .iter()
+            .map(|r| {
+                512 + r.id.capacity()
+                    + r.selector.capacity()
+                    + r.fields
+                        .iter()
+                        .chain(r.layout_options.iter())
                         .map(|(k, v)| 256 + size_of::<Value>() + k.capacity() + value_bytes(v))
                         .sum::<usize>()
             })
@@ -137,6 +156,7 @@ fn document_bytes(doc: &LuaDocument) -> usize {
         + monitor_bytes(&r.monitors)
         + device_bytes(&r.devices)
         + bindings_bytes(&r.bindings)
+        + workspace_bytes(&r.workspace_rules)
         + r.source_sha256.capacity()
         + r.draft.version.capacity()
         + r.draft
@@ -169,7 +189,9 @@ impl Undo {
                         + changes_bytes(changes)
                         + origin_bytes(origin)
                 }
-                Self::Bindings { retained_bytes, .. } => *retained_bytes,
+                Self::Bindings { retained_bytes, .. } | Self::Workspaces { retained_bytes, .. } => {
+                    *retained_bytes
+                }
                 Self::Monitors { retained_bytes, .. } | Self::Devices { retained_bytes, .. } => {
                     *retained_bytes
                 }
@@ -235,6 +257,16 @@ impl History {
         self.push(Undo::Field {
             id: id.into(),
             previous,
+        })
+    }
+    pub fn workspaces(
+        &mut self,
+        previous: Vec<hyprland_editor_core::workspace_rule::Rule>,
+    ) -> Result<(), String> {
+        let retained_bytes = workspace_bytes(&previous);
+        self.push(Undo::Workspaces {
+            previous,
+            retained_bytes,
         })
     }
     pub fn bindings(

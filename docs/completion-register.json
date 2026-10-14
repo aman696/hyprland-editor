@@ -13,6 +13,26 @@
   },
   "foundations": [
     {
+      "area": "workspace draft editor",
+      "code": [
+        "crates/editor-core/src/workspace_rule.rs",
+        "crates/editor-core/src/workspace_selector.rs",
+        "crates/editor-app/src/workspaces.rs",
+        "crates/editor-app/src/selector_forms.rs",
+        "data/workspaces.json",
+        "data/workspace-semantics.json"
+      ],
+      "test_references": [
+        "every_audited_workspace_field_round_trips_as_an_explicit_override",
+        "repeated_selectors_follow_merge_left_and_disabled_declarations_do_not_disable_prior_rule",
+        "test_editor",
+        "actual_restricted_worker_projects_workspace_rules_without_running_empty_hooks",
+        "workspace_declarations_survive_application_reopen_and_schema_tampering_is_refused",
+        "scripts/workspace_source_probe.py"
+      ],
+      "limits": "15 field controls, addresses/static filter clauses, enabled/unset, layout choices and retained options, source consolidation findings, private persistence and undo; no complete selector/layout/workflow codecs, source editing, live creation/matching, apply/recovery or preview certification"
+    },
+    {
       "area": "binding/submap draft editor",
       "code": [
         "crates/editor-core/src/action.rs",
@@ -11555,7 +11575,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed workspace drafts, static filter builders, source merge findings and schema-pinned persistence; complete selector/layout/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11577,7 +11597,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed workspace drafts, static filter builders, source merge findings and schema-pinned persistence; complete selector/layout/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11599,7 +11619,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed workspace drafts, static filter builders, source merge findings and schema-pinned persistence; complete selector/layout/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11621,7 +11641,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed workspace drafts, static filter builders, source merge findings and schema-pinned persistence; complete selector/layout/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11643,7 +11663,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed workspace drafts, static filter builders, source merge findings and schema-pinned persistence; complete selector/layout/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11665,7 +11685,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed workspace drafts, static filter builders, source merge findings and schema-pinned persistence; complete selector/layout/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11687,7 +11707,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed workspace drafts, static filter builders, source merge findings and schema-pinned persistence; complete selector/layout/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11709,7 +11729,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed workspace drafts, static filter builders, source merge findings and schema-pinned persistence; complete selector/layout/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11731,7 +11751,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed workspace drafts, static filter builders, source merge findings and schema-pinned persistence; complete selector/layout/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11753,7 +11773,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed workspace drafts, static filter builders, source merge findings and schema-pinned persistence; complete selector/layout/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11775,7 +11795,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed workspace drafts, static filter builders, source merge findings and schema-pinned persistence; complete selector/layout/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11797,7 +11817,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed workspace drafts, static filter builders, source merge findings and schema-pinned persistence; complete selector/layout/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11819,7 +11839,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed workspace drafts, static filter builders, source merge findings and schema-pinned persistence; complete selector/layout/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11841,7 +11861,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed workspace drafts, static filter builders, source merge findings and schema-pinned persistence; complete selector/layout/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11863,7 +11883,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed workspace drafts, static filter builders, source merge findings and schema-pinned persistence; complete selector/layout/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -13538,7 +13558,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed workspace drafts, static filter builders, source merge findings and schema-pinned persistence; complete selector/layout/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -13560,7 +13580,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed workspace drafts, static filter builders, source merge findings and schema-pinned persistence; complete selector/layout/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -13582,7 +13602,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed workspace drafts, static filter builders, source merge findings and schema-pinned persistence; complete selector/layout/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },

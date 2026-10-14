@@ -347,7 +347,7 @@ fn show(
         review.plan.rows().len()
     )));
     content.append(&label("Accepting updates your private draft and its source snapshot. Review both files; later external changes need another comparison. Undo restores the earlier revision."));
-    content.append(&label("This comparison merges scalar settings. Monitor, device and binding drafts stay unchanged; structured source reconciliation is not implemented yet."));
+    content.append(&label("This comparison merges scalar settings. Monitor, device, binding and workspace drafts stay unchanged; structured source reconciliation is not implemented yet."));
     let technical = gtk::Expander::builder().label("File Details").build();
     technical.set_widget_name("reconcile-details");
     let evidence=label(&format!("Previous: {}\nSelected: {}\nPrevious SHA-256: {}\nSelected SHA-256: {}\nSelected resolved target: {}\nSelected links: {}\nSelected UID: {} · mode {:o}\nSource diagnostics: {}",review.base_origin.display_path(),review.origin.display_path(),review.base.report.source_sha256,review.incoming.report.source_sha256,review.origin.resolved_path.as_deref().map(hyprland_editor_core::source::display_path_bytes).unwrap_or_else(||"Not recorded".into()),review.origin.links.len(),review.origin.owner,review.origin.mode & 0o777,review.incoming.report.diagnostics.len()));
