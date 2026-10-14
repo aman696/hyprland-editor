@@ -31,6 +31,8 @@ pub struct LuaReport {
     pub draft: Draft,
     #[serde(default)]
     pub monitors: Vec<crate::monitor::Rule>,
+    #[serde(default)]
+    pub devices: Vec<crate::device::Spec>,
     pub declarations: Vec<Declaration>,
     pub diagnostics: Vec<Diagnostic>,
     pub opaque_effects: bool,
@@ -616,6 +618,64 @@ impl Projection<'_> {
         }
         Ok(())
     }
+    fn device(&mut self, node: Node<'_>) -> Result<(), String> {
+        let args = node
+            .child_by_field_name("arguments")
+            .map(named)
+            .unwrap_or_default();
+        let parsed = (|| -> Result<crate::device::Spec, String> {
+            if args.len() != 1 || args[0].kind() != "table_constructor" {
+                return Err("Device call needs a static table".into());
+            }
+            let Some(Expr::Table(entries)) = evaluate(args[0], self.source, &self.env, 0) else {
+                return Err("Device expression is unresolved; it was not executed".into());
+            };
+            let fields = crate::device::catalogue(&self.report.draft.version);
+            let mut spec = crate::device::Spec::new(
+                &format!("source-device-{}", self.report.devices.len()),
+                "",
+            );
+            for (key, expr) in entries {
+                let Key::Name(key) = key else {
+                    return Err("Device keys need field names".into());
+                };
+                if key == "name" {
+                    let Expr::Text(name) = expr else {
+                        return Err("Device name needs a static string".into());
+                    };
+                    spec.name = name;
+                } else {
+                    let setting = fields
+                        .iter()
+                        .find(|s| s.lua_key == key)
+                        .ok_or("Unknown audited device field")?;
+                    let value = typed(setting, expr).ok_or("Invalid device field type or value")?;
+                    spec.fields.insert(key, value);
+                }
+            }
+            spec.validate(&self.report.draft.version)?;
+            Ok(spec)
+        })();
+        match parsed {
+            Ok(spec) => {
+                if self.report.devices.len() >= crate::device::MAX_DEVICES {
+                    return Err("Too many device declarations".into());
+                }
+                self.report.devices.push(spec);
+            }
+            Err(e) => {
+                self.report.opaque_effects = true;
+                self.diagnostic(node, &e);
+                if args
+                    .iter()
+                    .any(|n| evaluate(*n, self.source, &self.env, 0).is_none())
+                {
+                    self.api_available = false;
+                }
+            }
+        }
+        Ok(())
+    }
     fn statement(&mut self, node: Node<'_>) -> Result<(), String> {
         match node.kind() {
             "comment" | "hash_bang_line" | "empty_statement" => {}
@@ -673,7 +733,9 @@ impl Projection<'_> {
                 let Some(name) = node.child_by_field_name("name") else {
                     return Ok(());
                 };
-                if text(name, self.source) == "hl.monitor" && self.api_available {
+                if text(name, self.source) == "hl.device" && self.api_available {
+                    self.device(node)?;
+                } else if text(name, self.source) == "hl.monitor" && self.api_available {
                     self.monitor(node)?;
                 } else if text(name, self.source) == "hl.config" && self.api_available {
                     let args = node
@@ -766,6 +828,7 @@ pub fn parse(source: &str, version: &str, catalogue: &[Setting]) -> Result<LuaRe
             source_sha256: source_hash(source),
             draft: Draft::new(version),
             monitors: vec![],
+            devices: vec![],
             declarations: vec![],
             diagnostics: vec![],
             opaque_effects: false,
@@ -793,6 +856,7 @@ impl LuaDocument {
             return Err("Invalid or stale parser report".into());
         }
         report.draft.validate(catalogue)?;
+        crate::device::validate(&report.devices, &report.draft.version)?;
         for rule in &report.monitors {
             rule.validate(&report.draft.version)?;
         }

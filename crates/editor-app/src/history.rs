@@ -19,6 +19,10 @@ pub(super) enum Undo {
         origin: SourceIdentity,
         document_bytes: usize,
     },
+    Devices {
+        previous: Vec<hyprland_editor_core::device::Spec>,
+        retained_bytes: usize,
+    },
     Monitors {
         previous: Vec<hyprland_editor_core::monitor::Rule>,
         retained_bytes: usize,
@@ -66,6 +70,20 @@ fn monitor_bytes(rules: &Vec<hyprland_editor_core::monitor::Rule>) -> usize {
             })
             .sum::<usize>()
 }
+fn device_bytes(specs: &Vec<hyprland_editor_core::device::Spec>) -> usize {
+    specs.capacity() * size_of::<hyprland_editor_core::device::Spec>()
+        + specs
+            .iter()
+            .map(|s| {
+                512 + s.id.capacity()
+                    + s.name.capacity()
+                    + s.fields
+                        .iter()
+                        .map(|(k, v)| 256 + size_of::<Value>() + k.capacity() + value_bytes(v))
+                        .sum::<usize>()
+            })
+            .sum::<usize>()
+}
 fn document_bytes(doc: &LuaDocument) -> usize {
     let r = &doc.report;
     // Include Arc headers and conservative slack for partly filled B-tree nodes.
@@ -73,6 +91,7 @@ fn document_bytes(doc: &LuaDocument) -> usize {
         + 1056
         + doc.source.capacity()
         + monitor_bytes(&r.monitors)
+        + device_bytes(&r.devices)
         + r.source_sha256.capacity()
         + r.draft.version.capacity()
         + r.draft
@@ -105,7 +124,9 @@ impl Undo {
                         + changes_bytes(changes)
                         + origin_bytes(origin)
                 }
-                Self::Monitors { retained_bytes, .. } => *retained_bytes,
+                Self::Monitors { retained_bytes, .. } | Self::Devices { retained_bytes, .. } => {
+                    *retained_bytes
+                }
             }
     }
 }
@@ -168,6 +189,16 @@ impl History {
         self.push(Undo::Field {
             id: id.into(),
             previous,
+        })
+    }
+    pub fn devices(
+        &mut self,
+        previous: Vec<hyprland_editor_core::device::Spec>,
+    ) -> Result<(), String> {
+        let retained_bytes = device_bytes(&previous);
+        self.push(Undo::Devices {
+            previous,
+            retained_bytes,
         })
     }
     pub fn monitors(
@@ -296,6 +327,25 @@ mod tests {
         );
         assert!(history.monitors(vec![oversized]).is_err());
         assert!(matches!(history.pop(),Some(Undo::Field {id,..})if id=="kept"));
+    }
+    #[test]
+    fn device_inverse_preserves_order_and_refuses_excess_capacity() {
+        let mut history = History::default();
+        let a = hyprland_editor_core::device::Spec::new("a", "keyboard");
+        let b = hyprland_editor_core::device::Spec::new("b", "pointer");
+        history.devices(vec![a.clone(), b.clone()]).unwrap();
+        let Undo::Devices { previous, .. } = history.pop().unwrap() else {
+            panic!("device undo")
+        };
+        assert_eq!(previous, vec![a, b]);
+        history.field("kept", None).unwrap();
+        let mut oversized = hyprland_editor_core::device::Spec::new("large", "pointer");
+        oversized.fields.insert(
+            "tags".into(),
+            Value::String(String::with_capacity(MAX_BYTES + 1)),
+        );
+        assert!(history.devices(vec![oversized]).is_err());
+        assert!(matches!(history.pop(),Some(Undo::Field{id,..})if id=="kept"));
     }
     #[test]
     fn oversized_inverse_is_refused_without_discarding_existing_history() {

@@ -1,4 +1,6 @@
 mod controls;
+mod device_forms;
+mod devices;
 mod history;
 mod monitors;
 mod presentation;
@@ -28,6 +30,8 @@ struct State {
     saved: BTreeMap<String, BTreeMap<String, Value>>,
     monitors: BTreeMap<String, Vec<hyprland_editor_core::monitor::Rule>>,
     saved_monitors: BTreeMap<String, Vec<hyprland_editor_core::monitor::Rule>>,
+    devices: BTreeMap<String, Vec<hyprland_editor_core::device::Spec>>,
+    saved_devices: BTreeMap<String, Vec<hyprland_editor_core::device::Spec>>,
 }
 impl State {
     fn dirty_version(&self, version: &str) -> bool {
@@ -52,7 +56,15 @@ impl State {
             .get(version)
             .map(Vec::as_slice)
             .unwrap_or(&[]);
-        values_changed || source_changed || monitors != saved_monitors
+        values_changed
+            || source_changed
+            || monitors != saved_monitors
+            || self.devices.get(version).map(Vec::as_slice).unwrap_or(&[])
+                != self
+                    .saved_devices
+                    .get(version)
+                    .map(Vec::as_slice)
+                    .unwrap_or(&[])
     }
     fn dirty(&self) -> bool {
         self.dirty_version(&self.draft.version) || self.drafts.keys().any(|v| self.dirty_version(v))
@@ -120,11 +132,50 @@ impl State {
                 self.sources.insert(version.clone(), document);
                 self.source_origins.insert(version, origin);
             }
+            history::Undo::Devices { previous, .. } => {
+                self.devices.insert(self.draft.version.clone(), previous);
+            }
             history::Undo::Monitors { previous, .. } => {
                 self.monitors.insert(self.draft.version.clone(), previous);
             }
         }
         self.generation += 1;
+    }
+    fn export_lua(&self) -> Result<String, String> {
+        let mut text = self.draft.export_lua(&self.catalogue)?;
+        if let Some(rules) = self.monitors.get(&self.draft.version) {
+            if !rules.is_empty() {
+                text.push_str(&hyprland_editor_core::monitor::export_lua(
+                    rules,
+                    &self.draft.version,
+                )?);
+            }
+        }
+        if let Some(specs) = self.devices.get(&self.draft.version) {
+            text.push_str(&hyprland_editor_core::device::export_lua(
+                specs,
+                &self.draft.version,
+            )?);
+        }
+        Ok(text)
+    }
+    fn replace_devices(
+        &mut self,
+        specs: Vec<hyprland_editor_core::device::Spec>,
+    ) -> Result<(), String> {
+        hyprland_editor_core::device::validate(&specs, &self.draft.version)?;
+        let before = self
+            .devices
+            .get(&self.draft.version)
+            .cloned()
+            .unwrap_or_default();
+        if before == specs {
+            return Ok(());
+        }
+        self.undo.devices(before)?;
+        self.devices.insert(self.draft.version.clone(), specs);
+        self.generation += 1;
+        Ok(())
     }
     fn replace_monitors(
         &mut self,
@@ -162,7 +213,7 @@ fn label(text: &str) -> gtk::Label {
 fn summary(state: &Shared, status: &gtk::Label) {
     let s = state.borrow();
     status.set_text(&format!(
-        "{} {} in draft{} · {}",
+        "{} {} in draft{}{} · {}",
         s.draft.values.len(),
         if s.draft.values.len() == 1 {
             "setting"
@@ -173,6 +224,10 @@ fn summary(state: &Shared, status: &gtk::Label) {
             .get(&s.draft.version)
             .filter(|m| !m.is_empty())
             .map_or(String::new(), |m| format!(" · {} monitor rules", m.len())),
+        s.devices
+            .get(&s.draft.version)
+            .filter(|d| !d.is_empty())
+            .map_or(String::new(), |d| format!(" · {} device rules", d.len())),
         if s.dirty_version(&s.draft.version) {
             "Unsaved changes"
         } else {
@@ -434,6 +489,8 @@ fn initial_state() -> Shared {
         saved: BTreeMap::new(),
         monitors: BTreeMap::new(),
         saved_monitors: BTreeMap::new(),
+        devices: BTreeMap::new(),
+        saved_devices: BTreeMap::new(),
     }))
 }
 fn build(app: &adw::Application) -> adw::ApplicationWindow {
@@ -742,7 +799,7 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     let win = window.downgrade();
     review.connect_clicked(move |_|{
         let Some(win) = win.upgrade() else { return; };
-        let state=s.borrow();let rules=state.monitors.get(&state.draft.version).map(Vec::as_slice).unwrap_or(&[]);let result=state.draft.export_lua(&state.catalogue).and_then(|mut text| { if !rules.is_empty() { text.push_str(&hyprland_editor_core::monitor::export_lua(rules,&state.draft.version)?); } Ok(text) });match result{Ok(lua)=>{
+        let state=s.borrow();let result=state.export_lua();match result{Ok(lua)=>{
             let dialog=adw::Window::builder().title("Review draft overrides").transient_for(&win).modal(true).default_width(720).default_height(560).build();let b=gtk::Box::new(gtk::Orientation::Vertical,12);b.set_margin_top(16);b.set_margin_bottom(16);b.set_margin_start(16);b.set_margin_end(16);b.append(&label("These are draft overrides, not a diff against the running compositor. Copying does not apply them."));let text=gtk::TextView::builder().editable(false).monospace(true).wrap_mode(gtk::WrapMode::WordChar).build();text.buffer().set_text(&lua);b.append(&gtk::ScrolledWindow::builder().child(&text).vexpand(true).build());let copy=gtk::Button::with_label("Copy reviewed Lua to clipboard");b.append(&copy);let w=dialog.downgrade();copy.connect_clicked(move |_|{if let Some(w)=w.upgrade(){w.clipboard().set_text(&lua);}});dialog.set_content(Some(&b));dialog.present();
         },Err(e)=>notice(&win,"Invalid draft",&e)}
     });
@@ -754,6 +811,8 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     let diagnostics = gtk::Button::with_label("Import Diagnostics");
     let reattach = gtk::Button::with_label("Verify Source File");
     let reconcile = gtk::Button::with_label("Compare Changed Source");
+    let device_editor = gtk::Button::with_label("Edit Devices");
+    devices::connect(&device_editor, &window, &state, &status);
     let monitor_editor = gtk::Button::with_label("Edit Monitors");
     workflow::connect_live(&live, &window, &state, &status, &selection, &panel);
     workflow::connect_source_copy(&source_copy, &window, &state);
@@ -773,6 +832,7 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
         ("reattach-source", &reattach),
         ("reconcile-source", &reconcile),
         ("monitors", &monitor_editor),
+        ("devices", &device_editor),
     ] {
         presentation::bridge(&window, name, button);
     }
@@ -1089,6 +1149,7 @@ mod tests {
         workflow::test_source_persistence(&window);
         reconciliation::test_review(&window);
         monitors::test_editor(&window);
+        devices::test_editor(&window);
         window.close();
         assert!(
             window.is_visible(),

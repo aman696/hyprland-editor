@@ -11,3 +11,7 @@ On resume, first finish verification of the exact checkpoint: formatting, ordina
 Then continue devices, bindings, rules and animations. Monitor detection/effective rules, legacy monitor import, monitor source-span editing/reconciliation, isolated compositor preview, guarded apply/recovery, resource targets and the original full completion register remain open. No defensible overall completion percentage is established.
 
 Uncommitted preview scaffolding was moved outside the build to ignored `.dev/paused-preview/editor-lab`; it is incomplete and unverified. Exact-source reference copies and local test logs are also ignored development artifacts. No extra runtime/background monitor was started; the private test display was cleaned up after testing.
+
+## Resumed work
+
+Monitor verification was completed and published to main as `b8637af`; its GitHub run passed. The subsequent 0.6 device work adds the 43-field/name editor, static Lua projection, schema-pinned storage/undo, linked installed keyboard choices, numeric curves and tag rows. Local 91-test/native/strict/release evidence is in validation.md. Review and hosted verification belong to the device-editor branch and its eventual exact commit. The next visible editors are bindings, rules and animations; all original full-project obligations remain open and the goal remains active.

@@ -93,7 +93,7 @@ pub(super) fn form(
             } else {
                 String::new()
             };
-            let w = gtk::Entry::builder().text(v).max_length(4096).build();
+            let w = gtk::Entry::builder().text(v).max_length(16384).build();
             accessible_name(&w, &name);
             box_.append(&w);
             Box::new(move || Ok(Value::String(w.text().into())))

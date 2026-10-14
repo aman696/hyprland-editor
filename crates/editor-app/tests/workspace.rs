@@ -234,3 +234,31 @@ fn monitor_drafts_survive_actual_application_reopen_without_replacing_them_with_
     );
     fs::remove_dir_all(root).unwrap();
 }
+
+#[test]
+fn device_drafts_survive_application_reopen_and_schema_drift_is_rejected() {
+    use hyprland_editor_core::device::Spec;
+    let root = folder();
+    let source = "hl.device{name='keyboard',kb_layout='us'}";
+    let mut spec = Spec::new("edited", "keyboard");
+    spec.fields
+        .insert("kb_layout".into(), Value::String("de".into()));
+    let snapshot = fixture(&root, source).with_devices(vec![spec.clone()]);
+    let path = workspace::save(&root, &snapshot, &catalogue()).unwrap();
+    fs::remove_file(root.join("original.lua")).unwrap();
+    let (success, output, error) = run(&path);
+    assert!(success, "{error}");
+    let result: serde_json::Value = serde_json::from_str(&output).unwrap();
+    assert_eq!(result["device_rules"], 1);
+    assert_eq!(result["source_reparsed"], true);
+    assert_eq!(
+        workspace::read(&path, &catalogue()).unwrap().devices,
+        vec![spec]
+    );
+    let mut forged: serde_json::Value =
+        serde_json::from_slice(&snapshot.to_json(&catalogue()).unwrap()).unwrap();
+    forged["device_schema_sha256"] = serde_json::json!("0".repeat(64));
+    fs::write(&path, forged.to_string()).unwrap();
+    assert!(!run(&path).0);
+    fs::remove_dir_all(root).unwrap();
+}

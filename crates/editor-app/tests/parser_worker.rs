@@ -131,3 +131,46 @@ fn actual_restricted_worker_projects_monitors_and_keeps_unknown_calls_inert() {
     assert_eq!(parsed["Parsed"]["monitors"], json!([]));
     assert!(!marker.exists());
 }
+
+#[test]
+fn actual_worker_projects_devices_and_rejects_external_keyboard_entities() {
+    let source="hl.device{name='USB keyboard',kb_layout='us,de',kb_variant='dvorak,',sensitivity=0.5};hl.monitor{output='DP-1'}";
+    let parsed = request(json!({"Parse":{"source":source,"version":"0.56.2"}}));
+    assert_eq!(parsed["Parsed"]["devices"][0]["name"], "USB keyboard");
+    assert_eq!(
+        parsed["Parsed"]["devices"][0]["fields"]["kb_variant"]["value"],
+        "dvorak,"
+    );
+    assert_eq!(parsed["Parsed"]["opaque_effects"], false);
+    let registry =
+        request(json!({"ParseRegistry":{"xml":include_str!("fixtures/xkb-registry.xml")}}));
+    assert_eq!(
+        registry["Registry"]["layouts"][0]["variants"][0]["id"],
+        "dvorak"
+    );
+    let xml="<!DOCTYPE xkbConfigRegistry [<!ENTITY leak SYSTEM 'file:///etc/passwd'>]><xkbConfigRegistry>&leak;</xkbConfigRegistry>";
+    let result = request(json!({"ParseRegistry":{"xml":xml}}));
+    assert!(result["Error"].is_string());
+    let oversized = request(json!({"ParseRegistry":{"xml":" ".repeat(1024*1024+1)}}));
+    assert!(oversized["Error"].is_string());
+}
+#[test]
+fn installed_keyboard_registry_is_parsed_by_the_restricted_worker_when_available() {
+    let path = std::path::Path::new("/usr/share/X11/xkb/rules/evdev.xml");
+    if !path.is_file() {
+        return;
+    }
+    let xml = hyprland_editor_core::storage::read_source(path)
+        .unwrap()
+        .content;
+    let result = request(json!({"ParseRegistry":{"xml":xml}}));
+    assert!(
+        result["Registry"]["layouts"]
+            .as_array()
+            .is_some_and(|v| !v.is_empty()),
+        "{result}"
+    );
+    assert!(result["Registry"]["groups"]
+        .as_array()
+        .is_some_and(|v| !v.is_empty()));
+}

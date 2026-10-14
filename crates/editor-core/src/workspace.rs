@@ -57,6 +57,10 @@ pub struct Workspace {
     pub monitors: Vec<crate::monitor::Rule>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub monitor_schema_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub devices: Vec<crate::device::Spec>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub device_schema_sha256: Option<String>,
 }
 impl Workspace {
     pub fn new(draft: Draft) -> Self {
@@ -68,6 +72,8 @@ impl Workspace {
             sources: vec![],
             monitors: vec![],
             monitor_schema_sha256: None,
+            devices: vec![],
+            device_schema_sha256: None,
         }
     }
     pub fn with_root(mut self, content: String, origin: SourceIdentity) -> Self {
@@ -86,6 +92,16 @@ impl Workspace {
         }
         self.draft.validate(catalogue)?;
         crate::monitor::validate(&self.monitors, &self.draft.version)?;
+        crate::device::validate(&self.devices, &self.draft.version)?;
+        let device_hash = crate::device::schema_hash();
+        if (!self.devices.is_empty() && self.device_schema_sha256.as_deref() != Some(&device_hash))
+            || self
+                .device_schema_sha256
+                .as_ref()
+                .is_some_and(|h| *h != device_hash)
+        {
+            return Err("Device schema differs from the audited fields".into());
+        }
         let monitor_hash = crate::monitor::schema_hash();
         if (!self.monitors.is_empty()
             && self.monitor_schema_sha256.as_deref() != Some(&monitor_hash))
@@ -148,6 +164,11 @@ impl Workspace {
         self.root_source
             .as_deref()
             .and_then(|id| self.sources.iter().find(|s| s.id == id))
+    }
+    pub fn with_devices(mut self, devices: Vec<crate::device::Spec>) -> Self {
+        self.device_schema_sha256 = (!devices.is_empty()).then(crate::device::schema_hash);
+        self.devices = devices;
+        self
     }
     pub fn with_monitors(mut self, monitors: Vec<crate::monitor::Rule>) -> Self {
         self.monitor_schema_sha256 = (!monitors.is_empty()).then(crate::monitor::schema_hash);
