@@ -345,3 +345,26 @@ fn rule_declarations_survive_application_reopen_without_accessing_original_and_r
     assert!(!run(&path).0);
     fs::remove_dir_all(root).unwrap();
 }
+
+#[test]
+fn animation_declarations_survive_restricted_application_reopen_and_refuse_schema_tampering() {
+    let root = folder();
+    let source="hl.curve('ease',{type='bezier',points={{0.25,0.1},{0.25,1}}});hl.animation{leaf='windows',enabled=true,speed=5,bezier='ease',style='slide'}";
+    let report = lua::parse(source, BASELINE, &catalogue()).unwrap();
+    assert!(!report.opaque_effects);
+    let mut snapshot = fixture(&root, source).with_animations(report.animations.clone());
+    std::fs::remove_file(root.join("original.lua")).unwrap();
+    let path = workspace::save(&root, &snapshot, &catalogue()).unwrap();
+    let (ok, out, err) = run(&path);
+    assert!(ok, "{err}");
+    let result: serde_json::Value = serde_json::from_str(&out).unwrap();
+    assert_eq!(result["animation_declarations"], 2);
+    assert_eq!(result["source_reparsed"], true);
+    assert_eq!(result["original_paths_opened"], false);
+    snapshot.animation_schema_sha256 = Some("0".repeat(64));
+    std::fs::write(&path, serde_json::to_vec(&snapshot).unwrap()).unwrap();
+    let (ok, _, err) = run(&path);
+    assert!(!ok);
+    assert!(err.contains("Animation schema"));
+    std::fs::remove_dir_all(root).unwrap();
+}

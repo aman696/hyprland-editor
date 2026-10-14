@@ -13,6 +13,23 @@
   },
   "foundations": [
     {
+      "area": "animation draft editor",
+      "code": [
+        "crates/editor-core/src/animation.rs",
+        "crates/editor-app/src/animations.rs",
+        "data/animation-semantics.json",
+        "data/animation-source-fixtures.json"
+      ],
+      "test_references": [
+        "every_source_node_round_trips_and_whole_node_overrides_have_required_enabled",
+        "static_models_match_independent_source_binding_tree_observations",
+        "test_editor",
+        "animation_declarations_survive_restricted_application_reopen_and_refuse_schema_tampering",
+        "scripts/animation_source_probe.py"
+      ],
+      "limits": "34 public nodes and one internal node per snapshot, ordered node/Bézier/spring drafts, inherited whole-node resolution, duration explanation, style presets, curve diagrams/dragging, private persistence and undo; no full numeric/style/source/runtime conformance, compositor preview, live apply/recovery, accessibility or resource/release certificates"
+    },
+    {
       "area": "window/layer rule draft editor",
       "code": [
         "crates/editor-core/src/rule.rs",
@@ -15039,7 +15056,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15061,7 +15078,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15083,7 +15100,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15105,7 +15122,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15127,7 +15144,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15149,7 +15166,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15171,7 +15188,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15193,7 +15210,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15215,7 +15232,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15237,7 +15254,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15259,7 +15276,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15281,7 +15298,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15303,7 +15320,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15325,7 +15342,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15347,7 +15364,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15369,7 +15386,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15391,7 +15408,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15413,7 +15430,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15435,7 +15452,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15457,7 +15474,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15479,7 +15496,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15501,7 +15518,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15523,7 +15540,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15545,7 +15562,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15567,7 +15584,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15589,7 +15606,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15611,7 +15628,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15633,7 +15650,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15655,7 +15672,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15677,7 +15694,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15699,7 +15716,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15721,7 +15738,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15743,7 +15760,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15765,7 +15782,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15787,7 +15804,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15809,7 +15826,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15831,7 +15848,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15853,7 +15870,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15875,7 +15892,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15897,7 +15914,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15919,7 +15936,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15941,7 +15958,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed animation node/curve drafts, source-derived inheritance/timing, graphical controls, ordered static projection and schema-pinned storage; full source/style/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },

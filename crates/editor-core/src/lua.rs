@@ -39,6 +39,8 @@ pub struct LuaReport {
     pub workspace_rules: Vec<crate::workspace_rule::Rule>,
     #[serde(default)]
     pub rules: Vec<crate::rule::Rule>,
+    #[serde(default)]
+    pub animations: crate::animation::Draft,
     pub declarations: Vec<Declaration>,
     pub diagnostics: Vec<Diagnostic>,
     pub opaque_effects: bool,
@@ -422,6 +424,8 @@ struct Projection<'a> {
     api_available: bool,
     call: usize,
     submap: Option<String>,
+    animation_beziers: std::collections::BTreeSet<String>,
+    animation_springs: std::collections::BTreeSet<String>,
 }
 impl Projection<'_> {
     fn diagnostic(&mut self, node: Node<'_>, message: &str) {
@@ -670,6 +674,213 @@ impl Projection<'_> {
                     return Err("Too many device declarations".into());
                 }
                 self.report.devices.push(spec);
+            }
+            Err(e) => {
+                self.report.opaque_effects = true;
+                self.diagnostic(node, &e);
+                if args
+                    .iter()
+                    .any(|n| evaluate(*n, self.source, &self.env, 0).is_none())
+                {
+                    self.api_available = false;
+                }
+            }
+        }
+        Ok(())
+    }
+    fn animation(&mut self, node: Node<'_>, curve: bool) -> Result<(), String> {
+        use crate::animation::{Curve, CurveKind, Declaration, Node as AnimationNode, Operation};
+        let args = node
+            .child_by_field_name("arguments")
+            .map(named)
+            .unwrap_or_default();
+        let parsed = (|| -> Result<Operation, String> {
+            let literal = |value: Expr| match value {
+                Expr::Bool(v) => Some(Value::Bool(v)),
+                Expr::Int(v) => Some(Value::Int(v)),
+                Expr::Float(v) => Some(Value::Float(v)),
+                Expr::Text(v) => Some(Value::String(v)),
+                _ => None,
+            };
+            if curve {
+                if args.len() != 2 {
+                    return Err("Curve requires a literal name and one static table".into());
+                }
+                let Some(Expr::Text(name)) = evaluate(args[0], self.source, &self.env, 0) else {
+                    return Err("Curve name coercion is unresolved".into());
+                };
+                let Some(Expr::Table(entries)) = evaluate(args[1], self.source, &self.env, 0)
+                else {
+                    return Err("Curve expression is unresolved".into());
+                };
+                let mut fields = BTreeMap::new();
+                for (key, value) in entries {
+                    let Key::Name(key) = key else {
+                        return Err("Curve fields must be named".into());
+                    };
+                    if fields.insert(key, value).is_some() {
+                        return Err("Duplicate curve field".into());
+                    }
+                }
+                let Some(Expr::Text(kind)) = fields.remove("type") else {
+                    return Err("Curve type is required".into());
+                };
+                let shape = match kind.as_str() {
+                    "bezier" => {
+                        let Some(Expr::Table(points)) = fields.remove("points") else {
+                            return Err("Bézier points are required".into());
+                        };
+                        if points.len() != 2 {
+                            return Err("Bézier needs two points".into());
+                        }
+                        let p =
+                            array(&points, 2).ok_or("Bézier points must be a contiguous array")?;
+                        let point = |p: &Expr| -> Result<[Value; 2], String> {
+                            let Expr::Table(p) = p else {
+                                return Err("Bézier point needs two coordinates".into());
+                            };
+                            if p.len() != 2 {
+                                return Err("Bézier point needs two coordinates".into());
+                            }
+                            let p = array(p, 2).ok_or("Bézier coordinate array is ambiguous")?;
+                            Ok([
+                                literal(p[0].clone()).ok_or("Unresolved coordinate")?,
+                                literal(p[1].clone()).ok_or("Unresolved coordinate")?,
+                            ])
+                        };
+                        CurveKind::Bezier {
+                            points: [point(p[0])?, point(p[1])?],
+                        }
+                    }
+                    "spring" => {
+                        let stiffness = literal(
+                            fields
+                                .remove("stiffness")
+                                .ok_or("Spring stiffness is required")?,
+                        )
+                        .ok_or("Unresolved stiffness")?;
+                        let mass = literal(fields.remove("mass").ok_or("Spring mass is required")?)
+                            .ok_or("Unresolved mass")?;
+                        let alias = self.report.draft.version == crate::BASELINE
+                            || !fields.contains_key("damping")
+                            || matches!(fields.get("damping"), Some(Expr::Nil));
+                        if alias {
+                            fields.remove("damping");
+                        }
+                        let damping = literal(
+                            fields
+                                .remove(if alias { "dampening" } else { "damping" })
+                                .ok_or("Spring damping is required")?,
+                        )
+                        .ok_or("Unresolved damping")?;
+                        CurveKind::Spring {
+                            stiffness,
+                            damping,
+                            mass,
+                            dampening_alias: alias,
+                        }
+                    }
+                    _ => return Err("Curve type is outside the selected API".into()),
+                };
+                if !fields.is_empty() {
+                    return Err("Unmodeled curve fields remain in the source".into());
+                }
+                Ok(Operation::Curve(Curve { name, shape }))
+            } else {
+                if args.len() != 1 {
+                    return Err("Animation requires one static table".into());
+                }
+                let Some(Expr::Table(entries)) = evaluate(args[0], self.source, &self.env, 0)
+                else {
+                    return Err("Animation expression is unresolved".into());
+                };
+                let mut fields = BTreeMap::new();
+                for (key, value) in entries {
+                    let Key::Name(key) = key else {
+                        return Err("Animation fields must be named".into());
+                    };
+                    if fields.insert(key, value).is_some() {
+                        return Err("Duplicate animation field".into());
+                    }
+                }
+                let Some(Expr::Text(leaf)) = fields.remove("leaf") else {
+                    return Err("Animation leaf is required".into());
+                };
+                let enabled = literal(
+                    fields
+                        .remove("enabled")
+                        .ok_or("Animation enabled is required")?,
+                )
+                .ok_or("Unresolved enabled value")?;
+                let speed = match fields.remove("speed") {
+                    None | Some(Expr::Nil) => None,
+                    Some(value) => Some(literal(value).ok_or("Unresolved speed")?),
+                };
+                let mut string = |key: &str| -> Result<Option<String>, String> {
+                    match fields.remove(key) {
+                        None | Some(Expr::Nil) => Ok(None),
+                        Some(Expr::Text(s)) => Ok(Some(s)),
+                        _ => Err(format!("Unresolved animation {key} coercion")),
+                    }
+                };
+                let bezier = string("bezier")?;
+                let spring = string("spring")?;
+                let style = string("style")?;
+                if !fields.is_empty() {
+                    return Err("Unmodeled animation fields remain in source".into());
+                }
+                Ok(Operation::Node(AnimationNode {
+                    leaf,
+                    enabled,
+                    speed,
+                    bezier,
+                    spring,
+                    style,
+                }))
+            }
+        })();
+        let parsed = parsed.and_then(|operation| {
+            if self.report.animations.declarations.len() >= crate::animation::MAX_OPERATIONS {
+                return Err("Too many animation declarations".into());
+            }
+            match &operation {
+                Operation::Curve(c) => c.validate()?,
+                Operation::Node(n) => {
+                    n.validate(&self.report.draft.version)?;
+                    if crate::animation::enabled(&n.enabled)? {
+                        if let Some(name) = &n.bezier {
+                            if !self.animation_beziers.contains(name) {
+                                return Err("Bézier reference is not yet registered".into());
+                            }
+                        } else if let Some(name) = &n.spring {
+                            if !self.animation_springs.contains(name) {
+                                return Err("Spring reference is not yet registered".into());
+                            }
+                        }
+                    }
+                }
+            }
+            Ok(Declaration {
+                id: format!(
+                    "source-animation-{}",
+                    self.report.animations.declarations.len()
+                ),
+                operation,
+            })
+        });
+        match parsed {
+            Ok(declaration) => {
+                if let Operation::Curve(c) = &declaration.operation {
+                    match c.shape {
+                        CurveKind::Bezier { .. } => {
+                            self.animation_beziers.insert(c.name.clone());
+                        }
+                        CurveKind::Spring { .. } => {
+                            self.animation_springs.insert(c.name.clone());
+                        }
+                    }
+                }
+                self.report.animations.declarations.push(declaration);
             }
             Err(e) => {
                 self.report.opaque_effects = true;
@@ -1314,6 +1525,10 @@ impl Projection<'_> {
                     self.binding(node)?;
                 } else if text(name, self.source) == "hl.define_submap" && self.api_available {
                     self.submap(node)?;
+                } else if text(name, self.source) == "hl.curve" && self.api_available {
+                    self.animation(node, true)?;
+                } else if text(name, self.source) == "hl.animation" && self.api_available {
+                    self.animation(node, false)?;
                 } else if text(name, self.source) == "hl.window_rule" && self.api_available {
                     self.match_effect_rule(node, crate::rule::Kind::Window)?;
                 } else if text(name, self.source) == "hl.layer_rule" && self.api_available {
@@ -1419,6 +1634,7 @@ pub fn parse(source: &str, version: &str, catalogue: &[Setting]) -> Result<LuaRe
             bindings: crate::binding::Draft::default(),
             workspace_rules: vec![],
             rules: vec![],
+            animations: Default::default(),
             declarations: vec![],
             diagnostics: vec![],
             opaque_effects: false,
@@ -1426,10 +1642,13 @@ pub fn parse(source: &str, version: &str, catalogue: &[Setting]) -> Result<LuaRe
         api_available: true,
         call: 0,
         submap: None,
+        animation_beziers: ["default".into(), "linear".into()].into(),
+        animation_springs: ["default".into()].into(),
     };
     for node in named(tree.root_node()) {
         p.statement(node)?;
     }
+    p.report.animations.validate(version)?;
     crate::rule::validate(&p.report.rules, version)?;
     p.report.draft.validate(catalogue)?;
     p.report.bindings.validate(version)?;
@@ -1449,6 +1668,7 @@ impl LuaDocument {
         {
             return Err("Invalid or stale parser report".into());
         }
+        report.animations.validate(&report.draft.version)?;
         crate::rule::validate(&report.rules, &report.draft.version)?;
         report.draft.validate(catalogue)?;
         crate::device::validate(&report.devices, &report.draft.version)?;

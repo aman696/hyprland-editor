@@ -19,6 +19,10 @@ pub(super) enum Undo {
         origin: SourceIdentity,
         document_bytes: usize,
     },
+    Animations {
+        previous: hyprland_editor_core::animation::Draft,
+        retained_bytes: usize,
+    },
     Rules {
         previous: Vec<hyprland_editor_core::rule::Rule>,
         retained_bytes: usize,
@@ -94,6 +98,46 @@ fn workspace_bytes(rules: &Vec<hyprland_editor_core::workspace_rule::Rule>) -> u
                         .chain(r.layout_options.iter())
                         .map(|(k, v)| 256 + size_of::<Value>() + k.capacity() + value_bytes(v))
                         .sum::<usize>()
+            })
+            .sum::<usize>()
+}
+fn animation_bytes(draft: &hyprland_editor_core::animation::Draft) -> usize {
+    use hyprland_editor_core::animation::{CurveKind, Operation};
+    draft.declarations.capacity() * size_of::<hyprland_editor_core::animation::Declaration>()
+        + draft
+            .declarations
+            .iter()
+            .map(|d| {
+                d.id.capacity()
+                    + match &d.operation {
+                        Operation::Node(n) => {
+                            n.leaf.capacity()
+                                + value_bytes(&n.enabled)
+                                + n.speed.as_ref().map_or(0, value_bytes)
+                                + [&n.bezier, &n.spring, &n.style]
+                                    .into_iter()
+                                    .flatten()
+                                    .map(String::capacity)
+                                    .sum::<usize>()
+                        }
+                        Operation::Curve(c) => {
+                            c.name.capacity()
+                                + match &c.shape {
+                                    CurveKind::Bezier { points } => {
+                                        points.iter().flatten().map(value_bytes).sum::<usize>()
+                                    }
+                                    CurveKind::Spring {
+                                        stiffness,
+                                        damping,
+                                        mass,
+                                        ..
+                                    } => [stiffness, damping, mass]
+                                        .into_iter()
+                                        .map(value_bytes)
+                                        .sum::<usize>(),
+                                }
+                        }
+                    }
             })
             .sum::<usize>()
 }
@@ -193,6 +237,7 @@ fn document_bytes(doc: &LuaDocument) -> usize {
         + bindings_bytes(&r.bindings)
         + workspace_bytes(&r.workspace_rules)
         + rule_bytes(&r.rules)
+        + animation_bytes(&r.animations)
         + r.source_sha256.capacity()
         + r.draft.version.capacity()
         + r.draft
@@ -225,7 +270,8 @@ impl Undo {
                         + changes_bytes(changes)
                         + origin_bytes(origin)
                 }
-                Self::Rules { retained_bytes, .. }
+                Self::Animations { retained_bytes, .. }
+                | Self::Rules { retained_bytes, .. }
                 | Self::Bindings { retained_bytes, .. }
                 | Self::Workspaces { retained_bytes, .. } => *retained_bytes,
                 Self::Monitors { retained_bytes, .. } | Self::Devices { retained_bytes, .. } => {
@@ -239,6 +285,16 @@ pub(super) struct History {
     entries: VecDeque<Undo>,
 }
 impl History {
+    pub fn animations(
+        &mut self,
+        previous: hyprland_editor_core::animation::Draft,
+    ) -> Result<(), String> {
+        let retained_bytes = animation_bytes(&previous);
+        self.push(Undo::Animations {
+            previous,
+            retained_bytes,
+        })
+    }
     pub fn rules(&mut self, previous: Vec<hyprland_editor_core::rule::Rule>) -> Result<(), String> {
         let retained_bytes = rule_bytes(&previous);
         self.push(Undo::Rules {

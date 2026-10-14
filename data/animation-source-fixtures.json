@@ -1,0 +1,5143 @@
+{
+  "format": "hye-animation-source-fixtures-1",
+  "meaning": "Actual pinned animation binding/numeric/style/tree functions with inert curve registry, literal-string adapter and std pointer adapter; no renderer or compositor behavior certificate.",
+  "cases": [
+    {
+      "version": "baseline",
+      "case": "defaults",
+      "source": "",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "__internal_fadeCTM",
+          "parent": null,
+          "origin": "__internal_fadeCTM",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "border",
+          "parent": "global",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "borderangle",
+          "parent": "global",
+          "origin": "borderangle",
+          "overridden": true,
+          "enabled": false,
+          "speed": 1,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fade",
+          "parent": "global",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeDim",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeDpms",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeGlow",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeIn",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeLayers",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeLayersIn",
+          "parent": "fadeLayers",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeLayersOut",
+          "parent": "fadeLayers",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeOut",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadePopups",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadePopupsIn",
+          "parent": "fadePopups",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadePopupsOut",
+          "parent": "fadePopups",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeShadow",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeSwitch",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "global",
+          "parent": null,
+          "origin": "global",
+          "overridden": true,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "glowangle",
+          "parent": "global",
+          "origin": "glowangle",
+          "overridden": true,
+          "enabled": false,
+          "speed": 1,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "layers",
+          "parent": "global",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "layersIn",
+          "parent": "layers",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "layersOut",
+          "parent": "layers",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "monitorAdded",
+          "parent": "global",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "shadowangle",
+          "parent": "global",
+          "origin": "shadowangle",
+          "overridden": true,
+          "enabled": false,
+          "speed": 1,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "specialWorkspace",
+          "parent": "workspaces",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "specialWorkspaceIn",
+          "parent": "specialWorkspace",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "specialWorkspaceOut",
+          "parent": "specialWorkspace",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "workspaces",
+          "parent": "global",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "workspacesIn",
+          "parent": "workspaces",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "workspacesOut",
+          "parent": "workspaces",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "zoomFactor",
+          "parent": "global",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "missing-enabled",
+      "source": "hl.animation{leaf='windows',speed=8,bezier='default'}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "disabled-ignored",
+      "source": "hl.animation{leaf='windows',enabled=false,speed=-5,spring='missing',style='unknown'}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": false,
+          "speed": 1,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": false,
+          "speed": 1,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": false,
+          "speed": 1,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": false,
+          "speed": 1,
+          "curve": "default",
+          "style": ""
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "ancestor",
+      "source": "hl.animation{leaf='global',enabled=true,speed=3,bezier='linear'};hl.animation{leaf='windows',enabled=true,speed=5,bezier='default',style='slide'};hl.animation{leaf='windowsIn',enabled=false}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "border",
+          "parent": "global",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "fade",
+          "parent": "global",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "fadeDim",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "fadeDpms",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "fadeGlow",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "fadeIn",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "fadeLayers",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "fadeLayersIn",
+          "parent": "fadeLayers",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "fadeLayersOut",
+          "parent": "fadeLayers",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "fadeOut",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "fadePopups",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "fadePopupsIn",
+          "parent": "fadePopups",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "fadePopupsOut",
+          "parent": "fadePopups",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "fadeShadow",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "fadeSwitch",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "global",
+          "parent": null,
+          "origin": "global",
+          "overridden": true,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "layers",
+          "parent": "global",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "layersIn",
+          "parent": "layers",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "layersOut",
+          "parent": "layers",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "monitorAdded",
+          "parent": "global",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "specialWorkspace",
+          "parent": "workspaces",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "specialWorkspaceIn",
+          "parent": "specialWorkspace",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "specialWorkspaceOut",
+          "parent": "specialWorkspace",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windowsIn",
+          "overridden": true,
+          "enabled": false,
+          "speed": 1,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        },
+        {
+          "name": "workspaces",
+          "parent": "global",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "workspacesIn",
+          "parent": "workspaces",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "workspacesOut",
+          "parent": "workspaces",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "zoomFactor",
+          "parent": "global",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "bezier-bool",
+      "source": "hl.curve('ease',{type='bezier',points={{false,1},{0.25,1}}});hl.animation{leaf='windows',enabled=1,speed='5',bezier='ease'}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "ease",
+          "style": ""
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "ease",
+          "style": ""
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "ease",
+          "style": ""
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "ease",
+          "style": ""
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "bezier-before",
+      "source": "hl.animation{leaf='windows',enabled=true,speed=5,bezier='later'};hl.curve('later',{type='bezier',points={{0,0},{1,1}}})",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "dual-reference",
+      "source": "hl.animation{leaf='windows',enabled=true,speed=5,bezier='linear',spring='missing'}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "linear",
+          "style": ""
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "spring-old",
+      "source": "hl.curve('s',{type='spring',stiffness=250,dampening=25,mass=1});hl.animation{leaf='windows',enabled=true,speed=5,spring='s'}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "spring:s",
+          "style": ""
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "spring:s",
+          "style": ""
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "spring:s",
+          "style": ""
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "spring:s",
+          "style": ""
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "spring-new",
+      "source": "hl.curve('s',{type='spring',stiffness=250,damping=25,mass=1});hl.animation{leaf='windows',enabled=true,speed=5,spring='s'}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "spring-half",
+      "source": "hl.curve('s',{type='spring',stiffness=250,dampening=25,mass=0.5})",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "spring-f32-rounding",
+      "source": "hl.curve('s',{type='spring',stiffness=250,dampening=25,mass=0.50000000001})",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "spring-bool",
+      "source": "hl.curve('s',{type='spring',stiffness=true,dampening=25,mass=1})",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "speed-underflow",
+      "source": "hl.animation{leaf='windows',enabled=true,speed=1e-50,bezier='default'}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "bezier-edge",
+      "source": "hl.curve('s',{type='bezier',points={{-1,2},{0,1}}})",
+      "accepted": true,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "bezier-outside",
+      "source": "hl.curve('s',{type='bezier',points={{-1.01,2},{0,1}}})",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:windows:",
+      "source": "hl.animation{leaf=\"windows\",enabled=true,speed=5,bezier=\"default\",style=\"\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "style:windows:slide",
+      "source": "hl.animation{leaf=\"windows\",enabled=true,speed=5,bezier=\"default\",style=\"slide\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "style:windows:slidefade 80%",
+      "source": "hl.animation{leaf=\"windows\",enabled=true,speed=5,bezier=\"default\",style=\"slidefade 80%\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slidefade 80%"
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slidefade 80%"
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slidefade 80%"
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slidefade 80%"
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "style:windows:popin 80%",
+      "source": "hl.animation{leaf=\"windows\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80%\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin 80%"
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin 80%"
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin 80%"
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin 80%"
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "style:windows:popin 80% ",
+      "source": "hl.animation{leaf=\"windows\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80% \"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:windows:popin  80%",
+      "source": "hl.animation{leaf=\"windows\",enabled=true,speed=5,bezier=\"default\",style=\"popin  80%\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin  80%"
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin  80%"
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin  80%"
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin  80%"
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "style:windows:popin -2147483648%",
+      "source": "hl.animation{leaf=\"windows\",enabled=true,speed=5,bezier=\"default\",style=\"popin -2147483648%\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin -2147483648%"
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin -2147483648%"
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin -2147483648%"
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin -2147483648%"
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "style:windows:popin 2147483648%",
+      "source": "hl.animation{leaf=\"windows\",enabled=true,speed=5,bezier=\"default\",style=\"popin 2147483648%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:windows:popin 80%é",
+      "source": "hl.animation{leaf=\"windows\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80%é\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin 80%é"
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin 80%é"
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin 80%é"
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin 80%é"
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "style:windows:slide 80%é",
+      "source": "hl.animation{leaf=\"windows\",enabled=true,speed=5,bezier=\"default\",style=\"slide 80%é\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide 80%é"
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide 80%é"
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide 80%é"
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide 80%é"
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "style:windows:loop",
+      "source": "hl.animation{leaf=\"windows\",enabled=true,speed=5,bezier=\"default\",style=\"loop\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:windows:once",
+      "source": "hl.animation{leaf=\"windows\",enabled=true,speed=5,bezier=\"default\",style=\"once\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:windows:gnome",
+      "source": "hl.animation{leaf=\"windows\",enabled=true,speed=5,bezier=\"default\",style=\"gnome\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "gnome"
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "gnome"
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "gnome"
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "gnome"
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "style:windows:fade",
+      "source": "hl.animation{leaf=\"windows\",enabled=true,speed=5,bezier=\"default\",style=\"fade\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:layers:",
+      "source": "hl.animation{leaf=\"layers\",enabled=true,speed=5,bezier=\"default\",style=\"\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "layers",
+          "parent": "global",
+          "origin": "layers",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "layersIn",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "layersOut",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "style:layers:slide",
+      "source": "hl.animation{leaf=\"layers\",enabled=true,speed=5,bezier=\"default\",style=\"slide\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "layers",
+          "parent": "global",
+          "origin": "layers",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        },
+        {
+          "name": "layersIn",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        },
+        {
+          "name": "layersOut",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "style:layers:slidefade 80%",
+      "source": "hl.animation{leaf=\"layers\",enabled=true,speed=5,bezier=\"default\",style=\"slidefade 80%\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "layers",
+          "parent": "global",
+          "origin": "layers",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slidefade 80%"
+        },
+        {
+          "name": "layersIn",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slidefade 80%"
+        },
+        {
+          "name": "layersOut",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slidefade 80%"
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "style:layers:popin 80%",
+      "source": "hl.animation{leaf=\"layers\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80%\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "layers",
+          "parent": "global",
+          "origin": "layers",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin 80%"
+        },
+        {
+          "name": "layersIn",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin 80%"
+        },
+        {
+          "name": "layersOut",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin 80%"
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "style:layers:popin 80% ",
+      "source": "hl.animation{leaf=\"layers\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80% \"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:layers:popin  80%",
+      "source": "hl.animation{leaf=\"layers\",enabled=true,speed=5,bezier=\"default\",style=\"popin  80%\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "layers",
+          "parent": "global",
+          "origin": "layers",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin  80%"
+        },
+        {
+          "name": "layersIn",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin  80%"
+        },
+        {
+          "name": "layersOut",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin  80%"
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "style:layers:popin -2147483648%",
+      "source": "hl.animation{leaf=\"layers\",enabled=true,speed=5,bezier=\"default\",style=\"popin -2147483648%\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "layers",
+          "parent": "global",
+          "origin": "layers",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin -2147483648%"
+        },
+        {
+          "name": "layersIn",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin -2147483648%"
+        },
+        {
+          "name": "layersOut",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin -2147483648%"
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "style:layers:popin 2147483648%",
+      "source": "hl.animation{leaf=\"layers\",enabled=true,speed=5,bezier=\"default\",style=\"popin 2147483648%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:layers:popin 80%é",
+      "source": "hl.animation{leaf=\"layers\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80%é\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "layers",
+          "parent": "global",
+          "origin": "layers",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin 80%é"
+        },
+        {
+          "name": "layersIn",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin 80%é"
+        },
+        {
+          "name": "layersOut",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin 80%é"
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "style:layers:slide 80%é",
+      "source": "hl.animation{leaf=\"layers\",enabled=true,speed=5,bezier=\"default\",style=\"slide 80%é\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "layers",
+          "parent": "global",
+          "origin": "layers",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide 80%é"
+        },
+        {
+          "name": "layersIn",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide 80%é"
+        },
+        {
+          "name": "layersOut",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide 80%é"
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "style:layers:loop",
+      "source": "hl.animation{leaf=\"layers\",enabled=true,speed=5,bezier=\"default\",style=\"loop\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:layers:once",
+      "source": "hl.animation{leaf=\"layers\",enabled=true,speed=5,bezier=\"default\",style=\"once\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:layers:gnome",
+      "source": "hl.animation{leaf=\"layers\",enabled=true,speed=5,bezier=\"default\",style=\"gnome\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:layers:fade",
+      "source": "hl.animation{leaf=\"layers\",enabled=true,speed=5,bezier=\"default\",style=\"fade\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "layers",
+          "parent": "global",
+          "origin": "layers",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "fade"
+        },
+        {
+          "name": "layersIn",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "fade"
+        },
+        {
+          "name": "layersOut",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "fade"
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "style:workspaces:",
+      "source": "hl.animation{leaf=\"workspaces\",enabled=true,speed=5,bezier=\"default\",style=\"\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "specialWorkspace",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "specialWorkspaceIn",
+          "parent": "specialWorkspace",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "specialWorkspaceOut",
+          "parent": "specialWorkspace",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "workspaces",
+          "parent": "global",
+          "origin": "workspaces",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "workspacesIn",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "workspacesOut",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "style:workspaces:slide",
+      "source": "hl.animation{leaf=\"workspaces\",enabled=true,speed=5,bezier=\"default\",style=\"slide\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "specialWorkspace",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        },
+        {
+          "name": "specialWorkspaceIn",
+          "parent": "specialWorkspace",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        },
+        {
+          "name": "specialWorkspaceOut",
+          "parent": "specialWorkspace",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        },
+        {
+          "name": "workspaces",
+          "parent": "global",
+          "origin": "workspaces",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        },
+        {
+          "name": "workspacesIn",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        },
+        {
+          "name": "workspacesOut",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "style:workspaces:slidefade 80%",
+      "source": "hl.animation{leaf=\"workspaces\",enabled=true,speed=5,bezier=\"default\",style=\"slidefade 80%\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "specialWorkspace",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slidefade 80%"
+        },
+        {
+          "name": "specialWorkspaceIn",
+          "parent": "specialWorkspace",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slidefade 80%"
+        },
+        {
+          "name": "specialWorkspaceOut",
+          "parent": "specialWorkspace",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slidefade 80%"
+        },
+        {
+          "name": "workspaces",
+          "parent": "global",
+          "origin": "workspaces",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slidefade 80%"
+        },
+        {
+          "name": "workspacesIn",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slidefade 80%"
+        },
+        {
+          "name": "workspacesOut",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slidefade 80%"
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "style:workspaces:popin 80%",
+      "source": "hl.animation{leaf=\"workspaces\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:workspaces:popin 80% ",
+      "source": "hl.animation{leaf=\"workspaces\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80% \"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:workspaces:popin  80%",
+      "source": "hl.animation{leaf=\"workspaces\",enabled=true,speed=5,bezier=\"default\",style=\"popin  80%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:workspaces:popin -2147483648%",
+      "source": "hl.animation{leaf=\"workspaces\",enabled=true,speed=5,bezier=\"default\",style=\"popin -2147483648%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:workspaces:popin 2147483648%",
+      "source": "hl.animation{leaf=\"workspaces\",enabled=true,speed=5,bezier=\"default\",style=\"popin 2147483648%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:workspaces:popin 80%é",
+      "source": "hl.animation{leaf=\"workspaces\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80%é\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:workspaces:slide 80%é",
+      "source": "hl.animation{leaf=\"workspaces\",enabled=true,speed=5,bezier=\"default\",style=\"slide 80%é\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "specialWorkspace",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide 80%é"
+        },
+        {
+          "name": "specialWorkspaceIn",
+          "parent": "specialWorkspace",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide 80%é"
+        },
+        {
+          "name": "specialWorkspaceOut",
+          "parent": "specialWorkspace",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide 80%é"
+        },
+        {
+          "name": "workspaces",
+          "parent": "global",
+          "origin": "workspaces",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide 80%é"
+        },
+        {
+          "name": "workspacesIn",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide 80%é"
+        },
+        {
+          "name": "workspacesOut",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide 80%é"
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "style:workspaces:loop",
+      "source": "hl.animation{leaf=\"workspaces\",enabled=true,speed=5,bezier=\"default\",style=\"loop\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:workspaces:once",
+      "source": "hl.animation{leaf=\"workspaces\",enabled=true,speed=5,bezier=\"default\",style=\"once\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:workspaces:gnome",
+      "source": "hl.animation{leaf=\"workspaces\",enabled=true,speed=5,bezier=\"default\",style=\"gnome\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:workspaces:fade",
+      "source": "hl.animation{leaf=\"workspaces\",enabled=true,speed=5,bezier=\"default\",style=\"fade\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "specialWorkspace",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "fade"
+        },
+        {
+          "name": "specialWorkspaceIn",
+          "parent": "specialWorkspace",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "fade"
+        },
+        {
+          "name": "specialWorkspaceOut",
+          "parent": "specialWorkspace",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "fade"
+        },
+        {
+          "name": "workspaces",
+          "parent": "global",
+          "origin": "workspaces",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "fade"
+        },
+        {
+          "name": "workspacesIn",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "fade"
+        },
+        {
+          "name": "workspacesOut",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "fade"
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "style:borderangle:",
+      "source": "hl.animation{leaf=\"borderangle\",enabled=true,speed=5,bezier=\"default\",style=\"\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "borderangle",
+          "parent": "global",
+          "origin": "borderangle",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "style:borderangle:slide",
+      "source": "hl.animation{leaf=\"borderangle\",enabled=true,speed=5,bezier=\"default\",style=\"slide\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:borderangle:slidefade 80%",
+      "source": "hl.animation{leaf=\"borderangle\",enabled=true,speed=5,bezier=\"default\",style=\"slidefade 80%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:borderangle:popin 80%",
+      "source": "hl.animation{leaf=\"borderangle\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:borderangle:popin 80% ",
+      "source": "hl.animation{leaf=\"borderangle\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80% \"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:borderangle:popin  80%",
+      "source": "hl.animation{leaf=\"borderangle\",enabled=true,speed=5,bezier=\"default\",style=\"popin  80%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:borderangle:popin -2147483648%",
+      "source": "hl.animation{leaf=\"borderangle\",enabled=true,speed=5,bezier=\"default\",style=\"popin -2147483648%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:borderangle:popin 2147483648%",
+      "source": "hl.animation{leaf=\"borderangle\",enabled=true,speed=5,bezier=\"default\",style=\"popin 2147483648%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:borderangle:popin 80%é",
+      "source": "hl.animation{leaf=\"borderangle\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80%é\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:borderangle:slide 80%é",
+      "source": "hl.animation{leaf=\"borderangle\",enabled=true,speed=5,bezier=\"default\",style=\"slide 80%é\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:borderangle:loop",
+      "source": "hl.animation{leaf=\"borderangle\",enabled=true,speed=5,bezier=\"default\",style=\"loop\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "borderangle",
+          "parent": "global",
+          "origin": "borderangle",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "loop"
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "style:borderangle:once",
+      "source": "hl.animation{leaf=\"borderangle\",enabled=true,speed=5,bezier=\"default\",style=\"once\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "borderangle",
+          "parent": "global",
+          "origin": "borderangle",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "once"
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "style:borderangle:gnome",
+      "source": "hl.animation{leaf=\"borderangle\",enabled=true,speed=5,bezier=\"default\",style=\"gnome\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:borderangle:fade",
+      "source": "hl.animation{leaf=\"borderangle\",enabled=true,speed=5,bezier=\"default\",style=\"fade\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:fade:",
+      "source": "hl.animation{leaf=\"fade\",enabled=true,speed=5,bezier=\"default\",style=\"\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "fade",
+          "parent": "global",
+          "origin": "fade",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeDim",
+          "parent": "fade",
+          "origin": "fade",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeDpms",
+          "parent": "fade",
+          "origin": "fade",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeGlow",
+          "parent": "fade",
+          "origin": "fade",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeIn",
+          "parent": "fade",
+          "origin": "fade",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeLayers",
+          "parent": "fade",
+          "origin": "fade",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeLayersIn",
+          "parent": "fadeLayers",
+          "origin": "fade",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeLayersOut",
+          "parent": "fadeLayers",
+          "origin": "fade",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeOut",
+          "parent": "fade",
+          "origin": "fade",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadePopups",
+          "parent": "fade",
+          "origin": "fade",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadePopupsIn",
+          "parent": "fadePopups",
+          "origin": "fade",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadePopupsOut",
+          "parent": "fadePopups",
+          "origin": "fade",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeShadow",
+          "parent": "fade",
+          "origin": "fade",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeSwitch",
+          "parent": "fade",
+          "origin": "fade",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        }
+      ]
+    },
+    {
+      "version": "baseline",
+      "case": "style:fade:slide",
+      "source": "hl.animation{leaf=\"fade\",enabled=true,speed=5,bezier=\"default\",style=\"slide\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:fade:slidefade 80%",
+      "source": "hl.animation{leaf=\"fade\",enabled=true,speed=5,bezier=\"default\",style=\"slidefade 80%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:fade:popin 80%",
+      "source": "hl.animation{leaf=\"fade\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:fade:popin 80% ",
+      "source": "hl.animation{leaf=\"fade\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80% \"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:fade:popin  80%",
+      "source": "hl.animation{leaf=\"fade\",enabled=true,speed=5,bezier=\"default\",style=\"popin  80%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:fade:popin -2147483648%",
+      "source": "hl.animation{leaf=\"fade\",enabled=true,speed=5,bezier=\"default\",style=\"popin -2147483648%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:fade:popin 2147483648%",
+      "source": "hl.animation{leaf=\"fade\",enabled=true,speed=5,bezier=\"default\",style=\"popin 2147483648%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:fade:popin 80%é",
+      "source": "hl.animation{leaf=\"fade\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80%é\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:fade:slide 80%é",
+      "source": "hl.animation{leaf=\"fade\",enabled=true,speed=5,bezier=\"default\",style=\"slide 80%é\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:fade:loop",
+      "source": "hl.animation{leaf=\"fade\",enabled=true,speed=5,bezier=\"default\",style=\"loop\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:fade:once",
+      "source": "hl.animation{leaf=\"fade\",enabled=true,speed=5,bezier=\"default\",style=\"once\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:fade:gnome",
+      "source": "hl.animation{leaf=\"fade\",enabled=true,speed=5,bezier=\"default\",style=\"gnome\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "baseline",
+      "case": "style:fade:fade",
+      "source": "hl.animation{leaf=\"fade\",enabled=true,speed=5,bezier=\"default\",style=\"fade\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "defaults",
+      "source": "",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "__internal_fadeCTM",
+          "parent": null,
+          "origin": "__internal_fadeCTM",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "border",
+          "parent": "global",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "borderangle",
+          "parent": "global",
+          "origin": "borderangle",
+          "overridden": true,
+          "enabled": false,
+          "speed": 1,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fade",
+          "parent": "global",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeDim",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeDpms",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeGlow",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeIn",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeLayers",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeLayersIn",
+          "parent": "fadeLayers",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeLayersOut",
+          "parent": "fadeLayers",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeOut",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadePopups",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadePopupsIn",
+          "parent": "fadePopups",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadePopupsOut",
+          "parent": "fadePopups",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeShadow",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeSwitch",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "global",
+          "parent": null,
+          "origin": "global",
+          "overridden": true,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "glowangle",
+          "parent": "global",
+          "origin": "glowangle",
+          "overridden": true,
+          "enabled": false,
+          "speed": 1,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "layers",
+          "parent": "global",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "layersIn",
+          "parent": "layers",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "layersOut",
+          "parent": "layers",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "monitorAdded",
+          "parent": "global",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "shadowangle",
+          "parent": "global",
+          "origin": "shadowangle",
+          "overridden": true,
+          "enabled": false,
+          "speed": 1,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "specialWorkspace",
+          "parent": "workspaces",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "specialWorkspaceIn",
+          "parent": "specialWorkspace",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "specialWorkspaceOut",
+          "parent": "specialWorkspace",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "workspaces",
+          "parent": "global",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "workspacesIn",
+          "parent": "workspaces",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "workspacesOut",
+          "parent": "workspaces",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "zoomFactor",
+          "parent": "global",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 8,
+          "curve": "default",
+          "style": ""
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "missing-enabled",
+      "source": "hl.animation{leaf='windows',speed=8,bezier='default'}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "disabled-ignored",
+      "source": "hl.animation{leaf='windows',enabled=false,speed=-5,spring='missing',style='unknown'}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": false,
+          "speed": 1,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": false,
+          "speed": 1,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": false,
+          "speed": 1,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": false,
+          "speed": 1,
+          "curve": "default",
+          "style": ""
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "ancestor",
+      "source": "hl.animation{leaf='global',enabled=true,speed=3,bezier='linear'};hl.animation{leaf='windows',enabled=true,speed=5,bezier='default',style='slide'};hl.animation{leaf='windowsIn',enabled=false}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "border",
+          "parent": "global",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "fade",
+          "parent": "global",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "fadeDim",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "fadeDpms",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "fadeGlow",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "fadeIn",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "fadeLayers",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "fadeLayersIn",
+          "parent": "fadeLayers",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "fadeLayersOut",
+          "parent": "fadeLayers",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "fadeOut",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "fadePopups",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "fadePopupsIn",
+          "parent": "fadePopups",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "fadePopupsOut",
+          "parent": "fadePopups",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "fadeShadow",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "fadeSwitch",
+          "parent": "fade",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "global",
+          "parent": null,
+          "origin": "global",
+          "overridden": true,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "layers",
+          "parent": "global",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "layersIn",
+          "parent": "layers",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "layersOut",
+          "parent": "layers",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "monitorAdded",
+          "parent": "global",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "specialWorkspace",
+          "parent": "workspaces",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "specialWorkspaceIn",
+          "parent": "specialWorkspace",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "specialWorkspaceOut",
+          "parent": "specialWorkspace",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windowsIn",
+          "overridden": true,
+          "enabled": false,
+          "speed": 1,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        },
+        {
+          "name": "workspaces",
+          "parent": "global",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "workspacesIn",
+          "parent": "workspaces",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "workspacesOut",
+          "parent": "workspaces",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "zoomFactor",
+          "parent": "global",
+          "origin": "global",
+          "overridden": false,
+          "enabled": true,
+          "speed": 3,
+          "curve": "linear",
+          "style": ""
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "bezier-bool",
+      "source": "hl.curve('ease',{type='bezier',points={{false,1},{0.25,1}}});hl.animation{leaf='windows',enabled=1,speed='5',bezier='ease'}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "ease",
+          "style": ""
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "ease",
+          "style": ""
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "ease",
+          "style": ""
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "ease",
+          "style": ""
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "bezier-before",
+      "source": "hl.animation{leaf='windows',enabled=true,speed=5,bezier='later'};hl.curve('later',{type='bezier',points={{0,0},{1,1}}})",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "dual-reference",
+      "source": "hl.animation{leaf='windows',enabled=true,speed=5,bezier='linear',spring='missing'}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "linear",
+          "style": ""
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "linear",
+          "style": ""
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "spring-old",
+      "source": "hl.curve('s',{type='spring',stiffness=250,dampening=25,mass=1});hl.animation{leaf='windows',enabled=true,speed=5,spring='s'}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "spring:s",
+          "style": ""
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "spring:s",
+          "style": ""
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "spring:s",
+          "style": ""
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "spring:s",
+          "style": ""
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "spring-new",
+      "source": "hl.curve('s',{type='spring',stiffness=250,damping=25,mass=1});hl.animation{leaf='windows',enabled=true,speed=5,spring='s'}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "spring:s",
+          "style": ""
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "spring:s",
+          "style": ""
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "spring:s",
+          "style": ""
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "spring:s",
+          "style": ""
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "spring-half",
+      "source": "hl.curve('s',{type='spring',stiffness=250,dampening=25,mass=0.5})",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "spring-f32-rounding",
+      "source": "hl.curve('s',{type='spring',stiffness=250,dampening=25,mass=0.50000000001})",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "spring-bool",
+      "source": "hl.curve('s',{type='spring',stiffness=true,dampening=25,mass=1})",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "speed-underflow",
+      "source": "hl.animation{leaf='windows',enabled=true,speed=1e-50,bezier='default'}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "bezier-edge",
+      "source": "hl.curve('s',{type='bezier',points={{-1,2},{0,1}}})",
+      "accepted": true,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "bezier-outside",
+      "source": "hl.curve('s',{type='bezier',points={{-1.01,2},{0,1}}})",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:windows:",
+      "source": "hl.animation{leaf=\"windows\",enabled=true,speed=5,bezier=\"default\",style=\"\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "style:windows:slide",
+      "source": "hl.animation{leaf=\"windows\",enabled=true,speed=5,bezier=\"default\",style=\"slide\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "style:windows:slidefade 80%",
+      "source": "hl.animation{leaf=\"windows\",enabled=true,speed=5,bezier=\"default\",style=\"slidefade 80%\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slidefade 80%"
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slidefade 80%"
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slidefade 80%"
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slidefade 80%"
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "style:windows:popin 80%",
+      "source": "hl.animation{leaf=\"windows\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80%\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin 80%"
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin 80%"
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin 80%"
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin 80%"
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "style:windows:popin 80% ",
+      "source": "hl.animation{leaf=\"windows\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80% \"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:windows:popin  80%",
+      "source": "hl.animation{leaf=\"windows\",enabled=true,speed=5,bezier=\"default\",style=\"popin  80%\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin  80%"
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin  80%"
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin  80%"
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin  80%"
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "style:windows:popin -2147483648%",
+      "source": "hl.animation{leaf=\"windows\",enabled=true,speed=5,bezier=\"default\",style=\"popin -2147483648%\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin -2147483648%"
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin -2147483648%"
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin -2147483648%"
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin -2147483648%"
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "style:windows:popin 2147483648%",
+      "source": "hl.animation{leaf=\"windows\",enabled=true,speed=5,bezier=\"default\",style=\"popin 2147483648%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:windows:popin 80%é",
+      "source": "hl.animation{leaf=\"windows\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80%é\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin 80%é"
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin 80%é"
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin 80%é"
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin 80%é"
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "style:windows:slide 80%é",
+      "source": "hl.animation{leaf=\"windows\",enabled=true,speed=5,bezier=\"default\",style=\"slide 80%é\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide 80%é"
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide 80%é"
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide 80%é"
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide 80%é"
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "style:windows:loop",
+      "source": "hl.animation{leaf=\"windows\",enabled=true,speed=5,bezier=\"default\",style=\"loop\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:windows:once",
+      "source": "hl.animation{leaf=\"windows\",enabled=true,speed=5,bezier=\"default\",style=\"once\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:windows:gnome",
+      "source": "hl.animation{leaf=\"windows\",enabled=true,speed=5,bezier=\"default\",style=\"gnome\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "windows",
+          "parent": "global",
+          "origin": "windows",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "gnome"
+        },
+        {
+          "name": "windowsIn",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "gnome"
+        },
+        {
+          "name": "windowsMove",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "gnome"
+        },
+        {
+          "name": "windowsOut",
+          "parent": "windows",
+          "origin": "windows",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "gnome"
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "style:windows:fade",
+      "source": "hl.animation{leaf=\"windows\",enabled=true,speed=5,bezier=\"default\",style=\"fade\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:layers:",
+      "source": "hl.animation{leaf=\"layers\",enabled=true,speed=5,bezier=\"default\",style=\"\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "layers",
+          "parent": "global",
+          "origin": "layers",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "layersIn",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "layersOut",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "style:layers:slide",
+      "source": "hl.animation{leaf=\"layers\",enabled=true,speed=5,bezier=\"default\",style=\"slide\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "layers",
+          "parent": "global",
+          "origin": "layers",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        },
+        {
+          "name": "layersIn",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        },
+        {
+          "name": "layersOut",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "style:layers:slidefade 80%",
+      "source": "hl.animation{leaf=\"layers\",enabled=true,speed=5,bezier=\"default\",style=\"slidefade 80%\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "layers",
+          "parent": "global",
+          "origin": "layers",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slidefade 80%"
+        },
+        {
+          "name": "layersIn",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slidefade 80%"
+        },
+        {
+          "name": "layersOut",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slidefade 80%"
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "style:layers:popin 80%",
+      "source": "hl.animation{leaf=\"layers\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80%\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "layers",
+          "parent": "global",
+          "origin": "layers",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin 80%"
+        },
+        {
+          "name": "layersIn",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin 80%"
+        },
+        {
+          "name": "layersOut",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin 80%"
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "style:layers:popin 80% ",
+      "source": "hl.animation{leaf=\"layers\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80% \"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:layers:popin  80%",
+      "source": "hl.animation{leaf=\"layers\",enabled=true,speed=5,bezier=\"default\",style=\"popin  80%\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "layers",
+          "parent": "global",
+          "origin": "layers",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin  80%"
+        },
+        {
+          "name": "layersIn",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin  80%"
+        },
+        {
+          "name": "layersOut",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin  80%"
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "style:layers:popin -2147483648%",
+      "source": "hl.animation{leaf=\"layers\",enabled=true,speed=5,bezier=\"default\",style=\"popin -2147483648%\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "layers",
+          "parent": "global",
+          "origin": "layers",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin -2147483648%"
+        },
+        {
+          "name": "layersIn",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin -2147483648%"
+        },
+        {
+          "name": "layersOut",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin -2147483648%"
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "style:layers:popin 2147483648%",
+      "source": "hl.animation{leaf=\"layers\",enabled=true,speed=5,bezier=\"default\",style=\"popin 2147483648%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:layers:popin 80%é",
+      "source": "hl.animation{leaf=\"layers\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80%é\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "layers",
+          "parent": "global",
+          "origin": "layers",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin 80%é"
+        },
+        {
+          "name": "layersIn",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin 80%é"
+        },
+        {
+          "name": "layersOut",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "popin 80%é"
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "style:layers:slide 80%é",
+      "source": "hl.animation{leaf=\"layers\",enabled=true,speed=5,bezier=\"default\",style=\"slide 80%é\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "layers",
+          "parent": "global",
+          "origin": "layers",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide 80%é"
+        },
+        {
+          "name": "layersIn",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide 80%é"
+        },
+        {
+          "name": "layersOut",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide 80%é"
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "style:layers:loop",
+      "source": "hl.animation{leaf=\"layers\",enabled=true,speed=5,bezier=\"default\",style=\"loop\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:layers:once",
+      "source": "hl.animation{leaf=\"layers\",enabled=true,speed=5,bezier=\"default\",style=\"once\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:layers:gnome",
+      "source": "hl.animation{leaf=\"layers\",enabled=true,speed=5,bezier=\"default\",style=\"gnome\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:layers:fade",
+      "source": "hl.animation{leaf=\"layers\",enabled=true,speed=5,bezier=\"default\",style=\"fade\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "layers",
+          "parent": "global",
+          "origin": "layers",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "fade"
+        },
+        {
+          "name": "layersIn",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "fade"
+        },
+        {
+          "name": "layersOut",
+          "parent": "layers",
+          "origin": "layers",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "fade"
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "style:workspaces:",
+      "source": "hl.animation{leaf=\"workspaces\",enabled=true,speed=5,bezier=\"default\",style=\"\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "specialWorkspace",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "specialWorkspaceIn",
+          "parent": "specialWorkspace",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "specialWorkspaceOut",
+          "parent": "specialWorkspace",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "workspaces",
+          "parent": "global",
+          "origin": "workspaces",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "workspacesIn",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "workspacesOut",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "style:workspaces:slide",
+      "source": "hl.animation{leaf=\"workspaces\",enabled=true,speed=5,bezier=\"default\",style=\"slide\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "specialWorkspace",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        },
+        {
+          "name": "specialWorkspaceIn",
+          "parent": "specialWorkspace",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        },
+        {
+          "name": "specialWorkspaceOut",
+          "parent": "specialWorkspace",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        },
+        {
+          "name": "workspaces",
+          "parent": "global",
+          "origin": "workspaces",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        },
+        {
+          "name": "workspacesIn",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        },
+        {
+          "name": "workspacesOut",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide"
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "style:workspaces:slidefade 80%",
+      "source": "hl.animation{leaf=\"workspaces\",enabled=true,speed=5,bezier=\"default\",style=\"slidefade 80%\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "specialWorkspace",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slidefade 80%"
+        },
+        {
+          "name": "specialWorkspaceIn",
+          "parent": "specialWorkspace",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slidefade 80%"
+        },
+        {
+          "name": "specialWorkspaceOut",
+          "parent": "specialWorkspace",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slidefade 80%"
+        },
+        {
+          "name": "workspaces",
+          "parent": "global",
+          "origin": "workspaces",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slidefade 80%"
+        },
+        {
+          "name": "workspacesIn",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slidefade 80%"
+        },
+        {
+          "name": "workspacesOut",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slidefade 80%"
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "style:workspaces:popin 80%",
+      "source": "hl.animation{leaf=\"workspaces\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:workspaces:popin 80% ",
+      "source": "hl.animation{leaf=\"workspaces\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80% \"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:workspaces:popin  80%",
+      "source": "hl.animation{leaf=\"workspaces\",enabled=true,speed=5,bezier=\"default\",style=\"popin  80%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:workspaces:popin -2147483648%",
+      "source": "hl.animation{leaf=\"workspaces\",enabled=true,speed=5,bezier=\"default\",style=\"popin -2147483648%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:workspaces:popin 2147483648%",
+      "source": "hl.animation{leaf=\"workspaces\",enabled=true,speed=5,bezier=\"default\",style=\"popin 2147483648%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:workspaces:popin 80%é",
+      "source": "hl.animation{leaf=\"workspaces\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80%é\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:workspaces:slide 80%é",
+      "source": "hl.animation{leaf=\"workspaces\",enabled=true,speed=5,bezier=\"default\",style=\"slide 80%é\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "specialWorkspace",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide 80%é"
+        },
+        {
+          "name": "specialWorkspaceIn",
+          "parent": "specialWorkspace",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide 80%é"
+        },
+        {
+          "name": "specialWorkspaceOut",
+          "parent": "specialWorkspace",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide 80%é"
+        },
+        {
+          "name": "workspaces",
+          "parent": "global",
+          "origin": "workspaces",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide 80%é"
+        },
+        {
+          "name": "workspacesIn",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide 80%é"
+        },
+        {
+          "name": "workspacesOut",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "slide 80%é"
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "style:workspaces:loop",
+      "source": "hl.animation{leaf=\"workspaces\",enabled=true,speed=5,bezier=\"default\",style=\"loop\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:workspaces:once",
+      "source": "hl.animation{leaf=\"workspaces\",enabled=true,speed=5,bezier=\"default\",style=\"once\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:workspaces:gnome",
+      "source": "hl.animation{leaf=\"workspaces\",enabled=true,speed=5,bezier=\"default\",style=\"gnome\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:workspaces:fade",
+      "source": "hl.animation{leaf=\"workspaces\",enabled=true,speed=5,bezier=\"default\",style=\"fade\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "specialWorkspace",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "fade"
+        },
+        {
+          "name": "specialWorkspaceIn",
+          "parent": "specialWorkspace",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "fade"
+        },
+        {
+          "name": "specialWorkspaceOut",
+          "parent": "specialWorkspace",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "fade"
+        },
+        {
+          "name": "workspaces",
+          "parent": "global",
+          "origin": "workspaces",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "fade"
+        },
+        {
+          "name": "workspacesIn",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "fade"
+        },
+        {
+          "name": "workspacesOut",
+          "parent": "workspaces",
+          "origin": "workspaces",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "fade"
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "style:borderangle:",
+      "source": "hl.animation{leaf=\"borderangle\",enabled=true,speed=5,bezier=\"default\",style=\"\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "borderangle",
+          "parent": "global",
+          "origin": "borderangle",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "style:borderangle:slide",
+      "source": "hl.animation{leaf=\"borderangle\",enabled=true,speed=5,bezier=\"default\",style=\"slide\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:borderangle:slidefade 80%",
+      "source": "hl.animation{leaf=\"borderangle\",enabled=true,speed=5,bezier=\"default\",style=\"slidefade 80%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:borderangle:popin 80%",
+      "source": "hl.animation{leaf=\"borderangle\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:borderangle:popin 80% ",
+      "source": "hl.animation{leaf=\"borderangle\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80% \"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:borderangle:popin  80%",
+      "source": "hl.animation{leaf=\"borderangle\",enabled=true,speed=5,bezier=\"default\",style=\"popin  80%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:borderangle:popin -2147483648%",
+      "source": "hl.animation{leaf=\"borderangle\",enabled=true,speed=5,bezier=\"default\",style=\"popin -2147483648%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:borderangle:popin 2147483648%",
+      "source": "hl.animation{leaf=\"borderangle\",enabled=true,speed=5,bezier=\"default\",style=\"popin 2147483648%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:borderangle:popin 80%é",
+      "source": "hl.animation{leaf=\"borderangle\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80%é\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:borderangle:slide 80%é",
+      "source": "hl.animation{leaf=\"borderangle\",enabled=true,speed=5,bezier=\"default\",style=\"slide 80%é\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:borderangle:loop",
+      "source": "hl.animation{leaf=\"borderangle\",enabled=true,speed=5,bezier=\"default\",style=\"loop\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "borderangle",
+          "parent": "global",
+          "origin": "borderangle",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "loop"
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "style:borderangle:once",
+      "source": "hl.animation{leaf=\"borderangle\",enabled=true,speed=5,bezier=\"default\",style=\"once\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "borderangle",
+          "parent": "global",
+          "origin": "borderangle",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": "once"
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "style:borderangle:gnome",
+      "source": "hl.animation{leaf=\"borderangle\",enabled=true,speed=5,bezier=\"default\",style=\"gnome\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:borderangle:fade",
+      "source": "hl.animation{leaf=\"borderangle\",enabled=true,speed=5,bezier=\"default\",style=\"fade\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:fade:",
+      "source": "hl.animation{leaf=\"fade\",enabled=true,speed=5,bezier=\"default\",style=\"\"}",
+      "accepted": true,
+      "tree": [
+        {
+          "name": "fade",
+          "parent": "global",
+          "origin": "fade",
+          "overridden": true,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeDim",
+          "parent": "fade",
+          "origin": "fade",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeDpms",
+          "parent": "fade",
+          "origin": "fade",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeGlow",
+          "parent": "fade",
+          "origin": "fade",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeIn",
+          "parent": "fade",
+          "origin": "fade",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeLayers",
+          "parent": "fade",
+          "origin": "fade",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeLayersIn",
+          "parent": "fadeLayers",
+          "origin": "fade",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeLayersOut",
+          "parent": "fadeLayers",
+          "origin": "fade",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeOut",
+          "parent": "fade",
+          "origin": "fade",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadePopups",
+          "parent": "fade",
+          "origin": "fade",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadePopupsIn",
+          "parent": "fadePopups",
+          "origin": "fade",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadePopupsOut",
+          "parent": "fadePopups",
+          "origin": "fade",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeShadow",
+          "parent": "fade",
+          "origin": "fade",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        },
+        {
+          "name": "fadeSwitch",
+          "parent": "fade",
+          "origin": "fade",
+          "overridden": false,
+          "enabled": true,
+          "speed": 5,
+          "curve": "default",
+          "style": ""
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "case": "style:fade:slide",
+      "source": "hl.animation{leaf=\"fade\",enabled=true,speed=5,bezier=\"default\",style=\"slide\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:fade:slidefade 80%",
+      "source": "hl.animation{leaf=\"fade\",enabled=true,speed=5,bezier=\"default\",style=\"slidefade 80%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:fade:popin 80%",
+      "source": "hl.animation{leaf=\"fade\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:fade:popin 80% ",
+      "source": "hl.animation{leaf=\"fade\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80% \"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:fade:popin  80%",
+      "source": "hl.animation{leaf=\"fade\",enabled=true,speed=5,bezier=\"default\",style=\"popin  80%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:fade:popin -2147483648%",
+      "source": "hl.animation{leaf=\"fade\",enabled=true,speed=5,bezier=\"default\",style=\"popin -2147483648%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:fade:popin 2147483648%",
+      "source": "hl.animation{leaf=\"fade\",enabled=true,speed=5,bezier=\"default\",style=\"popin 2147483648%\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:fade:popin 80%é",
+      "source": "hl.animation{leaf=\"fade\",enabled=true,speed=5,bezier=\"default\",style=\"popin 80%é\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:fade:slide 80%é",
+      "source": "hl.animation{leaf=\"fade\",enabled=true,speed=5,bezier=\"default\",style=\"slide 80%é\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:fade:loop",
+      "source": "hl.animation{leaf=\"fade\",enabled=true,speed=5,bezier=\"default\",style=\"loop\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:fade:once",
+      "source": "hl.animation{leaf=\"fade\",enabled=true,speed=5,bezier=\"default\",style=\"once\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:fade:gnome",
+      "source": "hl.animation{leaf=\"fade\",enabled=true,speed=5,bezier=\"default\",style=\"gnome\"}",
+      "accepted": false,
+      "tree": []
+    },
+    {
+      "version": "current",
+      "case": "style:fade:fade",
+      "source": "hl.animation{leaf=\"fade\",enabled=true,speed=5,bezier=\"default\",style=\"fade\"}",
+      "accepted": false,
+      "tree": []
+    }
+  ]
+}
