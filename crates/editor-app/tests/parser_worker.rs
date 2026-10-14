@@ -211,3 +211,51 @@ fn actual_restricted_worker_projects_workspace_rules_without_running_empty_hooks
     );
     assert!(!marker.exists());
 }
+
+#[test]
+fn bounded_re2_samples_run_inside_the_restricted_worker() {
+    for (pattern, text, negated, expected) in [
+        ("fire.*", "firefox", false, true),
+        ("fire", "firefox", false, false),
+        ("fire", "firefox", true, true),
+        ("δοκιμή", "δοκιμή", false, true),
+    ] {
+        let result =
+            request(json!({"CheckRegex":{"pattern":pattern,"text":text,"negated":negated}}));
+        assert_eq!(result["RegexMatch"], expected, "{result}");
+    }
+    for pattern in ["[", "(?=x)", "(x)\\1"] {
+        assert!(
+            request(json!({"CheckRegex":{"pattern":pattern,"text":"x","negated":false}}))["Error"]
+                .is_string()
+        );
+    }
+    assert!(
+        request(json!({"CheckRegex":{"pattern":"x".repeat(16385),"text":"","negated":false}}))
+            ["Error"]
+            .is_string()
+    );
+}
+
+#[test]
+fn actual_restricted_worker_projects_inert_rule_groups_and_preserves_copy() {
+    let source="hl.window_rule{name='test',enabled=false,match={class='negative:foo.*'},move={'monitor_w - window_w',20}};hl.window_rule{name='test',center=true};hl.layer_rule{match={namespace='panel'},blur=false};hl.config{general={border_size=2}}";
+    let parsed = request(json!({"Parse":{"source":source,"version":"0.56.2"}}));
+    let report = &parsed["Parsed"];
+    assert_eq!(report["opaque_effects"], false);
+    assert_eq!(report["rules"].as_array().unwrap().len(), 3);
+    assert_eq!(report["rules"][0]["enabled"], false);
+    assert_eq!(report["rules"][1]["enabled"], Value::Null);
+    let mut draft = report["draft"].clone();
+    draft["values"]["general:border_size"]["value"] = json!(7);
+    let copy = request(json!({"Copy":{"source":source,"report":report,"draft":draft}}));
+    assert_eq!(
+        copy["Copy"],
+        source.replace("border_size=2", "border_size=7")
+    );
+    let tainted = request(
+        json!({"Parse":{"source":"hl.window_rule{move={os.execute('never execute'),2}};hl.layer_rule{blur=true}","version":"0.56.2"}}),
+    );
+    assert_eq!(tainted["Parsed"]["opaque_effects"], true);
+    assert_eq!(tainted["Parsed"]["rules"], json!([]));
+}

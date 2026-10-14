@@ -51,6 +51,12 @@ The workspace editor supplies all 15 audited field controls, address/static-filt
 
 Complete versioned monitor/action selectors, custom-option authoring/layout messages, visual layouts, animation/command workflows, source codecs, effective discovery, parser/hardware conformance and preview/apply/recovery remain required. No full WORKSPACE contract is certified. Rule and animation/gesture editors remain next alongside those shared codecs.
 
+## Window/layer rule draft milestone in 0.9
+
+The rule editor supplies all 57/60 audited window-effect controls, ten layer effects and consumed match properties, focused geometry inputs, exact text/RE2 sample checks, declaration CRUD, independent named duplication, explicit named effect ordering, relationship findings, static Lua projection, private persistence and bounded undo. Source-extracted probes with real Lua/RE2 verify named reuse, enabled reset, retained predicates, accumulation, registration position and full-match behavior with inert services. See [rule scope](rule-editor.md).
+
+Several string/geometry/border fields still need complete graphical semantic builders. Named-object lifecycle, effective discovery, source codecs, actual compositor/effect/hardware conformance, preview/apply/recovery and resource/release certificates remain required. No full RULE contract is certified. Shared semantic builders and animation/gesture editors are the next visible work; all original source, discovery, security and release obligations remain in scope.
+
 ## Next implementation order
 
 1. **Finish source ownership and persistence.** Extend the single-root source manifest to a lossless authorized dependency graph, generated ownership and multi-file changed-revision reconciliation. Preserve metadata and stable document identities across profiles; extend diagnostics to include graphs. Implement include authorization and dependency graphs without executing imports. Add insertion/deletion codecs only with comment/trivia preservation and conflict tests.

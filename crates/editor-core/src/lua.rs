@@ -37,6 +37,8 @@ pub struct LuaReport {
     pub bindings: crate::binding::Draft,
     #[serde(default)]
     pub workspace_rules: Vec<crate::workspace_rule::Rule>,
+    #[serde(default)]
+    pub rules: Vec<crate::rule::Rule>,
     pub declarations: Vec<Declaration>,
     pub diagnostics: Vec<Diagnostic>,
     pub opaque_effects: bool,
@@ -682,6 +684,157 @@ impl Projection<'_> {
         }
         Ok(())
     }
+    fn match_effect_rule(&mut self, node: Node<'_>, kind: crate::rule::Kind) -> Result<(), String> {
+        use crate::rule::{Effect, EffectValue, Geometry, Predicate, Rule};
+        let args = node
+            .child_by_field_name("arguments")
+            .map(named)
+            .unwrap_or_default();
+        let parsed = (|| -> Result<Rule, String> {
+            if args.len() != 1 {
+                return Err("Rule needs exactly one static table".into());
+            }
+            let Some(Expr::Table(entries)) = evaluate(args[0], self.source, &self.env, 0) else {
+                return Err("Rule expression is unresolved".into());
+            };
+            let mut rule = Rule::new(&format!("source-rule-{}", self.report.rules.len()), kind);
+            let mut keys = std::collections::BTreeSet::new();
+            let fields = crate::rule::catalogue(kind, &self.report.draft.version);
+            for (key, value) in entries {
+                let Key::Name(key) = key else {
+                    return Err("Rule requires named fields".into());
+                };
+                if !keys.insert(key.clone()) {
+                    return Err("Duplicate rule table field is ambiguous".into());
+                }
+                match key.as_str() {
+                    "name" => match value {
+                        Expr::Text(v) => rule.name = Some(v),
+                        Expr::Nil => {}
+                        _ => {
+                            return Err(
+                                "Rule name coercion is unresolved; use a literal string".into()
+                            )
+                        }
+                    },
+                    "enabled" => match value {
+                        Expr::Bool(v) => rule.enabled = Some(v),
+                        Expr::Nil => {}
+                        _ => return Err("Enabled needs a bool or unset".into()),
+                    },
+                    "match" => {
+                        if matches!(value, Expr::Nil) {
+                            continue;
+                        }
+                        let Expr::Table(matches) = value else {
+                            return Err("Match needs a literal table".into());
+                        };
+                        for (key, value) in matches {
+                            let Key::Name(property) = key else {
+                                return Err("Match needs named properties".into());
+                            };
+                            let value = match value {
+                                Expr::Text(s) => Value::String(s),
+                                Expr::Bool(b) => Value::Bool(b),
+                                Expr::Int(n) => Value::Int(n),
+                                _ => return Err("Match value coercion is unresolved".into()),
+                            };
+                            rule.predicates.push(Predicate { property, value });
+                        }
+                    }
+                    _ => {
+                        let setting = fields.iter().find(|s| s.lua_key == key).ok_or(
+                            "Unknown audited effect; plugin effect projection is unresolved",
+                        )?;
+                        let value = if setting.kind == "ExpressionVec2" {
+                            let geometry = match value {
+                                Expr::Text(s) => Geometry::Text(s),
+                                Expr::Table(ref values) => {
+                                    if values.len() != 2 {
+                                        return Err("Geometry requires exactly two axes".into());
+                                    }
+                                    let axes = array(values, 2)
+                                        .ok_or("Geometry requires exactly two axes")?;
+                                    let axis = |value: &Expr| match value {
+                                        Expr::Text(s) => Some(Value::String(s.clone())),
+                                        Expr::Int(n) => Some(Value::Int(*n)),
+                                        Expr::Float(n) => Some(Value::Float(*n)),
+                                        _ => None,
+                                    };
+                                    Geometry::Axes([
+                                        axis(axes[0]).ok_or("Unresolved geometry axis")?,
+                                        axis(axes[1]).ok_or("Unresolved geometry axis")?,
+                                    ])
+                                }
+                                _ => return Err("Geometry needs a string or two-axis array".into()),
+                            };
+                            EffectValue::Geometry(geometry)
+                        } else if kind == crate::rule::Kind::Window && key == "border_color" {
+                            match value {
+                                Expr::Text(s) => EffectValue::BorderText(s),
+                                v => {
+                                    if let Expr::Table(ref entries) = v {
+                                        let mut keys = std::collections::BTreeSet::new();
+                                        for (key, _) in entries {
+                                            let Key::Name(key) = key else {
+                                                return Err("Gradient requires named fields".into());
+                                            };
+                                            if !["colors", "angle"].contains(&key.as_str())
+                                                || !keys.insert(key)
+                                            {
+                                                return Err("Unresolved gradient fields".into());
+                                            }
+                                        }
+                                        if let Some(Expr::Table(colors)) = member(entries, "colors")
+                                        {
+                                            if colors.is_empty()
+                                                || colors.len() > 32
+                                                || array(colors, colors.len()).is_none()
+                                            {
+                                                return Err(
+                                                    "Gradient needs a contiguous color array"
+                                                        .into(),
+                                                );
+                                            }
+                                        }
+                                    }
+                                    EffectValue::Literal(
+                                        typed(setting, v).ok_or("Invalid border gradient")?,
+                                    )
+                                }
+                            }
+                        } else {
+                            EffectValue::Literal(
+                                typed(setting, value).ok_or("Invalid effect literal")?,
+                            )
+                        };
+                        rule.effects.push(Effect { key, value });
+                    }
+                }
+            }
+            rule.validate(&self.report.draft.version)?;
+            Ok(rule)
+        })();
+        match parsed {
+            Ok(rule) => {
+                if self.report.rules.len() >= crate::rule::MAX_RULES {
+                    return Err("Too many rule declarations".into());
+                }
+                self.report.rules.push(rule);
+            }
+            Err(e) => {
+                self.report.opaque_effects = true;
+                self.diagnostic(node, &e);
+                if args
+                    .iter()
+                    .any(|n| evaluate(*n, self.source, &self.env, 0).is_none())
+                {
+                    self.api_available = false;
+                }
+            }
+        }
+        Ok(())
+    }
     fn workspace_rule(&mut self, node: Node<'_>) -> Result<(), String> {
         let args = node
             .child_by_field_name("arguments")
@@ -1161,6 +1314,10 @@ impl Projection<'_> {
                     self.binding(node)?;
                 } else if text(name, self.source) == "hl.define_submap" && self.api_available {
                     self.submap(node)?;
+                } else if text(name, self.source) == "hl.window_rule" && self.api_available {
+                    self.match_effect_rule(node, crate::rule::Kind::Window)?;
+                } else if text(name, self.source) == "hl.layer_rule" && self.api_available {
+                    self.match_effect_rule(node, crate::rule::Kind::Layer)?;
                 } else if text(name, self.source) == "hl.workspace_rule" && self.api_available {
                     self.workspace_rule(node)?;
                 } else if text(name, self.source) == "hl.device" && self.api_available {
@@ -1261,6 +1418,7 @@ pub fn parse(source: &str, version: &str, catalogue: &[Setting]) -> Result<LuaRe
             devices: vec![],
             bindings: crate::binding::Draft::default(),
             workspace_rules: vec![],
+            rules: vec![],
             declarations: vec![],
             diagnostics: vec![],
             opaque_effects: false,
@@ -1272,6 +1430,7 @@ pub fn parse(source: &str, version: &str, catalogue: &[Setting]) -> Result<LuaRe
     for node in named(tree.root_node()) {
         p.statement(node)?;
     }
+    crate::rule::validate(&p.report.rules, version)?;
     p.report.draft.validate(catalogue)?;
     p.report.bindings.validate(version)?;
     crate::workspace_rule::validate(&p.report.workspace_rules, version)?;
@@ -1290,6 +1449,7 @@ impl LuaDocument {
         {
             return Err("Invalid or stale parser report".into());
         }
+        crate::rule::validate(&report.rules, &report.draft.version)?;
         report.draft.validate(catalogue)?;
         crate::device::validate(&report.devices, &report.draft.version)?;
         report.bindings.validate(&report.draft.version)?;

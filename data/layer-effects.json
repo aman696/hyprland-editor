@@ -1,0 +1,242 @@
+[
+  {
+    "id": "layer_rule_effect:above_lock",
+    "version": "0.56.2",
+    "kind": "Int",
+    "lua_key": "above_lock",
+    "default_expression": "0",
+    "bounds": {
+      "min": 0.0,
+      "max": 2.0
+    },
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsConfigRules.cpp#L191"
+  },
+  {
+    "id": "layer_rule_effect:above_lock",
+    "version": "audited-main",
+    "kind": "Int",
+    "lua_key": "above_lock",
+    "default_expression": "0",
+    "bounds": {
+      "min": 0.0,
+      "max": 2.0
+    },
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsConfigRules.cpp#L191"
+  },
+  {
+    "id": "layer_rule_effect:animation",
+    "version": "0.56.2",
+    "kind": "String",
+    "lua_key": "animation",
+    "default_expression": "STRVAL_EMPTY",
+    "bounds": {
+      "min": null,
+      "max": null
+    },
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsConfigRules.cpp#L189"
+  },
+  {
+    "id": "layer_rule_effect:animation",
+    "version": "audited-main",
+    "kind": "String",
+    "lua_key": "animation",
+    "default_expression": "STRVAL_EMPTY",
+    "bounds": {
+      "min": null,
+      "max": null
+    },
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsConfigRules.cpp#L189"
+  },
+  {
+    "id": "layer_rule_effect:blur",
+    "version": "0.56.2",
+    "kind": "Bool",
+    "lua_key": "blur",
+    "default_expression": "false",
+    "bounds": {
+      "min": null,
+      "max": null
+    },
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsConfigRules.cpp#L184"
+  },
+  {
+    "id": "layer_rule_effect:blur",
+    "version": "audited-main",
+    "kind": "Bool",
+    "lua_key": "blur",
+    "default_expression": "false",
+    "bounds": {
+      "min": null,
+      "max": null
+    },
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsConfigRules.cpp#L184"
+  },
+  {
+    "id": "layer_rule_effect:blur_popups",
+    "version": "0.56.2",
+    "kind": "Bool",
+    "lua_key": "blur_popups",
+    "default_expression": "false",
+    "bounds": {
+      "min": null,
+      "max": null
+    },
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsConfigRules.cpp#L185"
+  },
+  {
+    "id": "layer_rule_effect:blur_popups",
+    "version": "audited-main",
+    "kind": "Bool",
+    "lua_key": "blur_popups",
+    "default_expression": "false",
+    "bounds": {
+      "min": null,
+      "max": null
+    },
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsConfigRules.cpp#L185"
+  },
+  {
+    "id": "layer_rule_effect:dim_around",
+    "version": "0.56.2",
+    "kind": "Bool",
+    "lua_key": "dim_around",
+    "default_expression": "false",
+    "bounds": {
+      "min": null,
+      "max": null
+    },
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsConfigRules.cpp#L187"
+  },
+  {
+    "id": "layer_rule_effect:dim_around",
+    "version": "audited-main",
+    "kind": "Bool",
+    "lua_key": "dim_around",
+    "default_expression": "false",
+    "bounds": {
+      "min": null,
+      "max": null
+    },
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsConfigRules.cpp#L187"
+  },
+  {
+    "id": "layer_rule_effect:ignore_alpha",
+    "version": "0.56.2",
+    "kind": "Float",
+    "lua_key": "ignore_alpha",
+    "default_expression": "0.F",
+    "bounds": {
+      "min": 0.0,
+      "max": 1.0
+    },
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsConfigRules.cpp#L186"
+  },
+  {
+    "id": "layer_rule_effect:ignore_alpha",
+    "version": "audited-main",
+    "kind": "Float",
+    "lua_key": "ignore_alpha",
+    "default_expression": "0.F",
+    "bounds": {
+      "min": 0.0,
+      "max": 1.0
+    },
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsConfigRules.cpp#L186"
+  },
+  {
+    "id": "layer_rule_effect:no_anim",
+    "version": "0.56.2",
+    "kind": "Bool",
+    "lua_key": "no_anim",
+    "default_expression": "false",
+    "bounds": {
+      "min": null,
+      "max": null
+    },
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsConfigRules.cpp#L183"
+  },
+  {
+    "id": "layer_rule_effect:no_anim",
+    "version": "audited-main",
+    "kind": "Bool",
+    "lua_key": "no_anim",
+    "default_expression": "false",
+    "bounds": {
+      "min": null,
+      "max": null
+    },
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsConfigRules.cpp#L183"
+  },
+  {
+    "id": "layer_rule_effect:no_screen_share",
+    "version": "0.56.2",
+    "kind": "Bool",
+    "lua_key": "no_screen_share",
+    "default_expression": "false",
+    "bounds": {
+      "min": null,
+      "max": null
+    },
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsConfigRules.cpp#L192"
+  },
+  {
+    "id": "layer_rule_effect:no_screen_share",
+    "version": "audited-main",
+    "kind": "Bool",
+    "lua_key": "no_screen_share",
+    "default_expression": "false",
+    "bounds": {
+      "min": null,
+      "max": null
+    },
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsConfigRules.cpp#L192"
+  },
+  {
+    "id": "layer_rule_effect:order",
+    "version": "0.56.2",
+    "kind": "Int",
+    "lua_key": "order",
+    "default_expression": "0",
+    "bounds": {
+      "min": null,
+      "max": null
+    },
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsConfigRules.cpp#L190"
+  },
+  {
+    "id": "layer_rule_effect:order",
+    "version": "audited-main",
+    "kind": "Int",
+    "lua_key": "order",
+    "default_expression": "0",
+    "bounds": {
+      "min": null,
+      "max": null
+    },
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsConfigRules.cpp#L190"
+  },
+  {
+    "id": "layer_rule_effect:xray",
+    "version": "0.56.2",
+    "kind": "Bool",
+    "lua_key": "xray",
+    "default_expression": "false",
+    "bounds": {
+      "min": null,
+      "max": null
+    },
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsConfigRules.cpp#L188"
+  },
+  {
+    "id": "layer_rule_effect:xray",
+    "version": "audited-main",
+    "kind": "Bool",
+    "lua_key": "xray",
+    "default_expression": "false",
+    "bounds": {
+      "min": null,
+      "max": null
+    },
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsConfigRules.cpp#L188"
+  }
+]

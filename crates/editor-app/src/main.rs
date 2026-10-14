@@ -7,6 +7,7 @@ mod history;
 mod monitors;
 mod presentation;
 mod reconciliation;
+mod rules;
 mod selector_forms;
 mod worker;
 mod workflow;
@@ -38,6 +39,8 @@ struct State {
     saved_devices: BTreeMap<String, Vec<hyprland_editor_core::device::Spec>>,
     bindings: BTreeMap<String, hyprland_editor_core::binding::Draft>,
     saved_bindings: BTreeMap<String, hyprland_editor_core::binding::Draft>,
+    rules: BTreeMap<String, Vec<hyprland_editor_core::rule::Rule>>,
+    saved_rules: BTreeMap<String, Vec<hyprland_editor_core::rule::Rule>>,
     workspace_rules: BTreeMap<String, Vec<hyprland_editor_core::workspace_rule::Rule>>,
     saved_workspace_rules: BTreeMap<String, Vec<hyprland_editor_core::workspace_rule::Rule>>,
 }
@@ -67,7 +70,13 @@ impl State {
         let empty = hyprland_editor_core::binding::Draft::default();
         let bindings_changed = self.bindings.get(version).unwrap_or(&empty)
             != self.saved_bindings.get(version).unwrap_or(&empty);
-        bindings_changed
+        self.rules.get(version).map(Vec::as_slice).unwrap_or(&[])
+            != self
+                .saved_rules
+                .get(version)
+                .map(Vec::as_slice)
+                .unwrap_or(&[])
+            || bindings_changed
             || self
                 .workspace_rules
                 .get(version)
@@ -154,6 +163,9 @@ impl State {
                 self.sources.insert(version.clone(), document);
                 self.source_origins.insert(version, origin);
             }
+            history::Undo::Rules { previous, .. } => {
+                self.rules.insert(self.draft.version.clone(), previous);
+            }
             history::Undo::Workspaces { previous, .. } => {
                 self.workspace_rules
                     .insert(self.draft.version.clone(), previous);
@@ -192,10 +204,34 @@ impl State {
                 &self.draft.version,
             )?);
         }
+        if let Some(rules) = self.rules.get(&self.draft.version) {
+            text.push_str(&hyprland_editor_core::rule::export_lua(
+                rules,
+                &self.draft.version,
+            )?);
+        }
         if let Some(bindings) = self.bindings.get(&self.draft.version) {
             text.push_str(&bindings.export_lua(&self.draft.version)?);
         }
         Ok(text)
+    }
+    fn replace_rules(
+        &mut self,
+        rules: Vec<hyprland_editor_core::rule::Rule>,
+    ) -> Result<(), String> {
+        hyprland_editor_core::rule::validate(&rules, &self.draft.version)?;
+        let before = self
+            .rules
+            .get(&self.draft.version)
+            .cloned()
+            .unwrap_or_default();
+        if before == rules {
+            return Ok(());
+        }
+        self.undo.rules(before)?;
+        self.rules.insert(self.draft.version.clone(), rules);
+        self.generation += 1;
+        Ok(())
     }
     fn replace_workspaces(
         &mut self,
@@ -288,7 +324,7 @@ fn label(text: &str) -> gtk::Label {
 fn summary(state: &Shared, status: &gtk::Label) {
     let s = state.borrow();
     status.set_text(&format!(
-        "{} {} in draft{}{}{}{} · {}",
+        "{} {} in draft{}{}{}{}{} · {}",
         s.draft.values.len(),
         if s.draft.values.len() == 1 {
             "setting"
@@ -311,6 +347,13 @@ fn summary(state: &Shared, status: &gtk::Label) {
             .get(&s.draft.version)
             .filter(|r| !r.is_empty())
             .map_or(String::new(), |r| format!(" · {} workspace rules", r.len())),
+        s.rules
+            .get(&s.draft.version)
+            .filter(|r| !r.is_empty())
+            .map_or(String::new(), |r| format!(
+                " · {} window/layer declarations",
+                r.len()
+            )),
         if s.dirty_version(&s.draft.version) {
             "Unsaved changes"
         } else {
@@ -576,6 +619,8 @@ fn initial_state() -> Shared {
         saved_devices: BTreeMap::new(),
         bindings: BTreeMap::new(),
         saved_bindings: BTreeMap::new(),
+        rules: BTreeMap::new(),
+        saved_rules: BTreeMap::new(),
         workspace_rules: BTreeMap::new(),
         saved_workspace_rules: BTreeMap::new(),
     }))
@@ -900,6 +945,8 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     let reconcile = gtk::Button::with_label("Compare Changed Source");
     let binding_editor = gtk::Button::with_label("Edit Bindings");
     bindings::connect(&binding_editor, &window, &state, &status);
+    let rule_editor = gtk::Button::with_label("Rules");
+    rules::connect(&rule_editor, &window, &state, &status);
     let workspace_editor = gtk::Button::with_label("Workspaces");
     workspaces::connect(&workspace_editor, &window, &state, &status);
     let device_editor = gtk::Button::with_label("Edit Devices");
@@ -926,6 +973,7 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
         ("devices", &device_editor),
         ("bindings", &binding_editor),
         ("workspaces", &workspace_editor),
+        ("rules", &rule_editor),
     ] {
         presentation::bridge(&window, name, button);
     }
@@ -1245,6 +1293,7 @@ mod tests {
         devices::test_editor(&window);
         bindings::test_editor(&window);
         workspaces::test_editor(&window);
+        rules::test_editor(&window);
         window.close();
         assert!(
             window.is_visible(),
