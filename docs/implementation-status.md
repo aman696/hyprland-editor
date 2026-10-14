@@ -59,6 +59,12 @@ Several string/geometry/border fields still need complete graphical semantic bui
 
 The 0.9 milestone was published through [PR #4](https://github.com/aman696/hyprland-editor/pull/4), head `1348dd1ca116ad78270839497b2879aff31839b6`. All 129 local tests (including the private-display workflow), formatting, strict lint, release build and catalogue/register checks passed. Both hosted runs passed the pinned source probes, workspace tests, native graphical test, strict lint and release build: [push run](https://github.com/aman696/hyprland-editor/actions/runs/38554757943) and [PR run](https://github.com/aman696/hyprland-editor/actions/runs/38554765690). The merged tree was checked against that exact head. These are draft implementation results; full compositor/hardware/security/resource contracts remain unproven.
 
+## Structured rule values in 0.10
+
+Opacity channels/override, internal/client fullscreen state, ordered grouping operations, suppressed events, idle/content/tone-map modes and versioned border-pair palettes now have dedicated controls. Untouched spellings and unsupported original literals remain exact. A hash-pinned primitive source probe compares 120 observations using actual Hyprutils numeric/list helpers, color parsing and group consumer logic with inert graphics storage. See [semantic control scope](rule-semantic-controls.md).
+
+Complete geometry/selector/style domains, escaped/exotic literals, named-rule lifecycle, source/live/compositor conformance, preview/apply/recovery and resource/release gates remain open. This deepens existing rule support; no full feature acceptance or new coverage percentage is claimed. Shared semantic domains and animation/gesture editors remain next.
+
 ## Next implementation order
 
 1. **Finish source ownership and persistence.** Extend the single-root source manifest to a lossless authorized dependency graph, generated ownership and multi-file changed-revision reconciliation. Preserve metadata and stable document identities across profiles; extend diagnostics to include graphs. Implement include authorization and dependency graphs without executing imports. Add insertion/deletion codecs only with comment/trivia preservation and conflict tests.

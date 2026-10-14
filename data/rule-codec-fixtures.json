@@ -1,0 +1,1164 @@
+{
+  "format": "hye-rule-codec-fixtures-1",
+  "meaning": "Pinned primitive parser observations with inert gradient storage; no compositor behavior certificate.",
+  "cases": [
+    {
+      "kind": "opacity",
+      "raw": "",
+      "parsed": {
+        "active": {
+          "amount": 1,
+          "override_value": false
+        },
+        "inactive": {
+          "amount": 1,
+          "override_value": false
+        },
+        "fullscreen": {
+          "amount": 1,
+          "override_value": false
+        }
+      },
+      "version": "baseline"
+    },
+    {
+      "kind": "opacity",
+      "raw": "0.5",
+      "parsed": {
+        "active": {
+          "amount": 0.5,
+          "override_value": false
+        },
+        "inactive": {
+          "amount": 0.5,
+          "override_value": false
+        },
+        "fullscreen": {
+          "amount": 0.5,
+          "override_value": false
+        }
+      },
+      "version": "baseline"
+    },
+    {
+      "kind": "opacity",
+      "raw": "0.5 override",
+      "parsed": {
+        "active": {
+          "amount": 0.5,
+          "override_value": true
+        },
+        "inactive": {
+          "amount": 0.5,
+          "override_value": true
+        },
+        "fullscreen": {
+          "amount": 0.5,
+          "override_value": true
+        }
+      },
+      "version": "baseline"
+    },
+    {
+      "kind": "opacity",
+      "raw": "0.5 override 0.25",
+      "parsed": {
+        "active": {
+          "amount": 0.5,
+          "override_value": true
+        },
+        "inactive": {
+          "amount": 0.25,
+          "override_value": false
+        },
+        "fullscreen": {
+          "amount": 1,
+          "override_value": false
+        }
+      },
+      "version": "baseline"
+    },
+    {
+      "kind": "opacity",
+      "raw": "override opacity 0.5 override",
+      "parsed": {
+        "active": {
+          "amount": 0.5,
+          "override_value": true
+        },
+        "inactive": {
+          "amount": 0.5,
+          "override_value": true
+        },
+        "fullscreen": {
+          "amount": 0.5,
+          "override_value": true
+        }
+      },
+      "version": "baseline"
+    },
+    {
+      "kind": "opacity",
+      "raw": "0.5 0.25 0.75 override",
+      "parsed": {
+        "active": {
+          "amount": 0.5,
+          "override_value": false
+        },
+        "inactive": {
+          "amount": 0.25,
+          "override_value": false
+        },
+        "fullscreen": {
+          "amount": 0.75,
+          "override_value": true
+        }
+      },
+      "version": "baseline"
+    },
+    {
+      "kind": "opacity",
+      "raw": "0.5  0.25",
+      "parsed": null,
+      "version": "baseline"
+    },
+    {
+      "kind": "opacity",
+      "raw": "0.5 0.25 1 1",
+      "parsed": null,
+      "version": "baseline"
+    },
+    {
+      "kind": "opacity",
+      "raw": "+0.5",
+      "parsed": null,
+      "version": "baseline"
+    },
+    {
+      "kind": "opacity",
+      "raw": "1e-50",
+      "parsed": null,
+      "version": "baseline"
+    },
+    {
+      "kind": "opacity",
+      "raw": "1e-45",
+      "parsed": {
+        "active": {
+          "amount": 1e-45,
+          "override_value": false
+        },
+        "inactive": {
+          "amount": 1e-45,
+          "override_value": false
+        },
+        "fullscreen": {
+          "amount": 1e-45,
+          "override_value": false
+        }
+      },
+      "version": "baseline"
+    },
+    {
+      "kind": "opacity",
+      "raw": "3.4028235e38",
+      "parsed": {
+        "active": {
+          "amount": 3.4028235e+38,
+          "override_value": false
+        },
+        "inactive": {
+          "amount": 3.4028235e+38,
+          "override_value": false
+        },
+        "fullscreen": {
+          "amount": 3.4028235e+38,
+          "override_value": false
+        }
+      },
+      "version": "baseline"
+    },
+    {
+      "kind": "opacity",
+      "raw": "3.4028236e38",
+      "parsed": null,
+      "version": "baseline"
+    },
+    {
+      "kind": "fullscreen",
+      "raw": "2",
+      "parsed": {
+        "internal": 2,
+        "client": null
+      },
+      "version": "baseline"
+    },
+    {
+      "kind": "fullscreen",
+      "raw": "2 3",
+      "parsed": {
+        "internal": 2,
+        "client": 3
+      },
+      "version": "baseline"
+    },
+    {
+      "kind": "fullscreen",
+      "raw": "0x2 0x3 ignored",
+      "parsed": {
+        "internal": 2,
+        "client": 3
+      },
+      "version": "baseline"
+    },
+    {
+      "kind": "fullscreen",
+      "raw": "2  3",
+      "parsed": {
+        "internal": 2,
+        "client": null
+      },
+      "version": "baseline"
+    },
+    {
+      "kind": "fullscreen",
+      "raw": " 2 3",
+      "parsed": null,
+      "version": "baseline"
+    },
+    {
+      "kind": "fullscreen",
+      "raw": "2147483647 -2147483648",
+      "parsed": {
+        "internal": 2147483647,
+        "client": -2147483648
+      },
+      "version": "baseline"
+    },
+    {
+      "kind": "fullscreen",
+      "raw": "2147483648",
+      "parsed": null,
+      "version": "baseline"
+    },
+    {
+      "kind": "border",
+      "raw": "0xFF000000 0xFFFFFFFF",
+      "parsed": {
+        "active": {
+          "colors": [
+            4278190080
+          ],
+          "degrees": 0
+        },
+        "inactive": {
+          "colors": [
+            4294967295
+          ],
+          "degrees": 0
+        }
+      },
+      "version": "baseline"
+    },
+    {
+      "kind": "border",
+      "raw": "0xFF000000 45deg #fff 90deg",
+      "parsed": {
+        "active": {
+          "colors": [
+            4278190080
+          ],
+          "degrees": 45
+        },
+        "inactive": {
+          "colors": [
+            4294967295
+          ],
+          "degrees": 90
+        }
+      },
+      "version": "baseline"
+    },
+    {
+      "kind": "border",
+      "raw": "#ff000080",
+      "parsed": {
+        "active": {
+          "colors": [
+            2164195328
+          ],
+          "degrees": 0
+        },
+        "inactive": null
+      },
+      "version": "baseline"
+    },
+    {
+      "kind": "border",
+      "raw": "rgba(ff000080)",
+      "parsed": {
+        "active": {
+          "colors": [
+            2164195328
+          ],
+          "degrees": 0
+        },
+        "inactive": null
+      },
+      "version": "baseline"
+    },
+    {
+      "kind": "border",
+      "raw": "rgba(255, 0, 0, 0.5)",
+      "parsed": null,
+      "version": "baseline"
+    },
+    {
+      "kind": "border",
+      "raw": "0deg 0xFFFFFFFF 90deg",
+      "parsed": null,
+      "version": "baseline"
+    },
+    {
+      "kind": "border",
+      "raw": "0deg",
+      "parsed": null,
+      "version": "baseline"
+    },
+    {
+      "kind": "border",
+      "raw": "0xFF000000 0xFF000000 0xFF000000 0xFF000000 0xFF000000 0xFF000000 0xFF000000 0xFF000000 0xFF000000 0xFF000000 0xFF000000 0deg",
+      "parsed": null,
+      "version": "baseline"
+    },
+    {
+      "kind": "border_public_string",
+      "raw": "0xFF000000 0xFFFFFFFF",
+      "parsed": {
+        "active": {
+          "colors": [
+            4278190080
+          ],
+          "degrees": 0
+        },
+        "inactive": {
+          "colors": [
+            4294967295
+          ],
+          "degrees": 0
+        }
+      },
+      "version": "baseline"
+    },
+    {
+      "kind": "border_public_string",
+      "raw": "0xFF000000 45deg #fff 90deg",
+      "parsed": {
+        "active": {
+          "colors": [
+            4278190080
+          ],
+          "degrees": 45
+        },
+        "inactive": {
+          "colors": [
+            4294967295
+          ],
+          "degrees": 90
+        }
+      },
+      "version": "baseline"
+    },
+    {
+      "kind": "border_public_string",
+      "raw": "#ff000080",
+      "parsed": {
+        "active": {
+          "colors": [
+            2164195328
+          ],
+          "degrees": 0
+        },
+        "inactive": null
+      },
+      "version": "baseline"
+    },
+    {
+      "kind": "border_public_string",
+      "raw": "rgba(ff000080)",
+      "parsed": {
+        "active": {
+          "colors": [
+            2164195328
+          ],
+          "degrees": 0
+        },
+        "inactive": null
+      },
+      "version": "baseline"
+    },
+    {
+      "kind": "border_public_string",
+      "raw": "rgba(255, 0, 0, 0.5)",
+      "parsed": {
+        "active": {
+          "colors": [
+            2147418112
+          ],
+          "degrees": 0
+        },
+        "inactive": null
+      },
+      "version": "baseline"
+    },
+    {
+      "kind": "border_public_string",
+      "raw": "0deg 0xFFFFFFFF 90deg",
+      "parsed": null,
+      "version": "baseline"
+    },
+    {
+      "kind": "border_public_string",
+      "raw": "0deg",
+      "parsed": null,
+      "version": "baseline"
+    },
+    {
+      "kind": "border_public_string",
+      "raw": "0xFF000000 0xFF000000 0xFF000000 0xFF000000 0xFF000000 0xFF000000 0xFF000000 0xFF000000 0xFF000000 0xFF000000 0xFF000000 0deg",
+      "parsed": null,
+      "version": "baseline"
+    },
+    {
+      "kind": "group:0",
+      "raw": "set always barred lock always invade deny",
+      "parsed": 191,
+      "version": "baseline"
+    },
+    {
+      "kind": "group:0",
+      "raw": "new",
+      "parsed": 5,
+      "version": "baseline"
+    },
+    {
+      "kind": "group:0",
+      "raw": "override lock",
+      "parsed": 72,
+      "version": "baseline"
+    },
+    {
+      "kind": "group:0",
+      "raw": "unset lock",
+      "parsed": 64,
+      "version": "baseline"
+    },
+    {
+      "kind": "group:0",
+      "raw": "set group always",
+      "parsed": 3,
+      "version": "baseline"
+    },
+    {
+      "kind": "group:0",
+      "raw": "set  always",
+      "parsed": 1,
+      "version": "baseline"
+    },
+    {
+      "kind": "group:0",
+      "raw": "group",
+      "parsed": 0,
+      "version": "baseline"
+    },
+    {
+      "kind": "group:0",
+      "raw": "set always override lock always",
+      "parsed": 88,
+      "version": "baseline"
+    },
+    {
+      "kind": "group:128",
+      "raw": "set always barred lock always invade deny",
+      "parsed": 191,
+      "version": "baseline"
+    },
+    {
+      "kind": "group:128",
+      "raw": "new",
+      "parsed": 133,
+      "version": "baseline"
+    },
+    {
+      "kind": "group:128",
+      "raw": "override lock",
+      "parsed": 72,
+      "version": "baseline"
+    },
+    {
+      "kind": "group:128",
+      "raw": "unset lock",
+      "parsed": 64,
+      "version": "baseline"
+    },
+    {
+      "kind": "group:128",
+      "raw": "set group always",
+      "parsed": 131,
+      "version": "baseline"
+    },
+    {
+      "kind": "group:128",
+      "raw": "set  always",
+      "parsed": 129,
+      "version": "baseline"
+    },
+    {
+      "kind": "group:128",
+      "raw": "group",
+      "parsed": 128,
+      "version": "baseline"
+    },
+    {
+      "kind": "group:128",
+      "raw": "set always override lock always",
+      "parsed": 88,
+      "version": "baseline"
+    },
+    {
+      "kind": "group:64",
+      "raw": "set always barred lock always invade deny",
+      "parsed": 64,
+      "version": "baseline"
+    },
+    {
+      "kind": "group:64",
+      "raw": "new",
+      "parsed": 64,
+      "version": "baseline"
+    },
+    {
+      "kind": "group:64",
+      "raw": "override lock",
+      "parsed": 64,
+      "version": "baseline"
+    },
+    {
+      "kind": "group:64",
+      "raw": "unset lock",
+      "parsed": 64,
+      "version": "baseline"
+    },
+    {
+      "kind": "group:64",
+      "raw": "set group always",
+      "parsed": 64,
+      "version": "baseline"
+    },
+    {
+      "kind": "group:64",
+      "raw": "set  always",
+      "parsed": 64,
+      "version": "baseline"
+    },
+    {
+      "kind": "group:64",
+      "raw": "group",
+      "parsed": 64,
+      "version": "baseline"
+    },
+    {
+      "kind": "group:64",
+      "raw": "set always override lock always",
+      "parsed": 64,
+      "version": "baseline"
+    },
+    {
+      "kind": "opacity",
+      "raw": "",
+      "parsed": {
+        "active": {
+          "amount": 1,
+          "override_value": false
+        },
+        "inactive": {
+          "amount": 1,
+          "override_value": false
+        },
+        "fullscreen": {
+          "amount": 1,
+          "override_value": false
+        }
+      },
+      "version": "current"
+    },
+    {
+      "kind": "opacity",
+      "raw": "0.5",
+      "parsed": {
+        "active": {
+          "amount": 0.5,
+          "override_value": false
+        },
+        "inactive": {
+          "amount": 0.5,
+          "override_value": false
+        },
+        "fullscreen": {
+          "amount": 0.5,
+          "override_value": false
+        }
+      },
+      "version": "current"
+    },
+    {
+      "kind": "opacity",
+      "raw": "0.5 override",
+      "parsed": {
+        "active": {
+          "amount": 0.5,
+          "override_value": true
+        },
+        "inactive": {
+          "amount": 0.5,
+          "override_value": true
+        },
+        "fullscreen": {
+          "amount": 0.5,
+          "override_value": true
+        }
+      },
+      "version": "current"
+    },
+    {
+      "kind": "opacity",
+      "raw": "0.5 override 0.25",
+      "parsed": {
+        "active": {
+          "amount": 0.5,
+          "override_value": true
+        },
+        "inactive": {
+          "amount": 0.25,
+          "override_value": false
+        },
+        "fullscreen": {
+          "amount": 1,
+          "override_value": false
+        }
+      },
+      "version": "current"
+    },
+    {
+      "kind": "opacity",
+      "raw": "override opacity 0.5 override",
+      "parsed": {
+        "active": {
+          "amount": 0.5,
+          "override_value": true
+        },
+        "inactive": {
+          "amount": 0.5,
+          "override_value": true
+        },
+        "fullscreen": {
+          "amount": 0.5,
+          "override_value": true
+        }
+      },
+      "version": "current"
+    },
+    {
+      "kind": "opacity",
+      "raw": "0.5 0.25 0.75 override",
+      "parsed": {
+        "active": {
+          "amount": 0.5,
+          "override_value": false
+        },
+        "inactive": {
+          "amount": 0.25,
+          "override_value": false
+        },
+        "fullscreen": {
+          "amount": 0.75,
+          "override_value": true
+        }
+      },
+      "version": "current"
+    },
+    {
+      "kind": "opacity",
+      "raw": "0.5  0.25",
+      "parsed": null,
+      "version": "current"
+    },
+    {
+      "kind": "opacity",
+      "raw": "0.5 0.25 1 1",
+      "parsed": null,
+      "version": "current"
+    },
+    {
+      "kind": "opacity",
+      "raw": "+0.5",
+      "parsed": null,
+      "version": "current"
+    },
+    {
+      "kind": "opacity",
+      "raw": "1e-50",
+      "parsed": null,
+      "version": "current"
+    },
+    {
+      "kind": "opacity",
+      "raw": "1e-45",
+      "parsed": {
+        "active": {
+          "amount": 1e-45,
+          "override_value": false
+        },
+        "inactive": {
+          "amount": 1e-45,
+          "override_value": false
+        },
+        "fullscreen": {
+          "amount": 1e-45,
+          "override_value": false
+        }
+      },
+      "version": "current"
+    },
+    {
+      "kind": "opacity",
+      "raw": "3.4028235e38",
+      "parsed": {
+        "active": {
+          "amount": 3.4028235e+38,
+          "override_value": false
+        },
+        "inactive": {
+          "amount": 3.4028235e+38,
+          "override_value": false
+        },
+        "fullscreen": {
+          "amount": 3.4028235e+38,
+          "override_value": false
+        }
+      },
+      "version": "current"
+    },
+    {
+      "kind": "opacity",
+      "raw": "3.4028236e38",
+      "parsed": null,
+      "version": "current"
+    },
+    {
+      "kind": "fullscreen",
+      "raw": "2",
+      "parsed": {
+        "internal": 2,
+        "client": null
+      },
+      "version": "current"
+    },
+    {
+      "kind": "fullscreen",
+      "raw": "2 3",
+      "parsed": {
+        "internal": 2,
+        "client": 3
+      },
+      "version": "current"
+    },
+    {
+      "kind": "fullscreen",
+      "raw": "0x2 0x3 ignored",
+      "parsed": {
+        "internal": 2,
+        "client": 3
+      },
+      "version": "current"
+    },
+    {
+      "kind": "fullscreen",
+      "raw": "2  3",
+      "parsed": {
+        "internal": 2,
+        "client": null
+      },
+      "version": "current"
+    },
+    {
+      "kind": "fullscreen",
+      "raw": " 2 3",
+      "parsed": null,
+      "version": "current"
+    },
+    {
+      "kind": "fullscreen",
+      "raw": "2147483647 -2147483648",
+      "parsed": {
+        "internal": 2147483647,
+        "client": -2147483648
+      },
+      "version": "current"
+    },
+    {
+      "kind": "fullscreen",
+      "raw": "2147483648",
+      "parsed": null,
+      "version": "current"
+    },
+    {
+      "kind": "border",
+      "raw": "0xFF000000 0xFFFFFFFF",
+      "parsed": {
+        "active": {
+          "colors": [
+            4278190080
+          ],
+          "degrees": 0
+        },
+        "inactive": {
+          "colors": [
+            4294967295
+          ],
+          "degrees": 0
+        }
+      },
+      "version": "current"
+    },
+    {
+      "kind": "border",
+      "raw": "0xFF000000 45deg #fff 90deg",
+      "parsed": {
+        "active": {
+          "colors": [
+            4278190080
+          ],
+          "degrees": 45
+        },
+        "inactive": {
+          "colors": [
+            4294967295
+          ],
+          "degrees": 90
+        }
+      },
+      "version": "current"
+    },
+    {
+      "kind": "border",
+      "raw": "#ff000080",
+      "parsed": {
+        "active": {
+          "colors": [
+            2164195328
+          ],
+          "degrees": 0
+        },
+        "inactive": null
+      },
+      "version": "current"
+    },
+    {
+      "kind": "border",
+      "raw": "rgba(ff000080)",
+      "parsed": {
+        "active": {
+          "colors": [
+            2164195328
+          ],
+          "degrees": 0
+        },
+        "inactive": null
+      },
+      "version": "current"
+    },
+    {
+      "kind": "border",
+      "raw": "rgba(255, 0, 0, 0.5)",
+      "parsed": null,
+      "version": "current"
+    },
+    {
+      "kind": "border",
+      "raw": "0deg 0xFFFFFFFF 90deg",
+      "parsed": {
+        "active": null,
+        "inactive": {
+          "colors": [
+            4294967295
+          ],
+          "degrees": 90
+        }
+      },
+      "version": "current"
+    },
+    {
+      "kind": "border",
+      "raw": "0deg",
+      "parsed": null,
+      "version": "current"
+    },
+    {
+      "kind": "border",
+      "raw": "0xFF000000 0xFF000000 0xFF000000 0xFF000000 0xFF000000 0xFF000000 0xFF000000 0xFF000000 0xFF000000 0xFF000000 0xFF000000 0deg",
+      "parsed": null,
+      "version": "current"
+    },
+    {
+      "kind": "border_public_string",
+      "raw": "0xFF000000 0xFFFFFFFF",
+      "parsed": {
+        "active": {
+          "colors": [
+            4278190080
+          ],
+          "degrees": 0
+        },
+        "inactive": {
+          "colors": [
+            4294967295
+          ],
+          "degrees": 0
+        }
+      },
+      "version": "current"
+    },
+    {
+      "kind": "border_public_string",
+      "raw": "0xFF000000 45deg #fff 90deg",
+      "parsed": {
+        "active": {
+          "colors": [
+            4278190080
+          ],
+          "degrees": 45
+        },
+        "inactive": {
+          "colors": [
+            4294967295
+          ],
+          "degrees": 90
+        }
+      },
+      "version": "current"
+    },
+    {
+      "kind": "border_public_string",
+      "raw": "#ff000080",
+      "parsed": {
+        "active": {
+          "colors": [
+            2164195328
+          ],
+          "degrees": 0
+        },
+        "inactive": null
+      },
+      "version": "current"
+    },
+    {
+      "kind": "border_public_string",
+      "raw": "rgba(ff000080)",
+      "parsed": {
+        "active": {
+          "colors": [
+            2164195328
+          ],
+          "degrees": 0
+        },
+        "inactive": null
+      },
+      "version": "current"
+    },
+    {
+      "kind": "border_public_string",
+      "raw": "rgba(255, 0, 0, 0.5)",
+      "parsed": {
+        "active": {
+          "colors": [
+            2147418112
+          ],
+          "degrees": 0
+        },
+        "inactive": null
+      },
+      "version": "current"
+    },
+    {
+      "kind": "border_public_string",
+      "raw": "0deg 0xFFFFFFFF 90deg",
+      "parsed": {
+        "active": null,
+        "inactive": {
+          "colors": [
+            4294967295
+          ],
+          "degrees": 90
+        }
+      },
+      "version": "current"
+    },
+    {
+      "kind": "border_public_string",
+      "raw": "0deg",
+      "parsed": null,
+      "version": "current"
+    },
+    {
+      "kind": "border_public_string",
+      "raw": "0xFF000000 0xFF000000 0xFF000000 0xFF000000 0xFF000000 0xFF000000 0xFF000000 0xFF000000 0xFF000000 0xFF000000 0xFF000000 0deg",
+      "parsed": null,
+      "version": "current"
+    },
+    {
+      "kind": "group:0",
+      "raw": "set always barred lock always invade deny",
+      "parsed": 191,
+      "version": "current"
+    },
+    {
+      "kind": "group:0",
+      "raw": "new",
+      "parsed": 5,
+      "version": "current"
+    },
+    {
+      "kind": "group:0",
+      "raw": "override lock",
+      "parsed": 72,
+      "version": "current"
+    },
+    {
+      "kind": "group:0",
+      "raw": "unset lock",
+      "parsed": 64,
+      "version": "current"
+    },
+    {
+      "kind": "group:0",
+      "raw": "set group always",
+      "parsed": 3,
+      "version": "current"
+    },
+    {
+      "kind": "group:0",
+      "raw": "set  always",
+      "parsed": 1,
+      "version": "current"
+    },
+    {
+      "kind": "group:0",
+      "raw": "group",
+      "parsed": 0,
+      "version": "current"
+    },
+    {
+      "kind": "group:0",
+      "raw": "set always override lock always",
+      "parsed": 88,
+      "version": "current"
+    },
+    {
+      "kind": "group:128",
+      "raw": "set always barred lock always invade deny",
+      "parsed": 191,
+      "version": "current"
+    },
+    {
+      "kind": "group:128",
+      "raw": "new",
+      "parsed": 133,
+      "version": "current"
+    },
+    {
+      "kind": "group:128",
+      "raw": "override lock",
+      "parsed": 72,
+      "version": "current"
+    },
+    {
+      "kind": "group:128",
+      "raw": "unset lock",
+      "parsed": 64,
+      "version": "current"
+    },
+    {
+      "kind": "group:128",
+      "raw": "set group always",
+      "parsed": 131,
+      "version": "current"
+    },
+    {
+      "kind": "group:128",
+      "raw": "set  always",
+      "parsed": 129,
+      "version": "current"
+    },
+    {
+      "kind": "group:128",
+      "raw": "group",
+      "parsed": 128,
+      "version": "current"
+    },
+    {
+      "kind": "group:128",
+      "raw": "set always override lock always",
+      "parsed": 88,
+      "version": "current"
+    },
+    {
+      "kind": "group:64",
+      "raw": "set always barred lock always invade deny",
+      "parsed": 64,
+      "version": "current"
+    },
+    {
+      "kind": "group:64",
+      "raw": "new",
+      "parsed": 64,
+      "version": "current"
+    },
+    {
+      "kind": "group:64",
+      "raw": "override lock",
+      "parsed": 64,
+      "version": "current"
+    },
+    {
+      "kind": "group:64",
+      "raw": "unset lock",
+      "parsed": 64,
+      "version": "current"
+    },
+    {
+      "kind": "group:64",
+      "raw": "set group always",
+      "parsed": 64,
+      "version": "current"
+    },
+    {
+      "kind": "group:64",
+      "raw": "set  always",
+      "parsed": 64,
+      "version": "current"
+    },
+    {
+      "kind": "group:64",
+      "raw": "group",
+      "parsed": 64,
+      "version": "current"
+    },
+    {
+      "kind": "group:64",
+      "raw": "set always override lock always",
+      "parsed": 64,
+      "version": "current"
+    }
+  ]
+}

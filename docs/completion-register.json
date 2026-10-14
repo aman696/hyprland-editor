@@ -19,6 +19,10 @@
         "crates/editor-core/src/regex.rs",
         "crates/editor-core/native/regex.cpp",
         "crates/editor-app/src/rules.rs",
+        "crates/editor-app/src/rule_forms.rs",
+        "crates/editor-core/src/rule_codec.rs",
+        "data/rule-codec-provenance.json",
+        "data/rule-codec-fixtures.json",
         "data/window-effects.json",
         "data/layer-effects.json",
         "data/rule-semantics.json"
@@ -29,9 +33,12 @@
         "test_editor",
         "actual_restricted_worker_projects_inert_rule_groups_and_preserves_copy",
         "rule_declarations_survive_application_reopen_without_accessing_original_and_refuse_schema_tampering",
-        "scripts/rule_source_probe.py"
+        "scripts/rule_source_probe.py",
+        "typed_codecs_agree_with_pinned_primitive_parser_observations",
+        "test_forms",
+        "scripts/rule_codec_source_probe.py"
       ],
-      "limits": "57/60 window-effect controls, ten layer effects, consumed conditions, isolated exact-text/RE2 samples, geometry inputs, group boundaries, explicit named ordering, private persistence and undo; no complete specialized string/geometry/border builders, named-object lifecycle, effective rule discovery, source editing, compositor conformance, preview/apply/recovery or release certification"
+      "limits": "57/60 window-effect controls, ten layer effects, consumed conditions, isolated exact-text/RE2 samples, geometry inputs, group boundaries, explicit named ordering, private persistence/undo and specialized opacity/fullscreen/group/event/mode/border controls; no complete geometry/style/selector or exotic/escaped literal domains, named-object lifecycle, effective rule discovery, source editing, compositor conformance, preview/apply/recovery or release certification"
     },
     {
       "area": "workspace draft editor",

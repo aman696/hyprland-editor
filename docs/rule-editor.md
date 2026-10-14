@@ -1,4 +1,4 @@
-# Window and layer rule draft editor — 0.9
+# Window and layer rule draft editor — 0.9 foundation / 0.10 controls
 
 This milestone adds focused controls for all 57 baseline / 60 current window effects, ten layer effects in each pack, the 17 consumed window predicates and the layer namespace predicate. Name, enabled/unset, ordered declaration management, independent named duplication, removal, bounded undo, static Lua import/export, schema-pinned private storage and original-source omission guards are integrated into the application. It does not close the 94 complete RULE contracts.
 
@@ -16,7 +16,7 @@ Only the selected condition/effect form is created. Regex conditions offer exact
 
 Geometry accepts two string/number axes, original combined text or the upstream empty-string clearing sentinel. Untouched numeric axes preserve their input types and full integer range. Changing an axis authors a string expression. Expressions are never evaluated. MuParser grammar, variable availability, actual dimensions and placement still require isolated compositor validation and a complete graphical expression builder.
 
-Typed scalar fields retain false/zero values and literal bounds. Integer/float entries avoid artificial spinner bounds. Structured gradients use the existing color form. Imported legacy active/inactive border text remains available and is exported as text through the source binding's legacy fallback. The complete gradient-pair builder and independent border/opacity/fullscreen/group/event/style/selector codecs remain required. Several string fields still use literal text; this milestone does not satisfy the final no-writing goal for those fields.
+Typed scalar fields retain false/zero values and literal bounds. Integer/float entries avoid artificial spinner bounds. Structured gradients use the existing color form. Imported legacy active/inactive border text remains available and is exported as text through the source binding's legacy fallback. The [0.10 structured controls](rule-semantic-controls.md) add border pairs, opacity, fullscreen state, grouping, event and mode selectors with primitive parser evidence. Complete geometry/style/monitor/workspace/action selector builders and full runtime conformance remain required. Some fields still use literal text.
 
 The parser recognizes static tables and restricted pure locals. Calls, plugin effects, ambiguous duplicate keys, unknown structures and unsupported coercions remain opaque. An evaluated unresolved argument invalidates trust in later API calls. No Lua, hook, command or plugin is executed. Window-only and layer-only predicates are kept separate because the consumers do not use every globally registered property.
 

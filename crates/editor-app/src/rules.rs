@@ -71,7 +71,24 @@ fn literal(
         Ok(value)
     })
 }
-fn effect_form(panel: &gtk::Box, setting: &Setting, value: Option<EffectValue>) -> ValueGetter {
+fn effect_form(
+    panel: &gtk::Box,
+    setting: &Setting,
+    value: Option<EffectValue>,
+    version: &str,
+) -> ValueGetter {
+    if setting.lua_key == "border_color" {
+        return super::rule_forms::border(panel, value, version);
+    }
+    if setting.kind == "String" {
+        let raw = match &value {
+            Some(EffectValue::Literal(Value::String(s))) => Some(s.clone()),
+            _ => None,
+        };
+        if let Some(form) = super::rule_forms::string(panel, &setting.lua_key, raw) {
+            return form;
+        }
+    }
     if setting.kind == "ExpressionVec2" {
         let geometry = match value {
             Some(EffectValue::Geometry(g)) => g,
@@ -138,11 +155,6 @@ fn effect_form(panel: &gtk::Box, setting: &Setting, value: Option<EffectValue>) 
                 _ => Geometry::Text(String::new()),
             }))
         });
-    }
-    if let Some(EffectValue::BorderText(raw)) = value.as_ref() {
-        panel.append(&label("Imported active/inactive border syntax is retained as text. The complete gradient-pair builder is still required."));
-        let e = text(panel, "Border Value", raw);
-        return Box::new(move || Ok(EffectValue::BorderText(e.text().into())));
     }
     let initial = if let Some(EffectValue::Literal(v)) = value {
         Some(v)
@@ -344,17 +356,19 @@ fn editor(
     status: &gtk::Label,
     feedback: &gtk::Label,
 ) -> Getter {
-    panel.append(&label(if rule.kind == Kind::Window {
-        "Window Rule"
-    } else {
-        "Layer Rule"
-    }));
+    let metadata = gtk::Box::new(gtk::Orientation::Vertical, 8);
+    panel.append(
+        &gtk::Expander::builder()
+            .label("Name and Enabled State")
+            .child(&metadata)
+            .build(),
+    );
     let named = gtk::CheckButton::with_label("Named Rule");
     named.set_widget_name("rule-named");
     named.set_active(rule.name.is_some());
-    panel.append(&named);
+    metadata.append(&named);
     let name_box = gtk::Box::new(gtk::Orientation::Vertical, 8);
-    panel.append(&name_box);
+    metadata.append(&name_box);
     name_box.set_visible(named.is_active());
     let name = text(&name_box, "Rule Name", rule.name.as_deref().unwrap_or(""));
     name.set_widget_name("rule-name");
@@ -365,7 +379,7 @@ fn editor(
         }
     });
     let enabled = choices(
-        panel,
+        &metadata,
         &["Default Enabled", "Enabled", "Disabled"],
         match rule.enabled {
             None => 0,
@@ -374,13 +388,17 @@ fn editor(
         },
     );
     enabled.set_widget_name("rule-enabled");
-    let section = choices(panel, &["Conditions", "Effects"], 0);
+    let selection = gtk::Box::new(gtk::Orientation::Horizontal, 8);
+    panel.append(&selection);
+    let section = choices(&selection, &["Conditions", "Effects"], 0);
+    section.set_hexpand(true);
     section.set_widget_name("rule-section");
     let model = gtk::StringList::new(&[]);
     let field = gtk::DropDown::builder().model(&model).build();
     compact(&field);
     field.set_widget_name("rule-field");
-    panel.append(&field);
+    field.set_hexpand(true);
+    selection.append(&field);
     let set = gtk::CheckButton::with_label("Set This Field");
     set.set_widget_name("rule-field-enabled");
     panel.append(&set);
@@ -440,6 +458,7 @@ fn editor(
         }
     });
     let render: Rc<dyn Fn(bool)> = Rc::new({
+        let version = version.clone();
         let draft = draft.clone();
         let get = get.clone();
         let active = active.clone();
@@ -461,7 +480,13 @@ fn editor(
                 model.splice(
                     0,
                     model.n_items(),
-                    &keys.iter().map(String::as_str).collect::<Vec<_>>(),
+                    &keys
+                        .iter()
+                        .map(|k| super::human_name(k))
+                        .collect::<Vec<_>>()
+                        .iter()
+                        .map(String::as_str)
+                        .collect::<Vec<_>>(),
                 );
                 field.set_selected(0);
             }
@@ -480,7 +505,7 @@ fn editor(
                     .map(|e| e.value.clone());
                 set.set_active(value.is_some());
                 body.append(&label(&super::human_name(key)));
-                effect_form(&body, &fields[index], value)
+                effect_form(&body, &fields[index], value, &version)
             } else {
                 let value = d
                     .predicates
@@ -515,7 +540,9 @@ fn editor(
                         u32::from(*effect)
                     } else {
                         (0..model.n_items())
-                            .find(|i| model.string(*i).as_deref() == Some(key))
+                            .find(|i| {
+                                model.string(*i).as_deref() == Some(super::human_name(key).as_str())
+                            })
                             .unwrap_or(0)
                     });
                 }
@@ -928,6 +955,16 @@ pub(super) fn test_editor(parent: &adw::ApplicationWindow) {
         win: &adw::Window,
         name: &str,
     ) -> T {
+        if ["rule-named", "rule-name", "rule-enabled"].contains(&name) {
+            for expander in descendants(win.upcast_ref())
+                .into_iter()
+                .filter_map(|w| w.downcast::<gtk::Expander>().ok())
+            {
+                if expander.label().as_deref() == Some("Name and Enabled State") {
+                    expander.set_expanded(true);
+                }
+            }
+        }
         descendants(win.upcast_ref())
             .into_iter()
             .find(|w| w.widget_name() == name)
@@ -1131,6 +1168,26 @@ pub(super) fn test_editor(parent: &adw::ApplicationWindow) {
             .render_texture(&node, None)
             .save_to_png(format!("{path}.rules.png"))
             .unwrap();
+    }
+    if let Ok(path) = std::env::var("HYPRLAND_EDITOR_TEST_CAPTURE") {
+        for (key, suffix) in [("opacity", "opacity"), ("border_color", "borders")] {
+            widget::<gtk::DropDown>(&win, "rule-field").set_selected(
+                rule::catalogue(Kind::Window, hyprland_editor_core::AUDITED_MAIN)
+                    .iter()
+                    .position(|s| s.lua_key == key)
+                    .unwrap() as u32,
+            );
+            settle();
+            let paintable = gtk::WidgetPaintable::new(Some(&win));
+            let snapshot = gtk::Snapshot::new();
+            paintable.snapshot(&snapshot, win.width() as f64, win.height() as f64);
+            let node = snapshot.to_node().unwrap();
+            win.renderer()
+                .unwrap()
+                .render_texture(&node, None)
+                .save_to_png(format!("{path}.rules-{suffix}.png"))
+                .unwrap();
+        }
     }
     win.destroy();
     drop(win);

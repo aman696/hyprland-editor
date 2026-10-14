@@ -21,6 +21,7 @@ jobs:
       - run: python3 scripts/generate_actions.py --check
       - run: python3 scripts/workspace_source_probe.py
       - run: python3 scripts/rule_source_probe.py
+      - run: python3 scripts/rule_codec_source_probe.py --check
       - run: python3 scripts/implementation_report.py --check
       - run: cargo test --locked --workspace
       - name: Native graphical smoke test
