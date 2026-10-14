@@ -16,6 +16,9 @@ pub fn title_words(text: &str) -> String {
 }
 pub fn setting_name(id: &str) -> String {
     let leaf = id.rsplit(':').next().unwrap_or(id);
+    if let Some(key) = leaf.strip_prefix("kb_") {
+        return format!("Keyboard {}", title_words(key));
+    }
     if let Some(color) = leaf.strip_prefix("col.") {
         format!("{} Color", title_words(color))
     } else {
@@ -115,6 +118,7 @@ pub fn menu_model() -> gtk::gio::Menu {
     files.append(Some("Save Draft"), Some("win.save-draft"));
     files.append(Some("Undo"), Some("win.undo"));
     files.append(Some("Edit Monitors…"), Some("win.monitors"));
+    files.append(Some("Edit Devices…"), Some("win.devices"));
     menu.append_section(None, &files);
     let inspect = gtk::gio::Menu::new();
     inspect.append(Some("Refresh Desktop Values"), Some("win.read-live"));
@@ -215,7 +219,10 @@ pub fn bind_feedback(
                 !s.draft.values.is_empty()
                     || s.monitors
                         .get(&s.draft.version)
-                        .is_some_and(|m| !m.is_empty()),
+                        .is_some_and(|m| !m.is_empty())
+                    || s.devices
+                        .get(&s.draft.version)
+                        .is_some_and(|d| !d.is_empty()),
             );
         }
         if let Some(scope) = scope.upgrade() {

@@ -1,4 +1,5 @@
 //! Non-executing, version-scoped editing. This crate has no compositor IPC.
+pub mod device;
 pub mod import;
 pub mod lua;
 pub mod monitor;
@@ -7,6 +8,7 @@ pub mod source;
 pub mod source_path;
 pub mod storage;
 pub mod workspace;
+pub mod xkb;
 
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -117,8 +119,20 @@ impl Setting {
                 .map(Value::Float),
             "String" if raw == "STRVAL_EMPTY" => Some(Value::String(String::new())),
             "String" => serde_json::from_str::<String>(raw).ok().map(Value::String),
-            "CssGap" => raw.parse::<i64>().ok().map(|n| Value::CssGap([n; 4])),
             "Vec2" if raw == "Config::VEC2{}" => Some(Value::Vec2([0., 0.])),
+            "Vec2" => {
+                let parts = raw
+                    .strip_prefix('{')?
+                    .strip_suffix('}')?
+                    .split(',')
+                    .map(|n| n.trim().parse::<f64>())
+                    .collect::<Result<Vec<_>, _>>()
+                    .ok()?;
+                let value = Value::Vec2(parts.try_into().ok()?);
+                self.validate(&value).ok()?;
+                Some(value)
+            }
+            "CssGap" => raw.parse::<i64>().ok().map(|n| Value::CssGap([n; 4])),
             "Color" => parse_color(raw).ok().map(Value::Color),
             "Gradient" => raw
                 .strip_prefix("CHyprColor{")

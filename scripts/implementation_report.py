@@ -80,7 +80,7 @@ def build():
             "required_codec": feature["codec"], "required_tests": feature["tests_required"],
             "coverage_state": "Specified", "complete": False,
             "foundation": "typed scalar form and initial-value smoke check; full per-field semantics remain unproven"
-                if feature["kind"] == "scalar" else "typed monitor draft forms, static Lua projection, schema-pinned persistence and diagram; runtime/hardware/source editing unproven" if feature["engine"] == "MONITOR" else "no dedicated feature implementation yet",
+                if feature["kind"] == "scalar" else "typed monitor draft forms, static Lua projection, schema-pinned persistence and diagram; runtime/hardware/source editing unproven" if feature["engine"] == "MONITOR" else "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven" if feature["engine"] == "DEVICE" else "no dedicated feature implementation yet",
             "activation_certified": False, "preview_certified": False,
         })
     sections = numbered_sections(BLUEPRINT)
@@ -93,6 +93,9 @@ def build():
         "classification": "pending", "complete": False}
         for index, row in enumerate(contracts["documentation_candidates"], 1)]
     foundations = [
+        {"area": "device draft editor", "code": ["crates/editor-core/src/device.rs", "crates/editor-core/src/xkb.rs", "crates/editor-app/src/devices.rs", "crates/editor-app/src/device_forms.rs", "data/devices.json"],
+         "test_references": ["every_device_field_round_trips_the_pinned_static_lua_codec", "test_editor", "actual_worker_projects_devices_and_rejects_external_keyboard_entities", "device_drafts_survive_application_reopen_and_schema_drift_is_rejected"],
+         "limits": "43 fields and name selector, author category hints, linked XKB choices from installed metadata, numeric acceleration/scroll builders, ordered drafts and private persistence; no hardware capability discovery, effective global/default merge, tag-to-bind analysis, keyboard compilation, source editing, live input recovery or activation/preview certificates"},
         {"area": "monitor draft editor", "code": ["crates/editor-core/src/monitor.rs", "crates/editor-app/src/monitors.rs", "data/monitors.json"],
          "test_references": ["every_audited_monitor_field_has_a_typed_export_and_static_import", "test_editor", "monitor_drafts_survive_actual_application_reopen_without_replacing_them_with_source", "actual_restricted_worker_projects_monitors_and_keeps_unknown_calls_inert"],
          "limits": "22 versioned field controls and output selector, ordered drafts, explicit logical geometry, static Lua import/export and private saved snapshots; no hardware detection, effective rule resolution, source-span mutation/reconciliation, ICC decoding, monitor recovery, live apply or compositor preview certification"},

@@ -24,6 +24,7 @@ The [machine-readable register](completion-register.json) retains every contract
 
 ## Current foundations and limits
 
+- **device draft editor**: 43 fields and name selector, author category hints, linked XKB choices from installed metadata, numeric acceleration/scroll builders, ordered drafts and private persistence; no hardware capability discovery, effective global/default merge, tag-to-bind analysis, keyboard compilation, source editing, live input recovery or activation/preview certificates.
 - **monitor draft editor**: 22 versioned field controls and output selector, ordered drafts, explicit logical geometry, static Lua import/export and private saved snapshots; no hardware detection, effective rule resolution, source-span mutation/reconciliation, ICC decoding, monitor recovery, live apply or compositor preview certification.
 - **scalar draft forms**: initial values for 755 forms; not full per-field conformance, runtime activation or accessibility certification.
 - **static Lua and parser isolation**: restricted source projection and existing literals; no include/scope completeness or preview isolation proof.

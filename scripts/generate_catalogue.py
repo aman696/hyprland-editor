@@ -30,22 +30,26 @@ keys = {'id', 'kind', 'engine', 'version_membership', 'editor', 'codec',
         'runtime_observation', 'activation', 'preview', 'effect', 'source_versions'}
 features = [{k: v for k, v in feature.items() if k in keys}
             for feature in contracts['features']]
-monitors = []
-for feature in features:
-    if feature['engine'] != 'MONITOR' or feature['kind'] != 'structured_field':
-        continue
-    for source_name, source in feature['source_versions'].items():
-        version = {'baseline': '0.56.2', 'current': 'audited-main'}[source_name]
-        parts = source['constructor_cpp'].split(', ')
-        bounds = {'min': None, 'max': None}
-        if source['type'] in ('Int', 'Float'):
+def structured(engine, prefix, expected):
+    result = []
+    for feature in features:
+        if feature['engine'] != engine or feature['kind'] != 'structured_field':
+            continue
+        for source_name, source in feature['source_versions'].items():
+            version = {'baseline': '0.56.2', 'current': 'audited-main'}[source_name]
+            constructor = source['constructor_cpp']
+            parts = constructor.split(', ') if source['type'] in ('Int', 'Float') else [constructor]
+            bounds = {'min': None, 'max': None}
             for key, value in zip(('min', 'max'), parts[1:3]):
                 bounds[key] = float(value.rstrip('fF'))
-        monitors.append(dict(id='monitor:' + source['name'], version=version,
-            kind=source['type'], lua_key=source['name'], default_expression=parts[0],
-            bounds=bounds, source=source['source']))
-assert len(monitors) == 44 and len({m['id'] for m in monitors}) == 22
-for name, data in [('scalars.json', rows), ('features.json', features), ('monitors.json', monitors)]:
+            result.append(dict(id=prefix + ':' + source['name'], version=version,
+                kind=source['type'], lua_key=source['name'], default_expression=parts[0],
+                bounds=bounds, source=source['source']))
+    assert len(result) == expected * 2 and len({m['id'] for m in result}) == expected
+    return result
+monitors = structured('MONITOR', 'monitor', 22)
+devices = structured('DEVICE', 'device', 43)
+for name, data in [('scalars.json', rows), ('features.json', features), ('monitors.json', monitors), ('devices.json', devices)]:
     path = root / 'data' / name
     content = json.dumps(data, indent=2) + '\n'
     if check:

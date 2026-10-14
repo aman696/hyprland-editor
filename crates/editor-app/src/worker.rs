@@ -20,8 +20,11 @@ pub enum Request {
     },
     Copy {
         source: String,
-        report: LuaReport,
+        report: Box<LuaReport>,
         draft: Draft,
+    },
+    ParseRegistry {
+        xml: String,
     },
     Probe,
 }
@@ -29,6 +32,7 @@ pub enum Request {
 #[serde(deny_unknown_fields)]
 pub enum Response {
     Parsed(LuaReport),
+    Registry(hyprland_editor_core::xkb::Registry),
     Copy(String),
     Probe {
         file_denied: bool,
@@ -149,6 +153,9 @@ pub fn entry() {
             serde_json::from_slice(&bytes).map_err(|_| "Invalid parser request")?;
         let c = catalogue();
         match request {
+            Request::ParseRegistry { xml } => {
+                hyprland_editor_core::xkb::parse(&xml).map(Response::Registry)
+            }
             Request::Parse { source, version } => {
                 lua::parse(&source, &version, &c).map(Response::Parsed)
             }
@@ -156,7 +163,7 @@ pub fn entry() {
                 source,
                 report,
                 draft,
-            } => LuaDocument::from_report(source, report, &c)?
+            } => LuaDocument::from_report(source, *report, &c)?
                 .edited_copy(&draft, &c)
                 .map(Response::Copy),
             Request::Probe => {

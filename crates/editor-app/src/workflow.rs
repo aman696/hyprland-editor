@@ -38,6 +38,7 @@ struct Imported {
     message: String,
     saved_json: bool,
     monitors: Vec<hyprland_editor_core::monitor::Rule>,
+    devices: Vec<hyprland_editor_core::device::Spec>,
 }
 fn read_import(
     path: PathBuf,
@@ -65,7 +66,7 @@ fn read_import(
         let diagnostics = source
             .as_ref()
             .map_or(0, |doc| doc.report.diagnostics.len());
-        return Ok(Imported { draft:workspace.draft,source,origin,saved_json:true,monitors:workspace.monitors,
+        return Ok(Imported { draft:workspace.draft,source,origin,saved_json:true,monitors:workspace.monitors,devices:workspace.devices,
             message:format!("Saved draft reopened with {diagnostics} source diagnostics. Source snapshots were reparsed; recorded original paths were not opened. Desktop state is separate.") });
     }
     let captured = if path
@@ -77,13 +78,13 @@ fn read_import(
         storage::read_source(&path)?
     };
     match path.extension().and_then(|s|s.to_str()) {
-        Some("json")=>Draft::from_json(&captured.content,&catalogue).map(|draft|Imported{draft,source:None,origin:None,monitors:vec![],message:"Validated value-only draft loaded".into(),saved_json:true}),
-        Some("conf")=>import::legacy(&captured.content,&catalogue).map(|r|Imported{message:format!("Imported {} literal overrides; {} lines skipped; {} repeated keys. Includes and variables remain unresolved. Active state is separate.",r.draft.values.len(),r.skipped.len(),r.duplicate_keys.len()),draft:r.draft,source:None,origin:None,monitors:vec![],saved_json:false}),
+        Some("json")=>Draft::from_json(&captured.content,&catalogue).map(|draft|Imported{draft,source:None,origin:None,monitors:vec![],devices:vec![],message:"Validated value-only draft loaded".into(),saved_json:true}),
+        Some("conf")=>import::legacy(&captured.content,&catalogue).map(|r|Imported{message:format!("Imported {} literal overrides; {} lines skipped; {} repeated keys. Includes and variables remain unresolved. Active state is separate.",r.draft.values.len(),r.skipped.len(),r.duplicate_keys.len()),draft:r.draft,source:None,origin:None,monitors:vec![],devices:vec![],saved_json:false}),
         Some("lua")=>{
             let doc=parse_source(captured.content,version,&catalogue)?;
-            let mut message=format!("Imported {} scalar declarations and {} monitor rules; {} diagnostics. Effective values are not inferred by executing Lua.",doc.report.draft.values.len(),doc.report.monitors.len(),doc.report.diagnostics.len());
+            let mut message=format!("Imported {} scalar declarations, {} monitor rules and {} device rules; {} diagnostics. Effective values are not inferred by executing Lua.",doc.report.draft.values.len(),doc.report.monitors.len(),doc.report.devices.len(),doc.report.diagnostics.len());
             if doc.report.opaque_effects{message.push_str(" Opaque code remains in the source; this is a partial projection.");}
-            Ok(Imported{draft:doc.report.draft.clone(),monitors:doc.report.monitors.clone(),source:Some(doc),origin:Some(captured.identity),message,saved_json:false})
+            Ok(Imported{draft:doc.report.draft.clone(),monitors:doc.report.monitors.clone(),devices:doc.report.devices.clone(),source:Some(doc),origin:Some(captured.identity),message,saved_json:false})
         },_=>Err("Select saved .hye workspace, draft JSON, legacy .conf or Lua .lua source".into()),
     }
 }
@@ -109,7 +110,7 @@ pub(super) fn check_workspace(path: PathBuf) -> Result<serde_json::Value, String
     let imported = read_import(path, hyprland_editor_core::catalogue(), BASELINE.into())?;
     Ok(
         serde_json::json!({"scope":"draft-and-static-source-only", "version":imported.draft.version,
-        "draft_values":imported.draft.values.len(),"monitor_rules":imported.monitors.len(), "source_reparsed":imported.source.is_some(),
+        "draft_values":imported.draft.values.len(),"monitor_rules":imported.monitors.len(),"device_rules":imported.devices.len(), "source_reparsed":imported.source.is_some(),
         "source_sha256":imported.source.as_ref().map(|s|s.report.source_sha256.as_str()),
         "opaque_effects":imported.source.as_ref().is_some_and(|s|s.report.opaque_effects),
         "source_diagnostics":imported.source.as_ref().map_or(0,|s|s.report.diagnostics.len()),
@@ -156,7 +157,7 @@ fn connect_save_at(
     button.connect_clicked(move|button| {
         let Some(win)=win.upgrade() else{return;};
         let (generation,catalogue,workspace)={
-            let s=state.borrow();let mut snapshot=Workspace::new(s.draft.clone()).with_monitors(s.monitors.get(&s.draft.version).cloned().unwrap_or_default());
+            let s=state.borrow();let mut snapshot=Workspace::new(s.draft.clone()).with_monitors(s.monitors.get(&s.draft.version).cloned().unwrap_or_default()).with_devices(s.devices.get(&s.draft.version).cloned().unwrap_or_default());
             if let Some(doc)=s.sources.get(&s.draft.version) {
                 let Some(origin)=s.source_origins.get(&s.draft.version) else {
                     notice(&win,"Source identity missing","Reimport the original source before saving its context.");return;
@@ -165,7 +166,7 @@ fn connect_save_at(
             }
             (s.generation,s.catalogue.clone(),snapshot)
         };
-        let saved_monitors=workspace.monitors.clone();let saved_values=workspace.draft.values.clone();let saved_version=workspace.draft.version.clone();
+        let saved_devices=workspace.devices.clone();let saved_monitors=workspace.monitors.clone();let saved_values=workspace.draft.values.clone();let saved_version=workspace.draft.version.clone();
         let saved_origin=workspace.root().map(|root|root.origin.clone());
         let root=root.clone();
         button.set_sensitive(false);status.set_text("Saving a private draft and source snapshot…");
@@ -182,7 +183,7 @@ fn connect_save_at(
                 Ok(path)=>{
                     let mut s=state.borrow_mut();
                     if s.generation==generation {
-                        s.saved.insert(saved_version.clone(),saved_values);s.saved_monitors.insert(saved_version.clone(),saved_monitors);s.saved_source_origins.insert(saved_version,saved_origin);
+                        s.saved.insert(saved_version.clone(),saved_values);s.saved_monitors.insert(saved_version.clone(),saved_monitors);s.saved_devices.insert(saved_version.clone(),saved_devices);s.saved_source_origins.insert(saved_version,saved_origin);
                         drop(s);status.set_text(&format!("Private draft and source snapshot saved: {}",path.display()));
                     } else {drop(s);status.set_text(&format!("An earlier draft revision was saved to {}. Current edits remain unsaved.",path.display()));}
                 },Err(e)=>{super::summary(&state,&status);notice(&win,"Could not save draft",&e);}
@@ -299,8 +300,9 @@ pub(super) fn connect_source_copy(
     button.connect_clicked(move|button|{
         let Some(window)=win.upgrade()else{return;};let s=state.borrow();let Some(doc)=s.sources.get(&s.draft.version).cloned()else{drop(s);notice(&window,"Lua source required","Import a Lua source file first. JSON drafts and legacy imports have no Lua source spans to preserve.");return;};
         if s.monitors.get(&s.draft.version).map(Vec::as_slice).unwrap_or(&[]) != doc.report.monitors.as_slice() { drop(s);notice(&window,"Monitor source edits pending","Monitor drafts can be saved and reviewed as Lua. Updating their original source spans is not implemented yet; a scalar source copy would omit those edits.");return; }
+        if !hyprland_editor_core::device::same_declarations(s.devices.get(&s.draft.version).map(Vec::as_slice).unwrap_or(&[]),&doc.report.devices) {drop(s);notice(&window,"Device source edits pending","Device drafts can be saved and reviewed as Lua. Device source editing is not implemented; a scalar source copy would omit these changes.");return;}
         let draft=s.draft.clone();let generation=s.generation;drop(s);let state=state.clone();let win=window.downgrade();let button=button.downgrade();if let Some(button)=button.upgrade(){button.set_sensitive(false);}
-        background(move||worker::run(worker::Request::Copy{source:doc.source.clone(),report:doc.report.clone(),draft}),move|result|{
+        background(move||worker::run(worker::Request::Copy{source:doc.source.clone(),report:Box::new(doc.report.clone()),draft}),move|result|{
             if let Some(button)=button.upgrade(){button.set_sensitive(true);}let Some(win)=win.upgrade()else{return;};if state.borrow().generation!=generation{notice(&win,"Draft changed","The draft changed while the source copy was prepared. Review again to use the current edits.");return;}
             match result{Ok(worker::Response::Copy(source))=>review_copy(&win,source),Ok(_)=>notice(&win,"Invalid parser response","The worker did not return a source copy."),Err(e)=>notice(&win,"Cannot prepare source copy",&e)}
         });
@@ -349,6 +351,12 @@ fn apply_import(
     }
     s.monitors
         .insert(imported.draft.version.clone(), imported.monitors);
+    if imported.saved_json {
+        s.saved_devices
+            .insert(imported.draft.version.clone(), imported.devices.clone());
+    }
+    s.devices
+        .insert(imported.draft.version.clone(), imported.devices);
     s.draft = imported.draft;
     s.undo.clear();
     s.generation += 1;
@@ -480,6 +488,7 @@ pub(super) fn test_source_persistence(window: &adw::ApplicationWindow) {
             origin: Some(captured.identity.clone()),
             saved_json: false,
             monitors: vec![],
+            devices: vec![],
             message: "Fixture imported".into(),
         },
         &state,
@@ -504,6 +513,11 @@ pub(super) fn test_source_persistence(window: &adw::ApplicationWindow) {
             std::thread::sleep(Duration::from_millis(10));
         }
     };
+    let device = hyprland_editor_core::device::Spec::new("saved-device", "test keyboard");
+    state
+        .borrow_mut()
+        .replace_devices(vec![device.clone()])
+        .unwrap();
     let monitor = hyprland_editor_core::monitor::Rule::new("saved-monitor");
     state
         .borrow_mut()
@@ -522,6 +536,7 @@ pub(super) fn test_source_persistence(window: &adw::ApplicationWindow) {
     let saved = workspace::read(&files[0], &catalogue).unwrap();
     assert_eq!(saved.root().unwrap().origin, captured.identity);
     assert_eq!(saved.monitors, vec![monitor]);
+    assert_eq!(saved.devices, vec![device]);
     assert_eq!(
         saved.draft.values["general:border_size"],
         hyprland_editor_core::Value::Int(5)

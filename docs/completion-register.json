@@ -13,6 +13,23 @@
   },
   "foundations": [
     {
+      "area": "device draft editor",
+      "code": [
+        "crates/editor-core/src/device.rs",
+        "crates/editor-core/src/xkb.rs",
+        "crates/editor-app/src/devices.rs",
+        "crates/editor-app/src/device_forms.rs",
+        "data/devices.json"
+      ],
+      "test_references": [
+        "every_device_field_round_trips_the_pinned_static_lua_codec",
+        "test_editor",
+        "actual_worker_projects_devices_and_rejects_external_keyboard_entities",
+        "device_drafts_survive_application_reopen_and_schema_drift_is_rejected"
+      ],
+      "limits": "43 fields and name selector, author category hints, linked XKB choices from installed metadata, numeric acceleration/scroll builders, ordered drafts and private persistence; no hardware capability discovery, effective global/default merge, tag-to-bind analysis, keyboard compilation, source editing, live input recovery or activation/preview certificates"
+    },
+    {
       "area": "monitor draft editor",
       "code": [
         "crates/editor-core/src/monitor.rs",
@@ -10531,7 +10548,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10554,7 +10571,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10577,7 +10594,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10600,7 +10617,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10623,7 +10640,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10646,7 +10663,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10669,7 +10686,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10692,7 +10709,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10715,7 +10732,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10738,7 +10755,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10761,7 +10778,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10784,7 +10801,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10807,7 +10824,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10830,7 +10847,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10853,7 +10870,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10876,7 +10893,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10899,7 +10916,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10922,7 +10939,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10945,7 +10962,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10968,7 +10985,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -10991,7 +11008,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11014,7 +11031,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11037,7 +11054,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11060,7 +11077,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11083,7 +11100,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11106,7 +11123,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11129,7 +11146,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11152,7 +11169,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11175,7 +11192,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11198,7 +11215,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11221,7 +11238,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11244,7 +11261,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11267,7 +11284,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11290,7 +11307,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11313,7 +11330,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11336,7 +11353,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11359,7 +11376,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11382,7 +11399,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11405,7 +11422,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11428,7 +11445,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11451,7 +11468,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11474,7 +11491,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -11497,7 +11514,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -13480,7 +13497,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },

@@ -16,7 +16,7 @@ fn spin(value: f64, min: f64, max: f64, digits: u32) -> gtk::SpinButton {
     w.set_width_chars(8);
     w
 }
-fn number(
+pub(super) fn number(
     panel: &gtk::Box,
     name: &str,
     value: f64,
@@ -30,7 +30,7 @@ fn number(
     panel.append(&widget);
     widget
 }
-fn compact(picker: &gtk::DropDown) {
+pub(super) fn compact(picker: &gtk::DropDown) {
     let factory = gtk::SignalListItemFactory::new();
     factory.connect_setup(|_, item| {
         let item = item.downcast_ref::<gtk::ListItem>().unwrap();
@@ -53,7 +53,7 @@ fn compact(picker: &gtk::DropDown) {
     });
     picker.set_factory(Some(&factory));
 }
-fn choices(panel: &gtk::Box, names: &[&str], index: u32) -> gtk::DropDown {
+pub(super) fn choices(panel: &gtk::Box, names: &[&str], index: u32) -> gtk::DropDown {
     let picker = gtk::DropDown::from_strings(names);
     compact(&picker);
     picker.set_selected(index);

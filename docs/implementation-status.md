@@ -31,7 +31,13 @@ Acceptance is an in-memory reducer with source-aware undo. Inverse operations re
 
 The focused monitor editor covers the output selector and 22 fields for both pinned snapshots. Ordered CRUD, unset fields, bounded undo, static Lua import/export, graphical mode/position builders, private persistence and schematic dragging are implemented. These are draft capabilities: hardware discovery, actual available-mode validation, effective rule resolution, monitor source-span edits/reconciliation, ICC decoding, recovery and isolated compositor preview remain open. See [the monitor scope](monitor-editor.md). No full MONITOR contract is certified by this milestone.
 
-Following the user’s request for visible delivery, the next implementation priority is devices, followed by bindings, rules and animations. Each milestone must have working controls, private saved drafts, meaningful tests and explicit limitations. The original source, preview, recovery, packaging, resource and security obligations below remain required; this changes delivery order, not project scope.
+Following the user’s request for visible delivery, the next implementation priority was devices, followed by bindings, rules and animations. Each milestone must have working controls, private saved drafts, meaningful tests and explicit limitations. The original source, preview, recovery, packaging, resource and security obligations below remain required; this changes delivery order, not project scope.
+
+## Device draft milestone in 0.6
+
+The device editor supplies 43 field controls plus the name selector for both audited snapshots, author category hints, ordered CRUD/unset/undo, private persistence, static `hl.device` projection and combined Lua review. Installed evdev registry metadata supplies linked layout/variant selectors, models and lazy grouped keyboard-option controls; XML is parsed inside the existing syscall/resource-restricted worker without resolving DTDs or external entities. Custom acceleration and scrolling use numeric point rows rather than encoded strings. See [device scope](device-editor.md).
+
+Device hardware discovery/capabilities, effective global defaults, bind intersections/tag propagation, keyboard compilation, region hardware semantics, source-span editing/reconciliation and guarded input recovery remain required. No complete DEVICE contract is certified by this draft milestone. Bindings, rules and animations are the next visible editors; the original source, preview, apply/recovery and performance obligations remain in scope.
 
 ## Next implementation order
 
