@@ -67,7 +67,13 @@ Complete geometry/selector/style domains, escaped/exotic literals, named-rule li
 
 The 0.10 controls were published through [PR #5](https://github.com/aman696/hyprland-editor/pull/5), head `e54c781982608d3235752a41f5cbd503f4126fdb`. All 134 local tests, 120 primitive source observations, native form retention/cleanup checks, visual inspection, formatting, strict lint and release build passed. Both hosted runs passed the source-fixture probe, workspace/native checks, lint and release build: [push run](https://github.com/aman696/hyprland-editor/actions/runs/38624514678) and [PR run](https://github.com/aman696/hyprland-editor/actions/runs/38624525426). The merged tree was verified against that exact head. Full project acceptance remains unproven.
 
-Next source work uses exact animation-tree/API snapshots. Preserve node inheritance, whole-node override semantics, disabled-call handling, named curve references and curve creation order. Spring bounds must follow code (`> 0.5`), not its looser error-message wording. The public API encodes timing as `speed`; the audited duration obligation must be mapped to actual runtime timing before offering a duration control. Gesture callback/identity/action semantics and isolated preview/recovery/resource requirements remain required.
+## Animation drafts in 0.11
+
+The node/curve editor covers the pinned public tree, the additionally discovered internal fade node, required enabled state, whole-node inheritance, ordered curve registration, Bézier/spring references, versioned damping spelling, finite float32 bounds and source-derived timing. The GUI supplies curve sliders/dragging, spring parameters, branch selection, filtered style presets and an inheritance inspector. Static import/export, private schema-pinned save/reopen, dirty/generation tracking, bounded undo and source-copy omission guards are connected. See [animation scope](animation-editor.md).
+
+The source probe exercises 170 actual Lua binding/numeric/style/tree observations with inert services and explicit string/pointer adapters. Full animation source codecs, uncommon numeric/style domains, effective discovery, renderer/spring/runtime behavior, accessibility, resource certification, isolated preview and apply/recovery remain open. No complete ANIMATION contract is certified. Gesture callback/identity/action semantics and all shared source/inspection/recovery obligations remain required.
+
+Local 0.11 validation passed 142 tests, including the private-display workflow with handle dragging and closed-editor state release, formatting, strict lint, release build, catalogue/action/register checks and all 170 source-probe observations. The completed animation audit source cache was deleted; immutable hashes and fixtures remain. Hosted validation is pending publication. These checks do not establish full project acceptance.
 
 ## Next implementation order
 

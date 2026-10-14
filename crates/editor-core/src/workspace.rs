@@ -67,6 +67,10 @@ pub struct Workspace {
     pub workspace_rules: Vec<crate::workspace_rule::Rule>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub rules: Vec<crate::rule::Rule>,
+    #[serde(default, skip_serializing_if = "crate::animation::Draft::is_empty")]
+    pub animations: crate::animation::Draft,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub animation_schema_sha256: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub rule_schema_sha256: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -89,6 +93,8 @@ impl Workspace {
             bindings: Default::default(),
             workspace_rules: vec![],
             rules: vec![],
+            animations: Default::default(),
+            animation_schema_sha256: None,
             rule_schema_sha256: None,
             workspace_schema_sha256: None,
             binding_schema_sha256: None,
@@ -109,6 +115,17 @@ impl Workspace {
             return Err("Unsupported workspace format or source count".into());
         }
         self.draft.validate(catalogue)?;
+        self.animations.validate(&self.draft.version)?;
+        let animation_hash = crate::animation::schema_hash();
+        if (!self.animations.is_empty()
+            && self.animation_schema_sha256.as_deref() != Some(&animation_hash))
+            || self
+                .animation_schema_sha256
+                .as_ref()
+                .is_some_and(|h| *h != animation_hash)
+        {
+            return Err("Animation schema differs from the pinned tree/API".into());
+        }
         crate::rule::validate(&self.rules, &self.draft.version)?;
         let rule_hash = crate::rule::schema_hash();
         if (!self.rules.is_empty() && self.rule_schema_sha256.as_deref() != Some(&rule_hash))
@@ -214,6 +231,11 @@ impl Workspace {
         self.root_source
             .as_deref()
             .and_then(|id| self.sources.iter().find(|s| s.id == id))
+    }
+    pub fn with_animations(mut self, animations: crate::animation::Draft) -> Self {
+        self.animation_schema_sha256 = (!animations.is_empty()).then(crate::animation::schema_hash);
+        self.animations = animations;
+        self
     }
     pub fn with_rules(mut self, rules: Vec<crate::rule::Rule>) -> Self {
         self.rule_schema_sha256 = (!rules.is_empty()).then(crate::rule::schema_hash);

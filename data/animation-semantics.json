@@ -1,0 +1,791 @@
+{
+  "format": "hye-animation-semantics-1",
+  "source_files": [
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/lua/bindings/LuaBindingsConfigRules.cpp",
+      "git_blob": "8095b170ae7160d71281f7a9970e7cbd4c3151bb",
+      "sha256": "157c3e45b364f3e41b6fd7cf13fd19e7477e8c03a6a75c6c46fde5e2b5715be9",
+      "repo": "hyprwm/Hyprland"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/animation/AnimationManager.cpp",
+      "git_blob": "7742d2f03d9013f4d0b46f852e792c4a238c7be6",
+      "sha256": "8c37cd0d1e972e8789468fdf063456a6a40ed17d482b898b0639a6d2a1fa7985",
+      "repo": "hyprwm/Hyprland"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/shared/animation/AnimationTree.cpp",
+      "git_blob": "c2dd5e96d001579b58163a46ea1a62cef9b7fd5c",
+      "sha256": "313ed20167618dfe163fceee8753e9a49d8ef356bc3f580963e07039839e7bae",
+      "repo": "hyprwm/Hyprland"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/lua/bindings/LuaBindingsConfigRules.cpp",
+      "git_blob": "cc6108ff9d186bf3192282f9527a03328f6601e2",
+      "sha256": "789b1425c25b5a26c82f25e4d5d0b8176a6f56481573fc6e658662d1de7ea5ae",
+      "repo": "hyprwm/Hyprland"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/animation/AnimationManager.cpp",
+      "git_blob": "321c074363bac0cfa32f9079acb1ee09f71383e3",
+      "sha256": "9e6ebef3cf34a7f8940c5987c745c6f0f9b1347c577a2a1108328b62511868f7",
+      "repo": "hyprwm/Hyprland"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/shared/animation/AnimationTree.cpp",
+      "git_blob": "c2dd5e96d001579b58163a46ea1a62cef9b7fd5c",
+      "sha256": "313ed20167618dfe163fceee8753e9a49d8ef356bc3f580963e07039839e7bae",
+      "repo": "hyprwm/Hyprland"
+    },
+    {
+      "repo": "hyprwm/Hyprland",
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/lua/bindings/LuaBindingsInternal.hpp",
+      "sha256": "83630401a5b3d2cd99ec42705a7b70b0fdd73ddb3989c561a4316d15d72f0edd"
+    },
+    {
+      "repo": "hyprwm/Hyprland",
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/lua/types/LuaConfigBool.cpp",
+      "sha256": "5144382c5a9d5e4699cb9f53ee1dccab51156b10cf57318352684f33cb8e98ed"
+    },
+    {
+      "repo": "hyprwm/Hyprland",
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/lua/types/LuaConfigFloat.cpp",
+      "sha256": "e25b69c4342451925f864b296d41c1cdb540bcb814e146052ebd068251cafb06"
+    },
+    {
+      "repo": "hyprwm/Hyprland",
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/lua/bindings/LuaBindingsInternal.hpp",
+      "sha256": "574774a61671cb9864c73662f5ba8bd9899d38635a32dfcd8dd6c398c4279790"
+    },
+    {
+      "repo": "hyprwm/Hyprland",
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/lua/types/LuaConfigBool.cpp",
+      "sha256": "5144382c5a9d5e4699cb9f53ee1dccab51156b10cf57318352684f33cb8e98ed"
+    },
+    {
+      "repo": "hyprwm/Hyprland",
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/lua/types/LuaConfigFloat.cpp",
+      "sha256": "e25b69c4342451925f864b296d41c1cdb540bcb814e146052ebd068251cafb06"
+    },
+    {
+      "repo": "hyprwm/hyprutils",
+      "version": "hyprutils",
+      "commit": "a21e87b878e72ee5dfd375899e8b2ad0d0c4c0e1",
+      "path": "include/hyprutils/animation/AnimationConfig.hpp",
+      "sha256": "81cc1b743822e0edf42a4e3c90b13ba91b9639a218eaff7567d5f28a0c78b127"
+    },
+    {
+      "repo": "hyprwm/hyprutils",
+      "version": "hyprutils",
+      "commit": "a21e87b878e72ee5dfd375899e8b2ad0d0c4c0e1",
+      "path": "include/hyprutils/animation/AnimationManager.hpp",
+      "sha256": "6b07e7f1b25d19935081bc329a4face09b69a38cf97b9d9cd9bef9575783f847"
+    },
+    {
+      "repo": "hyprwm/hyprutils",
+      "version": "hyprutils",
+      "commit": "a21e87b878e72ee5dfd375899e8b2ad0d0c4c0e1",
+      "path": "src/animation/AnimatedVariable.cpp",
+      "sha256": "e9aa6712d9987e9415a0644a7e9521fd3813992f32043650ffdbb7f008d7c16a"
+    },
+    {
+      "repo": "hyprwm/hyprutils",
+      "version": "hyprutils",
+      "commit": "a21e87b878e72ee5dfd375899e8b2ad0d0c4c0e1",
+      "path": "src/animation/AnimationConfig.cpp",
+      "sha256": "dbb5d50a27f80ea947db92050af40ee87e0e9e0718add0520cbc96e32abe268e"
+    },
+    {
+      "repo": "hyprwm/hyprutils",
+      "version": "hyprutils",
+      "commit": "a21e87b878e72ee5dfd375899e8b2ad0d0c4c0e1",
+      "path": "src/animation/AnimationManager.cpp",
+      "sha256": "cd46df7bd7f8bfb193ace37b32370c99056e9c633cb88793045c32d6d4cdb097"
+    },
+    {
+      "repo": "hyprwm/hyprutils",
+      "version": "hyprutils",
+      "commit": "a21e87b878e72ee5dfd375899e8b2ad0d0c4c0e1",
+      "path": "src/animation/BezierCurve.cpp",
+      "sha256": "c5fd94f627d0e319f5f4602a4d5f6e6125b04dda728d380961f6804c273ae5a5"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/animation/AnimationManager.hpp",
+      "git_blob": "4470355570257bf55fae0fa08c6cf1f432813185",
+      "sha256": "e7834aef3b0f3259a109e5407c27bd31d5ad8ed05b698e4726e5972bacd479fa",
+      "repo": "hyprwm/Hyprland"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/shared/animation/AnimationTree.hpp",
+      "git_blob": "301e09f681b55ebdd531e27962de47814f42da58",
+      "sha256": "7bd902ec92b800a4c2623ddeb87d4a67f55e2c7c6ea920280904838cde689a3f",
+      "repo": "hyprwm/Hyprland"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/animation/AnimationManager.hpp",
+      "git_blob": "d3a612104fcc6f072c5bb262bc1e2a95b8335211",
+      "sha256": "26b2f5ee6db74b61743275f833c225656bf133f0e253e09321e95a065ad51727",
+      "repo": "hyprwm/Hyprland"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/shared/animation/AnimationTree.hpp",
+      "git_blob": "301e09f681b55ebdd531e27962de47814f42da58",
+      "sha256": "7bd902ec92b800a4c2623ddeb87d4a67f55e2c7c6ea920280904838cde689a3f",
+      "repo": "hyprwm/Hyprland"
+    },
+    {
+      "repo": "hyprwm/Hyprland",
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/lua/bindings/LuaBindingsInternal.cpp",
+      "sha256": "5f6534641d58073bbcbd3e004b168659d497072596cf10c9f2b189c55c2233e9"
+    },
+    {
+      "repo": "hyprwm/Hyprland",
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/lua/bindings/LuaBindingsInternal.cpp",
+      "sha256": "896a8a793a5373baa64c66ff0dac986a3ba2a5c90e3f71c466b841f95f5d3a16"
+    },
+    {
+      "repo": "hyprwm/hyprutils",
+      "version": "hyprutils",
+      "commit": "a21e87b878e72ee5dfd375899e8b2ad0d0c4c0e1",
+      "path": "include/hyprutils/animation/AnimatedVariable.hpp",
+      "sha256": "960660cf41fb4ecf56bfa269d316c06b499e0d915fd6c8faeb7782ca324e5bcb"
+    },
+    {
+      "repo": "hyprwm/hyprutils",
+      "version": "hyprutils",
+      "commit": "a21e87b878e72ee5dfd375899e8b2ad0d0c4c0e1",
+      "path": "include/hyprutils/animation/BezierCurve.hpp",
+      "sha256": "96540649172078b78a1a9b194137d8cab9398ba16d5893ef2c7b48b7896677bd"
+    },
+    {
+      "repo": "hyprwm/hyprutils",
+      "version": "hyprutils",
+      "commit": "a21e87b878e72ee5dfd375899e8b2ad0d0c4c0e1",
+      "path": "include/hyprutils/animation/Spring.hpp",
+      "sha256": "b78d3c3f80db1f4aae182caa16937563fdfa1405ad711320133b12138a51c461"
+    },
+    {
+      "repo": "hyprwm/hyprutils",
+      "version": "hyprutils",
+      "commit": "a21e87b878e72ee5dfd375899e8b2ad0d0c4c0e1",
+      "path": "src/animation/Spring.cpp",
+      "sha256": "b25648a60fcd70571d30eab0cecd57afb750a3a45c722a10c1852c8236a7a0b0"
+    }
+  ],
+  "nodes": [
+    {
+      "version": "0.56.2",
+      "name": "__internal_fadeCTM",
+      "parent": null,
+      "internal": true,
+      "initial": {
+        "enabled": true,
+        "speed": 5.0,
+        "curve": "linear",
+        "style": ""
+      }
+    },
+    {
+      "version": "0.56.2",
+      "name": "global",
+      "parent": null,
+      "internal": false,
+      "initial": {
+        "enabled": true,
+        "speed": 8.0,
+        "curve": "default",
+        "style": ""
+      }
+    },
+    {
+      "version": "0.56.2",
+      "name": "windows",
+      "parent": "global",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "layers",
+      "parent": "global",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "fade",
+      "parent": "global",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "border",
+      "parent": "global",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "borderangle",
+      "parent": "global",
+      "internal": false,
+      "initial": {
+        "enabled": false,
+        "speed": 1.0,
+        "curve": "default",
+        "style": ""
+      }
+    },
+    {
+      "version": "0.56.2",
+      "name": "shadowangle",
+      "parent": "global",
+      "internal": false,
+      "initial": {
+        "enabled": false,
+        "speed": 1.0,
+        "curve": "default",
+        "style": ""
+      }
+    },
+    {
+      "version": "0.56.2",
+      "name": "glowangle",
+      "parent": "global",
+      "internal": false,
+      "initial": {
+        "enabled": false,
+        "speed": 1.0,
+        "curve": "default",
+        "style": ""
+      }
+    },
+    {
+      "version": "0.56.2",
+      "name": "workspaces",
+      "parent": "global",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "zoomFactor",
+      "parent": "global",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "monitorAdded",
+      "parent": "global",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "layersIn",
+      "parent": "layers",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "layersOut",
+      "parent": "layers",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "windowsIn",
+      "parent": "windows",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "windowsOut",
+      "parent": "windows",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "windowsMove",
+      "parent": "windows",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "fadeIn",
+      "parent": "fade",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "fadeOut",
+      "parent": "fade",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "fadeSwitch",
+      "parent": "fade",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "fadeShadow",
+      "parent": "fade",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "fadeGlow",
+      "parent": "fade",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "fadeDim",
+      "parent": "fade",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "fadeLayers",
+      "parent": "fade",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "fadeLayersIn",
+      "parent": "fadeLayers",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "fadeLayersOut",
+      "parent": "fadeLayers",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "fadePopups",
+      "parent": "fade",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "fadePopupsIn",
+      "parent": "fadePopups",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "fadePopupsOut",
+      "parent": "fadePopups",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "fadeDpms",
+      "parent": "fade",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "workspacesIn",
+      "parent": "workspaces",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "workspacesOut",
+      "parent": "workspaces",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "specialWorkspace",
+      "parent": "workspaces",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "specialWorkspaceIn",
+      "parent": "specialWorkspace",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "0.56.2",
+      "name": "specialWorkspaceOut",
+      "parent": "specialWorkspace",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "__internal_fadeCTM",
+      "parent": null,
+      "internal": true,
+      "initial": {
+        "enabled": true,
+        "speed": 5.0,
+        "curve": "linear",
+        "style": ""
+      }
+    },
+    {
+      "version": "audited-main",
+      "name": "global",
+      "parent": null,
+      "internal": false,
+      "initial": {
+        "enabled": true,
+        "speed": 8.0,
+        "curve": "default",
+        "style": ""
+      }
+    },
+    {
+      "version": "audited-main",
+      "name": "windows",
+      "parent": "global",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "layers",
+      "parent": "global",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "fade",
+      "parent": "global",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "border",
+      "parent": "global",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "borderangle",
+      "parent": "global",
+      "internal": false,
+      "initial": {
+        "enabled": false,
+        "speed": 1.0,
+        "curve": "default",
+        "style": ""
+      }
+    },
+    {
+      "version": "audited-main",
+      "name": "shadowangle",
+      "parent": "global",
+      "internal": false,
+      "initial": {
+        "enabled": false,
+        "speed": 1.0,
+        "curve": "default",
+        "style": ""
+      }
+    },
+    {
+      "version": "audited-main",
+      "name": "glowangle",
+      "parent": "global",
+      "internal": false,
+      "initial": {
+        "enabled": false,
+        "speed": 1.0,
+        "curve": "default",
+        "style": ""
+      }
+    },
+    {
+      "version": "audited-main",
+      "name": "workspaces",
+      "parent": "global",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "zoomFactor",
+      "parent": "global",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "monitorAdded",
+      "parent": "global",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "layersIn",
+      "parent": "layers",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "layersOut",
+      "parent": "layers",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "windowsIn",
+      "parent": "windows",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "windowsOut",
+      "parent": "windows",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "windowsMove",
+      "parent": "windows",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "fadeIn",
+      "parent": "fade",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "fadeOut",
+      "parent": "fade",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "fadeSwitch",
+      "parent": "fade",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "fadeShadow",
+      "parent": "fade",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "fadeGlow",
+      "parent": "fade",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "fadeDim",
+      "parent": "fade",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "fadeLayers",
+      "parent": "fade",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "fadeLayersIn",
+      "parent": "fadeLayers",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "fadeLayersOut",
+      "parent": "fadeLayers",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "fadePopups",
+      "parent": "fade",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "fadePopupsIn",
+      "parent": "fadePopups",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "fadePopupsOut",
+      "parent": "fadePopups",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "fadeDpms",
+      "parent": "fade",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "workspacesIn",
+      "parent": "workspaces",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "workspacesOut",
+      "parent": "workspaces",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "specialWorkspace",
+      "parent": "workspaces",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "specialWorkspaceIn",
+      "parent": "specialWorkspace",
+      "internal": false,
+      "initial": null
+    },
+    {
+      "version": "audited-main",
+      "name": "specialWorkspaceOut",
+      "parent": "specialWorkspace",
+      "internal": false,
+      "initial": null
+    }
+  ],
+  "bezier_defaults": {
+    "default": [
+      [
+        0,
+        0.75
+      ],
+      [
+        0.15,
+        1
+      ]
+    ],
+    "linear": [
+      [
+        0,
+        0
+      ],
+      [
+        1,
+        1
+      ]
+    ]
+  },
+  "spring_defaults": {
+    "default": {
+      "stiffness": 250,
+      "damping": 25,
+      "mass": 1
+    }
+  },
+  "limits": [
+    "whole-node override; declaration absence uses source defaults and inheritance",
+    "enabled is required; disabled calls reset speed=1, curve=default, style=empty",
+    "bezier timing is speed*100 milliseconds; spring convergence is physical, not a fixed duration",
+    "spring stiffness/damping/mass must be strictly greater than 0.5 after float32 conversion",
+    "35 source nodes include one unadvertised internal root; the audit lists 34 public nodes",
+    "Style acceptance is not rendering conformance; prefix patterns and raw spellings are retained",
+    "Source registry behavior only; runtime/hardware/isolated compositor preview/apply remain unproven"
+  ]
+}
