@@ -65,6 +65,10 @@ Opacity channels/override, internal/client fullscreen state, ordered grouping op
 
 Complete geometry/selector/style domains, escaped/exotic literals, named-rule lifecycle, source/live/compositor conformance, preview/apply/recovery and resource/release gates remain open. This deepens existing rule support; no full feature acceptance or new coverage percentage is claimed. Shared semantic domains and animation/gesture editors remain next.
 
+The 0.10 controls were published through [PR #5](https://github.com/aman696/hyprland-editor/pull/5), head `e54c781982608d3235752a41f5cbd503f4126fdb`. All 134 local tests, 120 primitive source observations, native form retention/cleanup checks, visual inspection, formatting, strict lint and release build passed. Both hosted runs passed the source-fixture probe, workspace/native checks, lint and release build: [push run](https://github.com/aman696/hyprland-editor/actions/runs/38624514678) and [PR run](https://github.com/aman696/hyprland-editor/actions/runs/38624525426). The merged tree was verified against that exact head. Full project acceptance remains unproven.
+
+Next source work uses exact animation-tree/API snapshots. Preserve node inheritance, whole-node override semantics, disabled-call handling, named curve references and curve creation order. Spring bounds must follow code (`> 0.5`), not its looser error-message wording. The public API encodes timing as `speed`; the audited duration obligation must be mapped to actual runtime timing before offering a duration control. Gesture callback/identity/action semantics and isolated preview/recovery/resource requirements remain required.
+
 ## Next implementation order
 
 1. **Finish source ownership and persistence.** Extend the single-root source manifest to a lossless authorized dependency graph, generated ownership and multi-file changed-revision reconciliation. Preserve metadata and stable document identities across profiles; extend diagnostics to include graphs. Implement include authorization and dependency graphs without executing imports. Add insertion/deletion codecs only with comment/trivia preservation and conflict tests.
