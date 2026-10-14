@@ -1,6 +1,6 @@
-# Paused checkpoint — 14 October 2026
+# Session checkpoint — 14 October 2026
 
-The user explicitly paused the unfinished complete-editor goal before switching off. Do not resume implementation until requested. This checkpoint is work in progress, not a release certificate.
+The user explicitly paused the unfinished complete-editor goal before switching off. The goal was subsequently resumed on 14 October. The exact monitor checkpoint has now completed local and hosted verification; see [validation evidence](validation.md#monitor-draft-editor-05). The complete-editor goal remains unfinished.
 
 Current work: the monitor draft editor implements the output selector and all 22 pinned fields, ordered add/duplicate/reorder/remove, field unset behavior, shared bounded undo, static Lua import/export, private workspace persistence, combined scalar/monitor draft review and a schematic layout with explicit-coordinate dragging. Monitor source-copy export is blocked when it would omit monitor edits. Scalar source reconciliation explains that monitor drafts are retained unchanged.
 

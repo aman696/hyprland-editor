@@ -1,6 +1,6 @@
 # Coverage and implementation gates
 
-| Area | Audited inventory | Implemented in 0.4 | Next gate |
+| Area | Audited inventory | Implemented through 0.5 | Next gate |
 | --- | --- | --- | --- |
 | Scalar settings | 353 baseline / 402 audited-main | All nine type families have draft controls; literal bounds; source links; separate observed values | Runtime descriptions, richer help, enumerations and dependency validation |
 | Imported configuration | Legacy and Lua source grammars audited | Legacy literals; resource/syscall-restricted static Lua projection; guarded copies of existing literals; private source-backed `.hye` snapshots; explicit symlink-chain capture; reviewed single-root revisions; old JSON imports | Lossless multi-file/include graph, generated ownership, multi-file reconciliation, richer scope analysis |
