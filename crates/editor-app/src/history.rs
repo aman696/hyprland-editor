@@ -19,6 +19,10 @@ pub(super) enum Undo {
         origin: SourceIdentity,
         document_bytes: usize,
     },
+    Bindings {
+        inverse: hyprland_editor_core::binding::Inverse,
+        retained_bytes: usize,
+    },
     Devices {
         previous: Vec<hyprland_editor_core::device::Spec>,
         retained_bytes: usize,
@@ -84,6 +88,46 @@ fn device_bytes(specs: &Vec<hyprland_editor_core::device::Spec>) -> usize {
             })
             .sum::<usize>()
 }
+fn string_list_bytes(items: &Vec<String>) -> usize {
+    items.capacity() * size_of::<String>() + items.iter().map(String::capacity).sum::<usize>()
+}
+fn bind_bytes(bind: &hyprland_editor_core::binding::Bind) -> usize {
+    1024 + bind.id.capacity()
+        + string_list_bytes(&bind.chord.tokens)
+        + bind.description.as_ref().map_or(0, String::capacity)
+        + bind.submap.as_ref().map_or(0, String::capacity)
+        + bind.flags.iter().map(|f| 128 + f.capacity()).sum::<usize>()
+        + bind
+            .device
+            .as_ref()
+            .map_or(0, |d| string_list_bytes(&d.items))
+        + bind.actions.capacity() * size_of::<hyprland_editor_core::action::Action>()
+        + bind
+            .actions
+            .iter()
+            .map(|a| {
+                a.constructor.capacity()
+                    + a.variant.capacity()
+                    + a.fields
+                        .iter()
+                        .map(|(k, v)| 256 + size_of::<Value>() + k.capacity() + value_bytes(v))
+                        .sum::<usize>()
+            })
+            .sum::<usize>()
+}
+fn submap_bytes(m: &hyprland_editor_core::binding::Submap) -> usize {
+    256 + m.id.capacity()
+        + m.name.capacity()
+        + m.parent.as_ref().map_or(0, String::capacity)
+        + m.reset.as_ref().map_or(0, String::capacity)
+}
+fn bindings_bytes(b: &hyprland_editor_core::binding::Draft) -> usize {
+    string_list_bytes(&b.order)
+        + b.binds.capacity() * size_of::<hyprland_editor_core::binding::Bind>()
+        + b.binds.iter().map(bind_bytes).sum::<usize>()
+        + b.submaps.capacity() * size_of::<hyprland_editor_core::binding::Submap>()
+        + b.submaps.iter().map(submap_bytes).sum::<usize>()
+}
 fn document_bytes(doc: &LuaDocument) -> usize {
     let r = &doc.report;
     // Include Arc headers and conservative slack for partly filled B-tree nodes.
@@ -92,6 +136,7 @@ fn document_bytes(doc: &LuaDocument) -> usize {
         + doc.source.capacity()
         + monitor_bytes(&r.monitors)
         + device_bytes(&r.devices)
+        + bindings_bytes(&r.bindings)
         + r.source_sha256.capacity()
         + r.draft.version.capacity()
         + r.draft
@@ -124,6 +169,7 @@ impl Undo {
                         + changes_bytes(changes)
                         + origin_bytes(origin)
                 }
+                Self::Bindings { retained_bytes, .. } => *retained_bytes,
                 Self::Monitors { retained_bytes, .. } | Self::Devices { retained_bytes, .. } => {
                     *retained_bytes
                 }
@@ -189,6 +235,31 @@ impl History {
         self.push(Undo::Field {
             id: id.into(),
             previous,
+        })
+    }
+    pub fn bindings(
+        &mut self,
+        before: &hyprland_editor_core::binding::Draft,
+        after: &hyprland_editor_core::binding::Draft,
+    ) -> Result<(), String> {
+        let inverse = hyprland_editor_core::binding::Inverse::between(before, after);
+        let retained_bytes = 1024
+            + inverse
+                .binds
+                .iter()
+                .map(|(id, b)| id.capacity() + b.as_ref().map_or(0, bind_bytes))
+                .sum::<usize>()
+            + inverse
+                .submaps
+                .iter()
+                .map(|(id, m)| id.capacity() + m.as_ref().map_or(0, submap_bytes))
+                .sum::<usize>()
+            + inverse.bind_ids.as_ref().map_or(0, string_list_bytes)
+            + inverse.submap_ids.as_ref().map_or(0, string_list_bytes)
+            + inverse.order.as_ref().map_or(0, string_list_bytes);
+        self.push(Undo::Bindings {
+            inverse,
+            retained_bytes,
         })
     }
     pub fn devices(
@@ -345,6 +416,33 @@ mod tests {
             Value::String(String::with_capacity(MAX_BYTES + 1)),
         );
         assert!(history.devices(vec![oversized]).is_err());
+        assert!(matches!(history.pop(),Some(Undo::Field{id,..})if id=="kept"));
+    }
+    #[test]
+    fn binding_inverse_keeps_only_changed_records_and_refuses_oversized_history() {
+        let source = "hl.bind('Q',hl.dsp.no_op());hl.bind('W',hl.dsp.no_op())";
+        let before = hyprland_editor_core::lua::parse(
+            source,
+            hyprland_editor_core::BASELINE,
+            &hyprland_editor_core::catalogue(),
+        )
+        .unwrap()
+        .bindings;
+        let mut after = before.clone();
+        after.binds[0].description = Some("updated".into());
+        let mut history = History::default();
+        history.bindings(&before, &after).unwrap();
+        let Undo::Bindings { inverse, .. } = history.pop().unwrap() else {
+            panic!("binding inverse")
+        };
+        assert_eq!(inverse.binds.len(), 1);
+        assert!(inverse.bind_ids.is_none());
+        inverse.restore(&mut after);
+        assert_eq!(after, before);
+        history.field("kept", None).unwrap();
+        let mut oversized = before.clone();
+        oversized.binds[0].description = Some("x".repeat(MAX_BYTES));
+        assert!(history.bindings(&oversized, &before).is_err());
         assert!(matches!(history.pop(),Some(Undo::Field{id,..})if id=="kept"));
     }
     #[test]

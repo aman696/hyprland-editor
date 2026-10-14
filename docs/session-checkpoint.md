@@ -15,3 +15,7 @@ Uncommitted preview scaffolding was moved outside the build to ignored `.dev/pau
 ## Resumed work
 
 Monitor verification was completed and published to main as `b8637af`; its GitHub run passed. The subsequent 0.6 device work adds the 43-field/name editor, static Lua projection, schema-pinned storage/undo, linked installed keyboard choices, numeric curves and tag rows. Local 91-test/native/strict/release evidence is in validation.md. Review and hosted verification belong to the device-editor branch and its eventual exact commit. The next visible editors are bindings, rules and animations; all original full-project obligations remain open and the goal remains active.
+
+## Binding milestone — 0.7
+
+The resumed binding branch implements versioned chords/options, 51/52 dispatcher constructor forms, focused recording, declaration/action ordering, empty callbacks, literal submap rename/subtree duplication, escape creation, static relationship checks, private schema-pinned persistence and changed-record undo. No binding or dispatcher is activated. Validation and publication evidence belong in validation.md for the final exact revision. Rules/workspaces and animations/gestures are next, with the original selector/workflow, source graph, effective discovery, preview, recovery and resource obligations retained.

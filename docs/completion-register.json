@@ -13,6 +13,25 @@
   },
   "foundations": [
     {
+      "area": "binding/submap draft editor",
+      "code": [
+        "crates/editor-core/src/action.rs",
+        "crates/editor-core/src/binding.rs",
+        "crates/editor-app/src/bindings.rs",
+        "crates/editor-app/src/bind_forms.rs",
+        "data/actions.json",
+        "data/bindings.json"
+      ],
+      "test_references": [
+        "every_constructor_variant_exports_and_imports_its_typed_arguments",
+        "test_editor",
+        "binding_actions_remain_inert_in_actual_restricted_worker_and_preserve_timing",
+        "application_reopens_pinned_binding_graph_and_rejects_tampering",
+        "duplicate_submap_rebases_subtree_transitions_but_keeps_external_targets"
+      ],
+      "limits": "51/52 public dispatcher constructor forms, chords/flags, focused recording, literal submap rename/duplication and escape drafts, static findings, private persistence and inverse undo; no complete selector/workflow builders, effective conflicts/device intersections, source editing, live delivery, apply/recovery or compositor preview certification"
+    },
+    {
       "area": "device draft editor",
       "code": [
         "crates/editor-core/src/device.rs",
@@ -14137,7 +14156,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed binding/submap drafts, dispatcher variants, focused recording, static projection and schema-pinned storage; selector/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14159,7 +14178,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed binding/submap drafts, dispatcher variants, focused recording, static projection and schema-pinned storage; selector/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14181,7 +14200,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed binding/submap drafts, dispatcher variants, focused recording, static projection and schema-pinned storage; selector/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14203,7 +14222,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed binding/submap drafts, dispatcher variants, focused recording, static projection and schema-pinned storage; selector/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14225,7 +14244,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed binding/submap drafts, dispatcher variants, focused recording, static projection and schema-pinned storage; selector/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14247,7 +14266,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed binding/submap drafts, dispatcher variants, focused recording, static projection and schema-pinned storage; selector/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14269,7 +14288,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed binding/submap drafts, dispatcher variants, focused recording, static projection and schema-pinned storage; selector/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14291,7 +14310,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed binding/submap drafts, dispatcher variants, focused recording, static projection and schema-pinned storage; selector/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14313,7 +14332,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed binding/submap drafts, dispatcher variants, focused recording, static projection and schema-pinned storage; selector/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14335,7 +14354,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed binding/submap drafts, dispatcher variants, focused recording, static projection and schema-pinned storage; selector/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14357,7 +14376,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed binding/submap drafts, dispatcher variants, focused recording, static projection and schema-pinned storage; selector/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14378,7 +14397,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed binding/submap drafts, dispatcher variants, focused recording, static projection and schema-pinned storage; selector/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14400,7 +14419,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed binding/submap drafts, dispatcher variants, focused recording, static projection and schema-pinned storage; selector/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14422,7 +14441,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed binding/submap drafts, dispatcher variants, focused recording, static projection and schema-pinned storage; selector/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14444,7 +14463,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed binding/submap drafts, dispatcher variants, focused recording, static projection and schema-pinned storage; selector/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14466,7 +14485,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed binding/submap drafts, dispatcher variants, focused recording, static projection and schema-pinned storage; selector/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14488,7 +14507,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed binding/submap drafts, dispatcher variants, focused recording, static projection and schema-pinned storage; selector/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14510,7 +14529,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed binding/submap drafts, dispatcher variants, focused recording, static projection and schema-pinned storage; selector/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14532,7 +14551,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed binding/submap drafts, dispatcher variants, focused recording, static projection and schema-pinned storage; selector/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14554,7 +14573,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed binding/submap drafts, dispatcher variants, focused recording, static projection and schema-pinned storage; selector/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14576,7 +14595,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed binding/submap drafts, dispatcher variants, focused recording, static projection and schema-pinned storage; selector/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14598,7 +14617,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed binding/submap drafts, dispatcher variants, focused recording, static projection and schema-pinned storage; selector/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14620,7 +14639,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed binding/submap drafts, dispatcher variants, focused recording, static projection and schema-pinned storage; selector/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14642,7 +14661,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed binding/submap drafts, dispatcher variants, focused recording, static projection and schema-pinned storage; selector/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14664,7 +14683,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed binding/submap drafts, dispatcher variants, focused recording, static projection and schema-pinned storage; selector/workflow/source/runtime conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },

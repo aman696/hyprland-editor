@@ -1,0 +1,3652 @@
+[
+  {
+    "name": "cursor.move",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L77",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "coordinates",
+        "label": "Coordinates",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "x",
+            "kind": "Number",
+            "required": true,
+            "default": 0
+          },
+          {
+            "name": "y",
+            "kind": "Number",
+            "required": true,
+            "default": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "cursor.move",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L88",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "coordinates",
+        "label": "Coordinates",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "x",
+            "kind": "Number",
+            "required": true,
+            "default": 0
+          },
+          {
+            "name": "y",
+            "kind": "Number",
+            "required": true,
+            "default": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "cursor.move_to_corner",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L67",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "corner",
+        "label": "Corner",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "corner",
+            "kind": "Number",
+            "required": true,
+            "default": 0
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "cursor.move_to_corner",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L78",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "corner",
+        "label": "Corner",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "corner",
+            "kind": "Number",
+            "required": true,
+            "default": 0
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "dpms",
+    "version": "0.56.2",
+    "effect": "session-or-power",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L297",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "action",
+            "kind": "String",
+            "required": false,
+            "default": "toggle",
+            "choices": [
+              "toggle",
+              "enable",
+              "disable",
+              "on",
+              "off"
+            ]
+          },
+          {
+            "name": "monitor",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "dpms",
+    "version": "audited-main",
+    "effect": "session-or-power",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L311",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "action",
+            "kind": "String",
+            "required": false,
+            "default": "toggle",
+            "choices": [
+              "toggle",
+              "enable",
+              "disable",
+              "on",
+              "off"
+            ]
+          },
+          {
+            "name": "monitor",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "event",
+    "version": "0.56.2",
+    "effect": "external-or-layout",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L313",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "position",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "argument",
+            "kind": "String",
+            "required": true,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "event",
+    "version": "audited-main",
+    "effect": "external-or-layout",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L327",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "position",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "argument",
+            "kind": "String",
+            "required": true,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "exec_cmd",
+    "version": "0.56.2",
+    "effect": "external-command",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L233",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "position",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "argument",
+            "kind": "String",
+            "required": true,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "exec_cmd",
+    "version": "audited-main",
+    "effect": "external-command",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L242",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "position",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "argument",
+            "kind": "String",
+            "required": true,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "exec_raw",
+    "version": "0.56.2",
+    "effect": "external-command",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L252",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "position",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "argument",
+            "kind": "String",
+            "required": true,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "exec_raw",
+    "version": "audited-main",
+    "effect": "external-command",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L261",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "position",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "argument",
+            "kind": "String",
+            "required": true,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "exit",
+    "version": "0.56.2",
+    "effect": "session-or-power",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L262",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "none",
+        "table_required": false,
+        "fields": []
+      }
+    ]
+  },
+  {
+    "name": "exit",
+    "version": "audited-main",
+    "effect": "session-or-power",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L271",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "none",
+        "table_required": false,
+        "fields": []
+      }
+    ]
+  },
+  {
+    "name": "focus",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L1141",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "direction",
+        "label": "Direction",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "direction",
+            "kind": "String",
+            "required": true,
+            "default": "left",
+            "choices": [
+              "left",
+              "right",
+              "up",
+              "down",
+              "l",
+              "r",
+              "u",
+              "t",
+              "d",
+              "b"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "monitor",
+        "label": "Monitor",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "monitor",
+            "kind": "Selector",
+            "required": true,
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "workspace",
+        "label": "Workspace",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "workspace",
+            "kind": "Selector",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "on_current_monitor",
+            "kind": "Bool",
+            "required": false,
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "window",
+        "label": "Window",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": true,
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "urgent",
+        "label": "Urgent",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "urgent_or_last",
+            "kind": "Bool",
+            "required": true,
+            "default": true
+          }
+        ]
+      },
+      {
+        "id": "last",
+        "label": "Last",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "last",
+            "kind": "Bool",
+            "required": true,
+            "default": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "focus",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L1091",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "direction",
+        "label": "Direction",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "direction",
+            "kind": "String",
+            "required": true,
+            "default": "left",
+            "choices": [
+              "left",
+              "right",
+              "up",
+              "down",
+              "l",
+              "r",
+              "u",
+              "t",
+              "d",
+              "b"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "monitor",
+        "label": "Monitor",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "monitor",
+            "kind": "Selector",
+            "required": true,
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "workspace",
+        "label": "Workspace",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "workspace",
+            "kind": "Selector",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "on_current_monitor",
+            "kind": "Bool",
+            "required": false,
+            "default": false
+          }
+        ]
+      },
+      {
+        "id": "window",
+        "label": "Window",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": true,
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "urgent",
+        "label": "Urgent",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "urgent_or_last",
+            "kind": "Bool",
+            "required": true,
+            "default": true
+          }
+        ]
+      },
+      {
+        "id": "last",
+        "label": "Last",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "last",
+            "kind": "Bool",
+            "required": true,
+            "default": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "force_idle",
+    "version": "0.56.2",
+    "effect": "session-or-power",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L338",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "position",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "argument",
+            "kind": "Number",
+            "required": true,
+            "default": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "force_idle",
+    "version": "audited-main",
+    "effect": "session-or-power",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L352",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "position",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "argument",
+            "kind": "Number",
+            "required": true,
+            "default": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "force_renderer_reload",
+    "version": "0.56.2",
+    "effect": "session-or-power",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L333",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "none",
+        "table_required": false,
+        "fields": []
+      }
+    ]
+  },
+  {
+    "name": "force_renderer_reload",
+    "version": "audited-main",
+    "effect": "session-or-power",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L347",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "none",
+        "table_required": false,
+        "fields": []
+      }
+    ]
+  },
+  {
+    "name": "global",
+    "version": "0.56.2",
+    "effect": "external-or-layout",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L323",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "position",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "argument",
+            "kind": "String",
+            "required": true,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "global",
+    "version": "audited-main",
+    "effect": "external-or-layout",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L337",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "position",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "argument",
+            "kind": "String",
+            "required": true,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "group.active",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L119",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "index",
+        "label": "Index",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "index",
+            "kind": "Number",
+            "required": true,
+            "default": 1
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "group.active",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L130",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "index",
+        "label": "Index",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "index",
+            "kind": "Number",
+            "required": true,
+            "default": 1
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "group.lock",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L129",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "action",
+            "kind": "String",
+            "required": false,
+            "default": "toggle",
+            "choices": [
+              "toggle",
+              "enable",
+              "disable",
+              "on",
+              "off"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "group.lock",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L140",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "action",
+            "kind": "String",
+            "required": false,
+            "default": "toggle",
+            "choices": [
+              "toggle",
+              "enable",
+              "disable",
+              "on",
+              "off"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "group.lock_active",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L137",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "action",
+            "kind": "String",
+            "required": false,
+            "default": "toggle",
+            "choices": [
+              "toggle",
+              "enable",
+              "disable",
+              "on",
+              "off"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "group.lock_active",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L148",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "action",
+            "kind": "String",
+            "required": false,
+            "default": "toggle",
+            "choices": [
+              "toggle",
+              "enable",
+              "disable",
+              "on",
+              "off"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "group.move_window",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L107",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "forward",
+            "kind": "Bool",
+            "required": false,
+            "default": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "group.move_window",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L118",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "forward",
+            "kind": "Bool",
+            "required": false,
+            "default": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "group.next",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L93",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "group.next",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L104",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "group.prev",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L100",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "group.prev",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L111",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "group.toggle",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L87",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "group.toggle",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L98",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "layout",
+    "version": "0.56.2",
+    "effect": "external-or-layout",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L287",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "position",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "argument",
+            "kind": "String",
+            "required": true,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "layout",
+    "version": "audited-main",
+    "effect": "external-or-layout",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L301",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "position",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "argument",
+            "kind": "String",
+            "required": true,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "no_op",
+    "version": "0.56.2",
+    "effect": "inert",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L1202",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "none",
+        "table_required": false,
+        "fields": []
+      }
+    ]
+  },
+  {
+    "name": "no_op",
+    "version": "audited-main",
+    "effect": "inert",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L1152",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "none",
+        "table_required": false,
+        "fields": []
+      }
+    ]
+  },
+  {
+    "name": "pass",
+    "version": "0.56.2",
+    "effect": "input-or-capture",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L277",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "target",
+        "label": "Target",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": true,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "pass",
+    "version": "audited-main",
+    "effect": "input-or-capture",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L291",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "target",
+        "label": "Target",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": true,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "release_input_capture",
+    "version": "0.56.2",
+    "effect": "input-or-capture",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L348",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "none",
+        "table_required": false,
+        "fields": []
+      }
+    ]
+  },
+  {
+    "name": "release_input_capture",
+    "version": "audited-main",
+    "effect": "input-or-capture",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L362",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "none",
+        "table_required": false,
+        "fields": []
+      }
+    ]
+  },
+  {
+    "name": "reload_config",
+    "version": "audited-main",
+    "effect": "session-or-power",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L276",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "none",
+        "table_required": false,
+        "fields": []
+      }
+    ]
+  },
+  {
+    "name": "send_key_state",
+    "version": "0.56.2",
+    "effect": "input-or-capture",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L456",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "key_state",
+        "label": "Key State",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "mods",
+            "kind": "String",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "key",
+            "kind": "String",
+            "required": true,
+            "default": "Return"
+          },
+          {
+            "name": "state",
+            "kind": "String",
+            "required": true,
+            "default": "down",
+            "choices": [
+              "down",
+              "up",
+              "repeat"
+            ]
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "send_key_state",
+    "version": "audited-main",
+    "effect": "input-or-capture",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L418",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "key_state",
+        "label": "Key State",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "mods",
+            "kind": "String",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "key",
+            "kind": "String",
+            "required": true,
+            "default": "Return"
+          },
+          {
+            "name": "state",
+            "kind": "String",
+            "required": true,
+            "default": "down",
+            "choices": [
+              "down",
+              "up",
+              "repeat"
+            ]
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "send_shortcut",
+    "version": "0.56.2",
+    "effect": "input-or-capture",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L442",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "shortcut",
+        "label": "Shortcut",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "mods",
+            "kind": "String",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "key",
+            "kind": "String",
+            "required": true,
+            "default": "Return"
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "send_shortcut",
+    "version": "audited-main",
+    "effect": "input-or-capture",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L404",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "shortcut",
+        "label": "Shortcut",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "mods",
+            "kind": "String",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "key",
+            "kind": "String",
+            "required": true,
+            "default": "Return"
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "submap",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L267",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "position",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "argument",
+            "kind": "String",
+            "required": true,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "submap",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L281",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "position",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "argument",
+            "kind": "String",
+            "required": true,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.alter_zorder",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L1035",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "order",
+        "label": "Order",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "mode",
+            "kind": "String",
+            "required": true,
+            "default": "top"
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.alter_zorder",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L988",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "order",
+        "label": "Order",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "mode",
+            "kind": "String",
+            "required": true,
+            "default": "top"
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.bring_to_top",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L1030",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "none",
+        "table_required": false,
+        "fields": []
+      }
+    ]
+  },
+  {
+    "name": "window.bring_to_top",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L983",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "none",
+        "table_required": false,
+        "fields": []
+      }
+    ]
+  },
+  {
+    "name": "window.center",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L971",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.center",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L924",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.clear_tags",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L1011",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.clear_tags",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L964",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.close",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L699",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.close",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L652",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.cycle_next",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L977",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "next",
+            "kind": "Bool",
+            "required": false,
+            "default": true
+          },
+          {
+            "name": "tiled",
+            "kind": "Bool",
+            "required": false,
+            "default": false
+          },
+          {
+            "name": "floating",
+            "kind": "Bool",
+            "required": false,
+            "default": false
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.cycle_next",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L930",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "next",
+            "kind": "Bool",
+            "required": false,
+            "default": true
+          },
+          {
+            "name": "tiled",
+            "kind": "Bool",
+            "required": false,
+            "default": false
+          },
+          {
+            "name": "floating",
+            "kind": "Bool",
+            "required": false,
+            "default": false
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.deny_from_group",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L1059",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "action",
+            "kind": "String",
+            "required": false,
+            "default": "toggle",
+            "choices": [
+              "toggle",
+              "enable",
+              "disable",
+              "on",
+              "off"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.deny_from_group",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L1012",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "action",
+            "kind": "String",
+            "required": false,
+            "default": "toggle",
+            "choices": [
+              "toggle",
+              "enable",
+              "disable",
+              "on",
+              "off"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.drag",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L1067",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "none",
+        "table_required": false,
+        "fields": []
+      }
+    ]
+  },
+  {
+    "name": "window.drag",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L1020",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "none",
+        "table_required": false,
+        "fields": []
+      }
+    ]
+  },
+  {
+    "name": "window.float",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L721",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "action",
+            "kind": "String",
+            "required": false,
+            "default": "toggle",
+            "choices": [
+              "toggle",
+              "enable",
+              "disable",
+              "on",
+              "off"
+            ]
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.float",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L674",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "action",
+            "kind": "String",
+            "required": false,
+            "default": "toggle",
+            "choices": [
+              "toggle",
+              "enable",
+              "disable",
+              "on",
+              "off"
+            ]
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.fullscreen",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L730",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "mode",
+            "kind": "String",
+            "required": false,
+            "default": "fullscreen",
+            "choices": [
+              "fullscreen",
+              "maximized",
+              "0",
+              "1"
+            ]
+          },
+          {
+            "name": "action",
+            "kind": "String",
+            "required": false,
+            "default": "toggle",
+            "choices": [
+              "toggle",
+              "set",
+              "unset"
+            ]
+          },
+          {
+            "name": "layout_aware",
+            "kind": "Bool",
+            "required": false,
+            "default": true
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.fullscreen",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L683",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "mode",
+            "kind": "String",
+            "required": false,
+            "default": "fullscreen",
+            "choices": [
+              "fullscreen",
+              "maximized",
+              "0",
+              "1"
+            ]
+          },
+          {
+            "name": "action",
+            "kind": "String",
+            "required": false,
+            "default": "toggle",
+            "choices": [
+              "toggle",
+              "set",
+              "unset"
+            ]
+          },
+          {
+            "name": "layout_aware",
+            "kind": "Bool",
+            "required": false,
+            "default": true
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.fullscreen_state",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L782",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "states",
+        "label": "States",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "internal",
+            "kind": "Number",
+            "required": true,
+            "default": 2
+          },
+          {
+            "name": "client",
+            "kind": "Number",
+            "required": true,
+            "default": 2
+          },
+          {
+            "name": "action",
+            "kind": "String",
+            "required": false,
+            "default": "set",
+            "choices": [
+              "set",
+              "toggle",
+              "unset"
+            ]
+          },
+          {
+            "name": "layout_aware",
+            "kind": "Bool",
+            "required": false,
+            "default": true
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.fullscreen_state",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L735",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "states",
+        "label": "States",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "internal",
+            "kind": "Number",
+            "required": true,
+            "default": 2
+          },
+          {
+            "name": "client",
+            "kind": "Number",
+            "required": true,
+            "default": 2
+          },
+          {
+            "name": "action",
+            "kind": "String",
+            "required": false,
+            "default": "set",
+            "choices": [
+              "set",
+              "toggle",
+              "unset"
+            ]
+          },
+          {
+            "name": "layout_aware",
+            "kind": "Bool",
+            "required": false,
+            "default": true
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.kill",
+    "version": "0.56.2",
+    "effect": "process-termination-or-signal",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L705",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.kill",
+    "version": "audited-main",
+    "effect": "process-termination-or-signal",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L658",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.move",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L824",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "direction",
+        "label": "Direction",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "direction",
+            "kind": "String",
+            "required": true,
+            "default": "left",
+            "choices": [
+              "left",
+              "right",
+              "up",
+              "down",
+              "l",
+              "r",
+              "u",
+              "t",
+              "d",
+              "b"
+            ]
+          },
+          {
+            "name": "group_aware",
+            "kind": "Bool",
+            "required": false,
+            "default": false
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "coordinates",
+        "label": "Coordinates",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "x",
+            "kind": "Number",
+            "required": true,
+            "default": 0
+          },
+          {
+            "name": "y",
+            "kind": "Number",
+            "required": true,
+            "default": 0
+          },
+          {
+            "name": "relative",
+            "kind": "Bool",
+            "required": false,
+            "default": false
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "workspace",
+        "label": "Workspace",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "workspace",
+            "kind": "Selector",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "follow",
+            "kind": "Bool",
+            "required": false,
+            "default": true
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "monitor",
+        "label": "Monitor",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "monitor",
+            "kind": "Selector",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "follow",
+            "kind": "Bool",
+            "required": false,
+            "default": true
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "into_group",
+        "label": "Into Group",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "into_group",
+            "kind": "String",
+            "required": true,
+            "default": "left",
+            "choices": [
+              "left",
+              "right",
+              "up",
+              "down",
+              "l",
+              "r",
+              "u",
+              "t",
+              "d",
+              "b"
+            ]
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "into_or_create_group",
+        "label": "Into Or Create Group",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "into_or_create_group",
+            "kind": "String",
+            "required": true,
+            "default": "left",
+            "choices": [
+              "left",
+              "right",
+              "up",
+              "down",
+              "l",
+              "r",
+              "u",
+              "t",
+              "d",
+              "b"
+            ]
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "out_of_group",
+        "label": "Out Of Group",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "out_of_group",
+            "kind": "DirectionOrBool",
+            "required": true,
+            "default": true
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.move",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L777",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "direction",
+        "label": "Direction",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "direction",
+            "kind": "String",
+            "required": true,
+            "default": "left",
+            "choices": [
+              "left",
+              "right",
+              "up",
+              "down",
+              "l",
+              "r",
+              "u",
+              "t",
+              "d",
+              "b"
+            ]
+          },
+          {
+            "name": "group_aware",
+            "kind": "Bool",
+            "required": false,
+            "default": false
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "coordinates",
+        "label": "Coordinates",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "x",
+            "kind": "Number",
+            "required": true,
+            "default": 0
+          },
+          {
+            "name": "y",
+            "kind": "Number",
+            "required": true,
+            "default": 0
+          },
+          {
+            "name": "relative",
+            "kind": "Bool",
+            "required": false,
+            "default": false
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "workspace",
+        "label": "Workspace",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "workspace",
+            "kind": "Selector",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "follow",
+            "kind": "Bool",
+            "required": false,
+            "default": true
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "monitor",
+        "label": "Monitor",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "monitor",
+            "kind": "Selector",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "follow",
+            "kind": "Bool",
+            "required": false,
+            "default": true
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "into_group",
+        "label": "Into Group",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "into_group",
+            "kind": "String",
+            "required": true,
+            "default": "left",
+            "choices": [
+              "left",
+              "right",
+              "up",
+              "down",
+              "l",
+              "r",
+              "u",
+              "t",
+              "d",
+              "b"
+            ]
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "into_or_create_group",
+        "label": "Into Or Create Group",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "into_or_create_group",
+            "kind": "String",
+            "required": true,
+            "default": "left",
+            "choices": [
+              "left",
+              "right",
+              "up",
+              "down",
+              "l",
+              "r",
+              "u",
+              "t",
+              "d",
+              "b"
+            ]
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "out_of_group",
+        "label": "Out Of Group",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "out_of_group",
+            "kind": "DirectionOrBool",
+            "required": true,
+            "default": true
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.pin",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L1021",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "action",
+            "kind": "String",
+            "required": false,
+            "default": "toggle",
+            "choices": [
+              "toggle",
+              "enable",
+              "disable",
+              "on",
+              "off"
+            ]
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.pin",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L974",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "action",
+            "kind": "String",
+            "required": false,
+            "default": "toggle",
+            "choices": [
+              "toggle",
+              "enable",
+              "disable",
+              "on",
+              "off"
+            ]
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.pseudo",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L815",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "action",
+            "kind": "String",
+            "required": false,
+            "default": "toggle",
+            "choices": [
+              "toggle",
+              "enable",
+              "disable",
+              "on",
+              "off"
+            ]
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.pseudo",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L768",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "table",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "action",
+            "kind": "String",
+            "required": false,
+            "default": "toggle",
+            "choices": [
+              "toggle",
+              "enable",
+              "disable",
+              "on",
+              "off"
+            ]
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.resize",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L1072",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "interactive",
+        "label": "Interactive",
+        "shape": "none",
+        "table_required": false,
+        "fields": []
+      },
+      {
+        "id": "coordinates",
+        "label": "Coordinates",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "x",
+            "kind": "Number",
+            "required": true,
+            "default": 100
+          },
+          {
+            "name": "y",
+            "kind": "Number",
+            "required": true,
+            "default": 100
+          },
+          {
+            "name": "relative",
+            "kind": "Bool",
+            "required": false,
+            "default": false
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "aspect",
+        "label": "Aspect",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "keep_aspect_ratio",
+            "kind": "Bool",
+            "required": true,
+            "default": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.resize",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L1025",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "interactive",
+        "label": "Interactive",
+        "shape": "none",
+        "table_required": false,
+        "fields": []
+      },
+      {
+        "id": "coordinates",
+        "label": "Coordinates",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "x",
+            "kind": "Number",
+            "required": true,
+            "default": 100
+          },
+          {
+            "name": "y",
+            "kind": "Number",
+            "required": true,
+            "default": 100
+          },
+          {
+            "name": "relative",
+            "kind": "Bool",
+            "required": false,
+            "default": false
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "aspect",
+        "label": "Aspect",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "keep_aspect_ratio",
+            "kind": "Bool",
+            "required": true,
+            "default": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.set_prop",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L1046",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "property",
+        "label": "Property",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "prop",
+            "kind": "String",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "value",
+            "kind": "String",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.set_prop",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L999",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "property",
+        "label": "Property",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "prop",
+            "kind": "String",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "value",
+            "kind": "String",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.signal",
+    "version": "0.56.2",
+    "effect": "process-termination-or-signal",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L711",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "signal",
+        "label": "Signal",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "signal",
+            "kind": "Number",
+            "required": true,
+            "default": 15
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.signal",
+    "version": "audited-main",
+    "effect": "process-termination-or-signal",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L664",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "signal",
+        "label": "Signal",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "signal",
+            "kind": "Number",
+            "required": true,
+            "default": 15
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.swap",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L924",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "direction",
+        "label": "Direction",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "direction",
+            "kind": "String",
+            "required": true,
+            "default": "left",
+            "choices": [
+              "left",
+              "right",
+              "up",
+              "down",
+              "l",
+              "r",
+              "u",
+              "t",
+              "d",
+              "b"
+            ]
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "target",
+        "label": "Target",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "target",
+            "kind": "Selector",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "with",
+        "label": "With",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "with",
+            "kind": "Selector",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "other",
+        "label": "Other",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "other",
+            "kind": "Selector",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "next",
+        "label": "Next",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "next",
+            "kind": "Bool",
+            "required": true,
+            "default": true
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "prev",
+        "label": "Prev",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "prev",
+            "kind": "Bool",
+            "required": true,
+            "default": true
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.swap",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L877",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "direction",
+        "label": "Direction",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "direction",
+            "kind": "String",
+            "required": true,
+            "default": "left",
+            "choices": [
+              "left",
+              "right",
+              "up",
+              "down",
+              "l",
+              "r",
+              "u",
+              "t",
+              "d",
+              "b"
+            ]
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "target",
+        "label": "Target",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "target",
+            "kind": "Selector",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "with",
+        "label": "With",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "with",
+            "kind": "Selector",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "other",
+        "label": "Other",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "other",
+            "kind": "Selector",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "next",
+        "label": "Next",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "next",
+            "kind": "Bool",
+            "required": true,
+            "default": true
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      },
+      {
+        "id": "prev",
+        "label": "Prev",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "prev",
+            "kind": "Bool",
+            "required": true,
+            "default": true
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.tag",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L1000",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "tag",
+        "label": "Tag",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "tag",
+            "kind": "String",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.tag",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L953",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "tag",
+        "label": "Tag",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "tag",
+            "kind": "String",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "window",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "window.toggle_swallow",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L1017",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "none",
+        "table_required": false,
+        "fields": []
+      }
+    ]
+  },
+  {
+    "name": "window.toggle_swallow",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L970",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "none",
+        "table_required": false,
+        "fields": []
+      }
+    ]
+  },
+  {
+    "name": "workspace.change_id",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L1296",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "id",
+        "label": "Id",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "workspace",
+            "kind": "Selector",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "id",
+            "kind": "Number",
+            "required": true,
+            "default": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "workspace.change_id",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L1246",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "id",
+        "label": "Id",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "workspace",
+            "kind": "Selector",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "id",
+            "kind": "Number",
+            "required": true,
+            "default": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "workspace.move",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L1312",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "monitor",
+        "label": "Monitor",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "monitor",
+            "kind": "Selector",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "workspace",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "workspace.move",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L1262",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "monitor",
+        "label": "Monitor",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "monitor",
+            "kind": "Selector",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "workspace",
+            "kind": "Selector",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "workspace.rename",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L1280",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "name",
+        "label": "Name",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "workspace",
+            "kind": "Selector",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "name",
+            "kind": "String",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "workspace.rename",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L1230",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "name",
+        "label": "Name",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "workspace",
+            "kind": "Selector",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "name",
+            "kind": "String",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "workspace.swap_monitors",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L1331",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "monitors",
+        "label": "Monitors",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "monitor1",
+            "kind": "Selector",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "monitor2",
+            "kind": "Selector",
+            "required": true,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "workspace.swap_monitors",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L1281",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "monitors",
+        "label": "Monitors",
+        "shape": "table",
+        "table_required": true,
+        "fields": [
+          {
+            "name": "monitor1",
+            "kind": "Selector",
+            "required": true,
+            "default": ""
+          },
+          {
+            "name": "monitor2",
+            "kind": "Selector",
+            "required": true,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "workspace.toggle_special",
+    "version": "0.56.2",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L1274",
+    "source_sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "position",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "argument",
+            "kind": "String",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "workspace.toggle_special",
+    "version": "audited-main",
+    "effect": "window-or-workspace",
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsDispatchers.cpp#L1224",
+    "source_sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Default",
+        "shape": "position",
+        "table_required": false,
+        "fields": [
+          {
+            "name": "argument",
+            "kind": "String",
+            "required": false,
+            "default": ""
+          }
+        ]
+      }
+    ]
+  }
+]

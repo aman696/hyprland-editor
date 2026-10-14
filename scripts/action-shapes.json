@@ -1,0 +1,1471 @@
+{
+  "cursor.move": [
+    {
+      "id": "coordinates",
+      "label": "Coordinates",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "x",
+          "kind": "Number",
+          "required": true,
+          "default": 0
+        },
+        {
+          "name": "y",
+          "kind": "Number",
+          "required": true,
+          "default": 0
+        }
+      ]
+    }
+  ],
+  "cursor.move_to_corner": [
+    {
+      "id": "corner",
+      "label": "Corner",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "corner",
+          "kind": "Number",
+          "required": true,
+          "default": 0
+        },
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "dpms": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "table",
+      "table_required": false,
+      "fields": [
+        {
+          "name": "action",
+          "kind": "String",
+          "required": false,
+          "default": "toggle",
+          "choices": [
+            "toggle",
+            "enable",
+            "disable",
+            "on",
+            "off"
+          ]
+        },
+        {
+          "name": "monitor",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "position",
+      "table_required": false,
+      "fields": [
+        {
+          "name": "argument",
+          "kind": "String",
+          "required": true,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "exec_cmd": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "position",
+      "table_required": false,
+      "fields": [
+        {
+          "name": "argument",
+          "kind": "String",
+          "required": true,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "exec_raw": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "position",
+      "table_required": false,
+      "fields": [
+        {
+          "name": "argument",
+          "kind": "String",
+          "required": true,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "exit": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "none",
+      "table_required": false,
+      "fields": []
+    }
+  ],
+  "focus": [
+    {
+      "id": "direction",
+      "label": "Direction",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "direction",
+          "kind": "String",
+          "required": true,
+          "default": "left",
+          "choices": [
+            "left",
+            "right",
+            "up",
+            "down",
+            "l",
+            "r",
+            "u",
+            "t",
+            "d",
+            "b"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "monitor",
+      "label": "Monitor",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "monitor",
+          "kind": "Selector",
+          "required": true,
+          "default": ""
+        }
+      ]
+    },
+    {
+      "id": "workspace",
+      "label": "Workspace",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "workspace",
+          "kind": "Selector",
+          "required": true,
+          "default": ""
+        },
+        {
+          "name": "on_current_monitor",
+          "kind": "Bool",
+          "required": false,
+          "default": false
+        }
+      ]
+    },
+    {
+      "id": "window",
+      "label": "Window",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": true,
+          "default": ""
+        }
+      ]
+    },
+    {
+      "id": "urgent",
+      "label": "Urgent",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "urgent_or_last",
+          "kind": "Bool",
+          "required": true,
+          "default": true
+        }
+      ]
+    },
+    {
+      "id": "last",
+      "label": "Last",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "last",
+          "kind": "Bool",
+          "required": true,
+          "default": true
+        }
+      ]
+    }
+  ],
+  "force_idle": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "position",
+      "table_required": false,
+      "fields": [
+        {
+          "name": "argument",
+          "kind": "Number",
+          "required": true,
+          "default": 0
+        }
+      ]
+    }
+  ],
+  "force_renderer_reload": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "none",
+      "table_required": false,
+      "fields": []
+    }
+  ],
+  "global": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "position",
+      "table_required": false,
+      "fields": [
+        {
+          "name": "argument",
+          "kind": "String",
+          "required": true,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "group.active": [
+    {
+      "id": "index",
+      "label": "Index",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "index",
+          "kind": "Number",
+          "required": true,
+          "default": 1
+        },
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "group.lock": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "table",
+      "table_required": false,
+      "fields": [
+        {
+          "name": "action",
+          "kind": "String",
+          "required": false,
+          "default": "toggle",
+          "choices": [
+            "toggle",
+            "enable",
+            "disable",
+            "on",
+            "off"
+          ]
+        }
+      ]
+    }
+  ],
+  "group.lock_active": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "table",
+      "table_required": false,
+      "fields": [
+        {
+          "name": "action",
+          "kind": "String",
+          "required": false,
+          "default": "toggle",
+          "choices": [
+            "toggle",
+            "enable",
+            "disable",
+            "on",
+            "off"
+          ]
+        }
+      ]
+    }
+  ],
+  "group.move_window": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "table",
+      "table_required": false,
+      "fields": [
+        {
+          "name": "forward",
+          "kind": "Bool",
+          "required": false,
+          "default": true
+        }
+      ]
+    }
+  ],
+  "group.next": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "table",
+      "table_required": false,
+      "fields": [
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "group.prev": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "table",
+      "table_required": false,
+      "fields": [
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "group.toggle": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "table",
+      "table_required": false,
+      "fields": [
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "layout": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "position",
+      "table_required": false,
+      "fields": [
+        {
+          "name": "argument",
+          "kind": "String",
+          "required": true,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "no_op": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "none",
+      "table_required": false,
+      "fields": []
+    }
+  ],
+  "pass": [
+    {
+      "id": "target",
+      "label": "Target",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": true,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "release_input_capture": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "none",
+      "table_required": false,
+      "fields": []
+    }
+  ],
+  "reload_config": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "none",
+      "table_required": false,
+      "fields": []
+    }
+  ],
+  "send_key_state": [
+    {
+      "id": "key_state",
+      "label": "Key State",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "mods",
+          "kind": "String",
+          "required": true,
+          "default": ""
+        },
+        {
+          "name": "key",
+          "kind": "String",
+          "required": true,
+          "default": "Return"
+        },
+        {
+          "name": "state",
+          "kind": "String",
+          "required": true,
+          "default": "down",
+          "choices": [
+            "down",
+            "up",
+            "repeat"
+          ]
+        },
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "send_shortcut": [
+    {
+      "id": "shortcut",
+      "label": "Shortcut",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "mods",
+          "kind": "String",
+          "required": true,
+          "default": ""
+        },
+        {
+          "name": "key",
+          "kind": "String",
+          "required": true,
+          "default": "Return"
+        },
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "submap": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "position",
+      "table_required": false,
+      "fields": [
+        {
+          "name": "argument",
+          "kind": "String",
+          "required": true,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "window.alter_zorder": [
+    {
+      "id": "order",
+      "label": "Order",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "mode",
+          "kind": "String",
+          "required": true,
+          "default": "top"
+        },
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "window.bring_to_top": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "none",
+      "table_required": false,
+      "fields": []
+    }
+  ],
+  "window.center": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "table",
+      "table_required": false,
+      "fields": [
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "window.clear_tags": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "table",
+      "table_required": false,
+      "fields": [
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "window.close": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "table",
+      "table_required": false,
+      "fields": [
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "window.cycle_next": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "table",
+      "table_required": false,
+      "fields": [
+        {
+          "name": "next",
+          "kind": "Bool",
+          "required": false,
+          "default": true
+        },
+        {
+          "name": "tiled",
+          "kind": "Bool",
+          "required": false,
+          "default": false
+        },
+        {
+          "name": "floating",
+          "kind": "Bool",
+          "required": false,
+          "default": false
+        },
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "window.deny_from_group": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "table",
+      "table_required": false,
+      "fields": [
+        {
+          "name": "action",
+          "kind": "String",
+          "required": false,
+          "default": "toggle",
+          "choices": [
+            "toggle",
+            "enable",
+            "disable",
+            "on",
+            "off"
+          ]
+        }
+      ]
+    }
+  ],
+  "window.drag": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "none",
+      "table_required": false,
+      "fields": []
+    }
+  ],
+  "window.float": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "table",
+      "table_required": false,
+      "fields": [
+        {
+          "name": "action",
+          "kind": "String",
+          "required": false,
+          "default": "toggle",
+          "choices": [
+            "toggle",
+            "enable",
+            "disable",
+            "on",
+            "off"
+          ]
+        },
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "window.fullscreen": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "table",
+      "table_required": false,
+      "fields": [
+        {
+          "name": "mode",
+          "kind": "String",
+          "required": false,
+          "default": "fullscreen",
+          "choices": [
+            "fullscreen",
+            "maximized",
+            "0",
+            "1"
+          ]
+        },
+        {
+          "name": "action",
+          "kind": "String",
+          "required": false,
+          "default": "toggle",
+          "choices": [
+            "toggle",
+            "set",
+            "unset"
+          ]
+        },
+        {
+          "name": "layout_aware",
+          "kind": "Bool",
+          "required": false,
+          "default": true
+        },
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "window.fullscreen_state": [
+    {
+      "id": "states",
+      "label": "States",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "internal",
+          "kind": "Number",
+          "required": true,
+          "default": 2
+        },
+        {
+          "name": "client",
+          "kind": "Number",
+          "required": true,
+          "default": 2
+        },
+        {
+          "name": "action",
+          "kind": "String",
+          "required": false,
+          "default": "set",
+          "choices": [
+            "set",
+            "toggle",
+            "unset"
+          ]
+        },
+        {
+          "name": "layout_aware",
+          "kind": "Bool",
+          "required": false,
+          "default": true
+        },
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "window.kill": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "table",
+      "table_required": false,
+      "fields": [
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "window.move": [
+    {
+      "id": "direction",
+      "label": "Direction",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "direction",
+          "kind": "String",
+          "required": true,
+          "default": "left",
+          "choices": [
+            "left",
+            "right",
+            "up",
+            "down",
+            "l",
+            "r",
+            "u",
+            "t",
+            "d",
+            "b"
+          ]
+        },
+        {
+          "name": "group_aware",
+          "kind": "Bool",
+          "required": false,
+          "default": false
+        },
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    },
+    {
+      "id": "coordinates",
+      "label": "Coordinates",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "x",
+          "kind": "Number",
+          "required": true,
+          "default": 0
+        },
+        {
+          "name": "y",
+          "kind": "Number",
+          "required": true,
+          "default": 0
+        },
+        {
+          "name": "relative",
+          "kind": "Bool",
+          "required": false,
+          "default": false
+        },
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    },
+    {
+      "id": "workspace",
+      "label": "Workspace",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "workspace",
+          "kind": "Selector",
+          "required": true,
+          "default": ""
+        },
+        {
+          "name": "follow",
+          "kind": "Bool",
+          "required": false,
+          "default": true
+        },
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    },
+    {
+      "id": "monitor",
+      "label": "Monitor",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "monitor",
+          "kind": "Selector",
+          "required": true,
+          "default": ""
+        },
+        {
+          "name": "follow",
+          "kind": "Bool",
+          "required": false,
+          "default": true
+        },
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    },
+    {
+      "id": "into_group",
+      "label": "Into Group",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "into_group",
+          "kind": "String",
+          "required": true,
+          "default": "left",
+          "choices": [
+            "left",
+            "right",
+            "up",
+            "down",
+            "l",
+            "r",
+            "u",
+            "t",
+            "d",
+            "b"
+          ]
+        },
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    },
+    {
+      "id": "into_or_create_group",
+      "label": "Into Or Create Group",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "into_or_create_group",
+          "kind": "String",
+          "required": true,
+          "default": "left",
+          "choices": [
+            "left",
+            "right",
+            "up",
+            "down",
+            "l",
+            "r",
+            "u",
+            "t",
+            "d",
+            "b"
+          ]
+        },
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    },
+    {
+      "id": "out_of_group",
+      "label": "Out Of Group",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "out_of_group",
+          "kind": "DirectionOrBool",
+          "required": true,
+          "default": true
+        },
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "window.pin": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "table",
+      "table_required": false,
+      "fields": [
+        {
+          "name": "action",
+          "kind": "String",
+          "required": false,
+          "default": "toggle",
+          "choices": [
+            "toggle",
+            "enable",
+            "disable",
+            "on",
+            "off"
+          ]
+        },
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "window.pseudo": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "table",
+      "table_required": false,
+      "fields": [
+        {
+          "name": "action",
+          "kind": "String",
+          "required": false,
+          "default": "toggle",
+          "choices": [
+            "toggle",
+            "enable",
+            "disable",
+            "on",
+            "off"
+          ]
+        },
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "window.resize": [
+    {
+      "id": "interactive",
+      "label": "Interactive",
+      "shape": "none",
+      "table_required": false,
+      "fields": []
+    },
+    {
+      "id": "coordinates",
+      "label": "Coordinates",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "x",
+          "kind": "Number",
+          "required": true,
+          "default": 100
+        },
+        {
+          "name": "y",
+          "kind": "Number",
+          "required": true,
+          "default": 100
+        },
+        {
+          "name": "relative",
+          "kind": "Bool",
+          "required": false,
+          "default": false
+        },
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    },
+    {
+      "id": "aspect",
+      "label": "Aspect",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "keep_aspect_ratio",
+          "kind": "Bool",
+          "required": true,
+          "default": true
+        }
+      ]
+    }
+  ],
+  "window.set_prop": [
+    {
+      "id": "property",
+      "label": "Property",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "prop",
+          "kind": "String",
+          "required": true,
+          "default": ""
+        },
+        {
+          "name": "value",
+          "kind": "String",
+          "required": true,
+          "default": ""
+        },
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "window.signal": [
+    {
+      "id": "signal",
+      "label": "Signal",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "signal",
+          "kind": "Number",
+          "required": true,
+          "default": 15
+        },
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "window.swap": [
+    {
+      "id": "direction",
+      "label": "Direction",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "direction",
+          "kind": "String",
+          "required": true,
+          "default": "left",
+          "choices": [
+            "left",
+            "right",
+            "up",
+            "down",
+            "l",
+            "r",
+            "u",
+            "t",
+            "d",
+            "b"
+          ]
+        },
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    },
+    {
+      "id": "target",
+      "label": "Target",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "target",
+          "kind": "Selector",
+          "required": true,
+          "default": ""
+        },
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    },
+    {
+      "id": "with",
+      "label": "With",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "with",
+          "kind": "Selector",
+          "required": true,
+          "default": ""
+        },
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    },
+    {
+      "id": "other",
+      "label": "Other",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "other",
+          "kind": "Selector",
+          "required": true,
+          "default": ""
+        },
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "label": "Next",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "next",
+          "kind": "Bool",
+          "required": true,
+          "default": true
+        },
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    },
+    {
+      "id": "prev",
+      "label": "Prev",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "prev",
+          "kind": "Bool",
+          "required": true,
+          "default": true
+        },
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "window.tag": [
+    {
+      "id": "tag",
+      "label": "Tag",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "tag",
+          "kind": "String",
+          "required": true,
+          "default": ""
+        },
+        {
+          "name": "window",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "window.toggle_swallow": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "none",
+      "table_required": false,
+      "fields": []
+    }
+  ],
+  "workspace.change_id": [
+    {
+      "id": "id",
+      "label": "Id",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "workspace",
+          "kind": "Selector",
+          "required": true,
+          "default": ""
+        },
+        {
+          "name": "id",
+          "kind": "Number",
+          "required": true,
+          "default": 1
+        }
+      ]
+    }
+  ],
+  "workspace.move": [
+    {
+      "id": "monitor",
+      "label": "Monitor",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "monitor",
+          "kind": "Selector",
+          "required": true,
+          "default": ""
+        },
+        {
+          "name": "workspace",
+          "kind": "Selector",
+          "required": false,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "workspace.rename": [
+    {
+      "id": "name",
+      "label": "Name",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "workspace",
+          "kind": "Selector",
+          "required": true,
+          "default": ""
+        },
+        {
+          "name": "name",
+          "kind": "String",
+          "required": false,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "workspace.swap_monitors": [
+    {
+      "id": "monitors",
+      "label": "Monitors",
+      "shape": "table",
+      "table_required": true,
+      "fields": [
+        {
+          "name": "monitor1",
+          "kind": "Selector",
+          "required": true,
+          "default": ""
+        },
+        {
+          "name": "monitor2",
+          "kind": "Selector",
+          "required": true,
+          "default": ""
+        }
+      ]
+    }
+  ],
+  "workspace.toggle_special": [
+    {
+      "id": "default",
+      "label": "Default",
+      "shape": "position",
+      "table_required": false,
+      "fields": [
+        {
+          "name": "argument",
+          "kind": "String",
+          "required": false,
+          "default": ""
+        }
+      ]
+    }
+  ]
+}

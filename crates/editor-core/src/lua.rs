@@ -33,6 +33,8 @@ pub struct LuaReport {
     pub monitors: Vec<crate::monitor::Rule>,
     #[serde(default)]
     pub devices: Vec<crate::device::Spec>,
+    #[serde(default)]
+    pub bindings: crate::binding::Draft,
     pub declarations: Vec<Declaration>,
     pub diagnostics: Vec<Diagnostic>,
     pub opaque_effects: bool,
@@ -53,6 +55,7 @@ enum Expr {
     Float(f64),
     Text(String),
     Table(Vec<(Key, Expr)>),
+    Action(Box<crate::action::Action>),
 }
 #[derive(Clone, Debug, PartialEq)]
 enum Key {
@@ -414,6 +417,7 @@ struct Projection<'a> {
     report: LuaReport,
     api_available: bool,
     call: usize,
+    submap: Option<String>,
 }
 impl Projection<'_> {
     fn diagnostic(&mut self, node: Node<'_>, message: &str) {
@@ -676,9 +680,328 @@ impl Projection<'_> {
         }
         Ok(())
     }
+    fn action(&self, node: Node<'_>, at_load: bool) -> Result<crate::action::Action, String> {
+        if node.kind() == "identifier" {
+            if let Some(Expr::Action(a)) = self.env.get(text(node, self.source)) {
+                return Ok((**a).clone());
+            }
+        }
+        if node.kind() != "function_call" {
+            return Err(
+                "Dispatcher must be a known constructor or captured static dispatcher".into(),
+            );
+        }
+        let name = node
+            .child_by_field_name("name")
+            .ok_or("Dispatcher name missing")?;
+        let constructor = text(name, self.source)
+            .strip_prefix("hl.dsp.")
+            .ok_or("Only pinned hl.dsp constructors are projected")?;
+        let def = crate::action::find(constructor, &self.report.draft.version)
+            .ok_or("Dispatcher is outside the selected snapshot")?;
+        let args = node
+            .child_by_field_name("arguments")
+            .map(named)
+            .unwrap_or_default();
+        if args.len() > 1 {
+            return Err("Dispatcher argument shape is unsupported".into());
+        }
+        let evaluated = args
+            .first()
+            .and_then(|n| evaluate(*n, self.source, &self.env, 0));
+        if !args.is_empty() && evaluated.is_none() {
+            return Err("Dispatcher arguments are unresolved; they were not executed".into());
+        }
+        for variant in &def.variants {
+            let mut fields = BTreeMap::new();
+            match (&evaluated, variant.shape.as_str()) {
+                (None | Some(Expr::Nil), "none") => {}
+                (None | Some(Expr::Nil), "table" | "position")
+                    if !variant.table_required && !variant.fields.iter().any(|f| f.required) => {}
+                (Some(Expr::Table(entries)), "table") => {
+                    let mut valid = true;
+                    for (key, expr) in entries {
+                        let Key::Name(key) = key else {
+                            valid = false;
+                            break;
+                        };
+                        if matches!(expr, Expr::Nil) {
+                            continue;
+                        }
+                        let value = match expr {
+                            Expr::Text(s) => Value::String(s.clone()),
+                            Expr::Bool(v) => Value::Bool(*v),
+                            Expr::Int(n) => Value::Int(*n),
+                            Expr::Float(n) => Value::Float(*n),
+                            _ => {
+                                valid = false;
+                                break;
+                            }
+                        };
+                        fields.insert(key.clone(), value);
+                    }
+                    if !valid {
+                        continue;
+                    }
+                }
+                (Some(expr), "position") => {
+                    let value = match expr {
+                        Expr::Text(s) => Value::String(s.clone()),
+                        Expr::Int(n) => Value::Int(*n),
+                        Expr::Float(n) => Value::Float(*n),
+                        _ => continue,
+                    };
+                    fields.insert("argument".into(), value);
+                }
+                _ => continue,
+            }
+            for field in &variant.fields {
+                if field.kind == "Number" {
+                    if let Some(Value::Int(n)) = fields.get(&field.name) {
+                        fields.insert(field.name.clone(), Value::Float(*n as f64));
+                    }
+                }
+            }
+            let action = crate::action::Action {
+                constructor: constructor.into(),
+                variant: variant.id.clone(),
+                at_load,
+                fields,
+            };
+            if action.validate(&self.report.draft.version).is_ok() {
+                return Ok(action);
+            }
+        }
+        Err("Dispatcher fields/branch are outside the reviewed argument shapes".into())
+    }
+    fn callback_actions(&self, node: Node<'_>) -> Result<Vec<crate::action::Action>, String> {
+        if node.kind() != "function_definition" {
+            return self.action(node, true).map(|a| vec![a]);
+        }
+        let params = node
+            .child_by_field_name("parameters")
+            .ok_or("Callback parameters missing")?;
+        if !named(params).is_empty() {
+            return Err("Callbacks with parameters need the workflow editor".into());
+        }
+        let mut actions = vec![];
+        let statements = node
+            .child_by_field_name("body")
+            .map(named)
+            .unwrap_or_default();
+        for statement in statements {
+            if ["comment", "empty_statement"].contains(&statement.kind()) {
+                continue;
+            }
+            if statement.kind() != "function_call"
+                || statement
+                    .child_by_field_name("name")
+                    .is_none_or(|n| text(n, self.source) != "hl.dispatch")
+            {
+                return Err(
+                    "Callback contains opaque workflow statements; it was not executed".into(),
+                );
+            }
+            let args = statement
+                .child_by_field_name("arguments")
+                .map(named)
+                .unwrap_or_default();
+            if args.len() != 1 {
+                return Err("Dispatch needs one constructor".into());
+            }
+            actions.push(self.action(args[0], false)?);
+        }
+        if actions.len() > 64 {
+            return Err("Callback supports at most 64 static dispatchers".into());
+        }
+        Ok(actions)
+    }
+    fn binding(&mut self, node: Node<'_>) -> Result<(), String> {
+        let parsed = (|| -> Result<crate::binding::Bind, String> {
+            let args = node
+                .child_by_field_name("arguments")
+                .map(named)
+                .unwrap_or_default();
+            if args.len() < 2 || args.len() > 3 {
+                return Err("Bind needs a chord, dispatcher/callback and optional options".into());
+            }
+            let Some(Expr::Text(chord)) = evaluate(args[0], self.source, &self.env, 0) else {
+                return Err("Bind chord is unresolved".into());
+            };
+            let mut bind = crate::binding::Bind {
+                id: format!("source-bind-{}", self.report.bindings.binds.len()),
+                chord: crate::binding::Chord::parse(&chord),
+                actions: self.callback_actions(args[1])?,
+                flags: Default::default(),
+                description: None,
+                description_alias: false,
+                device: None,
+                submap: self.submap.clone(),
+            };
+            if let Some(options) = args.get(2) {
+                let Some(Expr::Table(entries)) = evaluate(*options, self.source, &self.env, 0)
+                else {
+                    return Err("Bind options are unresolved".into());
+                };
+                let mut description = None;
+                let mut alias = None;
+                for (key, value) in entries {
+                    let Key::Name(key) = key else {
+                        return Err("Bind option names must be strings".into());
+                    };
+                    if crate::binding::FLAGS.contains(&key.as_str()) {
+                        if value.truthy() {
+                            bind.flags.insert(key);
+                        }
+                    } else if ["description", "desc"].contains(&key.as_str()) {
+                        if matches!(value, Expr::Nil) {
+                            continue;
+                        }
+                        let Expr::Text(value) = value else {
+                            return Err("Description needs a static string".into());
+                        };
+                        if key == "description" {
+                            description = Some(value);
+                        } else {
+                            alias = Some(value);
+                        }
+                    } else if key == "device" {
+                        let Expr::Table(fields) = value else {
+                            return Err("Device filter needs a static table".into());
+                        };
+                        let inclusive = member(&fields, "inclusive")
+                            .map(Expr::truthy)
+                            .unwrap_or(true);
+                        let mut items = vec![];
+                        if let Some(v) = member(&fields, "list") {
+                            let Expr::Table(list) = v else {
+                                return Err("Device filter list needs a static table".into());
+                            };
+                            for (_, v) in list {
+                                let Expr::Text(s) = v else {
+                                    return Err("Device/tag targets need strings".into());
+                                };
+                                items.push(s.clone());
+                            }
+                        }
+                        bind.device = Some(crate::binding::DeviceFilter { inclusive, items });
+                    } else {
+                        return Err("Unknown bind option retained in source".into());
+                    }
+                }
+                if let Some(d) = description {
+                    bind.description = Some(d);
+                } else if let Some(d) = alias {
+                    bind.description = Some(d);
+                    bind.description_alias = true;
+                }
+            }
+            bind.validate(&self.report.draft.version)?;
+            Ok(bind)
+        })();
+        match parsed {
+            Ok(bind) => {
+                if self.report.bindings.binds.len() >= 10000 {
+                    return Err("Too many binding declarations".into());
+                }
+                self.report.bindings.order.push(bind.id.clone());
+                self.report.bindings.binds.push(bind);
+            }
+            Err(error) => {
+                self.report.opaque_effects = true;
+                self.diagnostic(node, &error);
+                let args = node
+                    .child_by_field_name("arguments")
+                    .map(named)
+                    .unwrap_or_default();
+                if args.iter().enumerate().any(|(i, n)| {
+                    if i == 1 && n.kind() == "function_definition" {
+                        return false;
+                    }
+                    evaluate(*n, self.source, &self.env, 0).is_none()
+                        && !(i == 1 && self.action(*n, true).is_ok())
+                }) {
+                    self.api_available = false;
+                }
+            }
+        }
+        Ok(())
+    }
+    fn submap(&mut self, node: Node<'_>) -> Result<(), String> {
+        let args = node
+            .child_by_field_name("arguments")
+            .map(named)
+            .unwrap_or_default();
+        let parsed = (|| -> Result<(String, Option<String>, Option<Node<'_>>), String> {
+            if args.len() < 2 || args.len() > 3 {
+                return Err("Submap needs name, optional reset and literal callback".into());
+            }
+            let Some(Expr::Text(name)) = evaluate(args[0], self.source, &self.env, 0) else {
+                return Err("Submap name is unresolved".into());
+            };
+            let reset = if args.len() == 3 {
+                let Some(Expr::Text(reset)) = evaluate(args[1], self.source, &self.env, 0) else {
+                    return Err("Submap reset is unresolved".into());
+                };
+                Some(reset)
+            } else {
+                None
+            };
+            let callback = *args.last().unwrap();
+            if callback.kind() != "function_definition"
+                || callback
+                    .child_by_field_name("parameters")
+                    .is_none_or(|n| !named(n).is_empty())
+            {
+                return Err("Submap needs a parameterless static callback".into());
+            }
+            let body = callback.child_by_field_name("body");
+            Ok((name, reset, body))
+        })();
+        match parsed {
+            Ok((name, reset, body)) => {
+                if self.report.bindings.submaps.len() >= 128 {
+                    return Err("Too many submaps".into());
+                }
+                let id = format!("source-submap-{}", self.report.bindings.submaps.len());
+                self.report.bindings.order.push(id.clone());
+                self.report.bindings.submaps.push(crate::binding::Submap {
+                    id: id.clone(),
+                    name,
+                    parent: self.submap.clone(),
+                    reset,
+                });
+                let parent = self.submap.replace(id);
+                let env = self.env.clone();
+                if let Some(body) = body {
+                    for statement in named(body) {
+                        self.statement(statement)?;
+                    }
+                }
+                self.env = env;
+                self.submap = parent;
+            }
+            Err(e) => {
+                self.report.opaque_effects = true;
+                self.api_available = false;
+                self.diagnostic(node, &e);
+            }
+        }
+        Ok(())
+    }
     fn statement(&mut self, node: Node<'_>) -> Result<(), String> {
         match node.kind() {
             "comment" | "hash_bang_line" | "empty_statement" => {}
+            "do_statement" => {
+                let env = self.env.clone();
+                if let Some(body) = node.child_by_field_name("body") {
+                    for n in named(body) {
+                        self.statement(n)?;
+                    }
+                }
+                self.env = env;
+            }
+
             "variable_declaration" => {
                 let children = named(node);
                 let Some(first) = children.first() else {
@@ -702,7 +1025,17 @@ impl Projection<'_> {
                     .unwrap_or_default();
                 let evaluated: Vec<_> = values
                     .iter()
-                    .map(|n| evaluate(*n, self.source, &self.env, 0))
+                    .map(|n| {
+                        evaluate(*n, self.source, &self.env, 0).or_else(|| {
+                            if self.api_available {
+                                self.action(*n, true)
+                                    .ok()
+                                    .map(|a| Expr::Action(Box::new(a)))
+                            } else {
+                                None
+                            }
+                        })
+                    })
                     .collect();
                 if evaluated.iter().any(Option::is_none) {
                     self.report.opaque_effects = true;
@@ -733,7 +1066,11 @@ impl Projection<'_> {
                 let Some(name) = node.child_by_field_name("name") else {
                     return Ok(());
                 };
-                if text(name, self.source) == "hl.device" && self.api_available {
+                if text(name, self.source) == "hl.bind" && self.api_available {
+                    self.binding(node)?;
+                } else if text(name, self.source) == "hl.define_submap" && self.api_available {
+                    self.submap(node)?;
+                } else if text(name, self.source) == "hl.device" && self.api_available {
                     self.device(node)?;
                 } else if text(name, self.source) == "hl.monitor" && self.api_available {
                     self.monitor(node)?;
@@ -829,17 +1166,20 @@ pub fn parse(source: &str, version: &str, catalogue: &[Setting]) -> Result<LuaRe
             draft: Draft::new(version),
             monitors: vec![],
             devices: vec![],
+            bindings: crate::binding::Draft::default(),
             declarations: vec![],
             diagnostics: vec![],
             opaque_effects: false,
         },
         api_available: true,
         call: 0,
+        submap: None,
     };
     for node in named(tree.root_node()) {
         p.statement(node)?;
     }
     p.report.draft.validate(catalogue)?;
+    p.report.bindings.validate(version)?;
     Ok(p.report)
 }
 impl LuaDocument {
@@ -857,6 +1197,7 @@ impl LuaDocument {
         }
         report.draft.validate(catalogue)?;
         crate::device::validate(&report.devices, &report.draft.version)?;
+        report.bindings.validate(&report.draft.version)?;
         for rule in &report.monitors {
             rule.validate(&report.draft.version)?;
         }

@@ -1,6 +1,6 @@
 # Coverage and implementation gates
 
-| Area | Audited inventory | Implemented through 0.6 | Next gate |
+| Area | Audited inventory | Implemented through 0.7 | Next gate |
 | --- | --- | --- | --- |
 | Scalar settings | 353 baseline / 402 audited-main | All nine type families have draft controls; literal bounds; source links; separate observed values | Runtime descriptions, richer help, enumerations and dependency validation |
 | Imported configuration | Legacy and Lua source grammars audited | Legacy literals; resource/syscall-restricted static Lua projection; guarded copies of existing literals; private source-backed `.hye` snapshots; explicit symlink-chain capture; reviewed single-root revisions; old JSON imports | Lossless multi-file/include graph, generated ownership, multi-file reconciliation, richer scope analysis |
@@ -8,7 +8,8 @@
 | Monitors | 22 fields and selector audited | Typed ordered drafts, GUI builders, diagram, static Lua import/export and private persistence | Hardware inspection, rule resolution, source edits/reconciliation, guarded apply/recovery and runtime certificates |
 | Devices | 43 fields and name audited | Typed ordered drafts, linked XKB choices, numeric curves, static Lua import/export and private persistence | Capabilities/effective state, keymap compilation, tag/bind analysis, source edits, guarded apply/recovery and runtime certificates |
 | Workspaces | Structured fields audited | Feature inventory only | Typed structured models, cross-field validation, graphical editors |
-| Rules, bindings, animations | Versioned parsers and handlers audited | Feature inventory only | Dedicated controls, codecs, matcher semantics, replay fixtures |
+| Bindings and submaps | Flags/chords and 51/52 public dispatcher constructors audited | Typed ordered drafts, focused recording, literal transitions, static Lua codecs and private persistence | Specialized selector/workflow builders, effective conflicts/device intersections, source edits and live behavior certificates |
+| Rules and animations | Versioned parsers and handlers audited | Feature inventory only | Dedicated controls, codecs, matcher semantics, replay fixtures |
 | Runtime actions and plugins | APIs/methods/fields/events audited | Feature inventory only | Capability and identity boundaries; unsupported opaque state remains unknown |
 | Review and storage | Draft/publication distinction specified | Override/source-copy review, clipboard export, private source-backed workspaces, exact schema pins, unsaved-source/edit guards, asynchronous save; reviewed scalar/source reconciliation and inverse undo | Multi-file patch/merge/conflict review and watched-path persistence certification |
 | Live apply | Recovery and watcher gates specified | Disabled; no writer exists | Independent recovery agent, session-pinned transactions, fault injection |

@@ -61,6 +61,10 @@ pub struct Workspace {
     pub devices: Vec<crate::device::Spec>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub device_schema_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "crate::binding::Draft::is_empty")]
+    pub bindings: crate::binding::Draft,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub binding_schema_sha256: Option<String>,
 }
 impl Workspace {
     pub fn new(draft: Draft) -> Self {
@@ -74,6 +78,8 @@ impl Workspace {
             monitor_schema_sha256: None,
             devices: vec![],
             device_schema_sha256: None,
+            bindings: Default::default(),
+            binding_schema_sha256: None,
         }
     }
     pub fn with_root(mut self, content: String, origin: SourceIdentity) -> Self {
@@ -101,6 +107,17 @@ impl Workspace {
                 .is_some_and(|h| *h != device_hash)
         {
             return Err("Device schema differs from the audited fields".into());
+        }
+        self.bindings.validate(&self.draft.version)?;
+        let binding_hash = crate::binding::schema_hash();
+        if (!self.bindings.is_empty()
+            && self.binding_schema_sha256.as_deref() != Some(&binding_hash))
+            || self
+                .binding_schema_sha256
+                .as_ref()
+                .is_some_and(|h| *h != binding_hash)
+        {
+            return Err("Binding/action schema differs from the selected audited pack".into());
         }
         let monitor_hash = crate::monitor::schema_hash();
         if (!self.monitors.is_empty()
@@ -164,6 +181,11 @@ impl Workspace {
         self.root_source
             .as_deref()
             .and_then(|id| self.sources.iter().find(|s| s.id == id))
+    }
+    pub fn with_bindings(mut self, bindings: crate::binding::Draft) -> Self {
+        self.binding_schema_sha256 = (!bindings.is_empty()).then(crate::binding::schema_hash);
+        self.bindings = bindings;
+        self
     }
     pub fn with_devices(mut self, devices: Vec<crate::device::Spec>) -> Self {
         self.device_schema_sha256 = (!devices.is_empty()).then(crate::device::schema_hash);

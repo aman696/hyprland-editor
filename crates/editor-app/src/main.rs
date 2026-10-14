@@ -1,3 +1,5 @@
+mod bind_forms;
+mod bindings;
 mod controls;
 mod device_forms;
 mod devices;
@@ -32,6 +34,8 @@ struct State {
     saved_monitors: BTreeMap<String, Vec<hyprland_editor_core::monitor::Rule>>,
     devices: BTreeMap<String, Vec<hyprland_editor_core::device::Spec>>,
     saved_devices: BTreeMap<String, Vec<hyprland_editor_core::device::Spec>>,
+    bindings: BTreeMap<String, hyprland_editor_core::binding::Draft>,
+    saved_bindings: BTreeMap<String, hyprland_editor_core::binding::Draft>,
 }
 impl State {
     fn dirty_version(&self, version: &str) -> bool {
@@ -56,7 +60,11 @@ impl State {
             .get(version)
             .map(Vec::as_slice)
             .unwrap_or(&[]);
-        values_changed
+        let empty = hyprland_editor_core::binding::Draft::default();
+        let bindings_changed = self.bindings.get(version).unwrap_or(&empty)
+            != self.saved_bindings.get(version).unwrap_or(&empty);
+        bindings_changed
+            || values_changed
             || source_changed
             || monitors != saved_monitors
             || self.devices.get(version).map(Vec::as_slice).unwrap_or(&[])
@@ -132,6 +140,9 @@ impl State {
                 self.sources.insert(version.clone(), document);
                 self.source_origins.insert(version, origin);
             }
+            history::Undo::Bindings { inverse, .. } => {
+                inverse.restore(self.bindings.entry(self.draft.version.clone()).or_default());
+            }
             history::Undo::Devices { previous, .. } => {
                 self.devices.insert(self.draft.version.clone(), previous);
             }
@@ -157,7 +168,28 @@ impl State {
                 &self.draft.version,
             )?);
         }
+        if let Some(bindings) = self.bindings.get(&self.draft.version) {
+            text.push_str(&bindings.export_lua(&self.draft.version)?);
+        }
         Ok(text)
+    }
+    fn replace_bindings(
+        &mut self,
+        bindings: hyprland_editor_core::binding::Draft,
+    ) -> Result<(), String> {
+        bindings.validate(&self.draft.version)?;
+        let before = self
+            .bindings
+            .get(&self.draft.version)
+            .cloned()
+            .unwrap_or_default();
+        if before == bindings {
+            return Ok(());
+        }
+        self.undo.bindings(&before, &bindings)?;
+        self.bindings.insert(self.draft.version.clone(), bindings);
+        self.generation += 1;
+        Ok(())
     }
     fn replace_devices(
         &mut self,
@@ -213,7 +245,7 @@ fn label(text: &str) -> gtk::Label {
 fn summary(state: &Shared, status: &gtk::Label) {
     let s = state.borrow();
     status.set_text(&format!(
-        "{} {} in draft{}{} · {}",
+        "{} {} in draft{}{}{} · {}",
         s.draft.values.len(),
         if s.draft.values.len() == 1 {
             "setting"
@@ -228,6 +260,10 @@ fn summary(state: &Shared, status: &gtk::Label) {
             .get(&s.draft.version)
             .filter(|d| !d.is_empty())
             .map_or(String::new(), |d| format!(" · {} device rules", d.len())),
+        s.bindings
+            .get(&s.draft.version)
+            .filter(|b| !b.is_empty())
+            .map_or(String::new(), |b| format!(" · {} bindings", b.binds.len())),
         if s.dirty_version(&s.draft.version) {
             "Unsaved changes"
         } else {
@@ -491,6 +527,8 @@ fn initial_state() -> Shared {
         saved_monitors: BTreeMap::new(),
         devices: BTreeMap::new(),
         saved_devices: BTreeMap::new(),
+        bindings: BTreeMap::new(),
+        saved_bindings: BTreeMap::new(),
     }))
 }
 fn build(app: &adw::Application) -> adw::ApplicationWindow {
@@ -811,6 +849,8 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     let diagnostics = gtk::Button::with_label("Import Diagnostics");
     let reattach = gtk::Button::with_label("Verify Source File");
     let reconcile = gtk::Button::with_label("Compare Changed Source");
+    let binding_editor = gtk::Button::with_label("Edit Bindings");
+    bindings::connect(&binding_editor, &window, &state, &status);
     let device_editor = gtk::Button::with_label("Edit Devices");
     devices::connect(&device_editor, &window, &state, &status);
     let monitor_editor = gtk::Button::with_label("Edit Monitors");
@@ -833,6 +873,7 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
         ("reconcile-source", &reconcile),
         ("monitors", &monitor_editor),
         ("devices", &device_editor),
+        ("bindings", &binding_editor),
     ] {
         presentation::bridge(&window, name, button);
     }
@@ -1150,6 +1191,7 @@ mod tests {
         reconciliation::test_review(&window);
         monitors::test_editor(&window);
         devices::test_editor(&window);
+        bindings::test_editor(&window);
         window.close();
         assert!(
             window.is_visible(),
