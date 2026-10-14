@@ -174,3 +174,25 @@ fn installed_keyboard_registry_is_parsed_by_the_restricted_worker_when_available
         .as_array()
         .is_some_and(|v| !v.is_empty()));
 }
+
+#[test]
+fn binding_actions_remain_inert_in_actual_restricted_worker_and_preserve_timing() {
+    let marker = std::env::temp_dir().join(format!("he-bind-never-execute-{}", std::process::id()));
+    let source=format!("local action=hl.dsp.exec_cmd('touch {}');hl.define_submap('resize',function()hl.bind('R',function()hl.dispatch(action);hl.dispatch(hl.dsp.exit())end,{{release=true}})end)",marker.display());
+    let parsed = request(json!({"Parse":{"source":source,"version":"0.56.2"}}));
+    assert_eq!(parsed["Parsed"]["opaque_effects"], false, "{parsed}");
+    assert_eq!(
+        parsed["Parsed"]["bindings"]["binds"][0]["actions"][0]["at_load"],
+        true
+    );
+    assert_eq!(
+        parsed["Parsed"]["bindings"]["binds"][0]["actions"][1]["at_load"],
+        false
+    );
+    assert!(!marker.exists());
+    let source=format!("hl.bind('Q',hl.dsp.no_op(),{{unknown=os.execute('touch {}')}});hl.bind('W',hl.dsp.no_op())",marker.display());
+    let parsed = request(json!({"Parse":{"source":source,"version":"0.56.2"}}));
+    assert_eq!(parsed["Parsed"]["opaque_effects"], true);
+    assert_eq!(parsed["Parsed"]["bindings"]["binds"], json!([]));
+    assert!(!marker.exists());
+}

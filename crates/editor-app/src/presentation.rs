@@ -119,6 +119,7 @@ pub fn menu_model() -> gtk::gio::Menu {
     files.append(Some("Undo"), Some("win.undo"));
     files.append(Some("Edit Monitors…"), Some("win.monitors"));
     files.append(Some("Edit Devices…"), Some("win.devices"));
+    files.append(Some("Edit Bindings…"), Some("win.bindings"));
     menu.append_section(None, &files);
     let inspect = gtk::gio::Menu::new();
     inspect.append(Some("Refresh Desktop Values"), Some("win.read-live"));
@@ -220,6 +221,9 @@ pub fn bind_feedback(
                     || s.monitors
                         .get(&s.draft.version)
                         .is_some_and(|m| !m.is_empty())
+                    || s.bindings
+                        .get(&s.draft.version)
+                        .is_some_and(|b| !b.is_empty())
                     || s.devices
                         .get(&s.draft.version)
                         .is_some_and(|d| !d.is_empty()),

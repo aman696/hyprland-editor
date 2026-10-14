@@ -1,0 +1,91 @@
+{
+  "format": "hyprland-editor-binding-schema-1",
+  "packs": [
+    {
+      "version": "0.56.2",
+      "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsToplevel.cpp#L132",
+      "source_sha256": "706b29eb52de087c1d6e64770cf85fb3ebc0f2fbe9ddcff086905499bcd332f5",
+      "flags": [
+        "repeating",
+        "locked",
+        "release",
+        "non_consuming",
+        "auto_consuming",
+        "transparent",
+        "ignore_mods",
+        "dont_inhibit",
+        "long_press",
+        "submap_universal",
+        "click",
+        "drag",
+        "allow_input_capture"
+      ],
+      "description_aliases": [
+        "description",
+        "desc"
+      ],
+      "device_fields": [
+        "inclusive",
+        "list"
+      ],
+      "constructor_timing": [
+        "configuration_load",
+        "callback_run"
+      ],
+      "submap_source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsToplevel.cpp#L258"
+    },
+    {
+      "version": "audited-main",
+      "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsToplevel.cpp#L83",
+      "source_sha256": "9b43410a1bd04174d0b6fb4d6844af0dfba426cd9341153de5cbf9481f6f8138",
+      "flags": [
+        "repeating",
+        "locked",
+        "release",
+        "non_consuming",
+        "auto_consuming",
+        "transparent",
+        "ignore_mods",
+        "dont_inhibit",
+        "long_press",
+        "submap_universal",
+        "click",
+        "drag",
+        "allow_input_capture",
+        "mouse"
+      ],
+      "description_aliases": [
+        "description",
+        "desc"
+      ],
+      "device_fields": [
+        "inclusive",
+        "list"
+      ],
+      "constructor_timing": [
+        "configuration_load",
+        "callback_run"
+      ],
+      "submap_source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsToplevel.cpp#L253"
+    }
+  ],
+  "editor_limits": {
+    "binds": 10000,
+    "submaps": 128,
+    "tokens": 32,
+    "actions_per_bind": 64,
+    "device_targets": 128,
+    "serialized_bytes": 4194304,
+    "minimum_actions_per_bind": 0
+  },
+  "constraints": [
+    "click and drag exclusive",
+    "repeat incompatible with release, click, drag, long_press",
+    "mouse current-only and incompatible with repeat, release, click, drag, locked"
+  ],
+  "model_fields": [
+    "binds",
+    "submaps",
+    "order"
+  ]
+}

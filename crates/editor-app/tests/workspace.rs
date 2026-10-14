@@ -262,3 +262,32 @@ fn device_drafts_survive_application_reopen_and_schema_drift_is_rejected() {
     assert!(!run(&path).0);
     fs::remove_dir_all(root).unwrap();
 }
+
+#[test]
+fn application_reopens_pinned_binding_graph_and_rejects_tampering() {
+    let root = folder();
+    let source="hl.define_submap('resize','reset',function()hl.bind('Escape',hl.dsp.submap('reset'))end);hl.bind('SUPER + R',hl.dsp.submap('resize'))";
+    let graph = lua::parse(source, BASELINE, &catalogue()).unwrap().bindings;
+    let snapshot = fixture(&root, source).with_bindings(graph.clone());
+    let path = workspace::save(&root, &snapshot, &catalogue()).unwrap();
+    fs::remove_file(root.join("original.lua")).unwrap();
+    let (success, output, error) = run(&path);
+    assert!(success, "{error}");
+    let report: serde_json::Value = serde_json::from_str(&output).unwrap();
+    assert_eq!(report["binding_rules"], 2);
+    assert_eq!(report["original_paths_opened"], false);
+    assert_eq!(
+        workspace::read(&path, &catalogue()).unwrap().bindings,
+        graph
+    );
+    let mut value: serde_json::Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+    value["binding_schema_sha256"] = serde_json::json!("tampered");
+    fs::write(&path, serde_json::to_vec(&value).unwrap()).unwrap();
+    assert!(!run(&path).0);
+    value["binding_schema_sha256"] =
+        serde_json::json!(hyprland_editor_core::binding::schema_hash());
+    value["bindings"]["order"] = serde_json::json!([]);
+    fs::write(&path, serde_json::to_vec(&value).unwrap()).unwrap();
+    assert!(!run(&path).0);
+    fs::remove_dir_all(root).unwrap();
+}

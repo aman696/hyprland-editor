@@ -39,6 +39,12 @@ The device editor supplies 43 field controls plus the name selector for both aud
 
 Device hardware discovery/capabilities, effective global defaults, bind intersections/tag propagation, keyboard compilation, region hardware semantics, source-span editing/reconciliation and guarded input recovery remain required. No complete DEVICE contract is certified by this draft milestone. Bindings, rules and animations are the next visible editors; the original source, preview, apply/recovery and performance obligations remain in scope.
 
+## Binding/submap draft milestone in 0.7
+
+The binding editor supplies chord builders and focused recording, all audited flags, ordered argument forms for the 51/52 public dispatcher constructors, static Lua import/export with constructor timing, literal submap rename/subtree duplication and escape creation, bounded static relationship findings, private schema-pinned storage and inverse undo. Only the selected action form is built. See [binding scope](binding-editor.md).
+
+Specialized selector/message/shortcut and visual workflow builders, effective runtime conflicts/device intersections, source codecs, actual compositor conformance, gestures, live apply/recovery and isolated preview remain required. No full BIND contract is certified. Rules/workspaces and animations/gestures are the next visible editors; all original source, discovery, security, resource and release requirements remain open.
+
 ## Next implementation order
 
 1. **Finish source ownership and persistence.** Extend the single-root source manifest to a lossless authorized dependency graph, generated ownership and multi-file changed-revision reconciliation. Preserve metadata and stable document identities across profiles; extend diagnostics to include graphs. Implement include authorization and dependency graphs without executing imports. Add insertion/deletion codecs only with comment/trivia preservation and conflict tests.

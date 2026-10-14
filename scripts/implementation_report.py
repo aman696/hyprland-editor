@@ -80,7 +80,7 @@ def build():
             "required_codec": feature["codec"], "required_tests": feature["tests_required"],
             "coverage_state": "Specified", "complete": False,
             "foundation": "typed scalar form and initial-value smoke check; full per-field semantics remain unproven"
-                if feature["kind"] == "scalar" else "typed monitor draft forms, static Lua projection, schema-pinned persistence and diagram; runtime/hardware/source editing unproven" if feature["engine"] == "MONITOR" else "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven" if feature["engine"] == "DEVICE" else "no dedicated feature implementation yet",
+                if feature["kind"] == "scalar" else "typed monitor draft forms, static Lua projection, schema-pinned persistence and diagram; runtime/hardware/source editing unproven" if feature["engine"] == "MONITOR" else "typed device drafts, graphical XKB/curve forms, static Lua import/export and schema-pinned persistence; hardware/source/runtime conformance unproven" if feature["engine"] == "DEVICE" else "typed binding/submap drafts, dispatcher variants, focused recording, static projection and schema-pinned storage; selector/workflow/source/runtime conformance unproven" if feature["engine"] == "BIND" else "no dedicated feature implementation yet",
             "activation_certified": False, "preview_certified": False,
         })
     sections = numbered_sections(BLUEPRINT)
@@ -93,6 +93,9 @@ def build():
         "classification": "pending", "complete": False}
         for index, row in enumerate(contracts["documentation_candidates"], 1)]
     foundations = [
+        {"area": "binding/submap draft editor", "code": ["crates/editor-core/src/action.rs", "crates/editor-core/src/binding.rs", "crates/editor-app/src/bindings.rs", "crates/editor-app/src/bind_forms.rs", "data/actions.json", "data/bindings.json"],
+         "test_references": ["every_constructor_variant_exports_and_imports_its_typed_arguments", "test_editor", "binding_actions_remain_inert_in_actual_restricted_worker_and_preserve_timing", "application_reopens_pinned_binding_graph_and_rejects_tampering", "duplicate_submap_rebases_subtree_transitions_but_keeps_external_targets"],
+         "limits": "51/52 public dispatcher constructor forms, chords/flags, focused recording, literal submap rename/duplication and escape drafts, static findings, private persistence and inverse undo; no complete selector/workflow builders, effective conflicts/device intersections, source editing, live delivery, apply/recovery or compositor preview certification"},
         {"area": "device draft editor", "code": ["crates/editor-core/src/device.rs", "crates/editor-core/src/xkb.rs", "crates/editor-app/src/devices.rs", "crates/editor-app/src/device_forms.rs", "data/devices.json"],
          "test_references": ["every_device_field_round_trips_the_pinned_static_lua_codec", "test_editor", "actual_worker_projects_devices_and_rejects_external_keyboard_entities", "device_drafts_survive_application_reopen_and_schema_drift_is_rejected"],
          "limits": "43 fields and name selector, author category hints, linked XKB choices from installed metadata, numeric acceleration/scroll builders, ordered drafts and private persistence; no hardware capability discovery, effective global/default merge, tag-to-bind analysis, keyboard compilation, source editing, live input recovery or activation/preview certificates"},
