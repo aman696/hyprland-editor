@@ -23,6 +23,11 @@ pub enum Request {
         report: Box<LuaReport>,
         draft: Draft,
     },
+    PlanModules {
+        context: hyprland_editor_core::module_path::Context,
+        modules: Vec<Vec<u8>>,
+        version: String,
+    },
     ParseRegistry {
         xml: String,
     },
@@ -33,6 +38,7 @@ pub enum Request {
 #[serde(deny_unknown_fields)]
 pub enum Response {
     Parsed(Box<LuaReport>),
+    ModulePlans(Vec<hyprland_editor_core::module_path::Plan>),
     Registry(hyprland_editor_core::xkb::Registry),
     Copy(String),
     RegexMatch(bool),
@@ -155,6 +161,12 @@ pub fn entry() {
             serde_json::from_slice(&bytes).map_err(|_| "Invalid parser request")?;
         let c = catalogue();
         match request {
+            Request::PlanModules {
+                context,
+                modules,
+                version,
+            } => hyprland_editor_core::module_path::plan_requests(&context, &modules, &version)
+                .map(Response::ModulePlans),
             Request::ParseRegistry { xml } => {
                 hyprland_editor_core::xkb::parse(&xml).map(Response::Registry)
             }

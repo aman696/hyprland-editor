@@ -259,3 +259,24 @@ fn actual_restricted_worker_projects_inert_rule_groups_and_preserves_copy() {
     assert_eq!(tainted["Parsed"]["opaque_effects"], true);
     assert_eq!(tainted["Parsed"]["rules"], json!([]));
 }
+
+#[test]
+fn module_candidate_plans_use_only_supplied_bytes_and_reject_amplification() {
+    let input = json!({"PlanModules":{
+        "context":{"main_file":b"/synthetic/config/main.lua","home":null,"inherited_package_path":null},
+        "modules":[b"./theme".to_vec(),b"named.theme".to_vec()],"version":"0.56.2"
+    }});
+    let response = request(input.clone());
+    let plans = response["ModulePlans"].as_array().unwrap();
+    assert_eq!(plans.len(), 2);
+    assert_eq!(plans[0]["primary"]["kind"], "explicit_files");
+    assert_eq!(
+        plans[0]["primary"]["base"],
+        json!(b"/synthetic/config/theme")
+    );
+    assert_eq!(plans[1]["inherited_search_unknown"], true);
+    let mut denied = input;
+    denied["PlanModules"]["context"]["inherited_package_path"] = json!(b"/x/?.lua;".repeat(500));
+    denied["PlanModules"]["modules"] = json!(vec![vec![b'a'; 4096]]);
+    assert!(request(denied)["Error"].as_str().unwrap().contains("1 MiB"));
+}

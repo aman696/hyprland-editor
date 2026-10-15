@@ -6,6 +6,7 @@ pub mod device;
 pub mod gesture;
 pub mod import;
 pub mod lua;
+pub mod module_path;
 pub mod monitor;
 pub mod reconcile;
 pub mod regex;
