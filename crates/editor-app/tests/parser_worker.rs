@@ -275,8 +275,43 @@ fn module_candidate_plans_use_only_supplied_bytes_and_reject_amplification() {
         json!(b"/synthetic/config/theme")
     );
     assert_eq!(plans[1]["inherited_search_unknown"], true);
+    let mut original = input.clone();
+    original["PlanModules"]["modules"] = json!([b"./parts/*".to_vec()]);
+    original["PlanModules"]["mode"] = json!("original");
+    assert_eq!(
+        request(original.clone())["ModulePlans"][0]["primary"]["kind"],
+        "named"
+    );
+    original["PlanModules"]["mode"] = json!("safe");
+    assert_eq!(
+        request(original)["ModulePlans"][0]["primary"]["kind"],
+        "explicit_wildcard"
+    );
     let mut denied = input;
     denied["PlanModules"]["context"]["inherited_package_path"] = json!(b"/x/?.lua;".repeat(500));
     denied["PlanModules"]["modules"] = json!(vec![vec![b'a'; 4096]]);
     assert!(request(denied)["Error"].as_str().unwrap().contains("1 MiB"));
+}
+
+#[test]
+fn dependency_inspection_reports_scopes_and_aliases_without_running_config_or_opening_targets() {
+    let marker = std::env::temp_dir().join(format!("he-dependency-marker-{}", std::process::id()));
+    assert!(!marker.exists());
+    let source=format!("local r=require;local p='./theme';r(p);local callback=function()dofile('/etc/passwd')end;os.execute('touch {}')",marker.display());
+    let response = request(json!({"InspectDependencies":{"source":source,"version":"0.56.2"}}));
+    let inventory: hyprland_editor_core::lua::DependencyInventory =
+        serde_json::from_value(response["Dependencies"].clone()).unwrap();
+    inventory.validate(&source, "0.56.2").unwrap();
+    assert_eq!(inventory.sites.len(), 2);
+    assert_eq!(inventory.sites[0].module.as_deref(), Some("./theme"));
+    assert_eq!(
+        inventory.sites[0].binding,
+        hyprland_editor_core::lua::DependencyBinding::CapturedCandidate
+    );
+    assert_eq!(
+        inventory.sites[1].scope,
+        hyprland_editor_core::lua::DependencyScope::FunctionBody
+    );
+    assert_eq!(inventory.sites[1].module.as_deref(), Some("/etc/passwd"));
+    assert!(!marker.exists());
 }

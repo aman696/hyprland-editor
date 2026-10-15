@@ -1,0 +1,2377 @@
+{
+  "cases": [
+    {
+      "case": "nil_cached_as_true",
+      "error_count": 0,
+      "global_loaded": {
+        "nilmod": true
+      },
+      "ok": true,
+      "registry_loaded": {
+        "nilmod": true
+      },
+      "source": "local a=require('nilmod');local b=require('nilmod');emit({a=a,b=b,same=a==b})",
+      "trace": [
+        "nilmod",
+        {
+          "a": true,
+          "b": true,
+          "same": true
+        }
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/nilmod.lua"
+      ]
+    },
+    {
+      "case": "false_reexecutes",
+      "error_count": 0,
+      "global_loaded": {
+        "falsemod": false
+      },
+      "ok": true,
+      "registry_loaded": {
+        "falsemod": false
+      },
+      "source": "emit(require('falsemod'));emit(require('falsemod'))",
+      "trace": [
+        "falsemod",
+        false,
+        "falsemod",
+        false
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/falsemod.lua"
+      ]
+    },
+    {
+      "case": "table_identity_cached",
+      "error_count": 0,
+      "global_loaded": {
+        "value": {
+          "changed": true,
+          "token": "value"
+        }
+      },
+      "ok": true,
+      "registry_loaded": {
+        "value": {
+          "changed": true,
+          "token": "value"
+        }
+      },
+      "source": "local a=require('value');a.changed=true;local b=require('value');emit({same=a==b,b=b})",
+      "trace": [
+        "value",
+        {
+          "b": {
+            "changed": true,
+            "token": "value"
+          },
+          "same": true
+        }
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/value.lua"
+      ]
+    },
+    {
+      "case": "number_cached",
+      "error_count": 0,
+      "global_loaded": {
+        "number": 7
+      },
+      "ok": true,
+      "registry_loaded": {
+        "number": 7
+      },
+      "source": "local a=require('number');local b=require('number');emit({a=a,b=b})",
+      "trace": [
+        "number",
+        {
+          "a": 7,
+          "b": 7
+        }
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/number.lua"
+      ]
+    },
+    {
+      "case": "module_first_return_only",
+      "error_count": 0,
+      "global_loaded": {
+        "multiret": 7
+      },
+      "ok": true,
+      "registry_loaded": {
+        "multiret": 7
+      },
+      "source": "emit({require('multiret')});emit({require('multiret')})",
+      "trace": [
+        "multiret",
+        [
+          7,
+          "<root>/config/multiret.lua"
+        ],
+        [
+          7
+        ]
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/multiret.lua"
+      ]
+    },
+    {
+      "case": "path_aliases_distinct_keys",
+      "error_count": 0,
+      "global_loaded": {
+        "./value": {
+          "token": "value"
+        },
+        "./value.lua": {
+          "token": "value"
+        },
+        "value": {
+          "token": "value"
+        }
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./value": {
+          "token": "value"
+        },
+        "./value.lua": {
+          "token": "value"
+        },
+        "value": {
+          "token": "value"
+        }
+      },
+      "source": "local a=require('value');local b=require('./value');local c=require('./value.lua');emit({ab=a==b,bc=b==c})",
+      "trace": [
+        "value",
+        "value",
+        "value",
+        {
+          "ab": false,
+          "bc": false
+        }
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/value.lua"
+      ]
+    },
+    {
+      "case": "normalized_path_alias_key",
+      "error_count": 0,
+      "global_loaded": {
+        "./nested/../value": {
+          "token": "value"
+        },
+        "./value": {
+          "token": "value"
+        }
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./nested/../value": {
+          "token": "value"
+        },
+        "./value": {
+          "token": "value"
+        }
+      },
+      "source": "local a=require('./value');local b=require('./nested/../value');emit(a==b)",
+      "trace": [
+        "value",
+        "value",
+        false
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/value.lua"
+      ]
+    },
+    {
+      "case": "preloaded_wins_file",
+      "error_count": 0,
+      "global_loaded": {
+        "value": {
+          "token": "preload"
+        }
+      },
+      "ok": true,
+      "registry_loaded": {
+        "value": {
+          "token": "preload"
+        }
+      },
+      "source": "package.preload.value=function()emit('preload');return {token='preload'}end;emit(require('value'))",
+      "trace": [
+        "preload",
+        {
+          "token": "preload"
+        }
+      ],
+      "version": "baseline",
+      "watched": []
+    },
+    {
+      "case": "preloaded_explicit_wins_file",
+      "error_count": 0,
+      "global_loaded": {
+        "./value": 9
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./value": 9
+      },
+      "source": "package.preload['./value']=function()emit('preload');return 9 end;emit(require('./value'))",
+      "trace": [
+        "preload",
+        9
+      ],
+      "version": "baseline",
+      "watched": []
+    },
+    {
+      "case": "runtime_error_becomes_cached_empty_table",
+      "error_count": 1,
+      "global_loaded": {
+        "runtime_error": {}
+      },
+      "ok": true,
+      "registry_loaded": {
+        "runtime_error": {}
+      },
+      "source": "local a=require('runtime_error');local b=require('runtime_error');emit({same=a==b,a=a,b=b})",
+      "trace": [
+        "runtime_error",
+        {
+          "a": {},
+          "b": {},
+          "same": true
+        }
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/runtime_error.lua"
+      ]
+    },
+    {
+      "case": "syntax_error_becomes_cached_empty_table",
+      "error_count": 1,
+      "global_loaded": {
+        "syntax_error": {}
+      },
+      "ok": true,
+      "registry_loaded": {
+        "syntax_error": {}
+      },
+      "source": "local a=require('syntax_error');local b=require('syntax_error');emit({same=a==b,a=a})",
+      "trace": [
+        {
+          "a": {},
+          "same": true
+        }
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/syntax_error.lua"
+      ]
+    },
+    {
+      "case": "table_error_becomes_empty_table",
+      "error_count": 1,
+      "global_loaded": {
+        "table_error": {}
+      },
+      "ok": true,
+      "registry_loaded": {
+        "table_error": {}
+      },
+      "source": "emit(require('table_error'))",
+      "trace": [
+        "table_error",
+        {}
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/table_error.lua"
+      ]
+    },
+    {
+      "case": "not_found_still_throws",
+      "error_count": 0,
+      "global_loaded": {},
+      "ok": true,
+      "registry_loaded": {},
+      "source": "local ok=pcall(require,'missing');emit(ok);local again=pcall(require,'missing');emit(again)",
+      "trace": [
+        false,
+        false
+      ],
+      "version": "baseline",
+      "watched": []
+    },
+    {
+      "case": "explicit_not_found_still_throws",
+      "error_count": 0,
+      "global_loaded": {},
+      "ok": true,
+      "registry_loaded": {},
+      "source": "emit(pcall(require,'./missing'))",
+      "trace": [
+        false
+      ],
+      "version": "baseline",
+      "watched": []
+    },
+    {
+      "case": "wildcard_order_results_and_cached_error",
+      "error_count": 2,
+      "global_loaded": {
+        "./parts/*.lua": [
+          {
+            "token": "a"
+          },
+          true,
+          false,
+          {},
+          5,
+          {}
+        ],
+        "<root>/config/parts/a.lua": {
+          "token": "a"
+        },
+        "<root>/config/parts/b.lua": true,
+        "<root>/config/parts/c.lua": false,
+        "<root>/config/parts/e.lua": 5
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./parts/*.lua": [
+          {
+            "token": "a"
+          },
+          true,
+          false,
+          {},
+          5,
+          {}
+        ],
+        "<root>/config/parts/a.lua": {
+          "token": "a"
+        },
+        "<root>/config/parts/b.lua": true,
+        "<root>/config/parts/c.lua": false,
+        "<root>/config/parts/e.lua": 5
+      },
+      "source": "local a=require('./parts/*.lua');local b=require('./parts/*.lua');emit({same=a==b,items=a})",
+      "trace": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        {
+          "items": [
+            {
+              "token": "a"
+            },
+            true,
+            false,
+            {},
+            5,
+            {}
+          ],
+          "same": true
+        }
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/parts",
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/b.lua",
+        "<root>/config/parts/c.lua",
+        "<root>/config/parts/d.lua",
+        "<root>/config/parts/e.lua",
+        "<root>/config/parts/f.lua"
+      ]
+    },
+    {
+      "case": "wildcard_and_individual_path_cache",
+      "error_count": 0,
+      "global_loaded": {
+        "./parts/[ab].lua": [
+          {
+            "token": "a"
+          },
+          true
+        ],
+        "<root>/config/parts/a.lua": {
+          "token": "a"
+        },
+        "<root>/config/parts/b.lua": true
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./parts/[ab].lua": [
+          {
+            "token": "a"
+          },
+          true
+        ],
+        "<root>/config/parts/a.lua": {
+          "token": "a"
+        },
+        "<root>/config/parts/b.lua": true
+      },
+      "source": "local a=require('./parts/[ab].lua');emit(require(__fixture_root..'/config/parts/a.lua'));emit(a)",
+      "trace": [
+        "a",
+        "b",
+        {
+          "token": "a"
+        },
+        [
+          {
+            "token": "a"
+          },
+          true
+        ]
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/parts",
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/b.lua"
+      ]
+    },
+    {
+      "case": "wildcard_aliases_reuse_individual_paths",
+      "error_count": 0,
+      "global_loaded": {
+        "./parts/../parts/[ab].lua": [
+          {
+            "token": "a"
+          },
+          true
+        ],
+        "./parts/[ab].lua": [
+          {
+            "token": "a"
+          },
+          true
+        ],
+        "<root>/config/parts/a.lua": {
+          "token": "a"
+        },
+        "<root>/config/parts/b.lua": true
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./parts/../parts/[ab].lua": [
+          {
+            "token": "a"
+          },
+          true
+        ],
+        "./parts/[ab].lua": [
+          {
+            "token": "a"
+          },
+          true
+        ],
+        "<root>/config/parts/a.lua": {
+          "token": "a"
+        },
+        "<root>/config/parts/b.lua": true
+      },
+      "source": "local a=require('./parts/[ab].lua');local b=require('./parts/../parts/[ab].lua');emit({same=a==b,first=a[1]==b[1]})",
+      "trace": [
+        "a",
+        "b",
+        {
+          "first": true,
+          "same": false
+        }
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/parts",
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/b.lua"
+      ]
+    },
+    {
+      "case": "wildcard_false_individual_reexecutes",
+      "error_count": 0,
+      "global_loaded": {
+        "./parts/[c].lua": [
+          false
+        ],
+        "./parts/c.lua": false,
+        "<root>/config/parts/c.lua": false
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./parts/[c].lua": [
+          false
+        ],
+        "./parts/c.lua": false,
+        "<root>/config/parts/c.lua": false
+      },
+      "source": "local a=require('./parts/c.lua');local b=require('./parts/[c].lua');emit({a=a,b=b})",
+      "trace": [
+        "c",
+        "c",
+        {
+          "a": false,
+          "b": [
+            false
+          ]
+        }
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/parts/c.lua",
+        "<root>/config/parts"
+      ]
+    },
+    {
+      "case": "wildcard_missing_still_throws",
+      "error_count": 0,
+      "global_loaded": {},
+      "ok": true,
+      "registry_loaded": {},
+      "source": "emit(pcall(require,'./no-directory/*.lua'))",
+      "trace": [
+        false
+      ],
+      "version": "baseline",
+      "watched": []
+    },
+    {
+      "case": "wildcard_cached_preload_pattern",
+      "error_count": 0,
+      "global_loaded": {
+        "./parts/*.lua": {
+          "token": "pattern"
+        }
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./parts/*.lua": {
+          "token": "pattern"
+        }
+      },
+      "source": "package.loaded['./parts/*.lua']={token='pattern'};emit(require('./parts/*.lua'))",
+      "trace": [
+        {
+          "token": "pattern"
+        }
+      ],
+      "version": "baseline",
+      "watched": []
+    },
+    {
+      "case": "wildcard_false_pattern_loads",
+      "error_count": 0,
+      "global_loaded": {
+        "./parts/[ab].lua": [
+          {
+            "token": "a"
+          },
+          true
+        ],
+        "<root>/config/parts/a.lua": {
+          "token": "a"
+        },
+        "<root>/config/parts/b.lua": true
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./parts/[ab].lua": [
+          {
+            "token": "a"
+          },
+          true
+        ],
+        "<root>/config/parts/a.lua": {
+          "token": "a"
+        },
+        "<root>/config/parts/b.lua": true
+      },
+      "source": "package.loaded['./parts/[ab].lua']=false;emit(require('./parts/[ab].lua'))",
+      "trace": [
+        "a",
+        "b",
+        [
+          {
+            "token": "a"
+          },
+          true
+        ]
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/parts",
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/b.lua"
+      ]
+    },
+    {
+      "case": "false_cache_override_reexecutes",
+      "error_count": 0,
+      "global_loaded": {
+        "value": {
+          "token": "value"
+        }
+      },
+      "ok": true,
+      "registry_loaded": {
+        "value": {
+          "token": "value"
+        }
+      },
+      "source": "require('value');package.loaded.value=false;require('value')",
+      "trace": [
+        "value",
+        "value"
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/value.lua"
+      ]
+    },
+    {
+      "case": "nil_cache_override_reexecutes",
+      "error_count": 0,
+      "global_loaded": {
+        "value": {
+          "token": "value"
+        }
+      },
+      "ok": true,
+      "registry_loaded": {
+        "value": {
+          "token": "value"
+        }
+      },
+      "source": "require('value');package.loaded.value=nil;require('value')",
+      "trace": [
+        "value",
+        "value"
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/value.lua"
+      ]
+    },
+    {
+      "case": "truthy_cache_override_skips_file",
+      "error_count": 0,
+      "global_loaded": {
+        "value": {
+          "token": "override"
+        }
+      },
+      "ok": true,
+      "registry_loaded": {
+        "value": {
+          "token": "override"
+        }
+      },
+      "source": "package.loaded.value={token='override'};emit(require('value'))",
+      "trace": [
+        {
+          "token": "override"
+        }
+      ],
+      "version": "baseline",
+      "watched": []
+    },
+    {
+      "case": "package_loaded_rebind_differs_from_registry",
+      "error_count": 0,
+      "global_loaded": {},
+      "ok": true,
+      "registry_loaded": {
+        "value": {
+          "token": "value"
+        }
+      },
+      "source": "local a=require('value');package.loaded={};local b=require('value');emit(a==b)",
+      "trace": [
+        "value",
+        true
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/value.lua"
+      ]
+    },
+    {
+      "case": "wildcard_after_loaded_rebind",
+      "error_count": 0,
+      "global_loaded": {
+        "./parts/[ab].lua": [
+          {
+            "token": "a"
+          },
+          true
+        ]
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./parts/[ab].lua": [
+          {
+            "token": "a"
+          },
+          true
+        ],
+        "<root>/config/parts/a.lua": {
+          "token": "a"
+        },
+        "<root>/config/parts/b.lua": true
+      },
+      "source": "local a=require('./parts/[ab].lua');package.loaded={};local b=require('./parts/[ab].lua');emit({same=a==b,first=a[1]==b[1]})",
+      "trace": [
+        "a",
+        "b",
+        {
+          "first": true,
+          "same": false
+        }
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/parts",
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/b.lua"
+      ]
+    },
+    {
+      "case": "nested_explicit_main_relative",
+      "error_count": 0,
+      "global_loaded": {
+        "./nested/child": "main",
+        "./sibling": "main"
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./nested/child": "main",
+        "./sibling": "main"
+      },
+      "source": "emit(require('./nested/child'))",
+      "trace": [
+        "child",
+        "main-sibling",
+        "main"
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/nested/child.lua",
+        "<root>/config/sibling.lua"
+      ]
+    },
+    {
+      "case": "finite_self_recursion_not_loading_sentinel",
+      "error_count": 0,
+      "global_loaded": {
+        "cycle": {
+          "count": 3
+        }
+      },
+      "ok": true,
+      "registry_loaded": {
+        "cycle": {
+          "count": 3
+        }
+      },
+      "source": "emit(require('cycle'))",
+      "trace": [
+        1,
+        2,
+        3,
+        {
+          "count": 3
+        }
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/cycle.lua"
+      ]
+    },
+    {
+      "case": "original_require_bypasses_error_fallback",
+      "error_count": 0,
+      "global_loaded": {},
+      "ok": true,
+      "registry_loaded": {},
+      "source": "emit(pcall(__require,'runtime_error'));emit(pcall(__require,'runtime_error'))",
+      "trace": [
+        "runtime_error",
+        false,
+        "runtime_error",
+        false
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/runtime_error.lua"
+      ]
+    },
+    {
+      "case": "reload_clears_user_cache_preserves_stdlibs",
+      "error_count": 0,
+      "global_loaded": {
+        "value": {
+          "token": "value"
+        }
+      },
+      "ok": true,
+      "registry_loaded": {
+        "value": {
+          "token": "value"
+        }
+      },
+      "source": "local a=require('value');local math_before=package.loaded.math;__fixture_reload();local b=require('value');emit({same=a==b,math_same=math_before==package.loaded.math})",
+      "trace": [
+        "value",
+        "value",
+        {
+          "math_same": true,
+          "same": false
+        }
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/value.lua"
+      ]
+    },
+    {
+      "case": "reload_after_loaded_rebind",
+      "error_count": 0,
+      "global_loaded": {},
+      "ok": true,
+      "registry_loaded": {
+        "value": {
+          "token": "value"
+        }
+      },
+      "source": "local a=require('value');package.loaded={};__fixture_reload();local b=require('value');emit(a==b)",
+      "trace": [
+        "value",
+        true
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/value.lua"
+      ]
+    },
+    {
+      "case": "nil_return_retains_assigned_false",
+      "error_count": 0,
+      "global_loaded": {
+        "assigned_false": false
+      },
+      "ok": true,
+      "registry_loaded": {
+        "assigned_false": false
+      },
+      "source": "emit(require('assigned_false'));emit(require('assigned_false'))",
+      "trace": [
+        "assigned_false",
+        false,
+        "assigned_false",
+        false
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/assigned_false.lua"
+      ]
+    },
+    {
+      "case": "nil_return_retains_assigned_table",
+      "error_count": 0,
+      "global_loaded": {
+        "assigned_table": {
+          "token": "assigned"
+        }
+      },
+      "ok": true,
+      "registry_loaded": {
+        "assigned_table": {
+          "token": "assigned"
+        }
+      },
+      "source": "local a=require('assigned_table');local b=require('assigned_table');emit({same=a==b,a=a})",
+      "trace": [
+        "assigned_table",
+        {
+          "a": {
+            "token": "assigned"
+          },
+          "same": true
+        }
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/assigned_table.lua"
+      ]
+    },
+    {
+      "case": "wildcard_error_retains_module_cache_assignment",
+      "error_count": 1,
+      "global_loaded": {
+        "./assigned/[f]ailed.lua": [
+          {}
+        ],
+        "<root>/config/assigned/failed.lua": true
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./assigned/[f]ailed.lua": [
+          {}
+        ],
+        "<root>/config/assigned/failed.lua": true
+      },
+      "source": "emit(require('./assigned/[f]ailed.lua'));emit(require(__fixture_root..'/config/assigned/failed.lua'))",
+      "trace": [
+        "assigned-failed",
+        [
+          {}
+        ],
+        true
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/assigned",
+        "<root>/config/assigned/failed.lua"
+      ]
+    },
+    {
+      "case": "safe_error_overwrites_module_cache_assignment",
+      "error_count": 1,
+      "global_loaded": {
+        "./assigned/failed.lua": {}
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./assigned/failed.lua": {}
+      },
+      "source": "local a=require('./assigned/failed.lua');local b=require('./assigned/failed.lua');emit({same=a==b,a=a})",
+      "trace": [
+        "assigned-failed",
+        {
+          "a": {},
+          "same": true
+        }
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/assigned/failed.lua"
+      ]
+    },
+    {
+      "case": "error_prefix_is_compared_not_resolver_category",
+      "error_count": 0,
+      "global_loaded": {},
+      "ok": true,
+      "registry_loaded": {},
+      "source": "emit(pcall(require,'misleading'));emit(pcall(require,'misleading'))",
+      "trace": [
+        "misleading",
+        false,
+        "misleading",
+        false
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/misleading.lua"
+      ]
+    },
+    {
+      "case": "non_table_loaded_wildcard_not_cached",
+      "error_count": 0,
+      "global_loaded": {},
+      "ok": true,
+      "registry_loaded": {
+        "<root>/config/parts/a.lua": {
+          "token": "a"
+        },
+        "<root>/config/parts/b.lua": true
+      },
+      "source": "package.loaded=false;local a=require('./parts/[ab].lua');local b=require('./parts/[ab].lua');emit({same=a==b,first=a[1]==b[1]})",
+      "trace": [
+        "a",
+        "b",
+        {
+          "first": true,
+          "same": false
+        }
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/parts",
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/b.lua"
+      ]
+    },
+    {
+      "case": "non_table_loaded_safe_error_not_cached",
+      "error_count": 2,
+      "global_loaded": {},
+      "ok": true,
+      "registry_loaded": {},
+      "source": "package.loaded=false;require('runtime_error');require('runtime_error')",
+      "trace": [
+        "runtime_error",
+        "runtime_error"
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/runtime_error.lua"
+      ]
+    },
+    {
+      "case": "original_require_treats_glob_as_literal_filename",
+      "error_count": 0,
+      "global_loaded": {
+        "./literal/*": "literal-file"
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./literal/*": "literal-file"
+      },
+      "source": "emit({__require('./literal/*')})",
+      "trace": [
+        "literal-star",
+        [
+          "literal-file",
+          "<root>/config///literal/*.lua"
+        ]
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/literal/*.lua"
+      ]
+    },
+    {
+      "case": "safe_wildcard_original_searcher_may_reject_metachar_filename",
+      "error_count": 1,
+      "global_loaded": {
+        "./literal/*": [
+          {}
+        ]
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./literal/*": [
+          {}
+        ]
+      },
+      "source": "emit(require('./literal/*'))",
+      "trace": [
+        [
+          {}
+        ]
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/literal",
+        "<root>/config/literal/*.lua"
+      ]
+    },
+    {
+      "case": "reload_numeric_loaded_key_can_fail",
+      "error_count": 0,
+      "global_loaded": {},
+      "ok": true,
+      "registry_loaded": {},
+      "source": "package.loaded[1]=true;emit(pcall(__fixture_reload))",
+      "trace": [
+        false
+      ],
+      "version": "baseline",
+      "watched": []
+    },
+    {
+      "case": "reload_numeric_string_key_is_removed",
+      "error_count": 0,
+      "global_loaded": {},
+      "ok": true,
+      "registry_loaded": {},
+      "source": "package.loaded['1']=true;emit(pcall(__fixture_reload));emit(package.loaded['1']==nil)",
+      "trace": [
+        true,
+        true
+      ],
+      "version": "baseline",
+      "watched": []
+    },
+    {
+      "case": "modified_path_for_named_module",
+      "error_count": 0,
+      "global_loaded": {
+        "sibling": "nested"
+      },
+      "ok": true,
+      "registry_loaded": {
+        "sibling": "nested"
+      },
+      "source": "package.path=__fixture_root..'/config/nested/?.lua';emit(require('sibling'))",
+      "trace": [
+        "nested-sibling",
+        "nested"
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/nested/sibling.lua"
+      ]
+    },
+    {
+      "case": "modified_path_does_not_rebase_explicit_module",
+      "error_count": 0,
+      "global_loaded": {
+        "./sibling": "main"
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./sibling": "main"
+      },
+      "source": "package.path=__fixture_root..'/config/nested/?.lua';emit(require('./sibling'))",
+      "trace": [
+        "main-sibling",
+        "main"
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/sibling.lua"
+      ]
+    },
+    {
+      "case": "nil_cached_as_true",
+      "error_count": 0,
+      "global_loaded": {
+        "nilmod": true
+      },
+      "ok": true,
+      "registry_loaded": {
+        "nilmod": true
+      },
+      "source": "local a=require('nilmod');local b=require('nilmod');emit({a=a,b=b,same=a==b})",
+      "trace": [
+        "nilmod",
+        {
+          "a": true,
+          "b": true,
+          "same": true
+        }
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/nilmod.lua"
+      ]
+    },
+    {
+      "case": "false_reexecutes",
+      "error_count": 0,
+      "global_loaded": {
+        "falsemod": false
+      },
+      "ok": true,
+      "registry_loaded": {
+        "falsemod": false
+      },
+      "source": "emit(require('falsemod'));emit(require('falsemod'))",
+      "trace": [
+        "falsemod",
+        false,
+        "falsemod",
+        false
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/falsemod.lua"
+      ]
+    },
+    {
+      "case": "table_identity_cached",
+      "error_count": 0,
+      "global_loaded": {
+        "value": {
+          "changed": true,
+          "token": "value"
+        }
+      },
+      "ok": true,
+      "registry_loaded": {
+        "value": {
+          "changed": true,
+          "token": "value"
+        }
+      },
+      "source": "local a=require('value');a.changed=true;local b=require('value');emit({same=a==b,b=b})",
+      "trace": [
+        "value",
+        {
+          "b": {
+            "changed": true,
+            "token": "value"
+          },
+          "same": true
+        }
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/value.lua"
+      ]
+    },
+    {
+      "case": "number_cached",
+      "error_count": 0,
+      "global_loaded": {
+        "number": 7
+      },
+      "ok": true,
+      "registry_loaded": {
+        "number": 7
+      },
+      "source": "local a=require('number');local b=require('number');emit({a=a,b=b})",
+      "trace": [
+        "number",
+        {
+          "a": 7,
+          "b": 7
+        }
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/number.lua"
+      ]
+    },
+    {
+      "case": "module_first_return_only",
+      "error_count": 0,
+      "global_loaded": {
+        "multiret": 7
+      },
+      "ok": true,
+      "registry_loaded": {
+        "multiret": 7
+      },
+      "source": "emit({require('multiret')});emit({require('multiret')})",
+      "trace": [
+        "multiret",
+        [
+          7,
+          "<root>/config/multiret.lua"
+        ],
+        [
+          7
+        ]
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/multiret.lua"
+      ]
+    },
+    {
+      "case": "path_aliases_distinct_keys",
+      "error_count": 0,
+      "global_loaded": {
+        "./value": {
+          "token": "value"
+        },
+        "./value.lua": {
+          "token": "value"
+        },
+        "value": {
+          "token": "value"
+        }
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./value": {
+          "token": "value"
+        },
+        "./value.lua": {
+          "token": "value"
+        },
+        "value": {
+          "token": "value"
+        }
+      },
+      "source": "local a=require('value');local b=require('./value');local c=require('./value.lua');emit({ab=a==b,bc=b==c})",
+      "trace": [
+        "value",
+        "value",
+        "value",
+        {
+          "ab": false,
+          "bc": false
+        }
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/value.lua"
+      ]
+    },
+    {
+      "case": "normalized_path_alias_key",
+      "error_count": 0,
+      "global_loaded": {
+        "./nested/../value": {
+          "token": "value"
+        },
+        "./value": {
+          "token": "value"
+        }
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./nested/../value": {
+          "token": "value"
+        },
+        "./value": {
+          "token": "value"
+        }
+      },
+      "source": "local a=require('./value');local b=require('./nested/../value');emit(a==b)",
+      "trace": [
+        "value",
+        "value",
+        false
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/value.lua"
+      ]
+    },
+    {
+      "case": "preloaded_wins_file",
+      "error_count": 0,
+      "global_loaded": {
+        "value": {
+          "token": "preload"
+        }
+      },
+      "ok": true,
+      "registry_loaded": {
+        "value": {
+          "token": "preload"
+        }
+      },
+      "source": "package.preload.value=function()emit('preload');return {token='preload'}end;emit(require('value'))",
+      "trace": [
+        "preload",
+        {
+          "token": "preload"
+        }
+      ],
+      "version": "current",
+      "watched": []
+    },
+    {
+      "case": "preloaded_explicit_wins_file",
+      "error_count": 0,
+      "global_loaded": {
+        "./value": 9
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./value": 9
+      },
+      "source": "package.preload['./value']=function()emit('preload');return 9 end;emit(require('./value'))",
+      "trace": [
+        "preload",
+        9
+      ],
+      "version": "current",
+      "watched": []
+    },
+    {
+      "case": "runtime_error_becomes_cached_empty_table",
+      "error_count": 1,
+      "global_loaded": {
+        "runtime_error": {}
+      },
+      "ok": true,
+      "registry_loaded": {
+        "runtime_error": {}
+      },
+      "source": "local a=require('runtime_error');local b=require('runtime_error');emit({same=a==b,a=a,b=b})",
+      "trace": [
+        "runtime_error",
+        {
+          "a": {},
+          "b": {},
+          "same": true
+        }
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/runtime_error.lua"
+      ]
+    },
+    {
+      "case": "syntax_error_becomes_cached_empty_table",
+      "error_count": 1,
+      "global_loaded": {
+        "syntax_error": {}
+      },
+      "ok": true,
+      "registry_loaded": {
+        "syntax_error": {}
+      },
+      "source": "local a=require('syntax_error');local b=require('syntax_error');emit({same=a==b,a=a})",
+      "trace": [
+        {
+          "a": {},
+          "same": true
+        }
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/syntax_error.lua"
+      ]
+    },
+    {
+      "case": "table_error_becomes_empty_table",
+      "error_count": 1,
+      "global_loaded": {
+        "table_error": {}
+      },
+      "ok": true,
+      "registry_loaded": {
+        "table_error": {}
+      },
+      "source": "emit(require('table_error'))",
+      "trace": [
+        "table_error",
+        {}
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/table_error.lua"
+      ]
+    },
+    {
+      "case": "not_found_still_throws",
+      "error_count": 0,
+      "global_loaded": {},
+      "ok": true,
+      "registry_loaded": {},
+      "source": "local ok=pcall(require,'missing');emit(ok);local again=pcall(require,'missing');emit(again)",
+      "trace": [
+        false,
+        false
+      ],
+      "version": "current",
+      "watched": []
+    },
+    {
+      "case": "explicit_not_found_still_throws",
+      "error_count": 0,
+      "global_loaded": {},
+      "ok": true,
+      "registry_loaded": {},
+      "source": "emit(pcall(require,'./missing'))",
+      "trace": [
+        false
+      ],
+      "version": "current",
+      "watched": []
+    },
+    {
+      "case": "wildcard_order_results_and_cached_error",
+      "error_count": 2,
+      "global_loaded": {
+        "./parts/*.lua": [
+          {
+            "token": "a"
+          },
+          true,
+          false,
+          {},
+          5,
+          {}
+        ],
+        "<root>/config/parts/a.lua": {
+          "token": "a"
+        },
+        "<root>/config/parts/b.lua": true,
+        "<root>/config/parts/c.lua": false,
+        "<root>/config/parts/e.lua": 5
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./parts/*.lua": [
+          {
+            "token": "a"
+          },
+          true,
+          false,
+          {},
+          5,
+          {}
+        ],
+        "<root>/config/parts/a.lua": {
+          "token": "a"
+        },
+        "<root>/config/parts/b.lua": true,
+        "<root>/config/parts/c.lua": false,
+        "<root>/config/parts/e.lua": 5
+      },
+      "source": "local a=require('./parts/*.lua');local b=require('./parts/*.lua');emit({same=a==b,items=a})",
+      "trace": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        {
+          "items": [
+            {
+              "token": "a"
+            },
+            true,
+            false,
+            {},
+            5,
+            {}
+          ],
+          "same": true
+        }
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/parts",
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/b.lua",
+        "<root>/config/parts/c.lua",
+        "<root>/config/parts/d.lua",
+        "<root>/config/parts/e.lua",
+        "<root>/config/parts/f.lua"
+      ]
+    },
+    {
+      "case": "wildcard_and_individual_path_cache",
+      "error_count": 0,
+      "global_loaded": {
+        "./parts/[ab].lua": [
+          {
+            "token": "a"
+          },
+          true
+        ],
+        "<root>/config/parts/a.lua": {
+          "token": "a"
+        },
+        "<root>/config/parts/b.lua": true
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./parts/[ab].lua": [
+          {
+            "token": "a"
+          },
+          true
+        ],
+        "<root>/config/parts/a.lua": {
+          "token": "a"
+        },
+        "<root>/config/parts/b.lua": true
+      },
+      "source": "local a=require('./parts/[ab].lua');emit(require(__fixture_root..'/config/parts/a.lua'));emit(a)",
+      "trace": [
+        "a",
+        "b",
+        {
+          "token": "a"
+        },
+        [
+          {
+            "token": "a"
+          },
+          true
+        ]
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/parts",
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/b.lua"
+      ]
+    },
+    {
+      "case": "wildcard_aliases_reuse_individual_paths",
+      "error_count": 0,
+      "global_loaded": {
+        "./parts/../parts/[ab].lua": [
+          {
+            "token": "a"
+          },
+          true
+        ],
+        "./parts/[ab].lua": [
+          {
+            "token": "a"
+          },
+          true
+        ],
+        "<root>/config/parts/a.lua": {
+          "token": "a"
+        },
+        "<root>/config/parts/b.lua": true
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./parts/../parts/[ab].lua": [
+          {
+            "token": "a"
+          },
+          true
+        ],
+        "./parts/[ab].lua": [
+          {
+            "token": "a"
+          },
+          true
+        ],
+        "<root>/config/parts/a.lua": {
+          "token": "a"
+        },
+        "<root>/config/parts/b.lua": true
+      },
+      "source": "local a=require('./parts/[ab].lua');local b=require('./parts/../parts/[ab].lua');emit({same=a==b,first=a[1]==b[1]})",
+      "trace": [
+        "a",
+        "b",
+        {
+          "first": true,
+          "same": false
+        }
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/parts",
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/b.lua"
+      ]
+    },
+    {
+      "case": "wildcard_false_individual_reexecutes",
+      "error_count": 0,
+      "global_loaded": {
+        "./parts/[c].lua": [
+          false
+        ],
+        "./parts/c.lua": false,
+        "<root>/config/parts/c.lua": false
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./parts/[c].lua": [
+          false
+        ],
+        "./parts/c.lua": false,
+        "<root>/config/parts/c.lua": false
+      },
+      "source": "local a=require('./parts/c.lua');local b=require('./parts/[c].lua');emit({a=a,b=b})",
+      "trace": [
+        "c",
+        "c",
+        {
+          "a": false,
+          "b": [
+            false
+          ]
+        }
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/parts/c.lua",
+        "<root>/config/parts"
+      ]
+    },
+    {
+      "case": "wildcard_missing_still_throws",
+      "error_count": 0,
+      "global_loaded": {},
+      "ok": true,
+      "registry_loaded": {},
+      "source": "emit(pcall(require,'./no-directory/*.lua'))",
+      "trace": [
+        false
+      ],
+      "version": "current",
+      "watched": []
+    },
+    {
+      "case": "wildcard_cached_preload_pattern",
+      "error_count": 0,
+      "global_loaded": {
+        "./parts/*.lua": {
+          "token": "pattern"
+        }
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./parts/*.lua": {
+          "token": "pattern"
+        }
+      },
+      "source": "package.loaded['./parts/*.lua']={token='pattern'};emit(require('./parts/*.lua'))",
+      "trace": [
+        {
+          "token": "pattern"
+        }
+      ],
+      "version": "current",
+      "watched": []
+    },
+    {
+      "case": "wildcard_false_pattern_loads",
+      "error_count": 0,
+      "global_loaded": {
+        "./parts/[ab].lua": [
+          {
+            "token": "a"
+          },
+          true
+        ],
+        "<root>/config/parts/a.lua": {
+          "token": "a"
+        },
+        "<root>/config/parts/b.lua": true
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./parts/[ab].lua": [
+          {
+            "token": "a"
+          },
+          true
+        ],
+        "<root>/config/parts/a.lua": {
+          "token": "a"
+        },
+        "<root>/config/parts/b.lua": true
+      },
+      "source": "package.loaded['./parts/[ab].lua']=false;emit(require('./parts/[ab].lua'))",
+      "trace": [
+        "a",
+        "b",
+        [
+          {
+            "token": "a"
+          },
+          true
+        ]
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/parts",
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/b.lua"
+      ]
+    },
+    {
+      "case": "false_cache_override_reexecutes",
+      "error_count": 0,
+      "global_loaded": {
+        "value": {
+          "token": "value"
+        }
+      },
+      "ok": true,
+      "registry_loaded": {
+        "value": {
+          "token": "value"
+        }
+      },
+      "source": "require('value');package.loaded.value=false;require('value')",
+      "trace": [
+        "value",
+        "value"
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/value.lua"
+      ]
+    },
+    {
+      "case": "nil_cache_override_reexecutes",
+      "error_count": 0,
+      "global_loaded": {
+        "value": {
+          "token": "value"
+        }
+      },
+      "ok": true,
+      "registry_loaded": {
+        "value": {
+          "token": "value"
+        }
+      },
+      "source": "require('value');package.loaded.value=nil;require('value')",
+      "trace": [
+        "value",
+        "value"
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/value.lua"
+      ]
+    },
+    {
+      "case": "truthy_cache_override_skips_file",
+      "error_count": 0,
+      "global_loaded": {
+        "value": {
+          "token": "override"
+        }
+      },
+      "ok": true,
+      "registry_loaded": {
+        "value": {
+          "token": "override"
+        }
+      },
+      "source": "package.loaded.value={token='override'};emit(require('value'))",
+      "trace": [
+        {
+          "token": "override"
+        }
+      ],
+      "version": "current",
+      "watched": []
+    },
+    {
+      "case": "package_loaded_rebind_differs_from_registry",
+      "error_count": 0,
+      "global_loaded": {},
+      "ok": true,
+      "registry_loaded": {
+        "value": {
+          "token": "value"
+        }
+      },
+      "source": "local a=require('value');package.loaded={};local b=require('value');emit(a==b)",
+      "trace": [
+        "value",
+        true
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/value.lua"
+      ]
+    },
+    {
+      "case": "wildcard_after_loaded_rebind",
+      "error_count": 0,
+      "global_loaded": {
+        "./parts/[ab].lua": [
+          {
+            "token": "a"
+          },
+          true
+        ]
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./parts/[ab].lua": [
+          {
+            "token": "a"
+          },
+          true
+        ],
+        "<root>/config/parts/a.lua": {
+          "token": "a"
+        },
+        "<root>/config/parts/b.lua": true
+      },
+      "source": "local a=require('./parts/[ab].lua');package.loaded={};local b=require('./parts/[ab].lua');emit({same=a==b,first=a[1]==b[1]})",
+      "trace": [
+        "a",
+        "b",
+        {
+          "first": true,
+          "same": false
+        }
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/parts",
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/b.lua"
+      ]
+    },
+    {
+      "case": "nested_explicit_main_relative",
+      "error_count": 0,
+      "global_loaded": {
+        "./nested/child": "main",
+        "./sibling": "main"
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./nested/child": "main",
+        "./sibling": "main"
+      },
+      "source": "emit(require('./nested/child'))",
+      "trace": [
+        "child",
+        "main-sibling",
+        "main"
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/nested/child.lua",
+        "<root>/config/sibling.lua"
+      ]
+    },
+    {
+      "case": "finite_self_recursion_not_loading_sentinel",
+      "error_count": 0,
+      "global_loaded": {
+        "cycle": {
+          "count": 3
+        }
+      },
+      "ok": true,
+      "registry_loaded": {
+        "cycle": {
+          "count": 3
+        }
+      },
+      "source": "emit(require('cycle'))",
+      "trace": [
+        1,
+        2,
+        3,
+        {
+          "count": 3
+        }
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/cycle.lua"
+      ]
+    },
+    {
+      "case": "original_require_bypasses_error_fallback",
+      "error_count": 0,
+      "global_loaded": {},
+      "ok": true,
+      "registry_loaded": {},
+      "source": "emit(pcall(__require,'runtime_error'));emit(pcall(__require,'runtime_error'))",
+      "trace": [
+        "runtime_error",
+        false,
+        "runtime_error",
+        false
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/runtime_error.lua"
+      ]
+    },
+    {
+      "case": "reload_clears_user_cache_preserves_stdlibs",
+      "error_count": 0,
+      "global_loaded": {
+        "value": {
+          "token": "value"
+        }
+      },
+      "ok": true,
+      "registry_loaded": {
+        "value": {
+          "token": "value"
+        }
+      },
+      "source": "local a=require('value');local math_before=package.loaded.math;__fixture_reload();local b=require('value');emit({same=a==b,math_same=math_before==package.loaded.math})",
+      "trace": [
+        "value",
+        "value",
+        {
+          "math_same": true,
+          "same": false
+        }
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/value.lua"
+      ]
+    },
+    {
+      "case": "reload_after_loaded_rebind",
+      "error_count": 0,
+      "global_loaded": {},
+      "ok": true,
+      "registry_loaded": {
+        "value": {
+          "token": "value"
+        }
+      },
+      "source": "local a=require('value');package.loaded={};__fixture_reload();local b=require('value');emit(a==b)",
+      "trace": [
+        "value",
+        true
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/value.lua"
+      ]
+    },
+    {
+      "case": "nil_return_retains_assigned_false",
+      "error_count": 0,
+      "global_loaded": {
+        "assigned_false": false
+      },
+      "ok": true,
+      "registry_loaded": {
+        "assigned_false": false
+      },
+      "source": "emit(require('assigned_false'));emit(require('assigned_false'))",
+      "trace": [
+        "assigned_false",
+        false,
+        "assigned_false",
+        false
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/assigned_false.lua"
+      ]
+    },
+    {
+      "case": "nil_return_retains_assigned_table",
+      "error_count": 0,
+      "global_loaded": {
+        "assigned_table": {
+          "token": "assigned"
+        }
+      },
+      "ok": true,
+      "registry_loaded": {
+        "assigned_table": {
+          "token": "assigned"
+        }
+      },
+      "source": "local a=require('assigned_table');local b=require('assigned_table');emit({same=a==b,a=a})",
+      "trace": [
+        "assigned_table",
+        {
+          "a": {
+            "token": "assigned"
+          },
+          "same": true
+        }
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/assigned_table.lua"
+      ]
+    },
+    {
+      "case": "wildcard_error_retains_module_cache_assignment",
+      "error_count": 1,
+      "global_loaded": {
+        "./assigned/[f]ailed.lua": [
+          {}
+        ],
+        "<root>/config/assigned/failed.lua": true
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./assigned/[f]ailed.lua": [
+          {}
+        ],
+        "<root>/config/assigned/failed.lua": true
+      },
+      "source": "emit(require('./assigned/[f]ailed.lua'));emit(require(__fixture_root..'/config/assigned/failed.lua'))",
+      "trace": [
+        "assigned-failed",
+        [
+          {}
+        ],
+        true
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/assigned",
+        "<root>/config/assigned/failed.lua"
+      ]
+    },
+    {
+      "case": "safe_error_overwrites_module_cache_assignment",
+      "error_count": 1,
+      "global_loaded": {
+        "./assigned/failed.lua": {}
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./assigned/failed.lua": {}
+      },
+      "source": "local a=require('./assigned/failed.lua');local b=require('./assigned/failed.lua');emit({same=a==b,a=a})",
+      "trace": [
+        "assigned-failed",
+        {
+          "a": {},
+          "same": true
+        }
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/assigned/failed.lua"
+      ]
+    },
+    {
+      "case": "error_prefix_is_compared_not_resolver_category",
+      "error_count": 0,
+      "global_loaded": {},
+      "ok": true,
+      "registry_loaded": {},
+      "source": "emit(pcall(require,'misleading'));emit(pcall(require,'misleading'))",
+      "trace": [
+        "misleading",
+        false,
+        "misleading",
+        false
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/misleading.lua"
+      ]
+    },
+    {
+      "case": "non_table_loaded_wildcard_not_cached",
+      "error_count": 0,
+      "global_loaded": {},
+      "ok": true,
+      "registry_loaded": {
+        "<root>/config/parts/a.lua": {
+          "token": "a"
+        },
+        "<root>/config/parts/b.lua": true
+      },
+      "source": "package.loaded=false;local a=require('./parts/[ab].lua');local b=require('./parts/[ab].lua');emit({same=a==b,first=a[1]==b[1]})",
+      "trace": [
+        "a",
+        "b",
+        {
+          "first": true,
+          "same": false
+        }
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/parts",
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/b.lua"
+      ]
+    },
+    {
+      "case": "non_table_loaded_safe_error_not_cached",
+      "error_count": 2,
+      "global_loaded": {},
+      "ok": true,
+      "registry_loaded": {},
+      "source": "package.loaded=false;require('runtime_error');require('runtime_error')",
+      "trace": [
+        "runtime_error",
+        "runtime_error"
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/runtime_error.lua"
+      ]
+    },
+    {
+      "case": "original_require_treats_glob_as_literal_filename",
+      "error_count": 0,
+      "global_loaded": {
+        "./literal/*": "literal-file"
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./literal/*": "literal-file"
+      },
+      "source": "emit({__require('./literal/*')})",
+      "trace": [
+        "literal-star",
+        [
+          "literal-file",
+          "<root>/config///literal/*.lua"
+        ]
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/literal/*.lua"
+      ]
+    },
+    {
+      "case": "safe_wildcard_original_searcher_may_reject_metachar_filename",
+      "error_count": 1,
+      "global_loaded": {
+        "./literal/*": [
+          {}
+        ]
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./literal/*": [
+          {}
+        ]
+      },
+      "source": "emit(require('./literal/*'))",
+      "trace": [
+        [
+          {}
+        ]
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/literal",
+        "<root>/config/literal/*.lua"
+      ]
+    },
+    {
+      "case": "reload_numeric_loaded_key_can_fail",
+      "error_count": 0,
+      "global_loaded": {},
+      "ok": true,
+      "registry_loaded": {},
+      "source": "package.loaded[1]=true;emit(pcall(__fixture_reload))",
+      "trace": [
+        false
+      ],
+      "version": "current",
+      "watched": []
+    },
+    {
+      "case": "reload_numeric_string_key_is_removed",
+      "error_count": 0,
+      "global_loaded": {},
+      "ok": true,
+      "registry_loaded": {},
+      "source": "package.loaded['1']=true;emit(pcall(__fixture_reload));emit(package.loaded['1']==nil)",
+      "trace": [
+        true,
+        true
+      ],
+      "version": "current",
+      "watched": []
+    },
+    {
+      "case": "modified_path_for_named_module",
+      "error_count": 0,
+      "global_loaded": {
+        "sibling": "nested"
+      },
+      "ok": true,
+      "registry_loaded": {
+        "sibling": "nested"
+      },
+      "source": "package.path=__fixture_root..'/config/nested/?.lua';emit(require('sibling'))",
+      "trace": [
+        "nested-sibling",
+        "nested"
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/nested/sibling.lua"
+      ]
+    },
+    {
+      "case": "modified_path_does_not_rebase_explicit_module",
+      "error_count": 0,
+      "global_loaded": {
+        "./sibling": "main"
+      },
+      "ok": true,
+      "registry_loaded": {
+        "./sibling": "main"
+      },
+      "source": "package.path=__fixture_root..'/config/nested/?.lua';emit(require('./sibling'))",
+      "trace": [
+        "main-sibling",
+        "main"
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/sibling.lua"
+      ]
+    }
+  ],
+  "format": "hye-module-load-fixtures-1",
+  "meaning": "Actual safe require, wildcard, package cache helpers, file-searcher initialization and reload cache-reset fragment with a minimal ConfigManager and real Lua 5.4. Only private trusted synthetic modules execute. Registry/global loaded maps, ordered path tracking, fallback/error counts and traces are observed. No user config execution, authorization, file-race, full reload, compositor, sandbox or dependency ABI certificate.",
+  "module_files": {
+    "assigned/failed.lua": "local name=...;emit('assigned-failed');package.loaded[name]=true;error('assigned failure')",
+    "assigned_false.lua": "emit('assigned_false');package.loaded.assigned_false=false;return nil",
+    "assigned_table.lua": "emit('assigned_table');package.loaded.assigned_table={token='assigned'};return nil",
+    "cycle.lua": "__cycle=(__cycle or 0)+1;emit(__cycle);if __cycle<3 then require('cycle')end;return {count=__cycle}",
+    "falsemod.lua": "emit('falsemod');return false",
+    "literal/*.lua": "emit('literal-star');return 'literal-file'",
+    "misleading.lua": "emit('misleading');error(\"module 'misleading' not found: fixture\",0)",
+    "multiret.lua": "emit('multiret');return 7,8",
+    "nested/child.lua": "emit('child');return require('./sibling')",
+    "nested/sibling.lua": "emit('nested-sibling');return 'nested'",
+    "nilmod.lua": "emit('nilmod');return nil",
+    "number.lua": "emit('number');return 7",
+    "parts/a.lua": "emit('a');return {token='a'}",
+    "parts/b.lua": "emit('b');return nil",
+    "parts/c.lua": "emit('c');return false",
+    "parts/d.lua": "emit('d');error('part failure')",
+    "parts/e.lua": "emit('e');return 5",
+    "parts/f.lua": "local value = ",
+    "runtime_error.lua": "emit('runtime_error');error('fixture failure')",
+    "sibling.lua": "emit('main-sibling');return 'main'",
+    "syntax_error.lua": "local value = ",
+    "table_error.lua": "emit('table_error');error({kind='fixture'})",
+    "value.lua": "emit('value');return {token='value'}"
+  },
+  "standard_keys": {
+    "baseline": [
+      "_G",
+      "coroutine",
+      "debug",
+      "io",
+      "math",
+      "os",
+      "package",
+      "string",
+      "table",
+      "utf8",
+      "bit32",
+      "jit"
+    ],
+    "current": [
+      "_G",
+      "coroutine",
+      "debug",
+      "io",
+      "math",
+      "os",
+      "package",
+      "string",
+      "table",
+      "utf8",
+      "bit32",
+      "jit"
+    ]
+  }
+}

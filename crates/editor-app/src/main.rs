@@ -12,6 +12,7 @@ mod reconciliation;
 mod rule_forms;
 mod rules;
 mod selector_forms;
+mod source_modules;
 mod worker;
 mod workflow;
 mod workspaces;
@@ -1037,6 +1038,8 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     let live = gtk::Button::with_label("Refresh Desktop Values");
     let source_copy = gtk::Button::with_label("Review Source Copy");
     let diagnostics = gtk::Button::with_label("Import Diagnostics");
+    let source_modules = gtk::Button::with_label("Inspect Source Modules");
+    source_modules::connect(&source_modules, &window, &state);
     let reattach = gtk::Button::with_label("Verify Source File");
     let reconcile = gtk::Button::with_label("Compare Changed Source");
     let binding_editor = gtk::Button::with_label("Edit Bindings");
@@ -1067,6 +1070,7 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
         ("read-live", &live),
         ("source-copy", &source_copy),
         ("diagnostics", &diagnostics),
+        ("source-modules", &source_modules),
         ("reattach-source", &reattach),
         ("reconcile-source", &reconcile),
         ("monitors", &monitor_editor),
@@ -1398,6 +1402,7 @@ mod tests {
         rules::test_editor(&window);
         animations::test_editor(&window);
         gestures::test_editor(&window);
+        source_modules::test_view(&window);
         rule_forms::test_forms();
         window.close();
         assert!(

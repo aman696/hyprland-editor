@@ -9,6 +9,13 @@ pub const MAX_CANDIDATES: usize = 512;
 pub const MAX_PLAN_BYTES: usize = 1_048_576;
 pub const MAX_BATCH_BYTES: usize = 2 * MAX_PLAN_BYTES;
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum RequireMode {
+    #[default]
+    Safe,
+    Original,
+}
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Context {
@@ -158,6 +165,14 @@ pub fn plan_requests(
     modules: &[Vec<u8>],
     version: &str,
 ) -> Result<Vec<Plan>, String> {
+    plan_requests_for(context, modules, version, RequireMode::Safe)
+}
+pub fn plan_requests_for(
+    context: &Context,
+    modules: &[Vec<u8>],
+    version: &str,
+    mode: RequireMode,
+) -> Result<Vec<Plan>, String> {
     if modules.len() > MAX_CANDIDATES {
         return Err("At most 512 module requests can be planned together".into());
     }
@@ -165,7 +180,7 @@ pub fn plan_requests(
     let mut plans = Vec::with_capacity(modules.len());
     let mut encoded = 0usize;
     for module in modules {
-        let plan = context.plan(module, version)?;
+        let plan = context.plan_for(module, version, mode)?;
         encoded += serde_json::to_vec(&plan).map_err(|e| e.to_string())?.len() + 1;
         if encoded > MAX_BATCH_BYTES {
             return Err("Encoded module plans exceed 2 MiB".into());
@@ -196,10 +211,20 @@ impl Context {
         }
         Ok(())
     }
+    /// Candidate plan for the safe require wrapper; use plan_for for __require.
     pub fn plan(&self, module: &[u8], version: &str) -> Result<Plan, String> {
+        self.plan_for(module, version, RequireMode::Safe)
+    }
+    pub fn plan_for(
+        &self,
+        module: &[u8],
+        version: &str,
+        mode: RequireMode,
+    ) -> Result<Plan, String> {
         self.validate(version)?;
         valid_bytes(module, MAX_MODULE_BYTES)?;
-        let primary = if is_explicit(module) {
+        let primary = if is_explicit(module) && !(mode == RequireMode::Original && has_glob(module))
+        {
             let base = absolute(module, self)?;
             if has_glob(module) {
                 let meta = base
@@ -397,5 +422,40 @@ mod tests {
         c.inherited_package_path = Some(b"/x/?.lua;".repeat(100));
         assert!(plan_requests(&c, &vec![vec![b'a'; 4096]; 20], BASELINE).is_err());
         assert!(plan_requests(&c, &vec![b"x".to_vec(); MAX_CANDIDATES + 1], BASELINE).is_err());
+    }
+    #[test]
+    fn original_require_does_not_use_the_wildcard_wrapper() {
+        let fixture: serde_json::Value =
+            serde_json::from_str(include_str!("../../../data/module-load-fixtures.json")).unwrap();
+        for (version, label) in [(BASELINE, "baseline"), (AUDITED_MAIN, "current")] {
+            let c = Context {
+                main_file: b"/fixture/config/hyprland.lua".to_vec(),
+                home: None,
+                inherited_package_path: Some(vec![]),
+            };
+            let original = c
+                .plan_for(b"./literal/*", version, RequireMode::Original)
+                .unwrap();
+            assert_eq!(original.primary, Primary::Named);
+            let source = fixture["cases"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|c| {
+                    c["version"] == label
+                        && c["case"] == "original_require_treats_glob_as_literal_filename"
+                })
+                .unwrap();
+            let selected = source["trace"][1][1]
+                .as_str()
+                .unwrap()
+                .replace("<root>", "/fixture")
+                .into_bytes();
+            assert!(original.lua_file_candidates.contains(&selected));
+            let safe = c
+                .plan_for(b"./literal/*", version, RequireMode::Safe)
+                .unwrap();
+            assert!(matches!(safe.primary, Primary::ExplicitWildcard { .. }));
+        }
     }
 }

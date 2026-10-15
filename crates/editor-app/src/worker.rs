@@ -23,8 +23,14 @@ pub enum Request {
         report: Box<LuaReport>,
         draft: Draft,
     },
+    InspectDependencies {
+        source: String,
+        version: String,
+    },
     PlanModules {
         context: hyprland_editor_core::module_path::Context,
+        #[serde(default)]
+        mode: hyprland_editor_core::module_path::RequireMode,
         modules: Vec<Vec<u8>>,
         version: String,
     },
@@ -38,6 +44,7 @@ pub enum Request {
 #[serde(deny_unknown_fields)]
 pub enum Response {
     Parsed(Box<LuaReport>),
+    Dependencies(lua::DependencyInventory),
     ModulePlans(Vec<hyprland_editor_core::module_path::Plan>),
     Registry(hyprland_editor_core::xkb::Registry),
     Copy(String),
@@ -161,12 +168,18 @@ pub fn entry() {
             serde_json::from_slice(&bytes).map_err(|_| "Invalid parser request")?;
         let c = catalogue();
         match request {
+            Request::InspectDependencies { source, version } => {
+                lua::inspect_dependencies(&source, &version).map(Response::Dependencies)
+            }
             Request::PlanModules {
                 context,
+                mode,
                 modules,
                 version,
-            } => hyprland_editor_core::module_path::plan_requests(&context, &modules, &version)
-                .map(Response::ModulePlans),
+            } => hyprland_editor_core::module_path::plan_requests_for(
+                &context, &modules, &version, mode,
+            )
+            .map(Response::ModulePlans),
             Request::ParseRegistry { xml } => {
                 hyprland_editor_core::xkb::parse(&xml).map(Response::Registry)
             }

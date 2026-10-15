@@ -1,5 +1,12 @@
 //! Static Lua source projection and byte-preserving copy preparation. Never runs Lua.
+mod dependencies;
 use crate::{parse_color, Draft, Setting, Value, AUDITED_MAIN, BASELINE, MAX_DOCUMENT_BYTES};
+pub use dependencies::{
+    inspect as inspect_dependencies, Barrier as DependencyBarrier,
+    BarrierKind as DependencyBarrierKind, Binding as DependencyBinding,
+    Inventory as DependencyInventory, Loader as DependencyLoader, Site as DependencySite,
+    SiteScope as DependencyScope,
+};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::{
@@ -1776,12 +1783,9 @@ impl Projection<'_> {
         Ok(())
     }
 }
-pub fn parse(source: &str, version: &str, catalogue: &[Setting]) -> Result<LuaReport, String> {
+fn syntax_tree(source: &str) -> Result<tree_sitter::Tree, String> {
     if source.len() > MAX_DOCUMENT_BYTES {
         return Err("Lua document exceeds 1 MiB".into());
-    }
-    if ![BASELINE, AUDITED_MAIN].contains(&version) {
-        return Err("Unknown Lua catalogue snapshot".into());
     }
     let mut parser = Parser::new();
     parser
@@ -1804,8 +1808,18 @@ pub fn parse(source: &str, version: &str, catalogue: &[Setting]) -> Result<LuaRe
         )
         .ok_or("Lua parsing exceeded its time budget")?;
     if tree.root_node().has_error() {
-        return Err("Lua has syntax errors; no declarations were imported".into());
+        return Err("Lua has syntax errors; static inspection was stopped".into());
     }
+    Ok(tree)
+}
+pub fn parse(source: &str, version: &str, catalogue: &[Setting]) -> Result<LuaReport, String> {
+    if source.len() > MAX_DOCUMENT_BYTES {
+        return Err("Lua document exceeds 1 MiB".into());
+    }
+    if ![BASELINE, AUDITED_MAIN].contains(&version) {
+        return Err("Unknown Lua catalogue snapshot".into());
+    }
+    let tree = syntax_tree(source)?;
     let mut p = Projection {
         source,
         catalogue,

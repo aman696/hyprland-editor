@@ -110,5 +110,9 @@
       "repo": "hyprwm/Hyprland"
     }
   ],
-  "scope": "Pinned source graph audit in progress; source-derived path primitives only. No full module projection, source writer or watcher certificate."
+  "scope": "Pinned initial path and require/cache helper observations. Static dependency-site inspection is not module replay or read authorization; full source graph implementation remains in progress.",
+  "require_modes": {
+    "safe": "Safe wrapper expands explicit wildcard patterns before original require. Uses global package.loaded for wildcard caching and fallback tables.",
+    "original": "Original Lua require still uses the custom file searcher but bypasses wildcard expansion and safe error fallback. Glob metacharacters can name literal files."
+  }
 }

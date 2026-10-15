@@ -25,6 +25,7 @@ jobs:
       - run: python3 scripts/animation_source_probe.py --check
       - run: python3 scripts/gesture_source_probe.py --check
       - run: python3 scripts/source_graph_probe.py --check
+      - run: python3 scripts/module_load_probe.py --check
       - run: python3 scripts/implementation_report.py --check
       - run: cargo test --locked --workspace
       - name: Native graphical smoke test
