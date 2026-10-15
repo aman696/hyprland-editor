@@ -1,6 +1,7 @@
 mod animations;
 mod bind_forms;
 mod bindings;
+mod capture_worker;
 mod controls;
 mod device_forms;
 mod devices;
@@ -8,6 +9,7 @@ mod gestures;
 mod history;
 mod monitors;
 mod presentation;
+mod process_policy;
 mod reconciliation;
 mod rule_forms;
 mod rules;
@@ -1117,6 +1119,12 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     window
 }
 fn main() {
+    if std::env::args_os().nth(1).as_deref()
+        == Some(std::ffi::OsStr::new("--capture-source-worker"))
+    {
+        capture_worker::entry();
+        return;
+    }
     if std::env::args_os().nth(1).as_deref() == Some(std::ffi::OsStr::new("--lua-source-worker")) {
         worker::entry();
         return;

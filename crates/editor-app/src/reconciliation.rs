@@ -50,7 +50,7 @@ fn input(state: &Shared) -> Result<Input, String> {
     })
 }
 fn compare(path: PathBuf, input: Input) -> Result<Review, String> {
-    let captured = hyprland_editor_core::source_path::read_selected(&path)?;
+    let captured = super::capture_worker::read_selected(&path)?;
     let incoming = Arc::new(workflow::parse_source(
         captured.content,
         input.draft.version.clone(),

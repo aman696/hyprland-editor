@@ -78,7 +78,7 @@ fn read_import(
         .extension()
         .is_some_and(|extension| extension == "lua" || extension == "conf")
     {
-        hyprland_editor_core::source_path::read_selected(&path)?
+        super::capture_worker::read_selected(&path)?
     } else {
         storage::read_source(&path)?
     };
@@ -433,7 +433,7 @@ pub(super) fn connect_reattach(
             let Some(button)=button.upgrade()else{return;};button.set_sensitive(false);
             let button=button.downgrade();let win=win.downgrade();
             background(move||{
-                let captured=hyprland_editor_core::source_path::read_selected(&path)?;
+                let captured=super::capture_worker::read_selected(&path)?;
                 let comparison=origin.compare_selected(&captured)?;
                 let doc=parse_source(captured.content,version,&catalogue)?;
                 Ok((comparison,doc,captured.identity))

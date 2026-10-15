@@ -2,7 +2,7 @@
 
 A native GTK4/libadwaita workspace for making Hyprland configuration graphical, with a versioned catalogue and a safety-first editing core. The long-term goal is complete configuration coverage, including rules, monitors, bindings, animations, devices and isolated preview.
 
-**Status: experimental 0.10 editor. This is the first working slice, not a complete Hyprland configuration manager.** Its live inspector is read-only. It does not apply changes to the running compositor.
+**Status: experimental 0.12 editor. This is the first working slice, not a complete Hyprland configuration manager.** Its live inspector is read-only. It does not apply changes to the running compositor.
 
 ![Native draft workspace](docs/screenshots/draft-workspace.png)
 
@@ -44,7 +44,7 @@ Saved workspaces contain the full imported Lua source and path/ownership evidenc
 
 ## Build and run
 
-Linux (pidfd support for inspection, close_range/seccomp support for Lua workers), Rust 1.90, GTK >= 4.12 libadwaita >= 1.5 libxkbcommon, RE2 and a C++17 compiler are required. No web server, browser runtime, background daemon or root access is required.
+Linux (pidfd support for inspection, close_range/seccomp support for workers), Rust 1.90, GTK >= 4.12 libadwaita >= 1.5 libxkbcommon, RE2 and a C++17 compiler are required. Importing or comparing an explicitly selected Lua/legacy file additionally requires enabled Landlock ABI 3 or newer; unavailable isolation produces an error. Draft editing and reopening private saved workspaces remain available. No web server, browser runtime, background daemon or root access is required.
 
 On Ubuntu 24.04:
 
@@ -97,7 +97,7 @@ Pure editing/storage tests need no display. Native UI smoke testing is separate.
 
 ## Architecture and memory
 
-`editor-core` owns validation, static source projection, span-based copy preparation, Lua encoding and private draft storage. `editor-discovery` owns the fixed read-only IPC interface. `editor-app` owns the native interface and launches its own inode as a restricted parser worker through `/proc/self/exe`. There is no compositor mutation interface. Background results are discarded when the draft generation changes.
+`editor-core` owns validation, static source projection, span-based copy preparation, Lua encoding and private draft storage. `editor-discovery` owns the fixed read-only IPC interface. `editor-app` owns the native interface and launches its own inode through `/proc/self/exe` for two separate roles: a parser without file access, and [selected-file capture](docs/source-capture.md) with read access to one held inode. There is no compositor mutation interface. Background results are discarded when the draft generation changes.
 
 Old JSON drafts contain values only. New `.hye` workspaces retain immutable source bytes and file identity evidence, with an exact catalogue fingerprint. Parser reports remain in memory and are recomputed on reopen. The GUI currently supports one Lua root; additional documents and legacy source snapshots are rejected explicitly rather than discarded. No include file is opened automatically. Live observations are point-in-time reads, kept separate from draft values; they can become stale. File source projections do not establish effective runtime values.
 

@@ -12,7 +12,7 @@ use std::{
         fd::{AsRawFd, FromRawFd},
         unix::{ffi::OsStrExt, fs::MetadataExt},
     },
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 fn error() -> String {
@@ -92,8 +92,80 @@ fn is_proc_link(file: &File) -> Result<bool, String> {
     Ok(unsafe { fs.assume_init() }.f_type as u64 == 0x9fa0)
 }
 
-/// Only an explicit picker/CLI path should call this. Recorded workspace paths are never inputs.
+/// A held, metadata-only leaf and its link evidence. No source bytes have been read.
+/// The capture role restricts filesystem access to this inode before capture().
+pub struct SelectedSource {
+    node: File,
+    absolute: PathBuf,
+    links: Vec<LinkIdentity>,
+    held_links: Vec<File>,
+}
+impl SelectedSource {
+    pub fn node(&self) -> &File {
+        &self.node
+    }
+    pub fn capture(self) -> Result<CapturedSource, String> {
+        let Self {
+            node,
+            absolute,
+            links,
+            held_links,
+        } = self;
+        let (content, after) = storage::read_regular_node(&node, MAX_DOCUMENT_BYTES)?;
+        // This name refers only to our own held inode, never a saved path hint.
+        let own_descriptor = CString::new(format!("/proc/self/fd/{}", node.as_raw_fd())).unwrap();
+        for (record, link) in links.iter().zip(&held_links) {
+            let now = link.metadata().map_err(|e| e.to_string())?;
+            if now.nlink() == 0
+                || now.dev() != record.device
+                || now.ino() != record.inode
+                || now.uid() != record.owner
+                || now.mode() != record.mode
+                || now.ctime() != record.changed_seconds
+                || now.ctime_nsec() != record.changed_nanoseconds
+            {
+                return Err(
+                    "A selected source link changed during capture; retry the stable chain".into(),
+                );
+            }
+        }
+        let mut identity = SourceIdentity::captured(&absolute, &after, &content)?;
+        // The held inode's kernel path is more accurate than a lexical hint if parents moved.
+        let mut resolved_path = vec![0; 4097];
+        let n = unsafe {
+            libc::readlink(
+                own_descriptor.as_ptr(),
+                resolved_path.as_mut_ptr().cast(),
+                resolved_path.len(),
+            )
+        };
+        if n <= 0 || n > 4096 {
+            return Err("Cannot record the selected source's bounded resolved path".into());
+        }
+        resolved_path.truncate(n as usize);
+        if resolved_path.starts_with(b"/nix/store/") {
+            identity.recorded_ownership = RecordedOwnership::StorePath;
+        } else if !links.is_empty() {
+            identity.recorded_ownership = RecordedOwnership::SymlinkManaged;
+        } else if after.uid() != unsafe { libc::geteuid() } {
+            identity.recorded_ownership = RecordedOwnership::OtherOwner;
+        } else if after.mode() & 0o200 == 0 {
+            identity.recorded_ownership = RecordedOwnership::ReadOnly;
+        } else {
+            identity.recorded_ownership = RecordedOwnership::UserOwned;
+        }
+        identity.resolved_path = Some(resolved_path);
+        identity.links = links;
+        identity.validate(&content)?;
+        Ok(CapturedSource { content, identity })
+    }
+}
+/// Direct helper retained for core fixtures; application reads use the isolated capture role.
 pub fn read_selected(path: &Path) -> Result<CapturedSource, String> {
+    resolve_selected(path)?.capture()
+}
+/// Only an explicit picker/CLI path should call this. Recorded workspace paths are never inputs.
+pub fn resolve_selected(path: &Path) -> Result<SelectedSource, String> {
     let absolute = if path.is_absolute() {
         path.to_path_buf()
     } else {
@@ -173,53 +245,12 @@ pub fn read_selected(path: &Path) -> Result<CapturedSource, String> {
         if !metadata.is_file() || metadata.len() > MAX_DOCUMENT_BYTES as u64 {
             return Err("Select a regular source no larger than 1 MiB".into());
         }
-        let (content, after) = storage::read_regular_node(&node, MAX_DOCUMENT_BYTES)?;
-        // This name refers only to our own held inode, never a saved path hint.
-        let own_descriptor = CString::new(format!("/proc/self/fd/{}", node.as_raw_fd())).unwrap();
-        for (record, link) in links.iter().zip(&held_links) {
-            let now = link.metadata().map_err(|e| e.to_string())?;
-            if now.nlink() == 0
-                || now.dev() != record.device
-                || now.ino() != record.inode
-                || now.uid() != record.owner
-                || now.mode() != record.mode
-                || now.ctime() != record.changed_seconds
-                || now.ctime_nsec() != record.changed_nanoseconds
-            {
-                return Err(
-                    "A selected source link changed during capture; retry the stable chain".into(),
-                );
-            }
-        }
-        let mut identity = SourceIdentity::captured(&absolute, &after, &content)?;
-        // The held inode's kernel path is more accurate than a lexical hint if parents moved.
-        let mut resolved_path = vec![0; 4097];
-        let n = unsafe {
-            libc::readlink(
-                own_descriptor.as_ptr(),
-                resolved_path.as_mut_ptr().cast(),
-                resolved_path.len(),
-            )
-        };
-        if n <= 0 || n > 4096 {
-            return Err("Cannot record the selected source's bounded resolved path".into());
-        }
-        resolved_path.truncate(n as usize);
-        if resolved_path.starts_with(b"/nix/store/") {
-            identity.recorded_ownership = RecordedOwnership::StorePath;
-        } else if !links.is_empty() {
-            identity.recorded_ownership = RecordedOwnership::SymlinkManaged;
-        } else if after.uid() != unsafe { libc::geteuid() } {
-            identity.recorded_ownership = RecordedOwnership::OtherOwner;
-        } else if after.mode() & 0o200 == 0 {
-            identity.recorded_ownership = RecordedOwnership::ReadOnly;
-        } else {
-            identity.recorded_ownership = RecordedOwnership::UserOwned;
-        }
-        identity.resolved_path = Some(resolved_path);
-        identity.links = links;
-        identity.validate(&content)?;
-        return Ok(CapturedSource { content, identity });
+        return Ok(SelectedSource {
+            node,
+            absolute,
+            links,
+            held_links,
+        });
     }
     Err("Select a source file, not a directory".into())
 }
@@ -343,6 +374,39 @@ mod tests {
             first.identity.links[0].target,
             second.identity.links[0].target
         );
+        fs::remove_dir_all(root).unwrap();
+    }
+    #[test]
+    fn held_leaf_cannot_be_redirected_by_replacement_and_deleted_leaf_is_rejected() {
+        let root = folder();
+        let path = root.join("selected.lua");
+        fs::write(&path, "-- selected inode\n").unwrap();
+        let held = resolve_selected(&path).unwrap();
+        fs::rename(&path, root.join("moved.lua")).unwrap();
+        fs::write(&path, "-- replacement inode\n").unwrap();
+        let captured = held.capture().unwrap();
+        assert_eq!(captured.content, "-- selected inode\n");
+        assert_eq!(captured.identity.selected_path, path.as_os_str().as_bytes());
+        assert_eq!(
+            captured.identity.resolved_path.as_deref(),
+            Some(root.join("moved.lua").as_os_str().as_bytes())
+        );
+        let held = resolve_selected(&path).unwrap();
+        fs::remove_file(&path).unwrap();
+        assert!(held.capture().unwrap_err().contains("changed"));
+        fs::remove_dir_all(root).unwrap();
+    }
+    #[test]
+    fn link_replaced_between_resolution_and_read_does_not_return_stale_evidence() {
+        let root = folder();
+        fs::write(root.join("old.lua"), "-- old\n").unwrap();
+        fs::write(root.join("new.lua"), "-- new\n").unwrap();
+        let path = root.join("selected.lua");
+        symlink("old.lua", &path).unwrap();
+        let held = resolve_selected(&path).unwrap();
+        fs::remove_file(&path).unwrap();
+        symlink("new.lua", &path).unwrap();
+        assert!(held.capture().unwrap_err().contains("link changed"));
         fs::remove_dir_all(root).unwrap();
     }
 }

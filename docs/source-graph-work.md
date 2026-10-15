@@ -42,6 +42,8 @@ Local validation passes 168 ordinary tests plus one native graphical workflow (1
 
 ## Required continuation
 
+Selected-file capture now has a separate inode-scoped process boundary; see [authority, limits and test evidence](source-capture.md). This routes the three existing explicit source-read workflows and preserves the parser's no-filesystem boundary. It does not authorize or read dependency candidates. Local validation of this increment passed 177 ordinary plus one native graphical test (178 total), formatting, strict lint, release build and catalogue/action/register checks. The preceding 169-test count describes the previously published inspector/cache increment.
+
 1. Connect the now-observed loader/cache semantics to ordered, bounded static module evaluation. Preserve actual call order, per-file lexical values, return arity/loader data, aliases, preload/searcher provenance, cycles and unknown state; generic path plans or a source-ordered site list cannot substitute for execution semantics.
 2. Extend syntactic request inspection into a full dependency/provenance graph with computed paths, module-return values, exact deferred/immediate API invocation rules and unresolved native/custom loaders. `dofile`/`loadfile` do not inherit require resolution rules; capture their actual execution context. An unknown edge stays visible; it cannot authorize a fetch or prove effective configuration.
 3. Implement a separately authorized capture graph with stable document identities, bounded wildcard parent evidence, cycles/misses, symlink/generator/store/system ownership and hard I/O deadlines. Captured path evidence and saved path hints never grant writer authority.
