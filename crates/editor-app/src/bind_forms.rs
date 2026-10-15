@@ -578,7 +578,7 @@ pub(super) fn action(
     }
     at_load.set_active(initial.at_load);
     advanced.append(&at_load);
-    advanced.append(&label("Otherwise the action is prepared when the shortcut runs. Original timing is retained; editing never runs it."));
+    advanced.append(&label("Otherwise the action is prepared when this block runs. Original timing is retained; editing never runs it."));
     panel.append(
         &gtk::Expander::builder()
             .label("Action Preparation")

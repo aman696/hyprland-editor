@@ -19,6 +19,10 @@ pub(super) enum Undo {
         origin: SourceIdentity,
         document_bytes: usize,
     },
+    Gestures {
+        previous: hyprland_editor_core::gesture::Draft,
+        retained_bytes: usize,
+    },
     Animations {
         previous: hyprland_editor_core::animation::Draft,
         retained_bytes: usize,
@@ -98,6 +102,54 @@ fn workspace_bytes(rules: &Vec<hyprland_editor_core::workspace_rule::Rule>) -> u
                         .chain(r.layout_options.iter())
                         .map(|(k, v)| 256 + size_of::<Value>() + k.capacity() + value_bytes(v))
                         .sum::<usize>()
+            })
+            .sum::<usize>()
+}
+fn action_bytes(a: &hyprland_editor_core::action::Action) -> usize {
+    a.constructor.capacity()
+        + a.variant.capacity()
+        + a.fields
+            .iter()
+            .map(|(k, v)| 256 + size_of::<Value>() + k.capacity() + value_bytes(v))
+            .sum::<usize>()
+}
+fn gesture_bytes(draft: &hyprland_editor_core::gesture::Draft) -> usize {
+    use hyprland_editor_core::gesture::GestureAction;
+    let workflow = |w: &hyprland_editor_core::gesture::Workflow| {
+        w.actions.capacity() * size_of::<hyprland_editor_core::action::Action>()
+            + w.actions.iter().map(action_bytes).sum::<usize>()
+            + w.event_parameter.as_ref().map_or(0, String::capacity)
+    };
+    draft.declarations.capacity() * size_of::<hyprland_editor_core::gesture::Spec>()
+        + draft
+            .declarations
+            .iter()
+            .map(|s| {
+                s.id.capacity()
+                    + s.direction.capacity()
+                    + value_bytes(&s.fingers)
+                    + [
+                        &s.mods,
+                        &s.scale,
+                        &s.disable_inhibit,
+                        &s.mode,
+                        &s.zoom_level,
+                        &s.workspace_name,
+                    ]
+                    .into_iter()
+                    .flatten()
+                    .map(value_bytes)
+                    .sum::<usize>()
+                    + match &s.action {
+                        GestureAction::Builtin(name) => name.capacity(),
+                        GestureAction::LegacyFinish(w) => workflow(w),
+                        GestureAction::Callbacks(c) => c
+                            .phases()
+                            .into_iter()
+                            .flatten()
+                            .map(workflow)
+                            .sum::<usize>(),
+                    }
             })
             .sum::<usize>()
 }
@@ -238,6 +290,7 @@ fn document_bytes(doc: &LuaDocument) -> usize {
         + workspace_bytes(&r.workspace_rules)
         + rule_bytes(&r.rules)
         + animation_bytes(&r.animations)
+        + gesture_bytes(&r.gestures)
         + r.source_sha256.capacity()
         + r.draft.version.capacity()
         + r.draft
@@ -270,7 +323,8 @@ impl Undo {
                         + changes_bytes(changes)
                         + origin_bytes(origin)
                 }
-                Self::Animations { retained_bytes, .. }
+                Self::Gestures { retained_bytes, .. }
+                | Self::Animations { retained_bytes, .. }
                 | Self::Rules { retained_bytes, .. }
                 | Self::Bindings { retained_bytes, .. }
                 | Self::Workspaces { retained_bytes, .. } => *retained_bytes,
@@ -285,6 +339,16 @@ pub(super) struct History {
     entries: VecDeque<Undo>,
 }
 impl History {
+    pub fn gestures(
+        &mut self,
+        previous: hyprland_editor_core::gesture::Draft,
+    ) -> Result<(), String> {
+        let retained_bytes = gesture_bytes(&previous);
+        self.push(Undo::Gestures {
+            previous,
+            retained_bytes,
+        })
+    }
     pub fn animations(
         &mut self,
         previous: hyprland_editor_core::animation::Draft,

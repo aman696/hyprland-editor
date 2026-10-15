@@ -53,7 +53,8 @@ struct CLuaConfigBool{bool m_data,m_bSetByUser=false;CLuaConfigBool(bool def):m_
 struct CLuaConfigString{std::string value;CLuaConfigString(const char*s):value(s){};
 SParseError parse(lua_State* L){if(lua_type(L,-1)!=LUA_TSTRING)return{PARSE_ERROR_BAD_TYPE,"literal string adapter"};size_t n=0;auto p=lua_tolstring(L,-1,&n);value.assign(p,n);return{};}const std::string& parsed(){return value;}};
 namespace Internal{
-int configError(lua_State*L,const std::string& s){return luaL_error(L,"%s",s.c_str());}
+inline bool configFailed=false;
+int configError(lua_State*,const std::string&){configFailed=true;return 0;}
 bool hasTableField(lua_State*L,int idx,const char*field);
 }
 }
@@ -75,7 +76,7 @@ std::string q(const std::string&s){std::ostringstream out;out<<std::quoted(s);re
 int main(){auto* L=luaL_newstate();luaL_openlibs(L);lua_newtable(L);lua_pushcfunction(L,hlCurve);lua_setfield(L,-2,"curve");lua_pushcfunction(L,hlAnimation);lua_setfield(L,-2,"animation");lua_setglobal(L,"hl");
 std::string line;while(std::getline(std::cin,line)){
 Config::animationTree()->reset();*Animation::mgr()=CHyprAnimationManager{};
-auto status=luaL_dostring(L,line.c_str());std::cout<<"{\"accepted\":"<<(status==LUA_OK?"true":"false")<<",\"tree\":[";
+Config::Lua::Internal::configFailed=false;auto status=luaL_dostring(L,line.c_str());std::cout<<"{\"accepted\":"<<(status==LUA_OK && !Config::Lua::Internal::configFailed?"true":"false")<<",\"tree\":[";
 std::map<std::string,SP<Hyprutils::Animation::SAnimationPropertyConfig>> sorted(Config::animationTree()->m_animationTree.getFullConfig().begin(),Config::animationTree()->m_animationTree.getFullConfig().end());bool comma=false;
 for(auto&[name,node]:sorted){if(comma)std::cout<<",";comma=true;auto parent=node->pParentAnimation.lock();auto values=node->pValues.lock();std::string origin,parentName;for(auto&[n,p]:sorted){if(p==values)origin=n;if(p==parent)parentName=n;}
 std::cout<<"{\"name\":"<<q(name)<<",\"parent\":"<<(parent==node?"null":q(parentName))<<",\"origin\":"<<q(origin)<<",\"overridden\":"<<(node->overridden?"true":"false")<<",\"enabled\":"<<(values->internalEnabled?"true":"false")<<",\"speed\":"<<std::setprecision(17)<<values->internalSpeed<<",\"curve\":"<<q(values->internalBezier)<<",\"style\":"<<q(values->internalStyle)<<"}";}
