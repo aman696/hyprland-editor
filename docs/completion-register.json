@@ -13,6 +13,23 @@
   },
   "foundations": [
     {
+      "area": "gesture draft editor",
+      "code": [
+        "crates/editor-core/src/gesture.rs",
+        "crates/editor-app/src/gestures.rs",
+        "data/gesture-semantics.json",
+        "data/gesture-source-fixtures.json"
+      ],
+      "test_references": [
+        "source_registration_and_callback_payload_observations_match_the_models",
+        "callbacks_preserve_phase_presence_parameters_preparation_and_legacy_shape",
+        "test_editor",
+        "gestures_survive_application_reopen_with_edits_and_reject_schema_and_shape_tampering",
+        "scripts/gesture_source_probe.py"
+      ],
+      "limits": "nine declaration fields, three phase blocks and five-part unset identity, ordered registration findings, static dispatcher workflows, synthetic callback data, private persistence and undo; no complete event-dependent workflows, source editing, effective discovery, input routing/inhibition/renderer/timeout conformance, isolated preview, guarded apply/recovery or resource/release certification"
+    },
+    {
       "area": "animation draft editor",
       "code": [
         "crates/editor-core/src/animation.rs",
@@ -14770,7 +14787,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed gesture drafts, ordered registration/unset identity, static phase action blocks, synthetic callback payloads and schema-pinned storage; full workflow/source/input/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14792,7 +14809,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed gesture drafts, ordered registration/unset identity, static phase action blocks, synthetic callback payloads and schema-pinned storage; full workflow/source/input/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14814,7 +14831,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed gesture drafts, ordered registration/unset identity, static phase action blocks, synthetic callback payloads and schema-pinned storage; full workflow/source/input/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14836,7 +14853,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed gesture drafts, ordered registration/unset identity, static phase action blocks, synthetic callback payloads and schema-pinned storage; full workflow/source/input/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14858,7 +14875,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed gesture drafts, ordered registration/unset identity, static phase action blocks, synthetic callback payloads and schema-pinned storage; full workflow/source/input/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14880,7 +14897,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed gesture drafts, ordered registration/unset identity, static phase action blocks, synthetic callback payloads and schema-pinned storage; full workflow/source/input/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14902,7 +14919,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed gesture drafts, ordered registration/unset identity, static phase action blocks, synthetic callback payloads and schema-pinned storage; full workflow/source/input/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14924,7 +14941,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed gesture drafts, ordered registration/unset identity, static phase action blocks, synthetic callback payloads and schema-pinned storage; full workflow/source/input/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14946,7 +14963,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed gesture drafts, ordered registration/unset identity, static phase action blocks, synthetic callback payloads and schema-pinned storage; full workflow/source/input/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14968,7 +14985,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed gesture drafts, ordered registration/unset identity, static phase action blocks, synthetic callback payloads and schema-pinned storage; full workflow/source/input/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -14990,7 +15007,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed gesture drafts, ordered registration/unset identity, static phase action blocks, synthetic callback payloads and schema-pinned storage; full workflow/source/input/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15012,7 +15029,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed gesture drafts, ordered registration/unset identity, static phase action blocks, synthetic callback payloads and schema-pinned storage; full workflow/source/input/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },
@@ -15034,7 +15051,7 @@
       ],
       "coverage_state": "Specified",
       "complete": false,
-      "foundation": "no dedicated feature implementation yet",
+      "foundation": "typed gesture drafts, ordered registration/unset identity, static phase action blocks, synthetic callback payloads and schema-pinned storage; full workflow/source/input/runtime/preview conformance unproven",
       "activation_certified": false,
       "preview_certified": false
     },

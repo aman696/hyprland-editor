@@ -3,6 +3,7 @@ pub mod action;
 pub mod animation;
 pub mod binding;
 pub mod device;
+pub mod gesture;
 pub mod import;
 pub mod lua;
 pub mod monitor;

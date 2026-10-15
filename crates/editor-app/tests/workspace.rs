@@ -368,3 +368,39 @@ fn animation_declarations_survive_restricted_application_reopen_and_refuse_schem
     assert!(err.contains("Animation schema"));
     std::fs::remove_dir_all(root).unwrap();
 }
+
+#[test]
+fn gestures_survive_application_reopen_with_edits_and_reject_schema_and_shape_tampering() {
+    let root = folder();
+    let source = "hl.gesture{fingers=3,direction='left',action='workspace'}";
+    let edited = "hl.gesture{fingers=4,direction='L',mods='SUPER',scale=2.0,action={start=function(e)hl.dispatch(hl.dsp.no_op())end,finish=function()end}}";
+    let report = lua::parse(edited, BASELINE, &catalogue()).unwrap();
+    assert!(!report.opaque_effects);
+    assert_eq!(report.gestures.declarations.len(), 1);
+    let snapshot = fixture(&root, source).with_gestures(report.gestures.clone());
+    let path = workspace::save(&root, &snapshot, &catalogue()).unwrap();
+    fs::remove_file(root.join("original.lua")).unwrap();
+    let (ok, out, err) = run(&path);
+    assert!(ok, "{err}");
+    let result: serde_json::Value = serde_json::from_str(&out).unwrap();
+    assert_eq!(result["gesture_declarations"], 1);
+    assert_eq!(result["source_reparsed"], true);
+    assert_eq!(result["original_paths_opened"], false);
+    assert_eq!(
+        workspace::read(&path, &catalogue()).unwrap().gestures,
+        report.gestures
+    );
+    let original: serde_json::Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+    let mut forged = original.clone();
+    forged["gesture_schema_sha256"] = serde_json::json!("tampered");
+    fs::write(&path, forged.to_string()).unwrap();
+    let (ok, _, err) = run(&path);
+    assert!(!ok);
+    assert!(err.contains("Gesture schema"));
+    let mut forged = original;
+    forged["gestures"]["declarations"][0]["fingers"] =
+        serde_json::json!({"type":"Float","value":4.0});
+    fs::write(&path, forged.to_string()).unwrap();
+    assert!(!run(&path).0);
+    fs::remove_dir_all(root).unwrap();
+}

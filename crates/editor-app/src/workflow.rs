@@ -43,6 +43,7 @@ struct Imported {
     workspace_rules: Vec<hyprland_editor_core::workspace_rule::Rule>,
     rules: Vec<hyprland_editor_core::rule::Rule>,
     animations: hyprland_editor_core::animation::Draft,
+    gestures: hyprland_editor_core::gesture::Draft,
 }
 fn read_import(
     path: PathBuf,
@@ -70,7 +71,7 @@ fn read_import(
         let diagnostics = source
             .as_ref()
             .map_or(0, |doc| doc.report.diagnostics.len());
-        return Ok(Imported { draft:workspace.draft,source,origin,saved_json:true,monitors:workspace.monitors,devices:workspace.devices,bindings:workspace.bindings,workspace_rules:workspace.workspace_rules,rules:workspace.rules,animations:workspace.animations,
+        return Ok(Imported { draft:workspace.draft,source,origin,saved_json:true,monitors:workspace.monitors,devices:workspace.devices,bindings:workspace.bindings,workspace_rules:workspace.workspace_rules,rules:workspace.rules,animations:workspace.animations,gestures:workspace.gestures,
             message:format!("Saved draft reopened with {diagnostics} source diagnostics. Source snapshots were reparsed; recorded original paths were not opened. Desktop state is separate.") });
     }
     let captured = if path
@@ -82,13 +83,13 @@ fn read_import(
         storage::read_source(&path)?
     };
     match path.extension().and_then(|s|s.to_str()) {
-        Some("json")=>Draft::from_json(&captured.content,&catalogue).map(|draft|Imported{draft,source:None,origin:None,monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),message:"Validated value-only draft loaded".into(),saved_json:true}),
-        Some("conf")=>import::legacy(&captured.content,&catalogue).map(|r|Imported{message:format!("Imported {} literal overrides; {} lines skipped; {} repeated keys. Includes and variables remain unresolved. Active state is separate.",r.draft.values.len(),r.skipped.len(),r.duplicate_keys.len()),draft:r.draft,source:None,origin:None,monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),saved_json:false}),
+        Some("json")=>Draft::from_json(&captured.content,&catalogue).map(|draft|Imported{draft,source:None,origin:None,monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),message:"Validated value-only draft loaded".into(),saved_json:true}),
+        Some("conf")=>import::legacy(&captured.content,&catalogue).map(|r|Imported{message:format!("Imported {} literal overrides; {} lines skipped; {} repeated keys. Includes and variables remain unresolved. Active state is separate.",r.draft.values.len(),r.skipped.len(),r.duplicate_keys.len()),draft:r.draft,source:None,origin:None,monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),saved_json:false}),
         Some("lua")=>{
             let doc=parse_source(captured.content,version,&catalogue)?;
             let mut message=format!("Imported {} scalar declarations, {} monitor rules and {} device rules; {} diagnostics. Effective values are not inferred by executing Lua.",doc.report.draft.values.len(),doc.report.monitors.len(),doc.report.devices.len(),doc.report.diagnostics.len());
             if doc.report.opaque_effects{message.push_str(" Opaque code remains in the source; this is a partial projection.");}
-            Ok(Imported{draft:doc.report.draft.clone(),monitors:doc.report.monitors.clone(),devices:doc.report.devices.clone(),bindings:doc.report.bindings.clone(),workspace_rules:doc.report.workspace_rules.clone(),rules:doc.report.rules.clone(),animations:doc.report.animations.clone(),source:Some(doc),origin:Some(captured.identity),message,saved_json:false})
+            Ok(Imported{draft:doc.report.draft.clone(),monitors:doc.report.monitors.clone(),devices:doc.report.devices.clone(),bindings:doc.report.bindings.clone(),workspace_rules:doc.report.workspace_rules.clone(),rules:doc.report.rules.clone(),animations:doc.report.animations.clone(),gestures:doc.report.gestures.clone(),source:Some(doc),origin:Some(captured.identity),message,saved_json:false})
         },_=>Err("Select saved .hye workspace, draft JSON, legacy .conf or Lua .lua source".into()),
     }
 }
@@ -114,7 +115,7 @@ pub(super) fn check_workspace(path: PathBuf) -> Result<serde_json::Value, String
     let imported = read_import(path, hyprland_editor_core::catalogue(), BASELINE.into())?;
     Ok(
         serde_json::json!({"scope":"draft-and-static-source-only", "version":imported.draft.version,
-        "draft_values":imported.draft.values.len(),"monitor_rules":imported.monitors.len(),"device_rules":imported.devices.len(),"binding_rules":imported.bindings.binds.len(),"workspace_rules":imported.workspace_rules.len(),"match_effect_rules":imported.rules.len(),"animation_declarations":imported.animations.declarations.len(), "source_reparsed":imported.source.is_some(),
+        "draft_values":imported.draft.values.len(),"monitor_rules":imported.monitors.len(),"device_rules":imported.devices.len(),"binding_rules":imported.bindings.binds.len(),"workspace_rules":imported.workspace_rules.len(),"match_effect_rules":imported.rules.len(),"animation_declarations":imported.animations.declarations.len(),"gesture_declarations":imported.gestures.declarations.len(), "source_reparsed":imported.source.is_some(),
         "source_sha256":imported.source.as_ref().map(|s|s.report.source_sha256.as_str()),
         "opaque_effects":imported.source.as_ref().is_some_and(|s|s.report.opaque_effects),
         "source_diagnostics":imported.source.as_ref().map_or(0,|s|s.report.diagnostics.len()),
@@ -161,7 +162,7 @@ fn connect_save_at(
     button.connect_clicked(move|button| {
         let Some(win)=win.upgrade() else{return;};
         let (generation,catalogue,workspace)={
-            let s=state.borrow();let mut snapshot=Workspace::new(s.draft.clone()).with_monitors(s.monitors.get(&s.draft.version).cloned().unwrap_or_default()).with_devices(s.devices.get(&s.draft.version).cloned().unwrap_or_default()).with_bindings(s.bindings.get(&s.draft.version).cloned().unwrap_or_default()).with_workspace_rules(s.workspace_rules.get(&s.draft.version).cloned().unwrap_or_default()).with_rules(s.rules.get(&s.draft.version).cloned().unwrap_or_default()).with_animations(s.animations.get(&s.draft.version).cloned().unwrap_or_default());
+            let s=state.borrow();let mut snapshot=Workspace::new(s.draft.clone()).with_monitors(s.monitors.get(&s.draft.version).cloned().unwrap_or_default()).with_devices(s.devices.get(&s.draft.version).cloned().unwrap_or_default()).with_bindings(s.bindings.get(&s.draft.version).cloned().unwrap_or_default()).with_workspace_rules(s.workspace_rules.get(&s.draft.version).cloned().unwrap_or_default()).with_rules(s.rules.get(&s.draft.version).cloned().unwrap_or_default()).with_animations(s.animations.get(&s.draft.version).cloned().unwrap_or_default()).with_gestures(s.gestures.get(&s.draft.version).cloned().unwrap_or_default());
             if let Some(doc)=s.sources.get(&s.draft.version) {
                 let Some(origin)=s.source_origins.get(&s.draft.version) else {
                     notice(&win,"Source identity missing","Reimport the original source before saving its context.");return;
@@ -170,7 +171,7 @@ fn connect_save_at(
             }
             (s.generation,s.catalogue.clone(),snapshot)
         };
-        let saved_animations=workspace.animations.clone();let saved_rules=workspace.rules.clone();let saved_workspaces=workspace.workspace_rules.clone();let saved_bindings=workspace.bindings.clone();let saved_devices=workspace.devices.clone();let saved_monitors=workspace.monitors.clone();let saved_values=workspace.draft.values.clone();let saved_version=workspace.draft.version.clone();
+        let saved_gestures=workspace.gestures.clone();let saved_animations=workspace.animations.clone();let saved_rules=workspace.rules.clone();let saved_workspaces=workspace.workspace_rules.clone();let saved_bindings=workspace.bindings.clone();let saved_devices=workspace.devices.clone();let saved_monitors=workspace.monitors.clone();let saved_values=workspace.draft.values.clone();let saved_version=workspace.draft.version.clone();
         let saved_origin=workspace.root().map(|root|root.origin.clone());
         let root=root.clone();
         button.set_sensitive(false);status.set_text("Saving a private draft and source snapshot…");
@@ -187,7 +188,7 @@ fn connect_save_at(
                 Ok(path)=>{
                     let mut s=state.borrow_mut();
                     if s.generation==generation {
-                        s.saved.insert(saved_version.clone(),saved_values);s.saved_monitors.insert(saved_version.clone(),saved_monitors);s.saved_devices.insert(saved_version.clone(),saved_devices);s.saved_bindings.insert(saved_version.clone(),saved_bindings);s.saved_rules.insert(saved_version.clone(),saved_rules);s.saved_animations.insert(saved_version.clone(),saved_animations);s.saved_workspace_rules.insert(saved_version.clone(),saved_workspaces);s.saved_source_origins.insert(saved_version,saved_origin);
+                        s.saved.insert(saved_version.clone(),saved_values);s.saved_monitors.insert(saved_version.clone(),saved_monitors);s.saved_devices.insert(saved_version.clone(),saved_devices);s.saved_bindings.insert(saved_version.clone(),saved_bindings);s.saved_rules.insert(saved_version.clone(),saved_rules);s.saved_animations.insert(saved_version.clone(),saved_animations);s.saved_gestures.insert(saved_version.clone(),saved_gestures);s.saved_workspace_rules.insert(saved_version.clone(),saved_workspaces);s.saved_source_origins.insert(saved_version,saved_origin);
                         drop(s);status.set_text(&format!("Private draft and source snapshot saved: {}",path.display()));
                     } else {drop(s);status.set_text(&format!("An earlier draft revision was saved to {}. Current edits remain unsaved.",path.display()));}
                 },Err(e)=>{super::summary(&state,&status);notice(&win,"Could not save draft",&e);}
@@ -306,6 +307,7 @@ pub(super) fn connect_source_copy(
         if s.monitors.get(&s.draft.version).map(Vec::as_slice).unwrap_or(&[]) != doc.report.monitors.as_slice() { drop(s);notice(&window,"Monitor source edits pending","Monitor drafts can be saved and reviewed as Lua. Updating their original source spans is not implemented yet; a scalar source copy would omit those edits.");return; }
         if !hyprland_editor_core::device::same_declarations(s.devices.get(&s.draft.version).map(Vec::as_slice).unwrap_or(&[]),&doc.report.devices) {drop(s);notice(&window,"Device source edits pending","Device drafts can be saved and reviewed as Lua. Device source editing is not implemented; a scalar source copy would omit these changes.");return;}
         let bindings=s.bindings.get(&s.draft.version).cloned().unwrap_or_default();if !bindings.same_declarations(&doc.report.bindings,&s.draft.version){drop(s);notice(&window,"Binding source edits pending","Binding drafts can be saved/exported. Original binding source editing is not implemented; a scalar copy would omit your binding edits.");return;}
+        if !s.gestures.get(&s.draft.version).cloned().unwrap_or_default().same_declarations(&doc.report.gestures,&s.draft.version) {drop(s);notice(&window,"Gesture source edits pending","Gesture source editing is not implemented; a scalar copy would omit those edits. Save or export the gesture draft instead.");return;}
         if !s.animations.get(&s.draft.version).cloned().unwrap_or_default().same_declarations(&doc.report.animations) {drop(s);notice(&window,"Animation source edits pending","Animation source editing is not implemented; a scalar copy would omit those edits. Save or export the animation draft instead.");return;}
         if !hyprland_editor_core::rule::same_declarations(s.rules.get(&s.draft.version).map(Vec::as_slice).unwrap_or(&[]),&doc.report.rules){drop(s);notice(&window,"Rule source edits pending","Window/layer rule source editing is not implemented; a scalar copy would omit those edits.");return;}
         if !hyprland_editor_core::workspace_rule::same_declarations(s.workspace_rules.get(&s.draft.version).map(Vec::as_slice).unwrap_or(&[]),&doc.report.workspace_rules){drop(s);notice(&window,"Workspace source edits pending","Workspace drafts can be saved/exported. Workspace source editing is not implemented; a scalar copy would omit those edits.");return;}
@@ -391,6 +393,12 @@ fn apply_import(
     }
     s.animations
         .insert(imported.draft.version.clone(), imported.animations);
+    if imported.saved_json {
+        s.saved_gestures
+            .insert(imported.draft.version.clone(), imported.gestures.clone());
+    }
+    s.gestures
+        .insert(imported.draft.version.clone(), imported.gestures);
     s.draft = imported.draft;
     s.undo.clear();
     s.generation += 1;
@@ -527,6 +535,7 @@ pub(super) fn test_source_persistence(window: &adw::ApplicationWindow) {
             workspace_rules: vec![],
             rules: vec![],
             animations: Default::default(),
+            gestures: Default::default(),
             message: "Fixture imported".into(),
         },
         &state,
@@ -572,6 +581,14 @@ pub(super) fn test_source_persistence(window: &adw::ApplicationWindow) {
         .borrow_mut()
         .replace_animations(animations.clone())
         .unwrap();
+    let gestures = hyprland_editor_core::lua::parse(
+        "hl.gesture{fingers=3,direction='left',action={start=function()hl.dispatch(hl.dsp.no_op())end,finish=function()end}}",
+        BASELINE, &catalogue,
+    ).unwrap().gestures;
+    state
+        .borrow_mut()
+        .replace_gestures(gestures.clone())
+        .unwrap();
     button.emit_clicked();
     wait();
     assert!(!state.borrow().dirty());
@@ -585,6 +602,7 @@ pub(super) fn test_source_persistence(window: &adw::ApplicationWindow) {
     let saved = workspace::read(&files[0], &catalogue).unwrap();
     assert_eq!(saved.root().unwrap().origin, captured.identity);
     assert_eq!(saved.animations, animations);
+    assert_eq!(saved.gestures, gestures);
     assert_eq!(saved.monitors, vec![monitor]);
     assert_eq!(saved.devices, vec![device]);
     assert_eq!(

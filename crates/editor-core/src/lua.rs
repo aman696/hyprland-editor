@@ -41,6 +41,8 @@ pub struct LuaReport {
     pub rules: Vec<crate::rule::Rule>,
     #[serde(default)]
     pub animations: crate::animation::Draft,
+    #[serde(default)]
+    pub gestures: crate::gesture::Draft,
     pub declarations: Vec<Declaration>,
     pub diagnostics: Vec<Diagnostic>,
     pub opaque_effects: bool,
@@ -688,6 +690,161 @@ impl Projection<'_> {
         }
         Ok(())
     }
+    fn gesture(&mut self, node: Node<'_>) -> Result<(), String> {
+        use crate::gesture::{Callbacks, GestureAction, Spec};
+        let args = node
+            .child_by_field_name("arguments")
+            .map(named)
+            .unwrap_or_default();
+        let parsed = (|| -> Result<Spec, String> {
+            if args.len() != 1 || args[0].kind() != "table_constructor" {
+                return Err("Gesture requires one explicit static table".into());
+            }
+            let mut fields = BTreeMap::new();
+            for field in named(args[0]) {
+                let key = field
+                    .child_by_field_name("name")
+                    .ok_or("Gesture fields must be named")?;
+                let key = if key.kind() == "identifier"
+                    && !text(field, self.source).trim_start().starts_with('[')
+                {
+                    text(key, self.source).to_string()
+                } else if let Some(Expr::Text(s)) = evaluate(key, self.source, &self.env, 0) {
+                    s
+                } else {
+                    return Err("Gesture key is unresolved".into());
+                };
+                if fields
+                    .insert(
+                        key,
+                        field
+                            .child_by_field_name("value")
+                            .ok_or("Gesture value missing")?,
+                    )
+                    .is_some()
+                {
+                    return Err("Duplicate gesture field".into());
+                }
+            }
+            let take = |fields: &mut BTreeMap<String, Node<'_>>,
+                        key: &str|
+             -> Result<Option<Value>, String> {
+                let Some(node) = fields.remove(key) else {
+                    return Ok(None);
+                };
+                Ok(match evaluate(node, self.source, &self.env, 0) {
+                    Some(Expr::Nil) => None,
+                    Some(Expr::Bool(v)) => Some(Value::Bool(v)),
+                    Some(Expr::Int(v)) => Some(Value::Int(v)),
+                    Some(Expr::Float(v)) => Some(Value::Float(v)),
+                    Some(Expr::Text(v)) => Some(Value::String(v)),
+                    _ => return Err(format!("Gesture {key} is unresolved")),
+                })
+            };
+            let fingers = take(&mut fields, "fingers")?.ok_or("Gesture fingers required")?;
+            let Some(Value::String(direction)) = take(&mut fields, "direction")? else {
+                return Err("Gesture direction requires text".into());
+            };
+            let action_node = fields.remove("action").ok_or("Gesture action required")?;
+            let action = if action_node.kind() == "function_definition" {
+                GestureAction::LegacyFinish(self.callback_workflow(action_node, true)?)
+            } else if action_node.kind() == "table_constructor" {
+                let mut callbacks = Callbacks::default();
+                let mut seen = std::collections::BTreeSet::new();
+                for field in named(action_node) {
+                    let key = field
+                        .child_by_field_name("name")
+                        .ok_or("Callback phase must be named")?;
+                    let key = if key.kind() == "identifier"
+                        && !text(field, self.source).trim_start().starts_with('[')
+                    {
+                        text(key, self.source).to_string()
+                    } else if let Some(Expr::Text(s)) = evaluate(key, self.source, &self.env, 0) {
+                        s
+                    } else {
+                        return Err("Callback phase is unresolved".into());
+                    };
+                    if !seen.insert(key.clone()) {
+                        return Err("Duplicate gesture callback phase".into());
+                    }
+                    let target = match key.as_str() {
+                        "start" => &mut callbacks.start,
+                        "update" => &mut callbacks.update,
+                        "finish" => &mut callbacks.finish,
+                        _ => return Err("Unmodeled gesture callback phase".into()),
+                    };
+                    let value = field
+                        .child_by_field_name("value")
+                        .ok_or("Callback value missing")?;
+                    if value.kind() != "nil" {
+                        *target = Some(self.callback_workflow(value, true)?);
+                    }
+                }
+                GestureAction::Callbacks(callbacks)
+            } else {
+                let Some(Expr::Text(name)) = evaluate(action_node, self.source, &self.env, 0)
+                else {
+                    return Err("Gesture action is unresolved".into());
+                };
+                GestureAction::Builtin(name)
+            };
+            let spec = Spec {
+                id: format!("source-gesture-{}", self.report.gestures.declarations.len()),
+                fingers,
+                direction,
+                action,
+                mods: take(&mut fields, "mods")?,
+                scale: take(&mut fields, "scale")?,
+                disable_inhibit: take(&mut fields, "disable_inhibit")?,
+                mode: take(&mut fields, "mode")?,
+                zoom_level: take(&mut fields, "zoom_level")?,
+                workspace_name: take(&mut fields, "workspace_name")?,
+            };
+            if !fields.is_empty() {
+                return Err("Unmodeled gesture fields remain in source".into());
+            }
+            spec.validate(&self.report.draft.version)?;
+            if self.report.gestures.declarations.len() >= crate::gesture::MAX_GESTURES {
+                return Err("Too many gesture declarations".into());
+            }
+            Ok(spec)
+        })();
+        match parsed {
+            Ok(spec) => self.report.gestures.declarations.push(spec),
+            Err(e) => {
+                self.report.opaque_effects = true;
+                self.diagnostic(node, &e);
+                // Literal function creation is inert; unresolved non-function argument expressions can run at load.
+                fn creation_is_static(
+                    node: Node<'_>,
+                    source: &str,
+                    env: &BTreeMap<String, Expr>,
+                ) -> bool {
+                    if node.kind() == "function_definition" {
+                        return true;
+                    }
+                    if node.kind() == "table_constructor" {
+                        return named(node).iter().all(|f| {
+                            f.child_by_field_name("value")
+                                .is_some_and(|v| creation_is_static(v, source, env))
+                                && f.child_by_field_name("name").is_none_or(|k| {
+                                    k.kind() == "identifier"
+                                        || evaluate(k, source, env, 0).is_some()
+                                })
+                        });
+                    }
+                    evaluate(node, source, env, 0).is_some()
+                }
+                if args
+                    .iter()
+                    .any(|n| !creation_is_static(*n, self.source, &self.env))
+                {
+                    self.api_available = false;
+                }
+            }
+        }
+        Ok(())
+    }
     fn animation(&mut self, node: Node<'_>, curve: bool) -> Result<(), String> {
         use crate::animation::{Curve, CurveKind, Declaration, Node as AnimationNode, Operation};
         let args = node
@@ -1229,16 +1386,30 @@ impl Projection<'_> {
         }
         Err("Dispatcher fields/branch are outside the reviewed argument shapes".into())
     }
-    fn callback_actions(&self, node: Node<'_>) -> Result<Vec<crate::action::Action>, String> {
+    fn callback_workflow(
+        &self,
+        node: Node<'_>,
+        allow_parameter: bool,
+    ) -> Result<crate::gesture::Workflow, String> {
         if node.kind() != "function_definition" {
-            return self.action(node, true).map(|a| vec![a]);
+            return Err("Callback must be a literal function".into());
         }
         let params = node
             .child_by_field_name("parameters")
             .ok_or("Callback parameters missing")?;
-        if !named(params).is_empty() {
-            return Err("Callbacks with parameters need the workflow editor".into());
-        }
+        let params = named(params);
+        let event_parameter = if params.is_empty() {
+            None
+        } else {
+            if !allow_parameter || params.len() != 1 || params[0].kind() != "identifier" {
+                return Err("Callback parameter shape needs the full workflow editor".into());
+            }
+            let name = text(params[0], self.source);
+            if self.env.contains_key(name) {
+                return Err("Callback parameter shadows a captured static value".into());
+            }
+            Some(name.to_string())
+        };
         let mut actions = vec![];
         let statements = node
             .child_by_field_name("body")
@@ -1269,7 +1440,18 @@ impl Projection<'_> {
         if actions.len() > 64 {
             return Err("Callback supports at most 64 static dispatchers".into());
         }
-        Ok(actions)
+        let workflow = crate::gesture::Workflow {
+            actions,
+            event_parameter,
+        };
+        workflow.validate(&self.report.draft.version)?;
+        Ok(workflow)
+    }
+    fn callback_actions(&self, node: Node<'_>) -> Result<Vec<crate::action::Action>, String> {
+        if node.kind() != "function_definition" {
+            return self.action(node, true).map(|a| vec![a]);
+        }
+        self.callback_workflow(node, false).map(|w| w.actions)
     }
     fn binding(&mut self, node: Node<'_>) -> Result<(), String> {
         let parsed = (|| -> Result<crate::binding::Bind, String> {
@@ -1527,6 +1709,8 @@ impl Projection<'_> {
                     self.submap(node)?;
                 } else if text(name, self.source) == "hl.curve" && self.api_available {
                     self.animation(node, true)?;
+                } else if text(name, self.source) == "hl.gesture" && self.api_available {
+                    self.gesture(node)?;
                 } else if text(name, self.source) == "hl.animation" && self.api_available {
                     self.animation(node, false)?;
                 } else if text(name, self.source) == "hl.window_rule" && self.api_available {
@@ -1635,6 +1819,7 @@ pub fn parse(source: &str, version: &str, catalogue: &[Setting]) -> Result<LuaRe
             workspace_rules: vec![],
             rules: vec![],
             animations: Default::default(),
+            gestures: Default::default(),
             declarations: vec![],
             diagnostics: vec![],
             opaque_effects: false,
@@ -1649,6 +1834,7 @@ pub fn parse(source: &str, version: &str, catalogue: &[Setting]) -> Result<LuaRe
         p.statement(node)?;
     }
     p.report.animations.validate(version)?;
+    p.report.gestures.validate(version)?;
     crate::rule::validate(&p.report.rules, version)?;
     p.report.draft.validate(catalogue)?;
     p.report.bindings.validate(version)?;
@@ -1669,6 +1855,7 @@ impl LuaDocument {
             return Err("Invalid or stale parser report".into());
         }
         report.animations.validate(&report.draft.version)?;
+        report.gestures.validate(&report.draft.version)?;
         crate::rule::validate(&report.rules, &report.draft.version)?;
         report.draft.validate(catalogue)?;
         crate::device::validate(&report.devices, &report.draft.version)?;

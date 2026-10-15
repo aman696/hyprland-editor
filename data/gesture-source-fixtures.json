@@ -1,0 +1,2802 @@
+{
+  "cases": [
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "fingers:2",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "HORIZONTAL",
+          "disable_inhibit": false,
+          "fingers": 2,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=2,direction='horizontal',action='workspace'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "fingers:9",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "HORIZONTAL",
+          "disable_inhibit": false,
+          "fingers": 9,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=9,direction='horizontal',action='workspace'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "fingers:1",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=1,direction='horizontal',action='workspace'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "fingers:10",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=10,direction='horizontal',action='workspace'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "fingers:3.0",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=3.0,direction='horizontal',action='workspace'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "fingers:'3'",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers='3',direction='horizontal',action='workspace'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "fingers:true",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=true,direction='horizontal',action='workspace'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "scale:0.1",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace',scale=0.1}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "scale:0.10000000149011612",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "HORIZONTAL",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 0.10000000149011612
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace',scale=0.10000000149011612}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "scale:1",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "HORIZONTAL",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace',scale=1}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "scale:10",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "HORIZONTAL",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 10
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace',scale=10}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "scale:10.0000001",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace',scale=10.0000001}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "scale:true",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "HORIZONTAL",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace',scale=true}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "scale:false",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace',scale=false}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "scale:'0.1'",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace',scale='0.1'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "scale:'1'",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "HORIZONTAL",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace',scale='1'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "scale:1e-50",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace',scale=1e-50}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "scale:-0.1",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace',scale=-0.1}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "scale:-10",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace',scale=-10}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "scale:0.099999999",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace',scale=0.099999999}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "scale:-0.099999999",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace',scale=-0.099999999}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "direction:SWIPE",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "SWIPE",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='SWIPE',action='workspace'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "direction:l",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='l',action='workspace'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "direction:r",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "RIGHT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='r',action='workspace'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "direction:top",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "UP",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='top',action='workspace'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "direction:t",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "UP",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='t',action='workspace'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "direction:bottom",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "DOWN",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='bottom',action='workspace'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "direction:b",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "DOWN",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='b',action='workspace'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "direction:horiz",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "HORIZONTAL",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='horiz',action='workspace'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "direction:vert",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "VERTICAL",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='vert',action='workspace'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "direction:pinch",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "PINCH",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='pinch',action='workspace'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "direction:zoomin",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "PINCH_IN",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='zoomin',action='workspace'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "direction:zoomout",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "PINCH_OUT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='zoomout',action='workspace'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "direction:unknown",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=3,direction='unknown',action='workspace'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "modifiers:SHIFT CONTROL ALT MOD2 MOD3 META MOD5 CAPS",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 255,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='workspace',mods='SHIFT CONTROL ALT MOD2 MOD3 META MOD5 CAPS'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "modifiers:notWINd",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 64,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='workspace',mods='notWINd'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "modifiers:shift_alt",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 9,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='workspace',mods='shift_alt'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "modifiers:ignored",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='workspace',mods='ignored'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "modifiers:",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='workspace',mods=''}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "action:workspace",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='workspace',mode='toggle',zoom_level=2.0,workspace_name='scratch'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "action:resize",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "resize",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='resize',mode='toggle',zoom_level=2.0,workspace_name='scratch'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "action:move",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "move",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='move',mode='toggle',zoom_level=2.0,workspace_name='scratch'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "action:special",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "special",
+          "arguments": [
+            "scratch"
+          ],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='special',mode='toggle',zoom_level=2.0,workspace_name='scratch'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "action:close",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "close",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='close',mode='toggle',zoom_level=2.0,workspace_name='scratch'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "action:float",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "float",
+          "arguments": [
+            "toggle"
+          ],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='float',mode='toggle',zoom_level=2.0,workspace_name='scratch'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "action:fullscreen",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "fullscreen",
+          "arguments": [
+            "toggle"
+          ],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='fullscreen',mode='toggle',zoom_level=2.0,workspace_name='scratch'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "action:cursor_zoom",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "cursor_zoom",
+          "arguments": [
+            "2.0",
+            "toggle"
+          ],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='cursor_zoom',mode='toggle',zoom_level=2.0,workspace_name='scratch'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "action:cursorZoom",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "cursor_zoom",
+          "arguments": [
+            "2.0",
+            "toggle"
+          ],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='cursorZoom',mode='toggle',zoom_level=2.0,workspace_name='scratch'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "action:scroll_move",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "scroll_move",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='scroll_move',mode='toggle',zoom_level=2.0,workspace_name='scratch'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "action:unknown",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=3,direction='left',action='unknown',mode='toggle',zoom_level=2.0,workspace_name='scratch'}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "overlap:swipe:left",
+      "errors": 1,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "SWIPE",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='swipe',action='workspace'};hl.gesture{fingers=3,direction='left',action='workspace',scale=2,disable_inhibit=true}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "overlap:left:swipe",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        },
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "SWIPE",
+          "disable_inhibit": true,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 2
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='workspace'};hl.gesture{fingers=3,direction='swipe',action='workspace',scale=2,disable_inhibit=true}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "overlap:horizontal:right",
+      "errors": 1,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "HORIZONTAL",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace'};hl.gesture{fingers=3,direction='right',action='workspace',scale=2,disable_inhibit=true}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "overlap:right:horizontal",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "RIGHT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        },
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "HORIZONTAL",
+          "disable_inhibit": true,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 2
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='right',action='workspace'};hl.gesture{fingers=3,direction='horizontal',action='workspace',scale=2,disable_inhibit=true}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "overlap:vertical:down",
+      "errors": 1,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "VERTICAL",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='vertical',action='workspace'};hl.gesture{fingers=3,direction='down',action='workspace',scale=2,disable_inhibit=true}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "overlap:up:vertical",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "UP",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        },
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "VERTICAL",
+          "disable_inhibit": true,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 2
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='up',action='workspace'};hl.gesture{fingers=3,direction='vertical',action='workspace',scale=2,disable_inhibit=true}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "overlap:pinch:pinchin",
+      "errors": 1,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "PINCH",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='pinch',action='workspace'};hl.gesture{fingers=3,direction='pinchin',action='workspace',scale=2,disable_inhibit=true}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "overlap:pinchin:pinchout",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "PINCH_IN",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        },
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "PINCH_OUT",
+          "disable_inhibit": true,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 2
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='pinchin',action='workspace'};hl.gesture{fingers=3,direction='pinchout',action='workspace',scale=2,disable_inhibit=true}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "overlap:pinchin:pinch",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "PINCH_IN",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        },
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "PINCH",
+          "disable_inhibit": true,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 2
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='pinchin',action='workspace'};hl.gesture{fingers=3,direction='pinch',action='workspace',scale=2,disable_inhibit=true}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "unset:",
+      "errors": 0,
+      "registered": [],
+      "source": "hl.gesture{fingers=3,direction=\"left\",action=\"workspace\"};hl.gesture{fingers=3,direction=\"left\",action=\"unset\"}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "unset:,scale=2",
+      "errors": 1,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction=\"left\",action=\"workspace\"};hl.gesture{fingers=3,direction=\"left\",action=\"unset\",scale=2}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "unset:,mods=\"CTRL\"",
+      "errors": 1,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction=\"left\",action=\"workspace\"};hl.gesture{fingers=3,direction=\"left\",action=\"unset\",mods=\"CTRL\"}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "unset:,disable_inhibit=true",
+      "errors": 1,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction=\"left\",action=\"workspace\"};hl.gesture{fingers=3,direction=\"left\",action=\"unset\",disable_inhibit=true}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "unset:,fingers=4",
+      "errors": 1,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction=\"left\",action=\"workspace\"};hl.gesture{fingers=4,direction=\"left\",action=\"unset\"}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "errors-do-not-stop-later-declarations",
+      "errors": 1,
+      "registered": [
+        {
+          "action": "move",
+          "arguments": [],
+          "direction": "RIGHT",
+          "disable_inhibit": false,
+          "fingers": 4,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3.0,direction=\"left\",action=\"workspace\"};hl.gesture{fingers=4,direction=\"right\",action=\"move\"}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "captured-and-late-preparation",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "callbacks",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "local saved=hl.dsp.no_op();hl.gesture{fingers=3,direction=\"left\",action={start=function(e) hl.dispatch(saved) end,update=function()end,finish=function()hl.dispatch(hl.dsp.no_op())end}}",
+      "trace": [
+        "prepare",
+        "dispatch",
+        "prepare",
+        "dispatch"
+      ],
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "legacy-end-has-no-payload",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "callbacks",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction=\"left\",action=function(e)table.insert(__trace,e==nil and \"nil-event\" or e)end}",
+      "trace": [
+        "nil-event"
+      ],
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "payloads:left",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "callbacks",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action={start=function(e)table.insert(__trace,e)end,update=function(e)table.insert(__trace,e)end,finish=function(e)table.insert(__trace,e)end}}",
+      "trace": [
+        {
+          "delta": {
+            "x": -12.0,
+            "y": 5.0
+          },
+          "direction": "LEFT",
+          "fingers": 3,
+          "phase": "start",
+          "time_ms": 123,
+          "type": "swipe"
+        },
+        {
+          "delta": {
+            "x": -12.0,
+            "y": 5.0
+          },
+          "direction": "LEFT",
+          "fingers": 3,
+          "phase": "update",
+          "time_ms": 123,
+          "type": "swipe"
+        },
+        {
+          "cancelled": true,
+          "direction": "LEFT",
+          "phase": "end",
+          "time_ms": 124,
+          "type": "swipe"
+        }
+      ],
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "payloads:pinchin",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "callbacks",
+          "arguments": [],
+          "direction": "PINCH_IN",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='pinchin',action={start=function(e)table.insert(__trace,e)end,update=function(e)table.insert(__trace,e)end,finish=function(e)table.insert(__trace,e)end}}",
+      "trace": [
+        {
+          "delta": {
+            "x": -12.0,
+            "y": 5.0
+          },
+          "direction": "PINCH_IN",
+          "fingers": 3,
+          "phase": "start",
+          "rotation": 10.0,
+          "scale": 0.8,
+          "time_ms": 123,
+          "type": "pinch"
+        },
+        {
+          "delta": {
+            "x": -12.0,
+            "y": 5.0
+          },
+          "direction": "PINCH_IN",
+          "fingers": 3,
+          "phase": "update",
+          "rotation": 10.0,
+          "scale": 0.8,
+          "time_ms": 123,
+          "type": "pinch"
+        },
+        {
+          "cancelled": true,
+          "direction": "PINCH_IN",
+          "phase": "end",
+          "time_ms": 124,
+          "type": "pinch"
+        }
+      ],
+      "version": "baseline"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "empty-callback-table",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=3,direction=\"left\",action={}}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "ignored-end-spelling",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=3,direction=\"left\",action={[\"end\"]=function()end}}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "invalid-callback-value",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=3,direction=\"left\",action={finish=true}}",
+      "trace": {},
+      "version": "baseline"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "fingers:2",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "HORIZONTAL",
+          "disable_inhibit": false,
+          "fingers": 2,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=2,direction='horizontal',action='workspace'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "fingers:9",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "HORIZONTAL",
+          "disable_inhibit": false,
+          "fingers": 9,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=9,direction='horizontal',action='workspace'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "fingers:1",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=1,direction='horizontal',action='workspace'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "fingers:10",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=10,direction='horizontal',action='workspace'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "fingers:3.0",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=3.0,direction='horizontal',action='workspace'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "fingers:'3'",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers='3',direction='horizontal',action='workspace'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "fingers:true",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=true,direction='horizontal',action='workspace'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "scale:0.1",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "HORIZONTAL",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 0.10000000149011612
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace',scale=0.1}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "scale:0.10000000149011612",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "HORIZONTAL",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 0.10000000149011612
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace',scale=0.10000000149011612}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "scale:1",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "HORIZONTAL",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace',scale=1}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "scale:10",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "HORIZONTAL",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 10
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace',scale=10}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "scale:10.0000001",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace',scale=10.0000001}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "scale:true",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "HORIZONTAL",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace',scale=true}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "scale:false",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace',scale=false}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "scale:'0.1'",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "HORIZONTAL",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 0.10000000149011612
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace',scale='0.1'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "scale:'1'",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "HORIZONTAL",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace',scale='1'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "scale:1e-50",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace',scale=1e-50}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "scale:-0.1",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "HORIZONTAL",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": -0.10000000149011612
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace',scale=-0.1}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "scale:-10",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "HORIZONTAL",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": -10
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace',scale=-10}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "scale:0.099999999",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "HORIZONTAL",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 0.10000000149011612
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace',scale=0.099999999}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "scale:-0.099999999",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "HORIZONTAL",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": -0.10000000149011612
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace',scale=-0.099999999}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "direction:SWIPE",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "SWIPE",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='SWIPE',action='workspace'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "direction:l",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='l',action='workspace'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "direction:r",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "RIGHT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='r',action='workspace'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "direction:top",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "UP",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='top',action='workspace'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "direction:t",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "UP",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='t',action='workspace'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "direction:bottom",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "DOWN",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='bottom',action='workspace'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "direction:b",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "DOWN",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='b',action='workspace'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "direction:horiz",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "HORIZONTAL",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='horiz',action='workspace'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "direction:vert",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "VERTICAL",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='vert',action='workspace'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "direction:pinch",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "PINCH",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='pinch',action='workspace'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "direction:zoomin",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "PINCH_IN",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='zoomin',action='workspace'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "direction:zoomout",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "PINCH_OUT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='zoomout',action='workspace'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "direction:unknown",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=3,direction='unknown',action='workspace'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "modifiers:SHIFT CONTROL ALT MOD2 MOD3 META MOD5 CAPS",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 255,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='workspace',mods='SHIFT CONTROL ALT MOD2 MOD3 META MOD5 CAPS'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "modifiers:notWINd",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 64,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='workspace',mods='notWINd'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "modifiers:shift_alt",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 9,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='workspace',mods='shift_alt'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "modifiers:ignored",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='workspace',mods='ignored'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "modifiers:",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='workspace',mods=''}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "action:workspace",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='workspace',mode='toggle',zoom_level=2.0,workspace_name='scratch'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "action:resize",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "resize",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='resize',mode='toggle',zoom_level=2.0,workspace_name='scratch'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "action:move",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "move",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='move',mode='toggle',zoom_level=2.0,workspace_name='scratch'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "action:special",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "special",
+          "arguments": [
+            "scratch"
+          ],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='special',mode='toggle',zoom_level=2.0,workspace_name='scratch'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "action:close",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "close",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='close',mode='toggle',zoom_level=2.0,workspace_name='scratch'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "action:float",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "float",
+          "arguments": [
+            "toggle"
+          ],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='float',mode='toggle',zoom_level=2.0,workspace_name='scratch'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "action:fullscreen",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "fullscreen",
+          "arguments": [
+            "toggle"
+          ],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='fullscreen',mode='toggle',zoom_level=2.0,workspace_name='scratch'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "action:cursor_zoom",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "cursor_zoom",
+          "arguments": [
+            "2.0",
+            "toggle"
+          ],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='cursor_zoom',mode='toggle',zoom_level=2.0,workspace_name='scratch'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "action:cursorZoom",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "cursor_zoom",
+          "arguments": [
+            "2.0",
+            "toggle"
+          ],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='cursorZoom',mode='toggle',zoom_level=2.0,workspace_name='scratch'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "action:scroll_move",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "scroll_move",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='scroll_move',mode='toggle',zoom_level=2.0,workspace_name='scratch'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "action:unknown",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=3,direction='left',action='unknown',mode='toggle',zoom_level=2.0,workspace_name='scratch'}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "overlap:swipe:left",
+      "errors": 1,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "SWIPE",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='swipe',action='workspace'};hl.gesture{fingers=3,direction='left',action='workspace',scale=2,disable_inhibit=true}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "overlap:left:swipe",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        },
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "SWIPE",
+          "disable_inhibit": true,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 2
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action='workspace'};hl.gesture{fingers=3,direction='swipe',action='workspace',scale=2,disable_inhibit=true}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "overlap:horizontal:right",
+      "errors": 1,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "HORIZONTAL",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='horizontal',action='workspace'};hl.gesture{fingers=3,direction='right',action='workspace',scale=2,disable_inhibit=true}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "overlap:right:horizontal",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "RIGHT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        },
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "HORIZONTAL",
+          "disable_inhibit": true,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 2
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='right',action='workspace'};hl.gesture{fingers=3,direction='horizontal',action='workspace',scale=2,disable_inhibit=true}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "overlap:vertical:down",
+      "errors": 1,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "VERTICAL",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='vertical',action='workspace'};hl.gesture{fingers=3,direction='down',action='workspace',scale=2,disable_inhibit=true}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "overlap:up:vertical",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "UP",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        },
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "VERTICAL",
+          "disable_inhibit": true,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 2
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='up',action='workspace'};hl.gesture{fingers=3,direction='vertical',action='workspace',scale=2,disable_inhibit=true}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "overlap:pinch:pinchin",
+      "errors": 1,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "PINCH",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='pinch',action='workspace'};hl.gesture{fingers=3,direction='pinchin',action='workspace',scale=2,disable_inhibit=true}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "overlap:pinchin:pinchout",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "PINCH_IN",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        },
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "PINCH_OUT",
+          "disable_inhibit": true,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 2
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='pinchin',action='workspace'};hl.gesture{fingers=3,direction='pinchout',action='workspace',scale=2,disable_inhibit=true}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "overlap:pinchin:pinch",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "PINCH_IN",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        },
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "PINCH",
+          "disable_inhibit": true,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 2
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='pinchin',action='workspace'};hl.gesture{fingers=3,direction='pinch',action='workspace',scale=2,disable_inhibit=true}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "unset:",
+      "errors": 0,
+      "registered": [],
+      "source": "hl.gesture{fingers=3,direction=\"left\",action=\"workspace\"};hl.gesture{fingers=3,direction=\"left\",action=\"unset\"}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "unset:,scale=2",
+      "errors": 1,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction=\"left\",action=\"workspace\"};hl.gesture{fingers=3,direction=\"left\",action=\"unset\",scale=2}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "unset:,mods=\"CTRL\"",
+      "errors": 1,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction=\"left\",action=\"workspace\"};hl.gesture{fingers=3,direction=\"left\",action=\"unset\",mods=\"CTRL\"}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "unset:,disable_inhibit=true",
+      "errors": 1,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction=\"left\",action=\"workspace\"};hl.gesture{fingers=3,direction=\"left\",action=\"unset\",disable_inhibit=true}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "unset:,fingers=4",
+      "errors": 1,
+      "registered": [
+        {
+          "action": "workspace",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction=\"left\",action=\"workspace\"};hl.gesture{fingers=4,direction=\"left\",action=\"unset\"}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "errors-do-not-stop-later-declarations",
+      "errors": 1,
+      "registered": [
+        {
+          "action": "move",
+          "arguments": [],
+          "direction": "RIGHT",
+          "disable_inhibit": false,
+          "fingers": 4,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3.0,direction=\"left\",action=\"workspace\"};hl.gesture{fingers=4,direction=\"right\",action=\"move\"}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "captured-and-late-preparation",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "callbacks",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "local saved=hl.dsp.no_op();hl.gesture{fingers=3,direction=\"left\",action={start=function(e) hl.dispatch(saved) end,update=function()end,finish=function()hl.dispatch(hl.dsp.no_op())end}}",
+      "trace": [
+        "prepare",
+        "dispatch",
+        "prepare",
+        "dispatch"
+      ],
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "legacy-end-has-no-payload",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "callbacks",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction=\"left\",action=function(e)table.insert(__trace,e==nil and \"nil-event\" or e)end}",
+      "trace": [
+        "nil-event"
+      ],
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "payloads:left",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "callbacks",
+          "arguments": [],
+          "direction": "LEFT",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='left',action={start=function(e)table.insert(__trace,e)end,update=function(e)table.insert(__trace,e)end,finish=function(e)table.insert(__trace,e)end}}",
+      "trace": [
+        {
+          "delta": {
+            "x": -12.0,
+            "y": 5.0
+          },
+          "direction": "LEFT",
+          "fingers": 3,
+          "phase": "start",
+          "time_ms": 123,
+          "type": "swipe"
+        },
+        {
+          "delta": {
+            "x": -12.0,
+            "y": 5.0
+          },
+          "direction": "LEFT",
+          "fingers": 3,
+          "phase": "update",
+          "time_ms": 123,
+          "type": "swipe"
+        },
+        {
+          "cancelled": true,
+          "direction": "LEFT",
+          "phase": "end",
+          "time_ms": 124,
+          "type": "swipe"
+        }
+      ],
+      "version": "current"
+    },
+    {
+      "accepted": true,
+      "callback_errors": 0,
+      "case": "payloads:pinchin",
+      "errors": 0,
+      "registered": [
+        {
+          "action": "callbacks",
+          "arguments": [],
+          "direction": "PINCH_IN",
+          "disable_inhibit": false,
+          "fingers": 3,
+          "modifiers": 0,
+          "scale": 1
+        }
+      ],
+      "source": "hl.gesture{fingers=3,direction='pinchin',action={start=function(e)table.insert(__trace,e)end,update=function(e)table.insert(__trace,e)end,finish=function(e)table.insert(__trace,e)end}}",
+      "trace": [
+        {
+          "delta": {
+            "x": -12.0,
+            "y": 5.0
+          },
+          "direction": "PINCH_IN",
+          "fingers": 3,
+          "phase": "start",
+          "rotation": 10.0,
+          "scale": 0.8,
+          "time_ms": 123,
+          "type": "pinch"
+        },
+        {
+          "delta": {
+            "x": -12.0,
+            "y": 5.0
+          },
+          "direction": "PINCH_IN",
+          "fingers": 3,
+          "phase": "update",
+          "rotation": 10.0,
+          "scale": 0.8,
+          "time_ms": 123,
+          "type": "pinch"
+        },
+        {
+          "cancelled": true,
+          "direction": "PINCH_IN",
+          "phase": "end",
+          "time_ms": 124,
+          "type": "pinch"
+        }
+      ],
+      "version": "current"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "empty-callback-table",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=3,direction=\"left\",action={}}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "ignored-end-spelling",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=3,direction=\"left\",action={[\"end\"]=function()end}}",
+      "trace": {},
+      "version": "current"
+    },
+    {
+      "accepted": false,
+      "callback_errors": 1,
+      "case": "invalid-callback-value",
+      "errors": 1,
+      "registered": [],
+      "source": "hl.gesture{fingers=3,direction=\"left\",action={finish=true}}",
+      "trace": {},
+      "version": "current"
+    }
+  ],
+  "format": "hye-gesture-source-fixtures-1",
+  "meaning": "Actual binding, descriptors, direction/modifier parsers, add/remove registry, and callback payload functions. Builtin actions, input objects, dispatchers, VM manager, base distance and pointer ownership are fixture adapters. No native input, renderer, VM timeout, userdata ABI or compositor certificate."
+}
