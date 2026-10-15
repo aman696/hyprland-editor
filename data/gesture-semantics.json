@@ -1,0 +1,368 @@
+{
+  "format": "hye-gesture-semantics-1",
+  "source_files": [
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/lua/bindings/LuaBindingsConfigRules.cpp",
+      "git_blob": "8095b170ae7160d71281f7a9970e7cbd4c3151bb",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "157c3e45b364f3e41b6fd7cf13fd19e7477e8c03a6a75c6c46fde5e2b5715be9"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/lua/bindings/LuaBindingsInternal.hpp",
+      "git_blob": "102ed7f3b20f5c7d6abbcfbc837e720584e6cbb1",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "83630401a5b3d2cd99ec42705a7b70b0fdd73ddb3989c561a4316d15d72f0edd"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/lua/types/LuaConfigBool.cpp",
+      "git_blob": "2162d0b0fad297be015d15b8842330d6e7bffeff",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "5144382c5a9d5e4699cb9f53ee1dccab51156b10cf57318352684f33cb8e98ed"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/lua/types/LuaConfigFloat.cpp",
+      "git_blob": "be3fd7497ede8b95d4e7bb0275641b049a921568",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "e25b69c4342451925f864b296d41c1cdb540bcb814e146052ebd068251cafb06"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/lua/types/LuaConfigInt.cpp",
+      "git_blob": "24220e87c3840fd28b756b97f4ce0195c7630606",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "f9ac2e83d9d936f759d53afdd4df6c2f52e250ad534b22dcfa507d723e8e91e7"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/managers/input/trackpad/GestureTypes.hpp",
+      "git_blob": "89f69638be59d76e09af7ec8a4e662e3d220af99",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "87ef4e338afd1ba8f16f2d4a9c03dfccedef3da0f5cdb4464da0c3ec903f23c1"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/managers/input/trackpad/TrackpadGestures.cpp",
+      "git_blob": "a1a389773e5994012e299ce9b38caa7629175885",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "5e23524d8a6a0778fc8199173978488e4b54e70611ec354b036a99ae6b9610b7"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/managers/input/trackpad/TrackpadGestures.hpp",
+      "git_blob": "ecf11c402d561e03e78f68e04bcec4440a9a92ce",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "f0e2a20af8b5c7e41d1c7a7e3bf650b9a6ac89f883adeefca0f39ff060cdce09"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/managers/input/trackpad/gestures/CursorZoomGesture.cpp",
+      "git_blob": "109a9a7cc650fd66609d7c3fb4e6fc032cb46164",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "5967e293ccdc7e99b6f6201a1d2e0aeff95b1d763ce5ad3d7fb50fabd76c6753"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/managers/input/trackpad/gestures/FloatGesture.cpp",
+      "git_blob": "3aaf51ab3a6607181085339aafb270d5157fd9fc",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "d10abdf34e7e966777c91e225ed63038da72511e5eb73f81ee3acfd93859934e"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/managers/input/trackpad/gestures/FullscreenGesture.cpp",
+      "git_blob": "3da347c783eeff39d9c4cfb7f5eeb843b87e6abf",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "b72fb2976e43899884afd9f8d9f6c6b3c6da04c9797482ef6df614e1bdc483e5"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/managers/input/trackpad/gestures/ITrackpadGesture.hpp",
+      "git_blob": "a5108a2c17109f46222cf645aedd01bc177ad067",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "3e89e749eeebee1050907830432221963e4ad9c2e7b76cebf784ef993e445890"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/managers/input/trackpad/gestures/LuaFunctionGesture.cpp",
+      "git_blob": "2ca01bbe76dabe0eeb7b62bbd17dd4e7158292d0",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "0dffeecd09b44073db72671352add66036edeb0559435ec2dda168d99c51edef"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/managers/input/trackpad/gestures/LuaFunctionGesture.hpp",
+      "git_blob": "ecb07e7a0c50a74f7637a237c7ff37392d53979c",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "65850acfc9d931e5a6154843e705284a3f2a9c993f63fecc6e554150d288e66c"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/lua/bindings/LuaBindingsConfigRules.cpp",
+      "git_blob": "cc6108ff9d186bf3192282f9527a03328f6601e2",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "789b1425c25b5a26c82f25e4d5d0b8176a6f56481573fc6e658662d1de7ea5ae"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/lua/bindings/LuaBindingsInternal.hpp",
+      "git_blob": "1841ec99ec9edd4a9a96fd7230f9ecb778ba52ed",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "574774a61671cb9864c73662f5ba8bd9899d38635a32dfcd8dd6c398c4279790"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/lua/types/LuaConfigBool.cpp",
+      "git_blob": "2162d0b0fad297be015d15b8842330d6e7bffeff",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "5144382c5a9d5e4699cb9f53ee1dccab51156b10cf57318352684f33cb8e98ed"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/lua/types/LuaConfigFloat.cpp",
+      "git_blob": "be3fd7497ede8b95d4e7bb0275641b049a921568",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "e25b69c4342451925f864b296d41c1cdb540bcb814e146052ebd068251cafb06"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/lua/types/LuaConfigInt.cpp",
+      "git_blob": "6397c835ec4f4ea4fd040548db2fafd71bd10fa9",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "9aa74379f36d7b7e952da75b943801c6cacd67c81eb6667be4c3b418928a1734"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/managers/input/trackpad/GestureTypes.hpp",
+      "git_blob": "89f69638be59d76e09af7ec8a4e662e3d220af99",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "87ef4e338afd1ba8f16f2d4a9c03dfccedef3da0f5cdb4464da0c3ec903f23c1"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/managers/input/trackpad/TrackpadGestures.cpp",
+      "git_blob": "87852b639205c4b1701543f8359628786aba06cf",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "ff08acb81f6942fd9862d1b6b6170a74e49198995e9b64f8823e58dcbeb41268"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/managers/input/trackpad/TrackpadGestures.hpp",
+      "git_blob": "5f870d99ac23942400e134b3c27756f3b7ba5335",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "0f61acef5340b8764d3a7fdc20a659e6e0a2403284c47812c680819584cf3d0e"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/managers/input/trackpad/gestures/CursorZoomGesture.cpp",
+      "git_blob": "db4dbbfc3cbbe47cba29f2aa7b8809a91ee27f36",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "6e288fe8a6b6b5ed86920bbd0c74ed62d597940fd2eeec301a8b4420e52ea539"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/managers/input/trackpad/gestures/FloatGesture.cpp",
+      "git_blob": "2d34315f722cd2a7d0fb69634f34383d48cb654a",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "9f05bfcb3534bf29df23479fb9747b3ce2a22ff1ac8e268ebe8574288cd0c397"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/managers/input/trackpad/gestures/FullscreenGesture.cpp",
+      "git_blob": "8b3cd95504ccdcdd2ed8cd947624b282f9d277e3",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "81eb0987f5eb3e9d0164cd161129311991ba76295c4c367920ab7ec1e9e1b6cb"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/managers/input/trackpad/gestures/ITrackpadGesture.hpp",
+      "git_blob": "a5108a2c17109f46222cf645aedd01bc177ad067",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "3e89e749eeebee1050907830432221963e4ad9c2e7b76cebf784ef993e445890"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/managers/input/trackpad/gestures/LuaFunctionGesture.cpp",
+      "git_blob": "2ca01bbe76dabe0eeb7b62bbd17dd4e7158292d0",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "0dffeecd09b44073db72671352add66036edeb0559435ec2dda168d99c51edef"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/managers/input/trackpad/gestures/LuaFunctionGesture.hpp",
+      "git_blob": "ecb07e7a0c50a74f7637a237c7ff37392d53979c",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "65850acfc9d931e5a6154843e705284a3f2a9c993f63fecc6e554150d288e66c"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/lua/bindings/LuaBindingsToplevel.cpp",
+      "git_blob": "9bacdeffef7f19db7587daa589912a42d8ea0498",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "706b29eb52de087c1d6e64770cf85fb3ebc0f2fbe9ddcff086905499bcd332f5"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/lua/bindings/LuaBindingsDispatchers.cpp",
+      "git_blob": "748b641a4f361276d49267ad897e9f6ba3fca217",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "a109eeb982856e0fe2ac9d88c29115a09984511787e19a20e7b4804e14a9d4de"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/lua/bindings/LuaBindingsInternal.cpp",
+      "git_blob": "01604a92e2093e3ce972339e7938f94766bfb995",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "5f6534641d58073bbcbd3e004b168659d497072596cf10c9f2b189c55c2233e9"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/lua/types/LuaConfigString.cpp",
+      "git_blob": "aece22de5bee7600299a7d75e87b34dd297fc8e4",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "7f4cb8035764a7a65833bdc4f0ab0d54c4014ee336f5a7075f37ad1301ac1420"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/managers/KeybindManager.cpp",
+      "git_blob": "4ab407ecda7570f189ec22f7629f4358b25b399f",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "8d8f35fc84c4a2f8de63ac2bf6f6531c651c6fa6d37b1aac7c8fc5d9342d4e40"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/lua/bindings/LuaBindingsToplevel.cpp",
+      "git_blob": "0969478ddac8ea64a6e5e536529617ae3fecd374",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "9b43410a1bd04174d0b6fb4d6844af0dfba426cd9341153de5cbf9481f6f8138"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/lua/bindings/LuaBindingsDispatchers.cpp",
+      "git_blob": "ef9a6ca46539eee565945a5ef0d1044b607aea9d",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "8c2609866fff6a26259c2b5d969e08f37efd0f499e82f3eae163a5c414dbf747"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/lua/bindings/LuaBindingsInternal.cpp",
+      "git_blob": "0efebd607cc12d70621ccf47fa2f6bc667c88bba",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "896a8a793a5373baa64c66ff0dac986a3ba2a5c90e3f71c466b841f95f5d3a16"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/lua/types/LuaConfigString.cpp",
+      "git_blob": "aece22de5bee7600299a7d75e87b34dd297fc8e4",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "7f4cb8035764a7a65833bdc4f0ab0d54c4014ee336f5a7075f37ad1301ac1420"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/input/Keys.hpp",
+      "git_blob": "c4cbb94728a080d83e82b69a37a05d878af0ab26",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "3c2f14ff2b05188c60542eb32c9b7aea61bdf7ff6e285fda0aa5c125bcb6ac71"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/keybinds/Resolver.cpp",
+      "git_blob": "3263acd2b836b889e1bcdba9b0988fa9dccb05e1",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "7ffd7b6cebdac6c9c493336182f902aba16a707ccdfedb0925658d50c8e67750"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/keybinds/Resolver.hpp",
+      "git_blob": "08056a66614b61e7cc0601b10b5d3264c37668db",
+      "repo": "hyprwm/Hyprland",
+      "sha256": "d7686afb44b84a4499aacf4fabd006e5b2d07306d9d06847c2c07585db7ad5bc"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/devices/IPointer.hpp",
+      "git_blob": "197ba123c7ea884636c67c7a803d49fb534300c0",
+      "sha256": "bf4b2309526ca44ac30d2c3d3ad6a66cc7bf8d7a398b22a8fdde58c0f0ab1310",
+      "repo": "hyprwm/Hyprland"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/devices/IPointer.hpp",
+      "git_blob": "1d1b823dc107193d2ad97b50a128b689c74db21c",
+      "sha256": "6ffba79611ea439c7d4b0b24579d4ab90f571f36611e9a7834eb25627782f1c3",
+      "repo": "hyprwm/Hyprland"
+    }
+  ],
+  "fingers": {
+    "lua_type": "integer",
+    "min": 2,
+    "max": 9
+  },
+  "scale": {
+    "baseline": {
+      "raw_min_float32_bound": 0.10000000149011612,
+      "raw_max": 10,
+      "comparison": "bounds checked before float32 conversion"
+    },
+    "current": {
+      "raw_min": -10,
+      "raw_max": 10,
+      "converted_absolute_min_float32": 0.10000000149011612,
+      "comparison": "raw outer bounds, then float32 conversion, then reject the near-zero gap"
+    }
+  },
+  "registration": "ordered first matching; prior broad directions can reject later registrations; removal requires fingers/direction/modifiers/float32-scale/inhibitor tuple",
+  "callback_phases": [
+    "start",
+    "update",
+    "finish"
+  ],
+  "event_finish_phase": "end",
+  "scope": "Source model; no native touchpad, callback execution, compositor or runtime-state certificate.",
+  "finish_direction": "Configured gesture direction, whereas start/update use the resolved input direction"
+}
