@@ -13,7 +13,7 @@ impl<'a> Engine<'a> {
     fn table_id(&self, doc: usize, node: Node<'_>, value: Value) -> Result<usize> {
         match value {
             Value::Table(id) => Ok(id),
-            Value::Bytes(_) => self.unknown(
+            Value::Bytes(_) | Value::PartialPath(_) => self.unknown(
                 doc,
                 node,
                 "String metatable/library indexing is not modeled",
@@ -334,6 +334,22 @@ impl<'a> Engine<'a> {
     ) -> Result<Value> {
         if op == "and" || op == "or" {
             return Ok(right);
+        }
+        if op == ".." {
+            if let (Value::Bytes(prefix), Value::PartialPath(path)) = (&left, &right) {
+                let value = self.bytes(&[prefix.as_ref(), path.as_ref()].concat())?;
+                let Value::Bytes(bytes) = value else {
+                    unreachable!()
+                };
+                return Ok(Value::PartialPath(bytes));
+            }
+        }
+        if matches!(left, Value::PartialPath(_)) || matches!(right, Value::PartialPath(_)) {
+            return self.unknown(
+                doc,
+                node,
+                "Operations on the uncaptured package.path tail are unresolved",
+            );
         }
         if op == "==" || op == "~=" {
             let same = match (&left, &right) {
@@ -856,7 +872,7 @@ impl<'a> Engine<'a> {
                     Value::Nil => "nil",
                     Value::Bool(_) => "boolean",
                     Value::Int(_) | Value::Float(_) => "number",
-                    Value::Bytes(_) => "string",
+                    Value::Bytes(_) | Value::PartialPath(_) => "string",
                     Value::Table(_) => "table",
                     Value::Closure(_) | Value::Native(_) => "function",
                     Value::Unknown(reason) => return self.unknown(doc, node, reason),
@@ -920,6 +936,13 @@ impl<'a> Engine<'a> {
         lua_caller: bool,
     ) -> Result<Vec<Value>> {
         let mut value = args.first().cloned().unwrap_or(Value::Nil);
+        if matches!(value, Value::PartialPath(_)) {
+            return self.unknown(
+                doc,
+                node,
+                "Error text includes an uncaptured package.path tail",
+            );
+        }
         if let Value::Unknown(reason) = value {
             return self.unknown(doc, node, reason);
         }
@@ -967,14 +990,16 @@ impl<'a> Engine<'a> {
         Err(Failure::Lua(value))
     }
     fn request(&self, doc: usize, node: Node<'a>, loader: Loader, module: &[u8]) -> Request {
-        let package_path = if matches!(loader, Loader::SafeRequire | Loader::OriginalRequire) {
-            match self.field(self.package, b"path") {
-                Value::Bytes(p) => Some(p.to_vec()),
-                _ => None,
-            }
-        } else {
-            None
-        };
+        let (package_path, package_path_unknown_tail) =
+            if matches!(loader, Loader::SafeRequire | Loader::OriginalRequire) {
+                match self.field(self.package, b"path") {
+                    Value::Bytes(p) => (Some(p.to_vec()), false),
+                    Value::PartialPath(p) => (Some(p.to_vec()), true),
+                    _ => (None, false),
+                }
+            } else {
+                (None, false)
+            };
         Request {
             document: self.documents[doc].document.id.clone(),
             sha256: self.documents[doc].document.sha256.clone(),
@@ -983,6 +1008,7 @@ impl<'a> Engine<'a> {
             loader,
             module: module.to_vec(),
             package_path,
+            package_path_unknown_tail,
         }
     }
     fn load_event(&mut self, request: Request, outcome: LoadOutcome) -> Result<()> {
@@ -1097,6 +1123,7 @@ impl<'a> Engine<'a> {
             match self.field(self.package, b"path") {
                 Value::Bytes(path) if !path.contains(&0) => {}
                 Value::Unknown(_) => {}
+                Value::PartialPath(path) if !path.contains(&0) => {}
                 _ => {
                     return self.unknown(
                         doc,

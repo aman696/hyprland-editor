@@ -56,6 +56,8 @@ def main():
     base_bytes = (ROOT/'data/ordered-module-fixtures.json').read_bytes()
     if hashlib.sha256(base_bytes).hexdigest() != matrix['canonical_fixtures_sha256']:
         raise RuntimeError('Lua profiles must be reverified after changing canonical observations')
+    if hashlib.sha256((ROOT/'data/runtime-path-fixtures.json').read_bytes()).hexdigest() != matrix['runtime_path_fixtures_sha256']:
+        raise RuntimeError('Lua profiles must be reverified after changing runtime path observations')
     base = json.loads(base_bytes)
     if args.release and any(r not in [p['release'] for p in matrix['profiles']] for r in args.release):
         raise RuntimeError('Unknown requested Lua profile')
@@ -84,6 +86,7 @@ def main():
             actual_bytes = output.read_bytes()
             if hashlib.sha256(actual_bytes).hexdigest() != profile['observations_sha256'] or json.loads(actual_bytes) != ordered.materialize(base,profile):
                 raise RuntimeError(f'Lua {release} ordered observations differ from its recorded profile')
+            subprocess.run([sys.executable,str(ROOT/'scripts/runtime_path_probe.py'),'--check'],env=dict(os.environ,PKG_CONFIG_LIBDIR=str(temp)),check=True,timeout=60,cwd=ROOT)
             print(f'Lua {release}: compiler bridge and {len(base["cases"])} ordered observations verified; error line uses {profile["error_call_line"]}',flush=True)
 
 

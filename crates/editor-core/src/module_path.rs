@@ -48,6 +48,15 @@ pub struct Plan {
     pub lua_file_candidates: Vec<Vec<u8>>,
     pub inherited_search_unknown: bool,
 }
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RuntimePlan {
+    pub primary: Primary,
+    /// Exact current package.path templates, without another main-directory pair.
+    pub lua_file_candidates: Vec<Vec<u8>>,
+    /// The known prefix may be tried; exhausting it does not establish a miss.
+    pub search_unknown: bool,
+}
 pub fn schema_hash() -> String {
     source_hash(include_str!("../../../data/source-graph-semantics.json"))
 }
@@ -64,6 +73,49 @@ pub fn is_explicit(module: &[u8]) -> bool {
 }
 pub fn has_glob(module: &[u8]) -> bool {
     module.iter().any(|c| b"*?[".contains(c))
+}
+/// Pure Linux lexical spelling used only AFTER an explicit candidate's status
+/// observation. This is never a containment check or evidence of file identity.
+pub fn normalized_load_path(path: &[u8]) -> Result<Vec<u8>, String> {
+    valid_bytes(path, 4096)?;
+    if path.is_empty() || path.iter().all(|b| *b == b'/') {
+        return Ok(path.to_vec());
+    }
+    let root = path.starts_with(b"/");
+    let mut parts: Vec<&[u8]> = vec![];
+    let mut trailing = path.ends_with(b"/");
+    for part in path.split(|b| *b == b'/').filter(|p| !p.is_empty()) {
+        if part == b"." {
+            trailing = true;
+            continue;
+        }
+        trailing = false;
+        if part == b".." {
+            if parts.last().is_some_and(|p| *p != b"..") {
+                parts.pop();
+                trailing = true;
+            } else if !root {
+                parts.push(part);
+            }
+        } else {
+            parts.push(part);
+        }
+    }
+    trailing |= path.ends_with(b"/");
+    if parts.is_empty() {
+        return Ok(if root { b"/".to_vec() } else { b".".to_vec() });
+    }
+    let mut out = if root { vec![b'/'] } else { vec![] };
+    for (i, part) in parts.iter().enumerate() {
+        if i > 0 {
+            out.push(b'/');
+        }
+        out.extend(*part);
+    }
+    if trailing && parts.last() != Some(&b"..".as_slice()) {
+        out.push(b'/');
+    }
+    Ok(out)
 }
 fn parent(bytes: &[u8]) -> &[u8] {
     bytes
@@ -115,9 +167,21 @@ fn lua_candidates(
         // Empty entries are real failed searchpath candidates; only a wholly empty
         // inherited path is omitted by the upstream ConfigManager constructor.
         if !path.is_empty() {
-            templates.extend(path.split(|c| *c == b';').map(<[u8]>::to_vec));
+            append_templates(&mut templates, path)?;
         }
     }
+    expand_templates(&module, templates)
+}
+fn append_templates(templates: &mut Vec<Vec<u8>>, path: &[u8]) -> Result<(), String> {
+    for template in path.split(|b| *b == b';') {
+        if templates.len() >= MAX_CANDIDATES {
+            return Err("Module search has more than 512 templates".into());
+        }
+        templates.push(template.to_vec());
+    }
+    Ok(())
+}
+fn expand_templates(module: &[u8], templates: Vec<Vec<u8>>) -> Result<Vec<Vec<u8>>, String> {
     if templates.len() > MAX_CANDIDATES {
         return Err("Module search has more than 512 templates".into());
     }
@@ -150,7 +214,7 @@ fn lua_candidates(
             let mut out = Vec::with_capacity(length);
             for c in template {
                 if c == b'?' {
-                    out.extend_from_slice(&module);
+                    out.extend_from_slice(module);
                 } else {
                     out.push(c);
                 }
@@ -190,6 +254,65 @@ pub fn plan_requests_for(
     Ok(plans)
 }
 impl Context {
+    /// The exact source-derived initial prefix. Unknown inherited entries remain
+    /// separate; this function never reads host Lua defaults or environment.
+    pub fn initial_path(&self, version: &str) -> Result<(Vec<u8>, bool), String> {
+        self.validate(version)?;
+        let directory = parent(&self.main_file);
+        let directory = &directory[..directory
+            .iter()
+            .rposition(|c| *c != b'/')
+            .map_or(0, |i| i + 1)];
+        let mut path = [directory, b"/?.lua;", directory, b"/?/init.lua"].concat();
+        if let Some(tail) = &self.inherited_package_path {
+            if !tail.is_empty() {
+                path.push(b';');
+                path.extend(tail);
+            }
+        }
+        valid_bytes(&path, MAX_SEARCH_PATH_BYTES)?;
+        Ok((path, self.inherited_package_path.is_none()))
+    }
+    pub fn plan_current(
+        &self,
+        module: &[u8],
+        version: &str,
+        mode: RequireMode,
+        package_path: Option<&[u8]>,
+        unknown_tail: bool,
+    ) -> Result<RuntimePlan, String> {
+        if unknown_tail && package_path.is_none_or(|path| path.is_empty()) {
+            return Err("Unknown path tail needs its known prefix".into());
+        }
+        // Only the primary path wrapper depends on the main-file context.
+        let mut context = self.clone();
+        context.inherited_package_path = Some(vec![]);
+        let primary = context.plan_for(module, version, mode)?.primary;
+        if matches!(primary, Primary::ExplicitWildcard { .. }) {
+            return Ok(RuntimePlan {
+                primary,
+                lua_file_candidates: vec![],
+                search_unknown: false,
+            });
+        }
+        let candidates = if let Some(path) = package_path {
+            valid_bytes(path, MAX_SEARCH_PATH_BYTES)?;
+            let name: Vec<_> = module
+                .iter()
+                .map(|b| if *b == b'.' { b'/' } else { *b })
+                .collect();
+            let mut templates = vec![];
+            append_templates(&mut templates, path)?;
+            expand_templates(&name, templates)?
+        } else {
+            vec![]
+        };
+        Ok(RuntimePlan {
+            primary,
+            lua_file_candidates: candidates,
+            search_unknown: unknown_tail || package_path.is_none(),
+        })
+    }
     fn validate(&self, version: &str) -> Result<(), String> {
         if ![BASELINE, AUDITED_MAIN].contains(&version) {
             return Err("Module resolution needs an audited snapshot".into());
@@ -283,6 +406,74 @@ impl Context {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn current_search_and_lexical_load_names_match_independent_observations() {
+        let data: serde_json::Value =
+            serde_json::from_str(include_str!("../../../data/runtime-path-fixtures.json")).unwrap();
+        assert_eq!(data["audit_manifest_sha256"], schema_hash());
+        let c = Context {
+            main_file: b"/fixture/config/main.lua".to_vec(),
+            home: None,
+            inherited_package_path: None,
+        };
+        let replace = |s: &str| s.replace("<root>", "/fixture").into_bytes();
+        for row in data["search"].as_array().unwrap() {
+            let module = replace(row["module"].as_str().unwrap());
+            let path = replace(row["package_path"].as_str().unwrap());
+            let plan = c
+                .plan_current(&module, BASELINE, RequireMode::Original, Some(&path), false)
+                .unwrap();
+            assert!(!plan.search_unknown);
+            if let Some(found) = row["selected"].as_str() {
+                assert!(plan.lua_file_candidates.contains(&replace(found)), "{row}");
+            } else {
+                assert_eq!(
+                    plan.lua_file_candidates,
+                    row["missing_candidates"]
+                        .as_array()
+                        .unwrap()
+                        .iter()
+                        .map(|p| replace(p.as_str().unwrap()))
+                        .collect::<Vec<_>>(),
+                    "{row}"
+                );
+            }
+        }
+        for row in data["normalization"].as_array().unwrap() {
+            assert_eq!(
+                normalized_load_path(row["path"].as_str().unwrap().as_bytes()).unwrap(),
+                row["normalized"].as_str().unwrap().as_bytes(),
+                "{row}"
+            );
+        }
+        let (prefix, unknown) = c.initial_path(BASELINE).unwrap();
+        assert!(unknown);
+        let partial = c
+            .plan_current(b"part", BASELINE, RequireMode::Safe, Some(&prefix), unknown)
+            .unwrap();
+        assert_eq!(
+            partial.lua_file_candidates,
+            vec![
+                b"/fixture/config/part.lua".to_vec(),
+                b"/fixture/config/part/init.lua".to_vec()
+            ]
+        );
+        assert!(partial.search_unknown);
+        let replaced = c
+            .plan_current(
+                b"part",
+                BASELINE,
+                RequireMode::Safe,
+                Some(b"/vendor/?.lua"),
+                false,
+            )
+            .unwrap();
+        assert_eq!(
+            replaced.lua_file_candidates,
+            vec![b"/vendor/part.lua".to_vec()]
+        );
+        assert!(!replaced.search_unknown);
+    }
     fn context() -> Context {
         Context {
             main_file: b"<root>/config/hyprland.lua".to_vec(),

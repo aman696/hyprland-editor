@@ -93,6 +93,10 @@ pub struct Request {
     pub loader: Loader,
     pub module: Vec<u8>,
     pub package_path: Option<Vec<u8>>,
+    /// Complete initial templates followed by an uncaptured inherited tail.
+    /// False + None means a wholly unknown path, never host defaults.
+    #[serde(default)]
+    pub package_path_unknown_tail: bool,
     pub working_directory: Option<Vec<u8>>,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -119,6 +123,8 @@ pub struct Program {
     pub documents: Vec<Document>,
     pub bindings: Vec<Binding>,
     pub initial_package_path: Option<Vec<u8>>,
+    #[serde(default)]
+    pub initial_package_path_unknown_tail: bool,
     pub working_directory: Option<Vec<u8>>,
 }
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -205,6 +211,9 @@ enum Value {
     Int(i64),
     Float(f64),
     Bytes(Arc<[u8]>),
+    /// Known complete initial templates with an unknown optional inherited tail.
+    /// Copying/overwriting this value preserves or replaces that provenance.
+    PartialPath(Arc<[u8]>),
     Table(usize),
     Closure(usize),
     Native(Native),
@@ -416,6 +425,13 @@ impl<'a> Engine<'a> {
             Value::Table(v) => Key::Table(v),
             Value::Closure(v) => Key::Closure(v),
             Value::Unknown(reason) => return Err(Failure::Unknown(0, 0..0, reason.into())),
+            Value::PartialPath(_) => {
+                return Err(Failure::Unknown(
+                    0,
+                    0..0,
+                    "A table key includes an uncaptured package.path tail".into(),
+                ))
+            }
             Value::Nil => {
                 return Err(Failure::Lua(Value::Unknown(
                     "The exact Lua table-index error text is not modeled",
@@ -555,6 +571,12 @@ impl<'a> Engine<'a> {
         e.field_set(e.package, b"preload", Value::Table(e.preload))?;
         e.field_set(e.package, b"searchers", Value::Table(searchers))?;
         let path = match &program.initial_package_path {
+            Some(path) if program.initial_package_path_unknown_tail => {
+                let Value::Bytes(bytes) = e.bytes(path)? else {
+                    unreachable!()
+                };
+                Value::PartialPath(bytes)
+            }
             Some(path) => e.bytes(path)?,
             None => Value::Unknown("Inherited package.path is not captured"),
         };
@@ -628,6 +650,13 @@ impl<'a> Engine<'a> {
             Value::Int(v) => Observed::Int(*v),
             Value::Float(v) => Observed::Float(*v),
             Value::Bytes(v) => Observed::Bytes(v.to_vec()),
+            Value::PartialPath(_) => {
+                return Err(Failure::Unknown(
+                    0,
+                    0..0,
+                    "The inherited package.path tail is not captured".into(),
+                ))
+            }
             Value::Table(id) => {
                 if self.tables[*id].unknown {
                     return Err(Failure::Unknown(
@@ -681,6 +710,11 @@ pub fn replay(program: &Program) -> std::result::Result<Report, String> {
         || program.documents.is_empty()
         || program.documents.len() > 32
         || program.bindings.len() > 512
+        || (program.initial_package_path_unknown_tail
+            && program
+                .initial_package_path
+                .as_ref()
+                .is_none_or(|p| p.is_empty()))
         || program
             .initial_package_path
             .as_ref()
@@ -730,6 +764,10 @@ pub fn replay(program: &Program) -> std::result::Result<Report, String> {
             || !d.source.is_char_boundary(span.end)
             || b.request.module.len() > 16_384
             || b.request.module.contains(&0)
+            || (b.request.package_path_unknown_tail
+                && b.request.package_path.as_ref().is_none_or(|p| p.is_empty()))
+            || (matches!(b.request.loader, Loader::Dofile | Loader::Loadfile)
+                && (b.request.package_path.is_some() || b.request.package_path_unknown_tail))
             || b.request
                 .package_path
                 .as_ref()

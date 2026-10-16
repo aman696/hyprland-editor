@@ -62,9 +62,48 @@ fn replay_program(source: &str) -> hyprland_editor_core::lua::replay::Program {
             load_name: b"/private-fixture/main.lua".to_vec(),
         }],
         bindings: vec![],
+        initial_package_path_unknown_tail: false,
         initial_package_path: None,
         working_directory: None,
     }
+}
+
+#[test]
+fn restricted_worker_keeps_partial_search_paths_distinct_from_literal_replacements() {
+    use hyprland_editor_core::lua::replay::*;
+    let mut p=replay_program("local saved=package.path;require('first');package.path='/vendor/?.lua';require('second');package.path=saved;require('third')");
+    p.initial_package_path = Some(b"/private-fixture/?.lua;/private-fixture/?/init.lua".to_vec());
+    p.initial_package_path_unknown_tail = true;
+    let part = "return 1";
+    p.documents.push(Document {
+        id: "part".into(),
+        source: part.into(),
+        sha256: hyprland_editor_core::lua::source_hash(part),
+        load_name: b"/private-fixture/part.lua".to_vec(),
+    });
+    for (module, unknown, path) in [
+        ("first", true, p.initial_package_path.clone().unwrap()),
+        ("second", false, b"/vendor/?.lua".to_vec()),
+        ("third", true, p.initial_package_path.clone().unwrap()),
+    ] {
+        let reply = request(json!({"ReplayModules":p}));
+        let pending: Request =
+            serde_json::from_value(reply["Replayed"]["halt"]["request"].clone()).unwrap();
+        assert_eq!(pending.module, module.as_bytes());
+        assert_eq!(pending.package_path, Some(path));
+        assert_eq!(pending.package_path_unknown_tail, unknown);
+        assert_eq!(reply["Replayed"]["runtime_verified"], false);
+        p.bindings.push(Binding {
+            request: pending,
+            resolution: Resolution::Loaded {
+                document: "part".into(),
+                loader_data: vec![],
+            },
+        });
+    }
+    assert!(request(json!({"ReplayModules":p}))["Replayed"]["halt"].is_null());
+    p.initial_package_path = None;
+    assert!(request(json!({"ReplayModules":p}))["Error"].is_string());
 }
 
 #[test]

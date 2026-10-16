@@ -35,6 +35,8 @@
         "scripts/module_load_probe.py",
         "scripts/ordered_module_probe.py",
         "scripts/lua_profile_probe.py",
+        "scripts/runtime_path_probe.py",
+        "unknown_inherited_path_provenance_survives_aliases_and_literal_replacement",
         "actual_metadata_helper_separates_absence_from_escape_denial_and_cycle",
         "changed_link_or_scope_invalidates_a_pending_negative_observation",
         "ordered_reference_observations",

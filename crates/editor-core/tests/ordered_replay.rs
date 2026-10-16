@@ -19,6 +19,7 @@ fn program(source: &str) -> Program {
         root: "main.lua".into(),
         documents: vec![document("main.lua", source)],
         bindings: vec![],
+        initial_package_path_unknown_tail: false,
         initial_package_path: Some(b"<root>/config/?.lua;<root>/config/?/init.lua".to_vec()),
         working_directory: Some(b"<root>".to_vec()),
     }
@@ -57,6 +58,86 @@ fn observed(value: &Observed) -> Value {
                 )
             }
         }
+    }
+}
+
+#[test]
+fn unknown_inherited_path_provenance_survives_aliases_and_literal_replacement() {
+    let mut p=program("local saved=package.path; require('first'); package.path='/vendor/?.lua'; require('second'); package.path=saved; require('third'); emit(type(package.path))");
+    p.initial_package_path_unknown_tail = true;
+    let prefix = p.initial_package_path.clone().unwrap();
+    p.documents.push(document("part.lua", "return 2"));
+    for (name, path, unknown) in [
+        ("first", prefix.clone(), true),
+        ("second", b"/vendor/?.lua".to_vec(), false),
+        ("third", prefix, true),
+    ] {
+        let report = replay(&p).unwrap();
+        let Some(Halt::NeedsResolution { request }) = report.halt else {
+            panic!("Expected resolution");
+        };
+        assert_eq!(request.module, name.as_bytes());
+        assert_eq!(request.package_path, Some(path));
+        assert_eq!(request.package_path_unknown_tail, unknown);
+        p.bindings.push(Binding {
+            request,
+            resolution: Resolution::Loaded {
+                document: "part.lua".into(),
+                loader_data: vec![],
+            },
+        });
+    }
+    let report = replay(&p).unwrap();
+    assert!(report.halt.is_none());
+    assert_eq!(observed(&report.events[0].arguments[0]), json!("string"));
+    let roundtrip: Program = serde_json::from_value(serde_json::to_value(&p).unwrap()).unwrap();
+    assert_eq!(roundtrip.bindings[0].request, p.bindings[0].request);
+    let mut stale = roundtrip;
+    stale.bindings[0].request.package_path_unknown_tail = false;
+    assert!(matches!(
+        replay(&stale).unwrap().halt,
+        Some(Halt::NeedsResolution { .. })
+    ));
+}
+
+#[test]
+fn known_path_prepends_are_preserved_without_fabricating_the_tail() {
+    let mut p = program("package.path='/before/?.lua;'..package.path; require('first')");
+    p.initial_package_path_unknown_tail = true;
+    let Some(Halt::NeedsResolution { request }) = replay(&p).unwrap().halt else {
+        panic!()
+    };
+    assert!(request.package_path_unknown_tail);
+    assert_eq!(
+        request.package_path.unwrap(),
+        [
+            b"/before/?.lua;".as_slice(),
+            p.initial_package_path.as_ref().unwrap()
+        ]
+        .concat()
+    );
+    p.initial_package_path = None;
+    assert!(replay(&p).is_err());
+}
+
+#[test]
+fn uncertain_path_operations_are_not_lua_errors_or_known_observations() {
+    for source in [
+        "pcall(function()emit(package.path==package.path)end);emit('after')",
+        "pcall(function()local t={};t[package.path]=1 end);emit('after')",
+        "pcall(error,package.path);emit('after')",
+        "pcall(function()package.path=package.path..';/after/?.lua' end);emit('after')",
+        "package.path='bad\\0;'..package.path;require('first');emit('after')",
+    ] {
+        let mut p = program(source);
+        p.initial_package_path_unknown_tail = true;
+        let report = replay(&p).unwrap();
+        assert!(
+            matches!(report.halt, Some(Halt::Unresolved { .. })),
+            "{source}: {:?}",
+            report.halt
+        );
+        assert!(report.events.is_empty(), "{source}");
     }
 }
 

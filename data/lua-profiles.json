@@ -2,7 +2,7 @@
   "canonical_fixtures_sha256": "a9b5cc7943ff916a753918f86684b1eb4d0a94a88681e6ec513c3d9f72c3d1ed",
   "canonical_release": "5.4.9",
   "format": "hye-lua-profiles-1",
-  "meaning": "Hash-pinned official Lua releases; 90 ordered reference observations verified for each. Only the recorded call-line differences are applied; other differences fail. This is a partial language/compiler profile, not full dependency ABI or target-compositor certification. Original source archives/builds are temporary and removed.",
+  "meaning": "Hash-pinned official Lua releases; 90 ordered reference observations and the hash-pinned runtime path fixtures verified for each. Only the recorded call-line differences are applied; other differences fail. This is a partial language/compiler profile, not full dependency ABI or target-compositor certification. Original source archives/builds are temporary and removed.",
   "profiles": [
     {
       "archive_sha256": "7d5ea1b9cb6aa0b59ca3dde1c6adcb57ef83a1ba8e5432c0ecd06bf439b3ad88",
@@ -55,5 +55,6 @@
       "ordered_overrides": [],
       "release": "5.4.9"
     }
-  ]
+  ],
+  "runtime_path_fixtures_sha256": "7b1d72899a20772d8bcd6f8fb9b40c0ba649a4bd977f770c382b495b916f2c59"
 }
