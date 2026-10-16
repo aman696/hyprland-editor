@@ -37,6 +37,8 @@ A native GTK4/libadwaita workspace for making Hyprland configuration graphical, 
 
 - Edit ordered gesture drafts with fingers/direction/modifier matching, versioned motion multipliers, built-in actions, phase/legacy action blocks, exact unset identity and registration findings. Save/reopen, reorder, duplicate and undo. Callback data samples stay inert; general event-dependent workflows and real input behavior remain open. See [gesture scope](docs/gesture-editor.md).
 
+The development worker also has an [ordered immutable-module evaluator](docs/ordered-module-evaluation.md), tested against independent Lua/source observations. It is not yet connected to captured files in the GUI. Its `hl.config` records are argument observations, not verified effective settings.
+
 ## Not available yet
 
 Complete Lua interpretation/include graphs, source-field insertion/deletion, multi-file/source dependency graphs and reconciliation, event-based live refresh, multi-instance selection, complete rule semantics/builders, complete animation and gesture semantics/builders and other structured editors, complete workspace/layout/workflow codecs, complete binding selectors/workflows and live behavior, device hardware inspection and source editing, monitor hardware inspection and source editing, plugins, live apply, display recovery, sandboxed compositor preview, distribution packages and release certification. Unknown defaults stay visibly unresolved. Bounds are literal source metadata, not a guarantee that combinations are valid on your system. Hardware behavior has not been tested.
@@ -50,13 +52,13 @@ Linux (pidfd support for inspection, close_range/seccomp support for workers), R
 On Ubuntu 24.04:
 
 ```sh
-sudo apt install build-essential pkg-config libgtk-4-dev libadwaita-1-dev libxkbcommon-dev libre2-dev
+sudo apt install build-essential pkg-config libgtk-4-dev libadwaita-1-dev libxkbcommon-dev libre2-dev liblua5.4-dev
 ```
 
 On Arch Linux:
 
 ```sh
-sudo pacman -S --needed rust pkgconf gtk4 libadwaita libxkbcommon re2 gcc
+sudo pacman -S --needed rust pkgconf gtk4 libadwaita libxkbcommon re2 lua54 gcc
 ```
 
 From the repository, using a working Rust toolchain:
@@ -67,6 +69,8 @@ cargo build --locked --release
 ```
 
 The repository pins Rust through `rust-toolchain.toml` for rustup users. Existing system Rust installations must meet the stated compiler requirement. GTK development packages are needed at build time; GTK and libadwaita runtime libraries are needed to run the resulting binary. It can open as a draft workspace on any graphical Linux desktop; Hyprland itself is not required for this slice.
+
+The development branch links Lua 5.4 for compilation-only validation in the restricted worker, with 64-bit integers and IEEE double precision. It never invokes the compiled source. Install the [Lua 5.4 package](https://archlinux.org/packages/extra/x86_64/lua54/) alongside newer Lua versions; the build explicitly probes `lua5.4`.
 
 A saved workspace can be checked without opening the GUI:
 

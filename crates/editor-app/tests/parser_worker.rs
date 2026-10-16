@@ -48,6 +48,105 @@ fn filesystem_and_network_are_denied() {
     assert_eq!(result["Probe"]["file_denied"], true);
     assert_eq!(result["Probe"]["network_denied"], true);
 }
+
+fn replay_program(source: &str) -> hyprland_editor_core::lua::replay::Program {
+    use hyprland_editor_core::lua::{replay::*, source_hash};
+    Program {
+        version: "0.56.2".into(),
+        profile: Profile::HyprlandLua54,
+        root: "root".into(),
+        documents: vec![Document {
+            id: "root".into(),
+            source: source.into(),
+            sha256: source_hash(source),
+            load_name: b"/private-fixture/main.lua".to_vec(),
+        }],
+        bindings: vec![],
+        initial_package_path: None,
+        working_directory: None,
+    }
+}
+
+#[test]
+fn ordered_modules_and_compilation_run_inside_the_restricted_worker() {
+    use hyprland_editor_core::lua::{replay::*, source_hash};
+    let mut p = replay_program(
+        "local a=require('part');a.n=a.n+1;hl.config({general={border_size=require('part').n}})",
+    );
+    let first = request(json!({"ReplayModules":p}));
+    let request: Request =
+        serde_json::from_value(first["Replayed"]["halt"]["request"].clone()).unwrap();
+    assert!(first["Replayed"]["events"].as_array().unwrap().is_empty());
+    let source = "return {n=2}";
+    p.documents.push(Document {
+        id: "part".into(),
+        source: source.into(),
+        sha256: source_hash(source),
+        load_name: b"/private-fixture/part.lua".to_vec(),
+    });
+    p.bindings.push(Binding {
+        request,
+        resolution: Resolution::Loaded {
+            document: "part".into(),
+            loader_data: b"/private-fixture/part.lua".to_vec(),
+        },
+    });
+    let expected = serde_json::to_value(replay(&p).unwrap()).unwrap();
+    let result = self::request(json!({"ReplayModules":p}));
+    assert_eq!(result["Replayed"], expected);
+    assert!(result["Replayed"]["halt"].is_null());
+    assert_eq!(result["Replayed"]["events"].as_array().unwrap().len(), 1);
+    assert_eq!(result["Replayed"]["runtime_verified"], false);
+    let bad = replay_program("hl.config({general={border_size=2}});local x <const> = 1;x=2");
+    let result = self::request(json!({"ReplayModules":bad}));
+    assert_eq!(result["Replayed"]["halt"]["kind"], "lua_error");
+    assert_eq!(result["Replayed"]["events"], json!([]));
+}
+
+#[test]
+fn replay_compiler_and_native_operations_never_execute_source() {
+    let marker =
+        std::env::temp_dir().join(format!("he-replay-never-execute-{}", std::process::id()));
+    let p = replay_program(&format!(
+        "os.execute('touch {}');hl.config({{general={{border_size=2}}}})",
+        marker.display()
+    ));
+    let result = request(json!({"ReplayModules":p}));
+    assert_eq!(result["Replayed"]["halt"]["kind"], "unresolved");
+    assert_eq!(result["Replayed"]["events"], json!([]));
+    assert!(!marker.exists());
+    let denied = request(json!("Probe"));
+    assert_eq!(denied["Probe"]["file_denied"], true);
+    assert_eq!(denied["Probe"]["network_denied"], true);
+}
+
+#[test]
+fn replay_budgets_bound_control_flow_and_alias_expansion_in_actual_worker() {
+    for source in [
+        "while true do end",
+        "local t={v=1};for i=1,24 do t={t,t}end;hl.config(t)",
+        "local function f()return f()end;pcall(f)",
+    ] {
+        let result = request(json!({"ReplayModules":replay_program(source)}));
+        assert_eq!(result["Replayed"]["halt"]["kind"], "budget", "{result}");
+        assert!(serde_json::to_vec(&result).unwrap().len() < 4 * 1024 * 1024);
+    }
+    let mut constants = String::from("return {");
+    for i in 0..90_000 {
+        use std::fmt::Write;
+        write!(&mut constants, "k{i}=1,").unwrap();
+    }
+    constants.push('}');
+    let result = request(json!({"ReplayModules":replay_program(&constants)}));
+    assert_eq!(result["Replayed"]["halt"]["kind"], "budget");
+    assert!(result["Replayed"]["halt"]["reason"]
+        .as_str()
+        .unwrap()
+        .contains("compilation"));
+    let mut p = replay_program("hl.config({general={border_size=2}})");
+    p.documents[0].sha256 = "0".repeat(64);
+    assert!(request(json!({"ReplayModules":p}))["Error"].is_string());
+}
 #[test]
 fn real_worker_imports_and_prepares_a_preserved_copy() {
     let source = "-- untouched\nhl.config({ ['general.border_size'] = 2 })\n";

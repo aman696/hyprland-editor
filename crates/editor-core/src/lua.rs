@@ -1,5 +1,6 @@
 //! Static Lua source projection and byte-preserving copy preparation. Never runs Lua.
 mod dependencies;
+pub mod replay;
 use crate::{parse_color, Draft, Setting, Value, AUDITED_MAIN, BASELINE, MAX_DOCUMENT_BYTES};
 pub use dependencies::{
     inspect as inspect_dependencies, Barrier as DependencyBarrier,

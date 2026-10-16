@@ -13,11 +13,14 @@
   },
   "foundations": [
     {
-      "area": "source dependency inspection and explicit capture",
+      "area": "source dependency capture and ordered evaluation",
       "code": [
         "crates/editor-core/src/module_path.rs",
         "crates/editor-core/src/module_cache.rs",
         "crates/editor-core/src/lua/dependencies.rs",
+        "crates/editor-core/src/lua/replay.rs",
+        "crates/editor-core/src/lua/replay/eval.rs",
+        "crates/editor-core/native/lua_syntax.cpp",
         "crates/editor-core/src/source_scope.rs",
         "crates/editor-app/src/capture_worker.rs",
         "crates/editor-app/src/directory_worker.rs",
@@ -28,6 +31,10 @@
       "test_references": [
         "scripts/source_graph_probe.py",
         "scripts/module_load_probe.py",
+        "scripts/ordered_module_probe.py",
+        "ordered_reference_observations",
+        "loader_edges_and_api_calls_share_actual_order_and_document_provenance",
+        "ordered_modules_and_compilation_run_inside_the_restricted_worker",
         "actual_policy_allows_selected_read_and_denies_other_read_write_network_and_process_creation",
         "actual_capability_transport_retains_approved_folder_and_refuses_external_targets",
         "contained_relative_absolute_and_alias_paths_preserve_bytes_and_link_evidence",
@@ -36,7 +43,7 @@
         "encoded_retention_budget_refuses_atomically_and_preview_bounds_unicode_and_controls",
         "test_review"
       ],
-      "limits": "source-pinned plans/cache transitions, syntactic dependency sites, isolated selected-file and held-folder capture, bounded temporary GUI snapshots and cleanup; no ordered module evaluation, complete ownership/alias/mount/concurrency certification, wildcard enumeration, graph save/reopen/history/reconciliation, source insertion/deletion, effective discovery, isolated preview, apply/recovery or resource/release acceptance"
+      "limits": "source-pinned plans/cache transitions, syntactic dependency sites, isolated selected-file and held-folder capture, bounded temporary GUI snapshots and cleanup, ordered immutable-byte evaluation under supplied resolution hypotheses with explicit unknowns and compilation-only validation; no captured-graph/evaluator integration, complete language/native/API codecs, ownership/alias/mount/concurrency certification, wildcard enumeration, graph save/reopen/history/reconciliation, source insertion/deletion, effective discovery, isolated preview, apply/recovery or resource/release acceptance"
     },
     {
       "area": "gesture draft editor",

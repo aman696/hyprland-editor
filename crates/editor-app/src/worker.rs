@@ -27,6 +27,7 @@ pub enum Request {
         source: String,
         version: String,
     },
+    ReplayModules(lua::replay::Program),
     PlanModules {
         context: hyprland_editor_core::module_path::Context,
         #[serde(default)]
@@ -45,6 +46,7 @@ pub enum Request {
 pub enum Response {
     Parsed(Box<LuaReport>),
     Dependencies(lua::DependencyInventory),
+    Replayed(Box<lua::replay::Report>),
     ModulePlans(Vec<hyprland_editor_core::module_path::Plan>),
     Registry(hyprland_editor_core::xkb::Registry),
     Copy(String),
@@ -95,6 +97,9 @@ pub fn entry() {
             serde_json::from_slice(&bytes).map_err(|_| "Invalid parser request")?;
         let c = catalogue();
         match request {
+            Request::ReplayModules(program) => {
+                lua::replay::replay(&program).map(|report| Response::Replayed(Box::new(report)))
+            }
             Request::InspectDependencies { source, version } => {
                 lua::inspect_dependencies(&source, &version).map(Response::Dependencies)
             }

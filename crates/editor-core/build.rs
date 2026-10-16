@@ -12,4 +12,17 @@ fn main() {
         build.include(path);
     }
     build.compile("hye_regex");
+    println!("cargo:rerun-if-changed=native/lua_syntax.cpp");
+    let lua = pkg_config::Config::new().probe("lua5.4").expect(
+        "Lua 5.4 development headers/library are required for compilation-only source validation",
+    );
+    let mut syntax = cc::Build::new();
+    syntax
+        .cpp(true)
+        .file("native/lua_syntax.cpp")
+        .flag_if_supported("-std=c++17");
+    for path in lua.include_paths {
+        syntax.include(path);
+    }
+    syntax.compile("hye_lua_syntax");
 }
