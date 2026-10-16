@@ -28,6 +28,7 @@ pub enum Request {
         version: String,
     },
     ReplayModules(lua::replay::Program),
+    DecodePrimitives(Vec<lua::scalar_codec::Case>),
     PlanModules {
         context: hyprland_editor_core::module_path::Context,
         #[serde(default)]
@@ -47,6 +48,11 @@ pub enum Response {
     Parsed(Box<LuaReport>),
     Dependencies(lua::DependencyInventory),
     Replayed(Box<lua::replay::Report>),
+    Primitives {
+        profile: lua::replay::CompilerProfile,
+        numeric_locale: String,
+        outcomes: Vec<lua::scalar_codec::Outcome>,
+    },
     ModulePlans(Vec<hyprland_editor_core::module_path::Plan>),
     Registry(hyprland_editor_core::xkb::Registry),
     Copy(String),
@@ -95,8 +101,16 @@ pub fn entry() {
         }
         let request: Request =
             serde_json::from_slice(&bytes).map_err(|_| "Invalid parser request")?;
-        let c = catalogue();
+        // Conversion/replay-only requests do not need another parsed catalogue.
+        let c = std::sync::LazyLock::new(catalogue);
         match request {
+            Request::DecodePrimitives(cases) => {
+                lua::scalar_codec::decode_batch(&cases).map(|outcomes| Response::Primitives {
+                    profile: lua::replay::compiler_profile(),
+                    numeric_locale: "C".into(),
+                    outcomes,
+                })
+            }
             Request::ReplayModules(program) => {
                 lua::replay::replay(&program).map(|report| Response::Replayed(Box::new(report)))
             }

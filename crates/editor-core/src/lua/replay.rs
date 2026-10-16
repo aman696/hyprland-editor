@@ -1,6 +1,7 @@
 //! Ordered evaluation of an immutable source bundle under an explicit, non-executing model.
 //! Module resolutions are supplied observations, never filesystem permissions or path guesses.
 mod eval;
+mod observed_float;
 mod provenance;
 use super::{named, source_hash, syntax_tree, text};
 use crate::{
@@ -34,6 +35,7 @@ pub struct CompilerProfile {
     pub release: String,
     pub library_identity: String,
     pub error_call_line: Option<ErrorCallLine>,
+    pub primitive_conversions_profiled: bool,
     pub schema_sha256: String,
 }
 /// The model's linked compiler is an explicit assumption, not a detected target
@@ -50,21 +52,23 @@ pub fn compiler_profile() -> CompilerProfile {
         let source = include_str!("../../../../data/lua-profiles.json");
         let matrix: serde_json::Value =
             serde_json::from_str(source).expect("Bundled Lua profile schema");
-        let error_call_line = matrix["profiles"]
+        let matching = matrix["profiles"]
             .as_array()
             .expect("Bundled Lua profiles")
             .iter()
             .find(|row| {
                 row["release"] == release && library_identity.contains(&format!("Lua {release} "))
-            })
-            .map(|row| {
-                serde_json::from_value(row["error_call_line"].clone())
-                    .expect("Bundled call-line rule")
             });
+        let error_call_line = matching.map(|row| {
+            serde_json::from_value(row["error_call_line"].clone()).expect("Bundled call-line rule")
+        });
+        let primitive_conversions_profiled = matching
+            .is_some_and(|row| row["primitive_conversion_profile"] == "hye-primitive-coercions-1");
         CompilerProfile {
             release,
             library_identity,
             error_call_line,
+            primitive_conversions_profiled,
             schema_sha256: source_hash(source),
         }
     });
@@ -140,7 +144,7 @@ pub enum Observed {
     Nil,
     Bool(bool),
     Int(i64),
-    Float(f64),
+    Float(#[serde(with = "observed_float")] f64),
     Bytes(Vec<u8>),
     Table(Vec<(Observed, Observed)>),
     Function(String),

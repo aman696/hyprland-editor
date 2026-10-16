@@ -14,7 +14,7 @@ fn main() {
     build.compile("hye_regex");
     println!("cargo:rerun-if-changed=native/lua_syntax.cpp");
     let lua = pkg_config::Config::new().probe("lua5.4").expect(
-        "Lua 5.4 development headers/library are required for compilation-only source validation",
+        "Lua 5.4 development headers/library are required for bounded source compilation and primitive conversion",
     );
     let mut syntax = cc::Build::new();
     syntax

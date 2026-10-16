@@ -1,5 +1,7 @@
 # Ordered immutable-module evaluation
 
+[Primitive scalar family conformance](scalar-value-conformance.md) is available through a separate restricted-worker batch interface; graph integration and actual registration semantics remain unfinished.
+
 Captured calls also have [source-derived registry-dispatch inspection](config-table-inspection.md), separate from native acceptance and edit ownership.
 
 `lua::replay` is the source-graph branch's ordered evaluator. It operates on supplied, immutable document bytes under explicit assumptions. The GUI now builds a temporary bundle through explicitly approved folder handles and shows captured files and modeled calls in order. It does not import those observations into drafts or save an editable multi-file workspace. All original audit obligations remain. No full feature or security gate is certified by this increment.

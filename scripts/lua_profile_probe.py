@@ -24,9 +24,15 @@ BRIDGE_PROBE = r'''
 #include <lua.hpp>
 #include <cassert>
 #include <cstring>
+#include <cstdint>
 extern "C" unsigned int hye_lua54_release();
 extern "C" size_t hye_lua54_identity(unsigned char*, size_t);
 extern "C" int hye_lua54_compile(const unsigned char*, size_t, const char*, unsigned char*, size_t, size_t*);
+struct Converted {unsigned int flags;int64_t integer;double number;size_t length;};
+extern "C" void* hye_lua54_coercions_new();
+extern "C" int hye_lua54_numeric_locale_c();
+extern "C" void hye_lua54_coercions_close(void*);
+extern "C" int hye_lua54_convert(void*,int,int64_t,double,const unsigned char*,size_t,Converted*,unsigned char*,size_t);
 int main() {
     assert(hye_lua54_release() == LUA_VERSION_RELEASE_NUM);
     unsigned char identity[512] = {};
@@ -43,6 +49,22 @@ int main() {
     assert(written > 0 && written <= sizeof(error));
     const unsigned char binary[] = {27, 'L', 'u', 'a'};
     assert(hye_lua54_compile(binary, sizeof(binary), "@profile", error, sizeof(error), &written) == 1);
+    assert(hye_lua54_numeric_locale_c()==1);
+    auto* state=hye_lua54_coercions_new();assert(state);
+    Converted out{};unsigned char text[128];
+    const unsigned char numeric[]=" 0x1p0 ";
+    assert(hye_lua54_convert(state,4,0,0,numeric,sizeof(numeric)-1,&out,text,sizeof(text))==0);
+    assert((out.flags&2)&&!(out.flags&1)&&out.number==1);
+    assert(hye_lua54_convert(state,3,0,3.0,nullptr,0,&out,text,sizeof(text))==0);
+    assert(!(out.flags&1)&&(out.flags&4)&&out.length==3&&std::memcmp(text,"3.0",3)==0);
+    const unsigned char nul[]={'a',0,'b'};
+    assert(hye_lua54_convert(state,4,0,0,nul,sizeof(nul),&out,text,sizeof(text))==0);
+    assert(out.length==1&&text[0]=='a');
+    for(int i=0;i<4096;++i){assert(hye_lua54_convert(state,2,i,0,nullptr,0,&out,text,sizeof(text))==0);assert(out.integer==i&&(out.flags&1));}
+    assert(hye_lua54_convert(state,4,0,0,nul,65537,&out,text,sizeof(text))==3);
+    assert(hye_lua54_convert(state,1,0,0,nullptr,0,&out,text,sizeof(text))==0);
+    assert(out.flags==8&&out.integer==0);
+    hye_lua54_coercions_close(state);
 }
 '''
 
@@ -58,10 +80,14 @@ def main():
         raise RuntimeError('Lua profiles must be reverified after changing canonical observations')
     if hashlib.sha256((ROOT/'data/runtime-path-fixtures.json').read_bytes()).hexdigest() != matrix['runtime_path_fixtures_sha256']:
         raise RuntimeError('Lua profiles must be reverified after changing runtime path observations')
+    if hashlib.sha256((ROOT/'data/scalar-value-fixtures.json').read_bytes()).hexdigest() != matrix['scalar_value_fixtures_sha256']:
+        raise RuntimeError('Lua profiles must be reverified after changing scalar observations')
     base = json.loads(base_bytes)
     if args.release and any(r not in [p['release'] for p in matrix['profiles']] for r in args.release):
         raise RuntimeError('Unknown requested Lua profile')
     for profile in matrix['profiles']:
+        if profile.get('primitive_conversion_profile') != 'hye-primitive-coercions-1':
+            raise RuntimeError('Unknown primitive conversion profile')
         release = profile['release']
         if args.release and release not in args.release:
             continue
@@ -87,6 +113,7 @@ def main():
             if hashlib.sha256(actual_bytes).hexdigest() != profile['observations_sha256'] or json.loads(actual_bytes) != ordered.materialize(base,profile):
                 raise RuntimeError(f'Lua {release} ordered observations differ from its recorded profile')
             subprocess.run([sys.executable,str(ROOT/'scripts/runtime_path_probe.py'),'--check'],env=dict(os.environ,PKG_CONFIG_LIBDIR=str(temp)),check=True,timeout=60,cwd=ROOT)
+            subprocess.run([sys.executable,str(ROOT/'scripts/scalar_value_probe.py'),'--check'],env=dict(os.environ,PKG_CONFIG_LIBDIR=str(temp)),check=True,timeout=90,cwd=ROOT)
             print(f'Lua {release}: compiler bridge and {len(base["cases"])} ordered observations verified; error line uses {profile["error_call_line"]}',flush=True)
 
 

@@ -1,8 +1,11 @@
-// Compilation only: no libraries are opened and no bytecode/function is invoked.
+// Text compilation and primitive C-API conversion. No libraries or Lua code run.
 #include <lua.hpp>
 #include <cstdlib>
+#include <cstdint>
+#include <clocale>
 #include <cstring>
 #include <limits>
+#include <new>
 static_assert(LUA_VERSION_NUM == 504);
 extern "C" unsigned int hye_lua54_release() {
     return LUA_VERSION_RELEASE_NUM;
@@ -62,4 +65,106 @@ extern "C" int hye_lua54_compile(const unsigned char* source, size_t length,
     }
     lua_close(state);
     return status == LUA_OK ? 0 : status == LUA_ERRMEM ? 2 : 1;
+}
+
+struct Coercions {
+    Budget budget{0};
+    lua_State* state = nullptr;
+};
+extern "C" int hye_lua54_numeric_locale_c() {
+    const char* locale = std::setlocale(LC_NUMERIC, nullptr);
+    return locale && std::strcmp(locale, "C") == 0;
+}
+struct Converted {
+    unsigned int flags;
+    int64_t integer;
+    double number;
+    size_t length;
+};
+static_assert(sizeof(unsigned int) == 4);
+struct Conversion {
+    int kind;
+    int64_t integer;
+    double number;
+    const unsigned char* bytes;
+    size_t length;
+    Converted* result;
+    unsigned char* text;
+    size_t capacity;
+    bool exceeded = false;
+};
+// Only this editor-owned C function is invoked. Allocation failures stay inside
+// lua_pcall; no C++ object with a destructor crosses Lua's longjmp boundary.
+static int convert_primitive(lua_State* state) {
+    auto* input = static_cast<Conversion*>(lua_touserdata(state, 1));
+    switch (input->kind) {
+        case 1: lua_pushboolean(state, input->integer != 0); break;
+        case 2: lua_pushinteger(state, input->integer); break;
+        case 3: lua_pushnumber(state, input->number); break;
+        case 4: lua_pushlstring(state, reinterpret_cast<const char*>(input->bytes), input->length); break;
+        default: lua_pushnil(state); break;
+    }
+    auto* out = input->result;
+    // Check number/integer identity before lua_tolstring mutates numeric slots.
+    if (lua_isinteger(state, -1)) {
+        out->flags |= 1;
+        out->integer = lua_tointeger(state, -1);
+    }
+    if (lua_isnumber(state, -1)) {
+        out->flags |= 2;
+        out->number = lua_tonumber(state, -1);
+    }
+    if (lua_isboolean(state, -1)) {
+        out->flags |= 8;
+        out->integer = lua_toboolean(state, -1);
+    }
+    if (lua_isstring(state, -1)) {
+        out->flags |= 4;
+        size_t length = 0;
+        const char* bytes = lua_tolstring(state, -1, &length);
+        const void* nul = std::memchr(bytes, 0, length);
+        if (nul)
+            length = static_cast<const char*>(nul) - bytes;
+        if (length > input->capacity)
+            input->exceeded = true;
+        else {
+            std::memcpy(input->text, bytes, length);
+            out->length = length;
+        }
+    }
+    return 0;
+}
+extern "C" void* hye_lua54_coercions_new() {
+    auto* context = new (std::nothrow) Coercions;
+    if (!context)
+        return nullptr;
+    context->state = lua_newstate(allocate, &context->budget);
+    if (!context->state) {
+        delete context;
+        return nullptr;
+    }
+    return context;
+}
+extern "C" void hye_lua54_coercions_close(void* pointer) {
+    auto* context = static_cast<Coercions*>(pointer);
+    if (context) {
+        lua_close(context->state);
+        delete context;
+    }
+}
+extern "C" int hye_lua54_convert(void* pointer, int kind, int64_t integer, double number,
+                                const unsigned char* bytes, size_t length, Converted* result,
+                                unsigned char* text, size_t capacity) {
+    if (!pointer || !result || !text || length > 65536 || kind < 0 || kind > 4 || (length && !bytes))
+        return 3;
+    auto* context = static_cast<Coercions*>(pointer);
+    *result = {};
+    Conversion input{kind, integer, number, bytes, length, result, text, capacity};
+    // A new state has room for these two nonallocating pushes. Each call resets
+    // the stack. All allocating string/conversion operations are protected.
+    lua_pushcfunction(context->state, convert_primitive);
+    lua_pushlightuserdata(context->state, &input);
+    const int status = lua_pcall(context->state, 1, 0, 0);
+    lua_settop(context->state, 0);
+    return status == LUA_OK && !input.exceeded ? 0 : 2;
 }

@@ -482,3 +482,83 @@ fn dependency_inspection_reports_scopes_and_aliases_without_running_config_or_op
     assert_eq!(inventory.sites[1].module.as_deref(), Some("/etc/passwd"));
     assert!(!marker.exists());
 }
+
+#[test]
+fn primitive_coercion_stays_in_the_restricted_worker_and_refuses_batch_budgets() {
+    use hyprland_editor_core::lua::{
+        replay::Observed,
+        scalar_codec::{Case, Codec},
+    };
+    let marker =
+        std::env::temp_dir().join(format!("he-coercion-never-execute-{}", std::process::id()));
+    let script = format!("os.execute('touch {}')", marker.display());
+    let cases = vec![
+        Case {
+            codec: Codec::Bool,
+            input: Observed::Bytes(b" 0x1p0 ".to_vec()),
+        },
+        Case {
+            codec: Codec::Float {
+                minimum: None,
+                maximum: None,
+            },
+            input: Observed::Int(16777217),
+        },
+        Case {
+            codec: Codec::String { validator: None },
+            input: Observed::Bytes(script.as_bytes().to_vec()),
+        },
+        Case {
+            codec: Codec::String {
+                validator: Some("unknown".into()),
+            },
+            input: Observed::Bytes(b"text".to_vec()),
+        },
+    ];
+    let mut cases = cases;
+    for bits in [0xfff8000000000000, 0x7ff0000000000000] {
+        cases.push(Case {
+            codec: Codec::Float {
+                minimum: None,
+                maximum: None,
+            },
+            input: Observed::Float(f64::from_bits(bits)),
+        });
+    }
+    let reply = request(json!({"DecodePrimitives":cases}));
+    let values = &reply["Primitives"]["outcomes"];
+    assert_eq!(values[0]["native"]["value"], true, "{reply}");
+    assert_eq!(values[1]["native"]["value"], 0x4b800000u32, "{reply}");
+    assert_eq!(
+        values[2]["representation"]["value"]["value"], script,
+        "{reply}"
+    );
+    assert_eq!(values[3]["kind"], "unresolved", "{reply}");
+    assert_eq!(values[4]["native"]["value"], 0xffc00000u32, "{reply}");
+    assert_eq!(values[5]["native"]["value"], 0x7f800000u32, "{reply}");
+    assert_eq!(
+        values[4]["representation"]["kind"], "unavailable",
+        "{reply}"
+    );
+    assert_eq!(reply["Primitives"]["numeric_locale"], "C");
+    assert!(reply["Primitives"]["profile"]["release"].is_string());
+    assert!(!marker.exists(), "Primitive text was executed");
+    assert!(request(json!({"DecodePrimitives":[]}))["Error"]
+        .as_str()
+        .unwrap()
+        .contains("1–256"));
+    let small = Case {
+        codec: Codec::Bool,
+        input: Observed::Bool(false),
+    };
+    assert!(request(json!({"DecodePrimitives":vec![small;257]}))["Error"].is_string());
+    let large = Case {
+        codec: Codec::String { validator: None },
+        input: Observed::Bytes(vec![b'x'; 65536]),
+    };
+    assert!(request(json!({"DecodePrimitives":vec![large;9]}))["Error"]
+        .as_str()
+        .unwrap()
+        .contains("2 MiB"));
+    assert!(!marker.exists());
+}

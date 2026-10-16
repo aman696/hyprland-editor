@@ -2,7 +2,7 @@
   "canonical_fixtures_sha256": "a191a059b53d172d3f46033c7320cff9a647cedaeb35dc78e71a8e96f29d5055",
   "canonical_release": "5.4.9",
   "format": "hye-lua-profiles-1",
-  "meaning": "Hash-pinned official Lua releases; 92 ordered reference observations and the hash-pinned runtime path fixtures verified for each. Only the recorded call-line differences are applied; other differences fail. This is a partial language/compiler profile, not full dependency ABI or target-compositor certification. Original source archives/builds are temporary and removed.",
+  "meaning": "Hash-pinned official Lua releases; 92 ordered reference observations and the hash-pinned runtime path fixtures and 592 primitive scalar parse observations verified for each. Only the recorded call-line differences are applied; other differences fail. This is a partial language/compiler profile, not full dependency ABI or target-compositor certification. Original source archives/builds are temporary and removed.",
   "profiles": [
     {
       "archive_sha256": "7d5ea1b9cb6aa0b59ca3dde1c6adcb57ef83a1ba8e5432c0ecd06bf439b3ad88",
@@ -29,7 +29,8 @@
           "version": "current"
         }
       ],
-      "release": "5.4.6"
+      "release": "5.4.6",
+      "primitive_conversion_profile": "hye-primitive-coercions-1"
     },
     {
       "archive_sha256": "9fbf5e28ef86c69858f6d3d34eccc32e911c1a28b4120ff3e84aaa70cfbf1e30",
@@ -37,7 +38,8 @@
       "error_call_line": "arguments",
       "observations_sha256": "a191a059b53d172d3f46033c7320cff9a647cedaeb35dc78e71a8e96f29d5055",
       "ordered_overrides": [],
-      "release": "5.4.7"
+      "release": "5.4.7",
+      "primitive_conversion_profile": "hye-primitive-coercions-1"
     },
     {
       "archive_sha256": "4f18ddae154e793e46eeab727c59ef1c0c0c2b744e7b94219710d76f530629ae",
@@ -45,7 +47,8 @@
       "error_call_line": "arguments",
       "observations_sha256": "a191a059b53d172d3f46033c7320cff9a647cedaeb35dc78e71a8e96f29d5055",
       "ordered_overrides": [],
-      "release": "5.4.8"
+      "release": "5.4.8",
+      "primitive_conversion_profile": "hye-primitive-coercions-1"
     },
     {
       "archive_sha256": "2335b6c582a52654f94612bf10d2f4672805d05329aa6568b1d8cd9e5c6fb8e6",
@@ -53,8 +56,10 @@
       "error_call_line": "arguments",
       "observations_sha256": "a191a059b53d172d3f46033c7320cff9a647cedaeb35dc78e71a8e96f29d5055",
       "ordered_overrides": [],
-      "release": "5.4.9"
+      "release": "5.4.9",
+      "primitive_conversion_profile": "hye-primitive-coercions-1"
     }
   ],
-  "runtime_path_fixtures_sha256": "7b1d72899a20772d8bcd6f8fb9b40c0ba649a4bd977f770c382b495b916f2c59"
+  "runtime_path_fixtures_sha256": "7b1d72899a20772d8bcd6f8fb9b40c0ba649a4bd977f770c382b495b916f2c59",
+  "scalar_value_fixtures_sha256": "b91a2c4f63a3b6d8df87662d9e866a7cac5659a7aed78713c4c6db83bf073b35"
 }

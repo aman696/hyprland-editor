@@ -2,6 +2,7 @@
 pub mod config_table;
 mod dependencies;
 pub mod replay;
+pub mod scalar_codec;
 use crate::{parse_color, Draft, Setting, Value, AUDITED_MAIN, BASELINE, MAX_DOCUMENT_BYTES};
 pub use dependencies::{
     inspect as inspect_dependencies, Barrier as DependencyBarrier,

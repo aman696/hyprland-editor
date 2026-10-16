@@ -28,6 +28,7 @@ jobs:
       - run: python3 scripts/module_load_probe.py --check
       - run: python3 scripts/ordered_module_probe.py --check
       - run: python3 scripts/config_table_probe.py --check
+      - run: python3 scripts/scalar_value_probe.py --check
       - run: python3 scripts/lua_profile_probe.py --check
       - run: python3 scripts/implementation_report.py --check
       - run: cargo test --locked --workspace
