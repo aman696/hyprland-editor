@@ -143,6 +143,35 @@ fn replay_budgets_bound_control_flow_and_alias_expansion_in_actual_worker() {
         .as_str()
         .unwrap()
         .contains("compilation"));
+    let name = "a".repeat(5000);
+    let result = request(
+        json!({"ReplayModules":replay_program(&format!("local {name} <const> = 1;{name}=2"))}),
+    );
+    assert_eq!(result["Replayed"]["halt"]["kind"], "budget");
+    {
+        use hyprland_editor_core::lua::{replay::*, source_hash};
+        let mut p = replay_program("pcall(require,'huge');hl.config{never=true}");
+        let source = format!("local {name} <const> = 1;{name}=2");
+        p.documents.push(Document {
+            id: "huge".into(),
+            sha256: source_hash(&source),
+            source,
+            load_name: b"/private-fixture/huge.lua".to_vec(),
+        });
+        let pending = request(json!({"ReplayModules":p}));
+        p.bindings.push(Binding {
+            request: serde_json::from_value(pending["Replayed"]["halt"]["request"].clone())
+                .unwrap(),
+            resolution: Resolution::Loaded {
+                document: "huge".into(),
+                loader_data: b"/private-fixture/huge.lua".to_vec(),
+            },
+        });
+        let result = request(json!({"ReplayModules":p}));
+        assert_eq!(result["Replayed"]["halt"]["kind"], "budget");
+        assert_eq!(result["Replayed"]["logged_module_errors"], 0);
+        assert_eq!(result["Replayed"]["events"], json!([]));
+    }
     let mut p = replay_program("hl.config({general={border_size=2}})");
     p.documents[0].sha256 = "0".repeat(64);
     assert!(request(json!({"ReplayModules":p}))["Error"].is_string());

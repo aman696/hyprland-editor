@@ -108,7 +108,7 @@ impl<'a> Engine<'a> {
                 return Err(Failure::Lua(Value::Bytes(Arc::from(error.as_slice()))))
             }
             Err(CompileFailure::Budget) => {
-                return self.budget("Lua compilation exceeded its allocation budget")
+                return self.budget("Lua compilation exceeded its allocation or diagnostic budget")
             }
         }
         let tree = documents[doc].tree.as_ref().map_err(|error| {
@@ -945,7 +945,10 @@ impl<'a> Engine<'a> {
                         "Long error source-name formatting is not modeled",
                     );
                 }
-                full.extend(format!(":{}: ", node.start_position().row + 1).bytes());
+                // Lua attributes OP_CALL to the argument list's opening token,
+                // which can be on a later line than the function expression.
+                let arguments = self.required(node, "arguments")?;
+                full.extend(format!(":{}: ", arguments.start_position().row + 1).bytes());
                 full.extend(message.iter());
                 value = self.bytes(&full)?;
             }
@@ -1238,7 +1241,7 @@ impl<'a> Engine<'a> {
             Ok(()) => {}
             Err(CompileFailure::Syntax(error)) => return Ok(vec![Value::Nil, self.bytes(error)?]),
             Err(CompileFailure::Budget) => {
-                return self.budget("Lua compilation exceeded its allocation budget")
+                return self.budget("Lua compilation exceeded its allocation or diagnostic budget")
             }
         }
         let tree = documents[target].tree.as_ref().map_err(|error| {

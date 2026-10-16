@@ -65,7 +65,7 @@ fn ordered_reference_observations() {
     let fixtures: Value =
         serde_json::from_str(include_str!("../../../data/ordered-module-fixtures.json")).unwrap();
     assert_eq!(fixtures["format"], "hye-ordered-module-fixtures-1");
-    assert_eq!(fixtures["cases"].as_array().unwrap().len(), 88);
+    assert_eq!(fixtures["cases"].as_array().unwrap().len(), 90);
     assert_eq!(
         fixtures["audit_manifest_sha256"],
         source_hash(include_str!("../../../data/source-graph-semantics.json"))
@@ -372,7 +372,7 @@ fn local_function_binding_uses_syntax_instead_of_whitespace_spelling() {
 }
 
 #[test]
-fn lua_compiler_allocation_budget_stops_before_tree_evaluation() {
+fn lua_compiler_allocation_and_diagnostic_budgets_stop_before_tree_evaluation() {
     use std::fmt::Write;
     let mut source = "return {".to_owned();
     for i in 0..90_000 {
@@ -384,6 +384,14 @@ fn lua_compiler_allocation_budget_stops_before_tree_evaluation() {
     assert!(r.events.is_empty());
     assert!(
         matches!(r.halt,Some(Halt::Budget {ref reason}) if reason.contains("compilation")),
+        "{:?}",
+        r.halt
+    );
+    let name = "a".repeat(5000);
+    let r = replay(&program(&format!("local {name} <const> = 1;{name}=2"))).unwrap();
+    assert!(r.events.is_empty());
+    assert!(
+        matches!(r.halt,Some(Halt::Budget {ref reason}) if reason.contains("diagnostic")),
         "{:?}",
         r.halt
     );

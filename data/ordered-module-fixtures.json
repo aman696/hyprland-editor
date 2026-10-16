@@ -843,6 +843,25 @@
       "watched": []
     },
     {
+      "case": "error_location_uses_argument_opening_line",
+      "error_count": 0,
+      "global_loaded": {
+        "where": true
+      },
+      "ok": true,
+      "registry_loaded": {
+        "where": true
+      },
+      "source": "require('where')",
+      "trace": [
+        "<root>/config/where.lua:2: x"
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/where.lua"
+      ]
+    },
+    {
       "case": "captured_cells",
       "error_count": 0,
       "global_loaded": {},
@@ -1682,6 +1701,25 @@
       ],
       "version": "current",
       "watched": []
+    },
+    {
+      "case": "error_location_uses_argument_opening_line",
+      "error_count": 0,
+      "global_loaded": {
+        "where": true
+      },
+      "ok": true,
+      "registry_loaded": {
+        "where": true
+      },
+      "source": "require('where')",
+      "trace": [
+        "<root>/config/where.lua:2: x"
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/where.lua"
+      ]
     }
   ],
   "format": "hye-ordered-module-fixtures-1",
@@ -1703,6 +1741,7 @@
     "none.lua": "emit('none')",
     "prefix.lua": "emit('prefix');error(\"module 'prefix' not found deliberately\",0)",
     "ret.lua": "local name,data=...;emit({name=name,data=data});return 7,9",
-    "value.lua": "emit('value');return {n=2,bump=function(self)self.n=self.n+1;return self.n end}"
+    "value.lua": "emit('value');return {n=2,bump=function(self)self.n=self.n+1;return self.n end}",
+    "where.lua": "local ok,e=pcall(function()error\n(\n'x'\n)end);emit(e);return true"
   }
 }

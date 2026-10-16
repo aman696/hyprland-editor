@@ -32,6 +32,7 @@ FILES = {
     'assigned_false.lua': "emit('assigned-false');package.loaded.assigned_false=false",
     'cycle.lua': "depth=(depth or 0)+1;if depth==1 then require('cycle') end;return depth",
     'env.lua': "emit(value);return value",
+    'where.lua': "local ok,e=pcall(function()error\n(\n'x'\n)end);emit(e);return true",
 }
 CASES = [
     ('captured_cells', "local x=1;local function f()return x end;x=2;emit(f())"),
@@ -78,6 +79,7 @@ CASES = [
     ('local_function_whitespace_shadowing', "local f=3;do local\tfunction f()return 9 end;emit(f())end;emit(f)"),
     ('empty_locals_and_method_declaration', "local a,b;local t={n=2};function t:inc(x)self.n=self.n+x;return self.n end;emit(a==nil and b==nil);emit(t:inc(3))"),
     ('loadfile_captured_environment', "local f=loadfile(__fixture_root..'/config/env.lua','t',{emit=emit,value=8});emit({f()})"),
+    ('error_location_uses_argument_opening_line', "require('where')"),
 ]
 
 

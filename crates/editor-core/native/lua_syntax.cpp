@@ -42,8 +42,10 @@ extern "C" int hye_lua54_compile(const unsigned char* source, size_t length,
         size_t count = 0;
         const char* message = lua_tolstring(state, -1, &count);
         if (message) {
-            if (count > capacity)
-                count = capacity;
+            if (count > capacity) {
+                lua_close(state);
+                return 3; // Diagnostic budget: never return a truncated error as exact.
+            }
             std::memcpy(error, message, count);
             *written = count;
         }
