@@ -1,27 +1,45 @@
 use super::*;
 impl<'a> Engine<'a> {
     fn first(values: Vec<Value>) -> Value {
-        values.into_iter().next().unwrap_or(Value::Nil)
+        values.into_iter().next().unwrap_or(Value::from(Kind::Nil))
     }
     fn number(value: &Value) -> Option<f64> {
         match value {
-            Value::Int(v) => Some(*v as f64),
-            Value::Float(v) => Some(*v),
+            Value {
+                kind: Kind::Int(v), ..
+            } => Some(*v as f64),
+            Value {
+                kind: Kind::Float(v),
+                ..
+            } => Some(*v),
             _ => None,
         }
     }
     fn table_id(&self, doc: usize, node: Node<'_>, value: Value) -> Result<usize> {
         match value {
-            Value::Table(id) => Ok(id),
-            Value::Bytes(_) | Value::PartialPath(_) => self.unknown(
+            Value {
+                kind: Kind::Table(id),
+                ..
+            } => Ok(id),
+            Value {
+                kind: Kind::Bytes(_),
+                ..
+            }
+            | Value {
+                kind: Kind::PartialPath(_),
+                ..
+            } => self.unknown(
                 doc,
                 node,
                 "String metatable/library indexing is not modeled",
             ),
-            Value::Unknown(reason) => self.unknown(doc, node, reason),
-            _ => Err(Failure::Lua(Value::Unknown(
+            Value {
+                kind: Kind::Unknown(reason),
+                ..
+            } => self.unknown(doc, node, reason),
+            _ => Err(Failure::Lua(Value::from(Kind::Unknown(
                 "The exact Lua indexing error text is not modeled",
-            ))),
+            )))),
         }
     }
     fn variable(&self, env: &Env, name: &str) -> Result<Value> {
@@ -29,11 +47,17 @@ impl<'a> Engine<'a> {
             return Ok(self.cells[*id].clone());
         }
         match env.locals.get("_ENV").map(|id| self.cells[*id].clone()) {
-            Some(Value::Table(id)) => Ok(self.field(id, name.as_bytes())),
-            Some(Value::Unknown(reason)) => Err(Failure::Unknown(0, 0..0, reason.into())),
-            _ => Err(Failure::Lua(Value::Unknown(
+            Some(Value {
+                kind: Kind::Table(id),
+                ..
+            }) => Ok(self.field(id, name.as_bytes())),
+            Some(Value {
+                kind: Kind::Unknown(reason),
+                ..
+            }) => Err(Failure::Unknown(0, 0..0, reason.into())),
+            _ => Err(Failure::Lua(Value::from(Kind::Unknown(
                 "The exact Lua environment-index error text is not modeled",
-            ))),
+            )))),
         }
     }
     fn list(
@@ -93,7 +117,7 @@ impl<'a> Engine<'a> {
             env: captured,
             variadic,
         });
-        Ok(Value::Closure(id))
+        Ok(Value::from(Kind::Closure(id)))
     }
     pub(super) fn chunk(
         &mut self,
@@ -105,7 +129,9 @@ impl<'a> Engine<'a> {
         match &documents[doc].compile {
             Ok(()) => {}
             Err(CompileFailure::Syntax(error)) => {
-                return Err(Failure::Lua(Value::Bytes(Arc::from(error.as_slice()))))
+                return Err(Failure::Lua(Value::from(Kind::Bytes(Arc::from(
+                    error.as_slice(),
+                )))))
             }
             Err(CompileFailure::Budget) => {
                 return self.budget("Lua compilation exceeded its allocation or diagnostic budget")
@@ -123,7 +149,7 @@ impl<'a> Engine<'a> {
             varargs: args,
             ..Env::default()
         };
-        let cell = self.cell(Value::Table(global))?;
+        let cell = self.cell(Value::from(Kind::Table(global)))?;
         env.locals.insert(Arc::from("_ENV"), cell);
         match self.block(doc, tree.root_node(), &mut env, 0)? {
             Flow::Return(values) => Ok(values),
@@ -138,18 +164,35 @@ impl<'a> Engine<'a> {
         env: &mut Env,
         depth: usize,
     ) -> Result<Vec<Value>> {
+        if self.source_frames.len() >= 256 {
+            return self.budget("Expression provenance stack exceeds 256 frames");
+        }
+        self.source_frames.push(vec![]);
+        let result = self.expression_value(doc, node, env, depth);
+        let evaluated = self.source_frames.pop().expect("source frame just entered");
+        let mut values = result?;
+        self.trace_expression(doc, node, &mut values, evaluated)?;
+        Ok(values)
+    }
+    fn expression_value(
+        &mut self,
+        doc: usize,
+        node: Node<'a>,
+        env: &mut Env,
+        depth: usize,
+    ) -> Result<Vec<Value>> {
         self.tick()?;
         if depth > 128 {
             return self.budget("Expression depth exceeds 128");
         }
         let source = &self.documents[doc].document.source;
         let value = match node.kind() {
-            "nil" => Value::Nil,
-            "true" => Value::Bool(true),
-            "false" => Value::Bool(false),
+            "nil" => Value::from(Kind::Nil),
+            "true" => Value::from(Kind::Bool(true)),
+            "false" => Value::from(Kind::Bool(false)),
             "number" => match super::super::evaluate(node, source, &BTreeMap::new(), 0) {
-                Some(super::super::Expr::Int(v)) => Value::Int(v),
-                Some(super::super::Expr::Float(v)) => Value::Float(v),
+                Some(super::super::Expr::Int(v)) => Value::from(Kind::Int(v)),
+                Some(super::super::Expr::Float(v)) => Value::from(Kind::Float(v)),
                 _ => {
                     return self.unknown(doc, node, "Numeric literal is outside the current model")
                 }
@@ -190,7 +233,7 @@ impl<'a> Engine<'a> {
                     self.one(doc, field, env, depth + 1)?
                 };
                 if key.is_nil() {
-                    Value::Nil
+                    Value::from(Kind::Nil)
                 } else {
                     let key = self.key(key)?;
                     self.get(id, &key)
@@ -237,18 +280,47 @@ impl<'a> Engine<'a> {
                         self.set(id, k, value)?;
                     }
                 }
-                Value::Table(id)
+                Value::from(Kind::Table(id))
             }
             "unary_expression" => {
                 let value = self.one(doc, self.required(node, "operand")?, env, depth + 1)?;
                 let op = text(self.required(node, "operator")?, source);
                 match (op, value) {
-                    ("not", Value::Unknown(reason)) => return self.unknown(doc, node, reason),
-                    ("not", v) => Value::Bool(!v.is_truthy()),
-                    ("-", Value::Int(v)) => Value::Int(v.wrapping_neg()),
-                    ("-", Value::Float(v)) => Value::Float(-v),
-                    ("#", Value::Bytes(v)) => Value::Int(v.len() as i64),
-                    ("#", Value::Table(id)) => {
+                    (
+                        "not",
+                        Value {
+                            kind: Kind::Unknown(reason),
+                            ..
+                        },
+                    ) => return self.unknown(doc, node, reason),
+                    ("not", v) => Value::from(Kind::Bool(!v.is_truthy())),
+                    (
+                        "-",
+                        Value {
+                            kind: Kind::Int(v), ..
+                        },
+                    ) => Value::from(Kind::Int(v.wrapping_neg())),
+                    (
+                        "-",
+                        Value {
+                            kind: Kind::Float(v),
+                            ..
+                        },
+                    ) => Value::from(Kind::Float(-v)),
+                    (
+                        "#",
+                        Value {
+                            kind: Kind::Bytes(v),
+                            ..
+                        },
+                    ) => Value::from(Kind::Int(v.len() as i64)),
+                    (
+                        "#",
+                        Value {
+                            kind: Kind::Table(id),
+                            ..
+                        },
+                    ) => {
                         if self.tables[id].unknown {
                             return self.unknown(doc, node, "Library table length is not modeled");
                         }
@@ -268,7 +340,7 @@ impl<'a> Engine<'a> {
                                 "Length of a table with holes is not inferred",
                             );
                         }
-                        Value::Int(n)
+                        Value::from(Kind::Int(n))
                     }
                     _ => {
                         return self.unknown(
@@ -281,7 +353,11 @@ impl<'a> Engine<'a> {
             }
             "binary_expression" => {
                 let left = self.one(doc, self.required(node, "left")?, env, depth + 1)?;
-                if let Value::Unknown(reason) = left {
+                if let Value {
+                    kind: Kind::Unknown(reason),
+                    ..
+                } = left
+                {
                     return self.unknown(doc, node, reason);
                 }
                 let op = text(self.required(node, "operator")?, source);
@@ -289,7 +365,11 @@ impl<'a> Engine<'a> {
                     left
                 } else {
                     let right = self.one(doc, self.required(node, "right")?, env, depth + 1)?;
-                    if let Value::Unknown(reason) = right {
+                    if let Value {
+                        kind: Kind::Unknown(reason),
+                        ..
+                    } = right
+                    {
                         return self.unknown(doc, node, reason);
                     }
                     self.binary(doc, node, op, left, right)?
@@ -336,15 +416,41 @@ impl<'a> Engine<'a> {
             return Ok(right);
         }
         if op == ".." {
-            if let (Value::Bytes(prefix), Value::PartialPath(path)) = (&left, &right) {
+            if let (
+                Value {
+                    kind: Kind::Bytes(prefix),
+                    ..
+                },
+                Value {
+                    kind: Kind::PartialPath(path),
+                    ..
+                },
+            ) = (&left, &right)
+            {
                 let value = self.bytes(&[prefix.as_ref(), path.as_ref()].concat())?;
-                let Value::Bytes(bytes) = value else {
+                let Value {
+                    kind: Kind::Bytes(bytes),
+                    ..
+                } = value
+                else {
                     unreachable!()
                 };
-                return Ok(Value::PartialPath(bytes));
+                return Ok(Value::from(Kind::PartialPath(bytes)));
             }
         }
-        if matches!(left, Value::PartialPath(_)) || matches!(right, Value::PartialPath(_)) {
+        if matches!(
+            left,
+            Value {
+                kind: Kind::PartialPath(_),
+                ..
+            }
+        ) || matches!(
+            right,
+            Value {
+                kind: Kind::PartialPath(_),
+                ..
+            }
+        ) {
             return self.unknown(
                 doc,
                 node,
@@ -353,7 +459,24 @@ impl<'a> Engine<'a> {
         }
         if op == "==" || op == "~=" {
             let same = match (&left, &right) {
-                (Value::Int(a), Value::Float(b)) | (Value::Float(b), Value::Int(a)) => {
+                (
+                    Value {
+                        kind: Kind::Int(a), ..
+                    },
+                    Value {
+                        kind: Kind::Float(b),
+                        ..
+                    },
+                )
+                | (
+                    Value {
+                        kind: Kind::Float(b),
+                        ..
+                    },
+                    Value {
+                        kind: Kind::Int(a), ..
+                    },
+                ) => {
                     b.is_finite()
                         && b.fract() == 0.
                         && *b >= i64::MIN as f64
@@ -362,7 +485,11 @@ impl<'a> Engine<'a> {
                 }
                 _ => left == right,
             };
-            return Ok(Value::Bool(if op == "==" { same } else { !same }));
+            return Ok(Value::from(Kind::Bool(if op == "==" {
+                same
+            } else {
+                !same
+            })));
         }
         if ["<", ">", "<=", ">="].contains(&op) {
             // Converting the integer to double loses order above 2^53. Compare it
@@ -381,10 +508,42 @@ impl<'a> Engine<'a> {
                 }
             };
             let order = match (&left, &right) {
-                (Value::Bytes(a), Value::Bytes(b)) => Some(a.cmp(b)),
-                (Value::Int(a), Value::Int(b)) => Some(a.cmp(b)),
-                (Value::Int(a), Value::Float(b)) => Some(integer_float(*a, *b)),
-                (Value::Float(a), Value::Int(b)) => Some(integer_float(*b, *a).reverse()),
+                (
+                    Value {
+                        kind: Kind::Bytes(a),
+                        ..
+                    },
+                    Value {
+                        kind: Kind::Bytes(b),
+                        ..
+                    },
+                ) => Some(a.cmp(b)),
+                (
+                    Value {
+                        kind: Kind::Int(a), ..
+                    },
+                    Value {
+                        kind: Kind::Int(b), ..
+                    },
+                ) => Some(a.cmp(b)),
+                (
+                    Value {
+                        kind: Kind::Int(a), ..
+                    },
+                    Value {
+                        kind: Kind::Float(b),
+                        ..
+                    },
+                ) => Some(integer_float(*a, *b)),
+                (
+                    Value {
+                        kind: Kind::Float(a),
+                        ..
+                    },
+                    Value {
+                        kind: Kind::Int(b), ..
+                    },
+                ) => Some(integer_float(*b, *a).reverse()),
                 _ => Self::number(&left)
                     .zip(Self::number(&right))
                     .and_then(|(a, b)| a.partial_cmp(&b)),
@@ -396,17 +555,22 @@ impl<'a> Engine<'a> {
                     "Comparison coercion is not modeled".into(),
                 )
             })?;
-            return Ok(Value::Bool(match op {
+            return Ok(Value::from(Kind::Bool(match op {
                 "<" => order.is_lt(),
                 ">" => order.is_gt(),
                 "<=" => !order.is_gt(),
                 _ => !order.is_lt(),
-            }));
+            })));
         }
         if op == ".." {
             let bytes = |v: Value| match v {
-                Value::Bytes(v) => Some(v.to_vec()),
-                Value::Int(v) => Some(v.to_string().into_bytes()),
+                Value {
+                    kind: Kind::Bytes(v),
+                    ..
+                } => Some(v.to_vec()),
+                Value {
+                    kind: Kind::Int(v), ..
+                } => Some(v.to_string().into_bytes()),
                 _ => None,
             };
             let mut a = bytes(left).ok_or_else(|| {
@@ -429,16 +593,24 @@ impl<'a> Engine<'a> {
             a.extend(b);
             return self.bytes(&a);
         }
-        if let (Value::Int(a), Value::Int(b)) = (&left, &right) {
+        if let (
+            Value {
+                kind: Kind::Int(a), ..
+            },
+            Value {
+                kind: Kind::Int(b), ..
+            },
+        ) = (&left, &right)
+        {
             let value = match op {
                 "+" => Some(a.wrapping_add(*b)),
                 "-" => Some(a.wrapping_sub(*b)),
                 "*" => Some(a.wrapping_mul(*b)),
                 "//" | "%" => {
                     if *b == 0 {
-                        return Err(Failure::Lua(Value::Unknown(
+                        return Err(Failure::Lua(Value::from(Kind::Unknown(
                             "The exact Lua arithmetic error text is not modeled",
-                        )));
+                        ))));
                     }
                     let mut quotient = a.wrapping_div(*b);
                     if a.wrapping_rem(*b) != 0 && (a < &0) != (b < &0) {
@@ -453,7 +625,7 @@ impl<'a> Engine<'a> {
                 _ => None,
             };
             if let Some(v) = value {
-                return Ok(Value::Int(v));
+                return Ok(Value::from(Kind::Int(v)));
             }
         }
         let (Some(a), Some(b)) = (Self::number(&left), Self::number(&right)) else {
@@ -476,7 +648,7 @@ impl<'a> Engine<'a> {
                 "Non-finite intermediate numbers need an explicit numeric profile",
             );
         }
-        Ok(Value::Float(v))
+        Ok(Value::from(Kind::Float(v)))
     }
     fn place(&mut self, doc: usize, node: Node<'a>, env: &mut Env) -> Result<Place> {
         let source = &self.documents[doc].document.source;
@@ -521,7 +693,7 @@ impl<'a> Engine<'a> {
             Place::Field(id, key) => {
                 if id == self.package
                     && key == Key::Bytes(Arc::from(b"searchers".as_slice()))
-                    && value != Value::Table(self.searchers)
+                    && value != Value::from(Kind::Table(self.searchers))
                 {
                     return self.unknown(
                         doc,
@@ -608,7 +780,7 @@ impl<'a> Engine<'a> {
                     .unwrap_or_default();
                 let values = self.list(doc, rhs, env, 0)?;
                 for (i, var) in vars.into_iter().enumerate() {
-                    let value = values.get(i).cloned().unwrap_or(Value::Nil);
+                    let value = values.get(i).cloned().unwrap_or(Value::from(Kind::Nil));
                     if local {
                         let id = self.cell(value)?;
                         env.locals.insert(self.name(text(var, source))?, id);
@@ -622,7 +794,7 @@ impl<'a> Engine<'a> {
                 let name = self.required(node, "name")?;
                 let local = node.child(0).is_some_and(|token| token.kind() == "local");
                 let place = if local {
-                    let id = self.cell(Value::Nil)?;
+                    let id = self.cell(Value::from(Kind::Nil))?;
                     env.locals.insert(self.name(text(name, source))?, id);
                     Place::Cell(id)
                 } else {
@@ -634,7 +806,11 @@ impl<'a> Engine<'a> {
             }
             "if_statement" => {
                 let condition = self.one(doc, self.required(node, "condition")?, env, 0)?;
-                if let Value::Unknown(reason) = condition {
+                if let Value {
+                    kind: Kind::Unknown(reason),
+                    ..
+                } = condition
+                {
                     return self.unknown(doc, node, reason);
                 }
                 let mut body = if condition.is_truthy() {
@@ -651,7 +827,11 @@ impl<'a> Engine<'a> {
                         }
                         let condition =
                             self.one(doc, self.required(branch, "condition")?, env, 0)?;
-                        if let Value::Unknown(reason) = condition {
+                        if let Value {
+                            kind: Kind::Unknown(reason),
+                            ..
+                        } = condition
+                        {
                             return self.unknown(doc, branch, reason);
                         }
                         if condition.is_truthy() {
@@ -670,7 +850,11 @@ impl<'a> Engine<'a> {
                 let mut inner = self.copied(env)?;
                 if node.kind() == "while_statement" {
                     let value = self.one(doc, self.required(node, "condition")?, env, 0)?;
-                    if let Value::Unknown(reason) = value {
+                    if let Value {
+                        kind: Kind::Unknown(reason),
+                        ..
+                    } = value
+                    {
                         return self.unknown(doc, node, reason);
                     }
                     if !value.is_truthy() {
@@ -686,7 +870,11 @@ impl<'a> Engine<'a> {
                 }
                 if node.kind() == "repeat_statement" {
                     let value = self.one(doc, self.required(node, "condition")?, &mut inner, 0)?;
-                    if let Value::Unknown(reason) = value {
+                    if let Value {
+                        kind: Kind::Unknown(reason),
+                        ..
+                    } = value
+                    {
                         return self.unknown(doc, node, reason);
                     }
                     if value.is_truthy() {
@@ -704,10 +892,22 @@ impl<'a> Engine<'a> {
                 let step = if let Some(step) = clause.child_by_field_name("step") {
                     self.one(doc, step, env, 0)?
                 } else {
-                    Value::Int(1)
+                    Value::from(Kind::Int(1))
                 };
-                let (Value::Int(mut current), Value::Int(end), Value::Int(step)) =
-                    (start, end, step)
+                let (
+                    Value {
+                        kind: Kind::Int(mut current),
+                        ..
+                    },
+                    Value {
+                        kind: Kind::Int(end),
+                        ..
+                    },
+                    Value {
+                        kind: Kind::Int(step),
+                        ..
+                    },
+                ) = (start, end, step)
                 else {
                     return self.unknown(
                         doc,
@@ -716,9 +916,9 @@ impl<'a> Engine<'a> {
                     );
                 };
                 if step == 0 {
-                    return Err(Failure::Lua(Value::Unknown(
+                    return Err(Failure::Lua(Value::from(Kind::Unknown(
                         "The exact Lua numeric-for error text is not modeled",
-                    )));
+                    ))));
                 }
                 while if step > 0 {
                     current <= end
@@ -727,7 +927,7 @@ impl<'a> Engine<'a> {
                 } {
                     self.tick()?;
                     let mut inner = self.copied(env)?;
-                    let id = self.cell(Value::Int(current))?;
+                    let id = self.cell(Value::from(Kind::Int(current)))?;
                     inner
                         .locals
                         .insert(self.name(text(self.required(clause, "name")?, source))?, id);
@@ -788,7 +988,10 @@ impl<'a> Engine<'a> {
     ) -> Result<Vec<Value>> {
         self.tick()?;
         match function {
-            Value::Closure(id) => {
+            Value {
+                kind: Kind::Closure(id),
+                ..
+            } => {
                 let closure = &self.closures[id];
                 let (target, body, params, variadic, captured) = (
                     closure.document,
@@ -805,7 +1008,7 @@ impl<'a> Engine<'a> {
                     vec![]
                 };
                 for (i, name) in params.into_iter().enumerate() {
-                    let id = self.cell(args.get(i).cloned().unwrap_or(Value::Nil))?;
+                    let id = self.cell(args.get(i).cloned().unwrap_or(Value::from(Kind::Nil)))?;
                     env.locals.insert(name, id);
                 }
                 if let Some(body) = body {
@@ -818,7 +1021,10 @@ impl<'a> Engine<'a> {
                     Ok(vec![])
                 }
             }
-            Value::Native(Native::Observe(api)) => {
+            Value {
+                kind: Kind::Native(Native::Observe(api)),
+                ..
+            } => {
                 if self.events.len() >= 2048 {
                     return self.budget("Replay call observation limit exceeded");
                 }
@@ -828,104 +1034,199 @@ impl<'a> Engine<'a> {
                 } else {
                     &args
                 };
-                let arguments = self.observed(observed_args)?;
+                let (arguments, argument_sources) = self.observed_sources(observed_args)?;
                 self.events.push(Event {
                     order: self.order,
                     document: self.documents[doc].document.id.clone(),
                     span: node.byte_range(),
                     api: api.into(),
                     arguments,
+                    argument_sources,
                 });
                 self.order += 1;
                 Ok(vec![])
             }
-            Value::Native(Native::Require(safe)) => self.require(doc, node, args, safe),
-            Value::Native(Native::Dofile) | Value::Native(Native::Loadfile) => self.file_call(
+            Value {
+                kind: Kind::Native(Native::Require(safe)),
+                ..
+            } => self.require(doc, node, args, safe),
+            Value {
+                kind: Kind::Native(Native::Dofile),
+                ..
+            }
+            | Value {
+                kind: Kind::Native(Native::Loadfile),
+                ..
+            } => self.file_call(
                 doc,
                 node,
                 args,
-                matches!(function, Value::Native(Native::Loadfile)),
+                matches!(
+                    function,
+                    Value {
+                        kind: Kind::Native(Native::Loadfile),
+                        ..
+                    }
+                ),
             ),
-            Value::Native(Native::Error) => self.raise(doc, node, args, true),
-            Value::Native(Native::Pcall) => {
-                let f = args.first().cloned().unwrap_or(Value::Nil);
+            Value {
+                kind: Kind::Native(Native::Error),
+                ..
+            } => self.raise(doc, node, args, true),
+            Value {
+                kind: Kind::Native(Native::Pcall),
+                ..
+            } => {
+                let f = args.first().cloned().unwrap_or(Value::from(Kind::Nil));
                 let args = args.get(1..).unwrap_or_default().to_vec();
                 // error() called directly by pcall has a C caller, so level one
                 // supplies no Lua source location. A Lua closure does have one.
-                let result = if f == Value::Native(Native::Error) {
+                let result = if f == Value::from(Kind::Native(Native::Error)) {
                     self.raise(doc, node, args, false)
                 } else {
                     self.invoke(doc, node, f, args)
                 };
                 match result {
                     Ok(values) => {
-                        let mut result = vec![Value::Bool(true)];
+                        let mut result = vec![Value::from(Kind::Bool(true))];
                         result.extend(values);
                         Ok(result)
                     }
-                    Err(Failure::Lua(value)) => Ok(vec![Value::Bool(false), value]),
+                    Err(Failure::Lua(value)) => Ok(vec![Value::from(Kind::Bool(false)), value]),
                     Err(other) => Err(other),
                 }
             }
-            Value::Native(Native::Type) => {
-                let name = match args.first().unwrap_or(&Value::Nil) {
-                    Value::Nil => "nil",
-                    Value::Bool(_) => "boolean",
-                    Value::Int(_) | Value::Float(_) => "number",
-                    Value::Bytes(_) | Value::PartialPath(_) => "string",
-                    Value::Table(_) => "table",
-                    Value::Closure(_) | Value::Native(_) => "function",
-                    Value::Unknown(reason) => return self.unknown(doc, node, reason),
+            Value {
+                kind: Kind::Native(Native::Type),
+                ..
+            } => {
+                let name = match args.first().unwrap_or(&Value::from(Kind::Nil)) {
+                    Value {
+                        kind: Kind::Nil, ..
+                    } => "nil",
+                    Value {
+                        kind: Kind::Bool(_),
+                        ..
+                    } => "boolean",
+                    Value {
+                        kind: Kind::Int(_), ..
+                    }
+                    | Value {
+                        kind: Kind::Float(_),
+                        ..
+                    } => "number",
+                    Value {
+                        kind: Kind::Bytes(_),
+                        ..
+                    }
+                    | Value {
+                        kind: Kind::PartialPath(_),
+                        ..
+                    } => "string",
+                    Value {
+                        kind: Kind::Table(_),
+                        ..
+                    } => "table",
+                    Value {
+                        kind: Kind::Closure(_),
+                        ..
+                    }
+                    | Value {
+                        kind: Kind::Native(_),
+                        ..
+                    } => "function",
+                    Value {
+                        kind: Kind::Unknown(reason),
+                        ..
+                    } => return self.unknown(doc, node, reason),
                 };
                 self.bytes(name.as_bytes()).map(|v| vec![v])
             }
-            Value::Native(Native::Rawget) | Value::Native(Native::Rawset) => {
-                let id = self.table_id(doc, node, args.first().cloned().unwrap_or(Value::Nil))?;
-                let value = args.get(1).cloned().unwrap_or(Value::Nil);
-                if matches!(function, Value::Native(Native::Rawget)) && value.is_nil() {
-                    return Ok(vec![Value::Nil]);
+            Value {
+                kind: Kind::Native(Native::Rawget),
+                ..
+            }
+            | Value {
+                kind: Kind::Native(Native::Rawset),
+                ..
+            } => {
+                let id = self.table_id(
+                    doc,
+                    node,
+                    args.first().cloned().unwrap_or(Value::from(Kind::Nil)),
+                )?;
+                let value = args.get(1).cloned().unwrap_or(Value::from(Kind::Nil));
+                if matches!(
+                    function,
+                    Value {
+                        kind: Kind::Native(Native::Rawget),
+                        ..
+                    }
+                ) && value.is_nil()
+                {
+                    return Ok(vec![Value::from(Kind::Nil)]);
                 }
                 let key = self.key(value)?;
-                if matches!(function, Value::Native(Native::Rawget)) {
+                if matches!(
+                    function,
+                    Value {
+                        kind: Kind::Native(Native::Rawget),
+                        ..
+                    }
+                ) {
                     Ok(vec![self.get(id, &key)])
                 } else {
                     self.store(
                         doc,
                         node,
                         Place::Field(id, key),
-                        args.get(2).cloned().unwrap_or(Value::Nil),
+                        args.get(2).cloned().unwrap_or(Value::from(Kind::Nil)),
                     )?;
-                    Ok(vec![Value::Table(id)])
+                    Ok(vec![Value::from(Kind::Table(id))])
                 }
             }
-            Value::Native(Native::Select) => {
-                let first = args.first().cloned().unwrap_or(Value::Nil);
+            Value {
+                kind: Kind::Native(Native::Select),
+                ..
+            } => {
+                let first = args.first().cloned().unwrap_or(Value::from(Kind::Nil));
                 match first {
-                    Value::Bytes(b) if b.as_ref() == b"#" => {
-                        Ok(vec![Value::Int(args.len().saturating_sub(1) as i64)])
-                    }
-                    Value::Int(n) if n != 0 => {
+                    Value {
+                        kind: Kind::Bytes(b),
+                        ..
+                    } if b.as_ref() == b"#" => Ok(vec![Value::from(Kind::Int(
+                        args.len().saturating_sub(1) as i64,
+                    ))]),
+                    Value {
+                        kind: Kind::Int(n), ..
+                    } if n != 0 => {
                         let count = args.len().saturating_sub(1) as i64;
                         let index = if n < 0 { count + n } else { n - 1 };
                         if index < 0 {
-                            return Err(Failure::Lua(Value::Unknown(
+                            return Err(Failure::Lua(Value::from(Kind::Unknown(
                                 "The exact Lua select error text is not modeled",
-                            )));
+                            ))));
                         }
                         Ok(args.get(index as usize + 1..).unwrap_or_default().to_vec())
                     }
                     _ => self.unknown(doc, node, "select argument coercion is not modeled"),
                 }
             }
-            Value::Native(Native::Unmodeled(name)) => self.unknown(
+            Value {
+                kind: Kind::Native(Native::Unmodeled(name)),
+                ..
+            } => self.unknown(
                 doc,
                 node,
                 &format!("Native operation {name} is not evaluated"),
             ),
-            Value::Unknown(reason) => self.unknown(doc, node, reason),
-            _ => Err(Failure::Lua(Value::Unknown(
+            Value {
+                kind: Kind::Unknown(reason),
+                ..
+            } => self.unknown(doc, node, reason),
+            _ => Err(Failure::Lua(Value::from(Kind::Unknown(
                 "The exact Lua call error text is not modeled",
-            ))),
+            )))),
         }
     }
     fn raise(
@@ -935,20 +1236,35 @@ impl<'a> Engine<'a> {
         args: Vec<Value>,
         lua_caller: bool,
     ) -> Result<Vec<Value>> {
-        let mut value = args.first().cloned().unwrap_or(Value::Nil);
-        if matches!(value, Value::PartialPath(_)) {
+        let mut value = args.first().cloned().unwrap_or(Value::from(Kind::Nil));
+        if matches!(
+            value,
+            Value {
+                kind: Kind::PartialPath(_),
+                ..
+            }
+        ) {
             return self.unknown(
                 doc,
                 node,
                 "Error text includes an uncaptured package.path tail",
             );
         }
-        if let Value::Unknown(reason) = value {
+        if let Value {
+            kind: Kind::Unknown(reason),
+            ..
+        } = value
+        {
             return self.unknown(doc, node, reason);
         }
         let level = match args.get(1) {
-            None | Some(Value::Nil) => 1,
-            Some(Value::Int(n)) => *n,
+            None
+            | Some(Value {
+                kind: Kind::Nil, ..
+            }) => 1,
+            Some(Value {
+                kind: Kind::Int(n), ..
+            }) => *n,
             _ => return self.unknown(doc, node, "Error stack-level coercion is not modeled"),
         };
         if level > 1 {
@@ -959,7 +1275,11 @@ impl<'a> Engine<'a> {
             );
         }
         if level > 0 && lua_caller {
-            if let Value::Bytes(message) = value {
+            if let Value {
+                kind: Kind::Bytes(message),
+                ..
+            } = value
+            {
                 let mut full = self.documents[doc].document.load_name.clone();
                 if full.len() > 59 {
                     return self.unknown(
@@ -993,8 +1313,14 @@ impl<'a> Engine<'a> {
         let (package_path, package_path_unknown_tail) =
             if matches!(loader, Loader::SafeRequire | Loader::OriginalRequire) {
                 match self.field(self.package, b"path") {
-                    Value::Bytes(p) => (Some(p.to_vec()), false),
-                    Value::PartialPath(p) => (Some(p.to_vec()), true),
+                    Value {
+                        kind: Kind::Bytes(p),
+                        ..
+                    } => (Some(p.to_vec()), false),
+                    Value {
+                        kind: Kind::PartialPath(p),
+                        ..
+                    } => (Some(p.to_vec()), true),
                     _ => (None, false),
                 }
             } else {
@@ -1066,7 +1392,11 @@ impl<'a> Engine<'a> {
         args: Vec<Value>,
         safe: bool,
     ) -> Result<Vec<Value>> {
-        let Some(Value::Bytes(module)) = args.first() else {
+        let Some(Value {
+            kind: Kind::Bytes(module),
+            ..
+        }) = args.first()
+        else {
             return self.unknown(doc, node, "Module-name coercion is not modeled");
         };
         if module.len() > 16_384 || module.contains(&0) {
@@ -1114,16 +1444,30 @@ impl<'a> Engine<'a> {
                 node,
                 preload,
                 vec![
-                    Value::Bytes(module.clone()),
-                    Value::Bytes(Arc::from(b":preload:".as_slice())),
+                    Value::from(Kind::Bytes(module.clone())),
+                    Value::from(Kind::Bytes(Arc::from(b":preload:".as_slice()))),
                 ],
             )
-            .map(|values| (values, Value::Bytes(Arc::from(b":preload:".as_slice()))))
+            .map(|values| {
+                (
+                    values,
+                    Value::from(Kind::Bytes(Arc::from(b":preload:".as_slice()))),
+                )
+            })
         } else {
             match self.field(self.package, b"path") {
-                Value::Bytes(path) if !path.contains(&0) => {}
-                Value::Unknown(_) => {}
-                Value::PartialPath(path) if !path.contains(&0) => {}
+                Value {
+                    kind: Kind::Bytes(path),
+                    ..
+                } if !path.contains(&0) => {}
+                Value {
+                    kind: Kind::Unknown(_),
+                    ..
+                } => {}
+                Value {
+                    kind: Kind::PartialPath(path),
+                    ..
+                } if !path.contains(&0) => {}
                 _ => {
                     return self.unknown(
                         doc,
@@ -1174,7 +1518,7 @@ impl<'a> Engine<'a> {
                         self.chunk(
                             target,
                             self.globals,
-                            vec![Value::Bytes(module.clone()), data.clone()],
+                            vec![Value::from(Kind::Bytes(module.clone())), data.clone()],
                         )
                     };
                     loaded.map(|values| (values, data))
@@ -1183,9 +1527,9 @@ impl<'a> Engine<'a> {
                 // diagnostic was captured. Its prefix is known to propagate
                 // through safe require; never fabricate an observable message.
                 Resolution::Missing => {
-                    return Err(Failure::Lua(Value::Unknown(
+                    return Err(Failure::Lua(Value::from(Kind::Unknown(
                         "The actual module-not-found diagnostic is not captured",
-                    )))
+                    ))))
                 }
             }
         };
@@ -1193,16 +1537,24 @@ impl<'a> Engine<'a> {
             Ok((returns, data)) => {
                 cache = self.cache(module)?;
                 let value = cache
-                    .returned(module, Self::first(returns), Value::Bool(true))
+                    .returned(module, Self::first(returns), Value::from(Kind::Bool(true)))
                     .map_err(Failure::Budget)?;
                 self.field_set(self.registry, module, value.clone())?;
                 Ok(vec![value, data])
             }
             Err(Failure::Lua(error)) if safe => {
-                if let Value::Unknown(reason) = error {
+                if let Value {
+                    kind: Kind::Unknown(reason),
+                    ..
+                } = error
+                {
                     return self.unknown(doc, node, reason);
                 }
-                let failure = if let Value::Bytes(message) = &error {
+                let failure = if let Value {
+                    kind: Kind::Bytes(message),
+                    ..
+                } = &error
+                {
                     module_cache::classify_error(module, message)
                 } else {
                     module_cache::Failure::Other
@@ -1214,7 +1566,7 @@ impl<'a> Engine<'a> {
                         module,
                         failure,
                         module_cache::Protection::SafeRequire,
-                        || Value::Table(table),
+                        || Value::from(Kind::Table(table)),
                     )
                     .map_err(Failure::Budget)?
                 {
@@ -1222,8 +1574,16 @@ impl<'a> Engine<'a> {
                     module_cache::Failed::Fallback { value, .. } => {
                         self.logged += 1;
                         if !module.is_empty() {
-                            if let Value::Table(package) = self.field(self.globals, b"package") {
-                                if let Value::Table(loaded) = self.field(package, b"loaded") {
+                            if let Value {
+                                kind: Kind::Table(package),
+                                ..
+                            } = self.field(self.globals, b"package")
+                            {
+                                if let Value {
+                                    kind: Kind::Table(loaded),
+                                    ..
+                                } = self.field(package, b"loaded")
+                                {
                                     self.field_set(loaded, module, value.clone())?;
                                 }
                             }
@@ -1242,7 +1602,11 @@ impl<'a> Engine<'a> {
         args: Vec<Value>,
         load: bool,
     ) -> Result<Vec<Value>> {
-        let Some(Value::Bytes(path)) = args.first() else {
+        let Some(Value {
+            kind: Kind::Bytes(path),
+            ..
+        }) = args.first()
+        else {
             return self.unknown(
                 doc,
                 node,
@@ -1251,9 +1615,14 @@ impl<'a> Engine<'a> {
         };
         if load {
             match args.get(1) {
-                None | Some(Value::Nil) => {}
-                Some(Value::Bytes(mode))
-                    if [b"t".as_slice(), b"bt", b"tb"].contains(&mode.as_ref()) => {}
+                None
+                | Some(Value {
+                    kind: Kind::Nil, ..
+                }) => {}
+                Some(Value {
+                    kind: Kind::Bytes(mode),
+                    ..
+                }) if [b"t".as_slice(), b"bt", b"tb"].contains(&mode.as_ref()) => {}
                 _ => {
                     return self.unknown(
                         doc,
@@ -1281,9 +1650,11 @@ impl<'a> Engine<'a> {
                 .position(|d| d.id == document)
                 .unwrap(),
             Resolution::Missing => {
-                let error = Value::Unknown("The actual file-loading diagnostic is not captured");
+                let error = Value::from(Kind::Unknown(
+                    "The actual file-loading diagnostic is not captured",
+                ));
                 return if load {
-                    Ok(vec![Value::Nil, error])
+                    Ok(vec![Value::from(Kind::Nil), error])
                 } else {
                     Err(Failure::Lua(error))
                 };
@@ -1295,7 +1666,9 @@ impl<'a> Engine<'a> {
         let documents = self.documents;
         match &documents[target].compile {
             Ok(()) => {}
-            Err(CompileFailure::Syntax(error)) => return Ok(vec![Value::Nil, self.bytes(error)?]),
+            Err(CompileFailure::Syntax(error)) => {
+                return Ok(vec![Value::from(Kind::Nil), self.bytes(error)?])
+            }
             Err(CompileFailure::Budget) => {
                 return self.budget("Lua compilation exceeded its allocation or diagnostic budget")
             }
@@ -1307,7 +1680,10 @@ impl<'a> Engine<'a> {
                 format!("Compiled syntax has no supported tree: {error}"),
             )
         })?;
-        let environment = args.get(2).cloned().unwrap_or(Value::Table(self.globals));
+        let environment = args
+            .get(2)
+            .cloned()
+            .unwrap_or(Value::from(Kind::Table(self.globals)));
         let cell = self.cell(environment)?;
         let mut env = Env::default();
         env.locals.insert(Arc::from("_ENV"), cell);
@@ -1322,6 +1698,6 @@ impl<'a> Engine<'a> {
             env,
             variadic: true,
         });
-        Ok(vec![Value::Closure(id)])
+        Ok(vec![Value::from(Kind::Closure(id))])
     }
 }

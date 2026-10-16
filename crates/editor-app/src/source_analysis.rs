@@ -25,9 +25,12 @@ pub(super) struct View {
     calls: gtk::glib::WeakRef<gtk::DropDown>,
     source: gtk::glib::WeakRef<gtk::TextView>,
     detail: gtk::glib::WeakRef<gtk::TextView>,
+    provenance: gtk::glib::WeakRef<gtk::TextView>,
     order: Rc<RefCell<Vec<Call>>>,
     #[cfg(test)]
     tabs: gtk::glib::WeakRef<gtk::Stack>,
+    #[cfg(test)]
+    source_expander: gtk::glib::WeakRef<gtk::Expander>,
 }
 fn short(bytes: &[u8]) -> String {
     let text = display_path_bytes(&bytes[..bytes.len().min(4096)]);
@@ -86,6 +89,16 @@ pub(super) fn build(model: &Model) -> (gtk::Box, View) {
     calls_page.append(&calls);
     let (area, detail) = text_area("dependency-analysis-call-details");
     calls_page.append(&area);
+    let (area, provenance) = text_area("dependency-value-sources");
+    provenance.update_property(&[gtk::accessible::Property::Label(
+        "Value source expression evidence",
+    )]);
+    area.set_vexpand(false);
+    let source_expander = gtk::Expander::builder()
+        .label("Value sources")
+        .child(&area)
+        .build();
+    calls_page.append(&source_expander);
     tabs.add_titled(&calls_page, Some("calls"), "Ordered calls");
     let switcher = gtk::StackSwitcher::builder().stack(&tabs).build();
     body.append(&switcher);
@@ -98,9 +111,12 @@ pub(super) fn build(model: &Model) -> (gtk::Box, View) {
         calls: calls.downgrade(),
         source: source.downgrade(),
         detail: detail.downgrade(),
+        provenance: provenance.downgrade(),
         order: Rc::new(RefCell::new(vec![])),
         #[cfg(test)]
         tabs: tabs.downgrade(),
+        #[cfg(test)]
+        source_expander: source_expander.downgrade(),
     };
     let v = view.clone();
     files.connect_selected_notify(move |_| v.file());
@@ -109,6 +125,14 @@ pub(super) fn build(model: &Model) -> (gtk::Box, View) {
     (body, view)
 }
 impl View {
+    #[cfg(test)]
+    pub(super) fn test_sources(&self) -> String {
+        self.source_expander.upgrade().unwrap().set_expanded(true);
+        let buffer = self.provenance.upgrade().unwrap().buffer();
+        buffer
+            .text(&buffer.start_iter(), &buffer.end_iter(), true)
+            .into()
+    }
     #[cfg(test)]
     pub(super) fn test_call(&self, index: u32) -> String {
         self.tabs.upgrade().unwrap().set_visible_child_name("calls");
@@ -152,7 +176,7 @@ impl View {
                 pick.set_model(Some(&gtk::StringList::new(&[])));
             }
         }
-        for weak in [&self.source, &self.detail] {
+        for weak in [&self.source, &self.detail, &self.provenance] {
             if let Some(view) = weak.upgrade() {
                 view.buffer().set_text("");
             }
@@ -268,8 +292,17 @@ impl View {
         let Some(row) = self.order.borrow().get(pick.selected() as usize).copied() else {
             view.buffer()
                 .set_text("No calls were observed before analysis stopped.");
+            if let Some(view) = self.provenance.upgrade() {
+                view.buffer().set_text("");
+            }
             return;
         };
+        if let Some(view) = self.provenance.upgrade() {
+            view.buffer().set_text(&match row {
+                Call::Api(i)=>super::source_provenance::describe(&analysis,&analysis.report.events[i]),
+                Call::Load(_)=>"Select a settings declaration to inspect its argument sources. Loader resolution evidence remains separate.".into(),
+            });
+        }
         let (document, span, body) = match row {
             Call::Api(i) => {
                 let e = &analysis.report.events[i];

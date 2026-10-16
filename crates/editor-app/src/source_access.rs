@@ -80,6 +80,8 @@ struct Session {
     analysis_cancel: Option<Arc<AtomicBool>>,
     context: super::source_context::Options,
     context_cost: usize,
+    #[cfg(test)]
+    finished_epoch: u64,
 }
 impl Session {
     fn current(&self, state: &Shared) -> bool {
@@ -319,6 +321,11 @@ impl Controls {
     }
     fn finish(&self, epoch: u64) -> Option<Rc<RefCell<Session>>> {
         let session = self.session.upgrade()?;
+        #[cfg(test)]
+        {
+            let prior = session.borrow().finished_epoch;
+            session.borrow_mut().finished_epoch = prior.max(epoch);
+        }
         if !session.borrow().alive || session.borrow().epoch != epoch {
             return None;
         }
@@ -712,6 +719,8 @@ fn show(
         analysis_cancel: None,
         context: super::source_context::Options::default(),
         context_cost: 0,
+        #[cfg(test)]
+        finished_epoch: 0,
     }));
     let ui = Controls {
         session: Rc::downgrade(&session),
@@ -1043,6 +1052,15 @@ pub(super) fn test_review(parent: &adw::Window, state: &Shared) {
     );
     let text = ui.analysis_view.test_call(1);
     assert!(text.contains("border_size: 4"), "{text}");
+    let sources = ui.analysis_view.test_sources();
+    assert!(
+        sources.contains("Argument 1.general.border_size"),
+        "{sources}"
+    );
+    assert!(
+        sources.contains("part.lua") && sources.contains("Literal"),
+        "{sources}"
+    );
     assert_eq!(state.borrow().generation, generation);
     let (minimum, _, _, _) = win.measure(gtk::Orientation::Horizontal, -1);
     assert!(minimum <= 350, "Analysis requires {minimum}px");
@@ -1201,8 +1219,11 @@ pub(super) fn test_review(parent: &adw::Window, state: &Shared) {
         .is_some_and(|s| s.contains("native/custom searchers")));
     // A result for an old imported snapshot must not attach a new folder.
     ui.approve(root.clone());
+    let pending_epoch = session.borrow().epoch;
     state.borrow_mut().generation += 1;
-    wait(|| !session.borrow().pending);
+    // Invalidating a session clears UI pending state before a worker finishes.
+    // Wait for this exact completion, not a timing-dependent pending=false flag.
+    wait(|| session.borrow().finished_epoch >= pending_epoch);
     assert!(session.borrow().folders.is_empty());
     assert!(!ui.read.upgrade().unwrap().is_sensitive());
     assert!(ui
@@ -1325,6 +1346,7 @@ mod tests {
             analysis_cancel: None,
             context: crate::source_context::Options::default(),
             context_cost: 0,
+            finished_epoch: 0,
         };
         for name in ["first.lua", "second.lua"] {
             std::fs::write(root.join(name), &content).unwrap();

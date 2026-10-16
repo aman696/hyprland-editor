@@ -1,11 +1,13 @@
 //! Ordered evaluation of an immutable source bundle under an explicit, non-executing model.
 //! Module resolutions are supplied observations, never filesystem permissions or path guesses.
 mod eval;
+mod provenance;
 use super::{named, source_hash, syntax_tree, text};
 use crate::{
     module_cache::{self, CachedValue},
     AUDITED_MAIN, BASELINE, MAX_DOCUMENT_BYTES,
 };
+pub use provenance::{ExpressionKind, ExpressionSource, ValueSource};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -152,6 +154,8 @@ pub struct Event {
     pub span: Range<usize>,
     pub api: String,
     pub arguments: Vec<Observed>,
+    /// Value rows align with Observed::Table row order. Key provenance is not inferred.
+    pub argument_sources: Vec<ValueSource>,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
@@ -197,6 +201,7 @@ pub struct Report {
     pub version: String,
     pub profile: Profile,
     pub events: Vec<Event>,
+    pub expression_sources: Vec<ExpressionSource>,
     pub loads: Vec<LoadEvent>,
     pub returns: Vec<Observed>,
     pub halt: Option<Halt>,
@@ -205,7 +210,7 @@ pub struct Report {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-enum Value {
+enum Kind {
     Nil,
     Bool(bool),
     Int(i64),
@@ -218,6 +223,22 @@ enum Value {
     Closure(usize),
     Native(Native),
     Unknown(&'static str),
+}
+#[derive(Clone, Debug)]
+struct Value {
+    kind: Kind,
+    origin: Option<u32>,
+}
+impl From<Kind> for Value {
+    fn from(kind: Kind) -> Self {
+        Self { kind, origin: None }
+    }
+}
+// Provenance is editor metadata, never part of Lua equality or cache identity.
+impl PartialEq for Value {
+    fn eq(&self, other: &Self) -> bool {
+        self.kind == other.kind
+    }
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum Native {
@@ -235,16 +256,43 @@ enum Native {
 }
 impl CachedValue for Value {
     fn is_nil(&self) -> bool {
-        matches!(self, Self::Nil)
+        matches!(
+            self,
+            Value {
+                kind: Kind::Nil,
+                ..
+            }
+        )
     }
     fn is_truthy(&self) -> bool {
-        !matches!(self, Self::Nil | Self::Bool(false))
+        !matches!(
+            self,
+            Value {
+                kind: Kind::Nil,
+                ..
+            } | Value {
+                kind: Kind::Bool(false),
+                ..
+            }
+        )
     }
     fn is_lua_true(&self) -> bool {
-        matches!(self, Self::Bool(true))
+        matches!(
+            self,
+            Value {
+                kind: Kind::Bool(true),
+                ..
+            }
+        )
     }
     fn is_table(&self) -> bool {
-        matches!(self, Self::Table(_))
+        matches!(
+            self,
+            Value {
+                kind: Kind::Table(_),
+                ..
+            }
+        )
     }
 }
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -357,6 +405,9 @@ struct Engine<'a> {
     calls: usize,
     output: usize,
     entries: usize,
+    expression_sources: Vec<ExpressionSource>,
+    source_frames: Vec<Vec<u32>>,
+    source_edges: usize,
 }
 impl<'a> Engine<'a> {
     fn budget<T>(&self, reason: &str) -> Result<T> {
@@ -377,7 +428,7 @@ impl<'a> Engine<'a> {
         if bytes.len() > 65_536 || self.bytes > 4 * MAX_DOCUMENT_BYTES {
             return self.budget("Static replay string retention exceeds its budget");
         }
-        Ok(Value::Bytes(Arc::from(bytes)))
+        Ok(Value::from(Kind::Bytes(Arc::from(bytes))))
     }
     fn table(&mut self, unknown: bool) -> Result<usize> {
         if self.tables.len() >= 4096 {
@@ -412,30 +463,55 @@ impl<'a> Engine<'a> {
     }
     fn key(&self, value: Value) -> Result<Key> {
         Ok(match value {
-            Value::Bool(v) => Key::Bool(v),
-            Value::Int(v) => Key::Int(v),
-            Value::Float(v) if v.is_finite() => {
+            Value {
+                kind: Kind::Bool(v),
+                ..
+            } => Key::Bool(v),
+            Value {
+                kind: Kind::Int(v), ..
+            } => Key::Int(v),
+            Value {
+                kind: Kind::Float(v),
+                ..
+            } if v.is_finite() => {
                 if v.fract() == 0. && v >= i64::MIN as f64 && v < -(i64::MIN as f64) {
                     Key::Int(v as i64)
                 } else {
                     Key::Float(v.to_bits())
                 }
             }
-            Value::Bytes(v) => Key::Bytes(v),
-            Value::Table(v) => Key::Table(v),
-            Value::Closure(v) => Key::Closure(v),
-            Value::Unknown(reason) => return Err(Failure::Unknown(0, 0..0, reason.into())),
-            Value::PartialPath(_) => {
+            Value {
+                kind: Kind::Bytes(v),
+                ..
+            } => Key::Bytes(v),
+            Value {
+                kind: Kind::Table(v),
+                ..
+            } => Key::Table(v),
+            Value {
+                kind: Kind::Closure(v),
+                ..
+            } => Key::Closure(v),
+            Value {
+                kind: Kind::Unknown(reason),
+                ..
+            } => return Err(Failure::Unknown(0, 0..0, reason.into())),
+            Value {
+                kind: Kind::PartialPath(_),
+                ..
+            } => {
                 return Err(Failure::Unknown(
                     0,
                     0..0,
                     "A table key includes an uncaptured package.path tail".into(),
                 ))
             }
-            Value::Nil => {
-                return Err(Failure::Lua(Value::Unknown(
+            Value {
+                kind: Kind::Nil, ..
+            } => {
+                return Err(Failure::Lua(Value::from(Kind::Unknown(
                     "The exact Lua table-index error text is not modeled",
-                )))
+                ))))
             }
             _ => {
                 return Err(Failure::Unknown(
@@ -452,9 +528,9 @@ impl<'a> Engine<'a> {
             .get(key)
             .cloned()
             .unwrap_or(if self.tables[table].unknown {
-                Value::Unknown("Unmodeled library field")
+                Value::from(Kind::Unknown("Unmodeled library field"))
             } else {
-                Value::Nil
+                Value::from(Kind::Nil)
             })
     }
     fn set(&mut self, table: usize, key: Key, value: Value) -> Result<()> {
@@ -505,6 +581,9 @@ impl<'a> Engine<'a> {
             calls: 0,
             output: 0,
             entries: 0,
+            expression_sources: vec![],
+            source_frames: vec![],
+            source_edges: 0,
         };
         e.globals = e.table(program.profile == Profile::HyprlandLua54)?;
         e.package = e.table(true)?;
@@ -513,18 +592,21 @@ impl<'a> Engine<'a> {
         // Prevent the initialization stores from looking like a user searcher mutation.
         let searchers = e.table(true)?;
         for (name, value) in [
-            ("_G", Value::Table(e.globals)),
-            ("package", Value::Table(e.package)),
-            ("require", Value::Native(Native::Require(true))),
-            ("__require", Value::Native(Native::Require(false))),
-            ("dofile", Value::Native(Native::Dofile)),
-            ("loadfile", Value::Native(Native::Loadfile)),
-            ("error", Value::Native(Native::Error)),
-            ("pcall", Value::Native(Native::Pcall)),
-            ("type", Value::Native(Native::Type)),
-            ("rawget", Value::Native(Native::Rawget)),
-            ("rawset", Value::Native(Native::Rawset)),
-            ("select", Value::Native(Native::Select)),
+            ("_G", Value::from(Kind::Table(e.globals))),
+            ("package", Value::from(Kind::Table(e.package))),
+            ("require", Value::from(Kind::Native(Native::Require(true)))),
+            (
+                "__require",
+                Value::from(Kind::Native(Native::Require(false))),
+            ),
+            ("dofile", Value::from(Kind::Native(Native::Dofile))),
+            ("loadfile", Value::from(Kind::Native(Native::Loadfile))),
+            ("error", Value::from(Kind::Native(Native::Error))),
+            ("pcall", Value::from(Kind::Native(Native::Pcall))),
+            ("type", Value::from(Kind::Native(Native::Type))),
+            ("rawget", Value::from(Kind::Native(Native::Rawget))),
+            ("rawset", Value::from(Kind::Native(Native::Rawset))),
+            ("select", Value::from(Kind::Native(Native::Select))),
         ] {
             e.field_set(e.globals, name.as_bytes(), value)?;
         }
@@ -548,7 +630,7 @@ impl<'a> Engine<'a> {
             e.field_set(
                 e.globals,
                 name.as_bytes(),
-                Value::Native(Native::Unmodeled(name)),
+                Value::from(Kind::Native(Native::Unmodeled(name))),
             )?;
         }
         for name in [
@@ -562,32 +644,44 @@ impl<'a> Engine<'a> {
             "utf8",
         ] {
             let id = e.table(true)?;
-            e.field_set(e.globals, name.as_bytes(), Value::Table(id))?;
-            e.field_set(e.registry, name.as_bytes(), Value::Table(id))?;
+            e.field_set(e.globals, name.as_bytes(), Value::from(Kind::Table(id)))?;
+            e.field_set(e.registry, name.as_bytes(), Value::from(Kind::Table(id)))?;
         }
-        e.field_set(e.registry, b"_G", Value::Table(e.globals))?;
-        e.field_set(e.registry, b"package", Value::Table(e.package))?;
-        e.field_set(e.package, b"loaded", Value::Table(e.registry))?;
-        e.field_set(e.package, b"preload", Value::Table(e.preload))?;
-        e.field_set(e.package, b"searchers", Value::Table(searchers))?;
+        e.field_set(e.registry, b"_G", Value::from(Kind::Table(e.globals)))?;
+        e.field_set(e.registry, b"package", Value::from(Kind::Table(e.package)))?;
+        e.field_set(e.package, b"loaded", Value::from(Kind::Table(e.registry)))?;
+        e.field_set(e.package, b"preload", Value::from(Kind::Table(e.preload)))?;
+        e.field_set(e.package, b"searchers", Value::from(Kind::Table(searchers)))?;
         let path = match &program.initial_package_path {
             Some(path) if program.initial_package_path_unknown_tail => {
-                let Value::Bytes(bytes) = e.bytes(path)? else {
+                let Value {
+                    kind: Kind::Bytes(bytes),
+                    ..
+                } = e.bytes(path)?
+                else {
                     unreachable!()
                 };
-                Value::PartialPath(bytes)
+                Value::from(Kind::PartialPath(bytes))
             }
             Some(path) => e.bytes(path)?,
-            None => Value::Unknown("Inherited package.path is not captured"),
+            None => Value::from(Kind::Unknown("Inherited package.path is not captured")),
         };
         e.field_set(e.package, b"path", path)?;
         let hl = e.table(true)?;
-        e.field_set(hl, b"config", Value::Native(Native::Observe("hl.config")))?;
-        e.field_set(e.globals, b"hl", Value::Table(hl))?;
+        e.field_set(
+            hl,
+            b"config",
+            Value::from(Kind::Native(Native::Observe("hl.config"))),
+        )?;
+        e.field_set(e.globals, b"hl", Value::from(Kind::Table(hl)))?;
         if program.profile == Profile::SyntheticEmit {
             let fixture = e.bytes(b"<root>")?;
             e.field_set(e.globals, b"__fixture_root", fixture)?;
-            e.field_set(e.globals, b"emit", Value::Native(Native::Observe("emit")))?;
+            e.field_set(
+                e.globals,
+                b"emit",
+                Value::from(Kind::Native(Native::Observe("emit"))),
+            )?;
         }
         let version = e.bytes(b"Lua 5.4")?;
         e.field_set(e.globals, b"_VERSION", version)?;
@@ -603,16 +697,31 @@ impl<'a> Engine<'a> {
             module_cache::Cache::new(&self.program.version, entries(self.registry), false)
                 .map_err(Failure::Budget)?;
         let loaded = match self.field(self.globals, b"package") {
-            Value::Table(package) => self.field(package, b"loaded"),
-            Value::Unknown(reason) => return Err(Failure::Unknown(0, 0..0, reason.into())),
-            _ => Value::Nil,
+            Value {
+                kind: Kind::Table(package),
+                ..
+            } => self.field(package, b"loaded"),
+            Value {
+                kind: Kind::Unknown(reason),
+                ..
+            } => return Err(Failure::Unknown(0, 0..0, reason.into())),
+            _ => Value::from(Kind::Nil),
         };
         match loaded {
-            Value::Table(id) if id == self.registry => {}
-            Value::Table(id) => cache
+            Value {
+                kind: Kind::Table(id),
+                ..
+            } if id == self.registry => {}
+            Value {
+                kind: Kind::Table(id),
+                ..
+            } => cache
                 .rebind_global(entries(id), false)
                 .map_err(Failure::Budget)?,
-            Value::Unknown(reason) => return Err(Failure::Unknown(0, 0..0, reason.into())),
+            Value {
+                kind: Kind::Unknown(reason),
+                ..
+            } => return Err(Failure::Unknown(0, 0..0, reason.into())),
             _ => cache.global_not_table(),
         }
         Ok(cache)
@@ -625,10 +734,18 @@ impl<'a> Engine<'a> {
         cost: &mut usize,
     ) -> Result<Observed> {
         *cost = cost.saturating_add(96);
-        if let Value::Bytes(v) = value {
+        if let Value {
+            kind: Kind::Bytes(v),
+            ..
+        } = value
+        {
             *cost = cost.saturating_add(v.len().saturating_mul(4));
         }
-        if let Value::Closure(id) = value {
+        if let Value {
+            kind: Kind::Closure(id),
+            ..
+        } = value
+        {
             // Function labels contain a caller-supplied document ID. JSON can
             // expand each control byte to six bytes; charge before formatting.
             let label = self.documents[self.closures[*id].document]
@@ -645,19 +762,38 @@ impl<'a> Engine<'a> {
             return self.budget("Observed replay value exceeds 32 levels");
         }
         Ok(match value {
-            Value::Nil => Observed::Nil,
-            Value::Bool(v) => Observed::Bool(*v),
-            Value::Int(v) => Observed::Int(*v),
-            Value::Float(v) => Observed::Float(*v),
-            Value::Bytes(v) => Observed::Bytes(v.to_vec()),
-            Value::PartialPath(_) => {
+            Value {
+                kind: Kind::Nil, ..
+            } => Observed::Nil,
+            Value {
+                kind: Kind::Bool(v),
+                ..
+            } => Observed::Bool(*v),
+            Value {
+                kind: Kind::Int(v), ..
+            } => Observed::Int(*v),
+            Value {
+                kind: Kind::Float(v),
+                ..
+            } => Observed::Float(*v),
+            Value {
+                kind: Kind::Bytes(v),
+                ..
+            } => Observed::Bytes(v.to_vec()),
+            Value {
+                kind: Kind::PartialPath(_),
+                ..
+            } => {
                 return Err(Failure::Unknown(
                     0,
                     0..0,
                     "The inherited package.path tail is not captured".into(),
                 ))
             }
-            Value::Table(id) => {
+            Value {
+                kind: Kind::Table(id),
+                ..
+            } => {
                 if self.tables[*id].unknown {
                     return Err(Failure::Unknown(
                         0,
@@ -671,12 +807,12 @@ impl<'a> Engine<'a> {
                 let mut rows = vec![];
                 for (k, v) in &self.tables[*id].values {
                     let key = match k {
-                        Key::Bool(v) => Value::Bool(*v),
-                        Key::Int(v) => Value::Int(*v),
-                        Key::Float(v) => Value::Float(f64::from_bits(*v)),
-                        Key::Bytes(v) => Value::Bytes(v.clone()),
-                        Key::Table(v) => Value::Table(*v),
-                        Key::Closure(v) => Value::Closure(*v),
+                        Key::Bool(v) => Value::from(Kind::Bool(*v)),
+                        Key::Int(v) => Value::from(Kind::Int(*v)),
+                        Key::Float(v) => Value::from(Kind::Float(f64::from_bits(*v))),
+                        Key::Bytes(v) => Value::from(Kind::Bytes(v.clone())),
+                        Key::Table(v) => Value::from(Kind::Table(*v)),
+                        Key::Closure(v) => Value::from(Kind::Closure(*v)),
                     };
                     rows.push((
                         self.snapshot(&key, seen, depth + 1, cost)?,
@@ -686,12 +822,21 @@ impl<'a> Engine<'a> {
                 seen.remove(id);
                 Observed::Table(rows)
             }
-            Value::Closure(id) => Observed::Function(format!(
+            Value {
+                kind: Kind::Closure(id),
+                ..
+            } => Observed::Function(format!(
                 "{}:closure:{id}",
                 self.documents[self.closures[*id].document].document.id
             )),
-            Value::Native(n) => Observed::Function(format!("{n:?}")),
-            Value::Unknown(reason) => return Err(Failure::Unknown(0, 0..0, (*reason).into())),
+            Value {
+                kind: Kind::Native(n),
+                ..
+            } => Observed::Function(format!("{n:?}")),
+            Value {
+                kind: Kind::Unknown(reason),
+                ..
+            } => return Err(Failure::Unknown(0, 0..0, (*reason).into())),
         })
     }
     fn observed(&mut self, values: &[Value]) -> Result<Vec<Observed>> {
@@ -851,6 +996,7 @@ pub fn replay(program: &Program) -> std::result::Result<Report, String> {
         version: program.version.clone(),
         profile: program.profile.clone(),
         events: engine.events,
+        expression_sources: engine.expression_sources,
         loads: engine.loads,
         returns,
         halt,

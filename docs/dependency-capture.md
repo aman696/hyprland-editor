@@ -66,3 +66,5 @@ Context changes clear completed analysis and update its operation epoch; canceli
 The native fixture supplies context through the actual editor and verifies a four-file chain using relative dofile, home-based require and named search-path fallback. It checks displayed arguments, unchanged draft/grants, cancel preservation, pending-operation refusal and invalidation when an inherited tail becomes unknown again. Pure boundary fixtures cover unknown versus empty, non-UTF-8 byte preservation, malformed escapes, template metacharacters and size/NUL refusals. File picker portal behavior remains unproven. Current validation passes 223 ordinary tests plus the private-display native workflow (224 total).
 
 ![Supplied analysis context](screenshots/dependency-context.png)
+
+The selected settings call now has a collapsed **Value sources** section for [per-value expression evidence](ordered-module-evaluation.md#per-value-expression-evidence). It can trace supported forwarded values into captured modules without giving those expressions editing rights. Complete ownership, consumer-impact and graph import remain required.

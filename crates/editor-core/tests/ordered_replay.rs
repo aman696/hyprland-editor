@@ -61,6 +61,137 @@ fn observed(value: &Observed) -> Value {
     }
 }
 
+fn forwarded_literal<'a>(report: &'a Report, source: &ValueSource) -> &'a ExpressionSource {
+    let mut id = source.expression.expect("Missing expression evidence");
+    for _ in 0..128 {
+        let node = &report.expression_sources[id as usize];
+        if node.kind == ExpressionKind::Literal {
+            return node;
+        }
+        id = node.selected.expect("No selected literal in this fixture");
+    }
+    panic!("Expression evidence cycle")
+}
+
+#[test]
+fn value_sources_keep_equal_literals_separate_and_follow_alias_mutation_and_closure_returns() {
+    for version in [BASELINE, AUDITED_MAIN] {
+        let mut p = program("local part=require('part');local alias=part;local function pass(x)return x end;emit({pass(alias.left),alias.right});alias.left=9;emit({alias.left,part.right});emit({part.right+1})");
+        p.version = version.into();
+        p.documents
+            .push(document("part.lua", "return {left=2,right=2}"));
+        let Some(Halt::NeedsResolution { request }) = replay(&p).unwrap().halt else {
+            panic!("No requested module")
+        };
+        p.bindings.push(Binding {
+            request,
+            resolution: Resolution::Loaded {
+                document: "part.lua".into(),
+                loader_data: vec![],
+            },
+        });
+        let report = replay(&p).unwrap();
+        assert!(report.halt.is_none(), "{:?}", report.halt);
+        let first = &report.events[0].argument_sources[0].rows;
+        let left = forwarded_literal(&report, &first[0]);
+        let right = forwarded_literal(&report, &first[1]);
+        assert_eq!((left.document, right.document), (1, 1));
+        assert_ne!(
+            left.span, right.span,
+            "Equal primitive values must not merge distinct origins"
+        );
+        assert_eq!(&p.documents[1].source[left.span.clone()], "2");
+        let second = &report.events[1].argument_sources[0].rows;
+        let changed = forwarded_literal(&report, &second[0]);
+        assert_eq!(changed.document, 0);
+        assert_eq!(&p.documents[0].source[changed.span.clone()], "9");
+        assert_eq!(forwarded_literal(&report, &second[1]), right);
+        assert_eq!(observed(&report.events[0].arguments[0]), json!([2, 2]));
+        assert_eq!(observed(&report.events[1].arguments[0]), json!([9, 2]));
+        let derived_id = report.events[2].argument_sources[0].rows[0]
+            .expression
+            .unwrap() as usize;
+        let derived = &report.expression_sources[derived_id];
+        assert_eq!(derived.kind, ExpressionKind::Operation);
+        assert!(derived.selected.is_none());
+        assert_eq!(derived.evaluated.len(), 2);
+        for (id, source) in report.expression_sources.iter().enumerate() {
+            let doc = &p.documents[source.document];
+            assert!(doc.source.get(source.span.clone()).is_some());
+            assert_eq!(
+                source.line,
+                doc.source[..source.span.start]
+                    .bytes()
+                    .filter(|&b| b == b'\n')
+                    .count()
+                    + 1
+            );
+            assert!(
+                source
+                    .evaluated
+                    .iter()
+                    .chain(source.selected.iter())
+                    .all(|&prior| (prior as usize) < id),
+                "Evidence must be an acyclic backward graph"
+            );
+        }
+        let decoded: Report =
+            serde_json::from_slice(&serde_json::to_vec(&report).unwrap()).unwrap();
+        assert_eq!(decoded.expression_sources, report.expression_sources);
+    }
+}
+
+#[test]
+fn cached_tables_and_multireturn_preserve_source_selection_without_changing_identity() {
+    let mut p=program("local a=require('part');local b=require('part');local function choose(x,y)return y,x end;emit({choose(a.right,a.left)});emit(a==b);a.left=7;emit(b)");
+    p.documents
+        .push(document("part.lua", "return {left=2,right=3}"));
+    let Some(Halt::NeedsResolution { request }) = replay(&p).unwrap().halt else {
+        panic!("No module request")
+    };
+    p.bindings.push(Binding {
+        request,
+        resolution: Resolution::Loaded {
+            document: "part.lua".into(),
+            loader_data: vec![],
+        },
+    });
+    let report = replay(&p).unwrap();
+    assert!(report.halt.is_none());
+    assert_eq!(observed(&report.events[0].arguments[0]), json!([2, 3]));
+    assert_eq!(observed(&report.events[1].arguments[0]), json!(true));
+    let rows = &report.events[0].argument_sources[0].rows;
+    assert_eq!(
+        &p.documents[1].source[forwarded_literal(&report, &rows[0]).span.clone()],
+        "2"
+    );
+    assert_eq!(
+        &p.documents[1].source[forwarded_literal(&report, &rows[1]).span.clone()],
+        "3"
+    );
+    assert_eq!(report.events[2].argument_sources[0].rows.len(), 2);
+    assert!(matches!(report.loads[1].outcome, LoadOutcome::Cached));
+}
+
+#[test]
+fn expression_evidence_budget_cannot_be_swallowed_by_pcall_and_cycles_stay_bounded() {
+    let report = replay(&program(
+        "pcall(function()local x=0;for i=1,10000 do x=x+1 end end);emit('after')",
+    ))
+    .unwrap();
+    assert!(
+        matches!(report.halt,Some(Halt::Budget{ref reason}) if reason.contains("provenance")||reason.contains("source evidence"))
+    );
+    assert!(report.events.is_empty());
+    assert!(report.expression_sources.len() <= 8192);
+    assert!(serde_json::to_vec(&report).unwrap().len() < 2 * 1024 * 1024);
+    let report = replay(&program("local t={};t.self=t;emit(t)")).unwrap();
+    assert!(report.halt.is_none());
+    let source = &report.events[0].argument_sources[0];
+    assert_eq!(source.rows.len(), 1);
+    assert!(source.rows[0].rows.is_empty());
+}
+
 #[test]
 fn unknown_inherited_path_provenance_survives_aliases_and_literal_replacement() {
     let mut p=program("local saved=package.path; require('first'); package.path='/vendor/?.lua'; require('second'); package.path=saved; require('third'); emit(type(package.path))");
