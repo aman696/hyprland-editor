@@ -20,9 +20,11 @@ const MAX_REQUEST: usize = 32 * 1024;
 const MAX_RESPONSE: usize = 8 * MAX_DOCUMENT_BYTES;
 const DEADLINE: Duration = Duration::from_secs(3);
 static BUSY: AtomicBool = AtomicBool::new(false);
-struct Lease;
+#[cfg(test)]
+pub(super) static TEST_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+pub(super) struct Lease;
 impl Lease {
-    fn acquire() -> Result<Self, String> {
+    pub(super) fn acquire() -> Result<Self, String> {
         BUSY.compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
             .map(|_| Self)
             .map_err(|_| {
@@ -72,7 +74,7 @@ enum Response {
 fn io_error(context: &str) -> String {
     format!("{context}: {}", std::io::Error::last_os_error())
 }
-fn prepare() -> Result<(), String> {
+pub(super) fn prepare() -> Result<(), String> {
     let expected = std::env::args_os()
         .nth(2)
         .and_then(|s| s.to_str().and_then(|s| s.parse::<libc::pid_t>().ok()))
@@ -110,7 +112,7 @@ fn prepare() -> Result<(), String> {
 
 /// Handle every filesystem right defined through ABI 3, allowing only READ_FILE on the leaf.
 /// O_PATH resolution before this point handles metadata only; no configuration bytes are read.
-fn restrict_to(node: &File) -> Result<u32, String> {
+pub(super) fn restrict_to(node: &File) -> Result<u32, String> {
     #[repr(C)]
     struct Ruleset {
         handled_access_fs: u64,
@@ -264,7 +266,12 @@ pub(super) fn entry() {
 
 /// The reaper owns the lease; an uninterruptible kernel I/O wait cannot accumulate more children.
 /// Killing is best effort. No GUI thread waits for this cleanup or joins an unfinished pipe reader.
-fn quarantine(mut child: Child, reader: JoinHandle<()>, writer: JoinHandle<()>, lease: Lease) {
+pub(super) fn quarantine(
+    mut child: Child,
+    reader: JoinHandle<()>,
+    writer: JoinHandle<()>,
+    lease: Lease,
+) {
     let _ = child.kill();
     std::thread::spawn(move || {
         let _lease = lease;
@@ -404,6 +411,7 @@ mod tests {
     use super::*;
     #[test]
     fn stopped_capture_returns_and_eventually_releases_its_single_flight_lease() {
+        let _test = TEST_LOCK.lock().unwrap();
         let start = Instant::now();
         let error = run(Request::Stop, Duration::from_millis(150))
             .err()

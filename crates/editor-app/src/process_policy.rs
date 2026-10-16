@@ -79,7 +79,7 @@ fn install(allowed: &[libc::c_long]) -> Result<(), String> {
 pub(super) fn parser() -> Result<(), String> {
     install(BASE)
 }
-pub(super) fn capture() -> Result<(), String> {
+fn capture_syscalls() -> Vec<libc::c_long> {
     let mut allowed = BASE.to_vec();
     allowed.extend([
         libc::SYS_openat,
@@ -95,5 +95,18 @@ pub(super) fn capture() -> Result<(), String> {
     allowed.extend([libc::SYS_open, libc::SYS_readlink, libc::SYS_newfstatat]);
     #[cfg(target_arch = "aarch64")]
     allowed.push(libc::SYS_newfstatat);
+    allowed
+}
+pub(super) fn capture() -> Result<(), String> {
+    install(&capture_syscalls())
+}
+pub(super) fn capability_reply(capture: bool) -> Result<(), String> {
+    let mut allowed = if capture {
+        capture_syscalls()
+    } else {
+        BASE.to_vec()
+    };
+    // Only send on the already-held private channel; socket creation/connect/receive are denied.
+    allowed.extend([libc::SYS_sendmsg, libc::SYS_shutdown]);
     install(&allowed)
 }

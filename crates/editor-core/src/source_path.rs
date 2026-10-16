@@ -36,7 +36,7 @@ fn open_node(parent: i32, name: &[u8], directory: bool) -> Result<File, String> 
     }
     Ok(unsafe { File::from_raw_fd(fd) })
 }
-fn link_bytes(file: &File) -> Result<Vec<u8>, String> {
+pub(crate) fn link_bytes(file: &File) -> Result<Vec<u8>, String> {
     let mut bytes = vec![0; 4097];
     // The empty name reads the held link itself, avoiding substitution at its path.
     let n = unsafe {
@@ -56,7 +56,7 @@ fn link_bytes(file: &File) -> Result<Vec<u8>, String> {
     bytes.truncate(n as usize);
     Ok(bytes)
 }
-fn components(bytes: &[u8]) -> VecDeque<Vec<u8>> {
+pub(crate) fn components(bytes: &[u8]) -> VecDeque<Vec<u8>> {
     let mut parts: VecDeque<_> = bytes
         .split(|b| *b == b'/')
         .filter(|p| !p.is_empty())
@@ -84,7 +84,7 @@ fn path_bytes(parts: &[Vec<u8>], leaf: Option<&[u8]>) -> Vec<u8> {
     }
     out
 }
-fn is_proc_link(file: &File) -> Result<bool, String> {
+pub(crate) fn is_proc_link(file: &File) -> Result<bool, String> {
     let mut fs = std::mem::MaybeUninit::<libc::statfs>::uninit();
     if unsafe { libc::fstatfs(file.as_raw_fd(), fs.as_mut_ptr()) } < 0 {
         return Err(error());
@@ -95,10 +95,10 @@ fn is_proc_link(file: &File) -> Result<bool, String> {
 /// A held, metadata-only leaf and its link evidence. No source bytes have been read.
 /// The capture role restricts filesystem access to this inode before capture().
 pub struct SelectedSource {
-    node: File,
-    absolute: PathBuf,
-    links: Vec<LinkIdentity>,
-    held_links: Vec<File>,
+    pub(crate) node: File,
+    pub(crate) absolute: PathBuf,
+    pub(crate) links: Vec<LinkIdentity>,
+    pub(crate) held_links: Vec<File>,
 }
 impl SelectedSource {
     pub fn node(&self) -> &File {
@@ -166,6 +166,9 @@ pub fn read_selected(path: &Path) -> Result<CapturedSource, String> {
 }
 /// Only an explicit picker/CLI path should call this. Recorded workspace paths are never inputs.
 pub fn resolve_selected(path: &Path) -> Result<SelectedSource, String> {
+    resolve_node(path, false)
+}
+pub(crate) fn resolve_node(path: &Path, want_directory: bool) -> Result<SelectedSource, String> {
     let absolute = if path.is_absolute() {
         path.to_path_buf()
     } else {
@@ -190,7 +193,7 @@ pub fn resolve_selected(path: &Path) -> Result<SelectedSource, String> {
             return Err("Source path resolution exceeded its step budget".into());
         }
         if component == b"." {
-            if pending.is_empty() {
+            if pending.is_empty() && !want_directory {
                 return Err("Select a source file, not a directory".into());
             }
             continue;
@@ -242,7 +245,11 @@ pub fn resolve_selected(path: &Path) -> Result<SelectedSource, String> {
             resolved.push(component);
             continue;
         }
-        if !metadata.is_file() || metadata.len() > MAX_DOCUMENT_BYTES as u64 {
+        if want_directory {
+            if !metadata.is_dir() {
+                return Err("Select a directory".into());
+            }
+        } else if !metadata.is_file() || metadata.len() > MAX_DOCUMENT_BYTES as u64 {
             return Err("Select a regular source no larger than 1 MiB".into());
         }
         return Ok(SelectedSource {
@@ -252,7 +259,16 @@ pub fn resolve_selected(path: &Path) -> Result<SelectedSource, String> {
             held_links,
         });
     }
-    Err("Select a source file, not a directory".into())
+    if want_directory {
+        Ok(SelectedSource {
+            node: directory,
+            absolute,
+            links,
+            held_links,
+        })
+    } else {
+        Err("Select a source file, not a directory".into())
+    }
 }
 
 #[cfg(test)]

@@ -216,7 +216,7 @@ fn show(parent: &adw::ApplicationWindow, state: &Shared) -> Result<adw::Window, 
             Ok(inventory)
         },
         move |result| {
-            let (Some(_win), Some(feedback), Some(results), Some(state)) = (
+            let (Some(win), Some(feedback), Some(results), Some(state)) = (
                 weak.upgrade(),
                 feedback.upgrade(),
                 results.upgrade(),
@@ -238,6 +238,16 @@ fn show(parent: &adw::ApplicationWindow, state: &Shared) -> Result<adw::Window, 
             match result {
                 Ok(inventory) => {
                     feedback.set_text("Snapshot inspection complete. These are possible dependencies, not an effective file graph.");
+                    let access = gtk::Button::with_label("Review Dependency Files…");
+                    access.set_widget_name("source-module-open-files");
+                    super::source_access::connect(
+                        &access,
+                        &win,
+                        &state,
+                        version.clone(),
+                        expected_hash.clone(),
+                    );
+                    results.append(&access);
                     report(&results, source, inventory);
                 }
                 Err(error) => feedback.set_text(&error),
@@ -316,6 +326,7 @@ pub(super) fn test_view(parent: &adw::ApplicationWindow) {
         generation,
         "Read-only inspection must not edit drafts"
     );
+    super::source_access::test_review(&win, &state);
     if let Ok(path) = std::env::var("HYPRLAND_EDITOR_TEST_CAPTURE") {
         for _ in 0..10 {
             while context.pending() {

@@ -46,6 +46,10 @@ The native graphical test constructs and validates all 755 version-specific scal
 
 This is an engineering and visual review, not a completed usability study with external users.
 
+## Dependency file review
+
+The module inspector opens temporary dependency review in a separate focused window. Folder selection precedes file selection; only one captured source is rendered at a time, with an explicit 16 KiB excerpt bound. Folder and capture evidence remain collapsed. Forget and Remove remain available as cleanup actions, while changed drafts disable new reads and reject pending results. The native workflow checks measured 350-pixel minimum width and resource release on close. The window inherits native styling; full portal, accessibility, large-text and translation reviews remain open. See [capture scope](dependency-capture.md).
+
 ## Changed-source comparison
 
 The main menu opens a focused comparison after explicit source selection. A compact page selector switches between setting changes, previous file and selected file. A searchable setting selector marks rows requiring a choice; only one row creates its result control. Automatic independent changes are visible and can be overridden. Unresolved incoming absence has no remove/adopt option. Partial projections require an acknowledgement before acceptance. File identity remains in a collapsed, height-bounded disclosure. Acceptance changes only the private in-memory draft/snapshot; Undo restores both. Native tests cover conflict and partial acknowledgement controls at a 360-pixel window request.

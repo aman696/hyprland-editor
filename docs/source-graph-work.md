@@ -42,6 +42,8 @@ Local validation passes 168 ordinary tests plus one native graphical workflow (1
 
 ## Required continuation
 
+Approved-folder capture and its temporary GUI review are now implemented on this branch; see [folder authority, lifecycle, evidence and remaining work](dependency-capture.md). Live folder handles are passed between private helpers rather than reconstructed from saved paths. The workflow captures explicitly chosen files and preserves their immutable bytes for review. It does not yet evaluate or persist a dependency graph, enumerate wildcards or attach captures to the editable workspace.
+
 Selected-file capture now has a separate inode-scoped process boundary; see [authority, limits and test evidence](source-capture.md). This routes the three existing explicit source-read workflows and preserves the parser's no-filesystem boundary. It does not authorize or read dependency candidates. Local validation of this increment passed 177 ordinary plus one native graphical test (178 total), formatting, strict lint, release build and catalogue/action/register checks. The preceding 169-test count describes the previously published inspector/cache increment.
 
 1. Connect the now-observed loader/cache semantics to ordered, bounded static module evaluation. Preserve actual call order, per-file lexical values, return arity/loader data, aliases, preload/searcher provenance, cycles and unknown state; generic path plans or a source-ordered site list cannot substitute for execution semantics.

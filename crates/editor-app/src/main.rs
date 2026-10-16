@@ -5,6 +5,8 @@ mod capture_worker;
 mod controls;
 mod device_forms;
 mod devices;
+mod directory_worker;
+mod fd_channel;
 mod gestures;
 mod history;
 mod monitors;
@@ -14,6 +16,7 @@ mod reconciliation;
 mod rule_forms;
 mod rules;
 mod selector_forms;
+mod source_access;
 mod source_modules;
 mod worker;
 mod workflow;
@@ -1119,6 +1122,33 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     window
 }
 fn main() {
+    if std::env::args_os().nth(1).as_deref()
+        == Some(std::ffi::OsStr::new("--directory-source-worker"))
+    {
+        directory_worker::entry();
+        return;
+    }
+    if std::env::args_os().nth(1).as_deref() == Some(std::ffi::OsStr::new("--check-source-folder"))
+    {
+        use std::os::unix::ffi::OsStrExt;
+        let args: Vec<_> = std::env::args_os().skip(2).collect();
+        let result = if args.len() == 2 {
+            directory_worker::check(std::path::Path::new(&args[0]), args[1].as_bytes())
+        } else {
+            Err(
+                "--check-source-folder requires an explicitly selected folder and a candidate path"
+                    .into(),
+            )
+        };
+        match result {
+            Ok(value) => println!("{value}"),
+            Err(error) => {
+                eprintln!("{error}");
+                std::process::exit(1);
+            }
+        }
+        return;
+    }
     if std::env::args_os().nth(1).as_deref()
         == Some(std::ffi::OsStr::new("--capture-source-worker"))
     {

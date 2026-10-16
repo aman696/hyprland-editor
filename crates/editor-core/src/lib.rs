@@ -15,6 +15,7 @@ pub mod rule;
 pub mod rule_codec;
 pub mod source;
 pub mod source_path;
+pub mod source_scope;
 pub mod storage;
 pub mod workspace;
 pub mod workspace_rule;
