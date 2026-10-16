@@ -1128,15 +1128,21 @@ fn main() {
         directory_worker::entry();
         return;
     }
-    if std::env::args_os().nth(1).as_deref() == Some(std::ffi::OsStr::new("--check-source-folder"))
+    if matches!(std::env::args_os().nth(1).as_deref(),Some(flag) if flag==std::ffi::OsStr::new("--check-source-folder") || flag==std::ffi::OsStr::new("--probe-source-folder"))
     {
         use std::os::unix::ffi::OsStrExt;
         let args: Vec<_> = std::env::args_os().skip(2).collect();
         let result = if args.len() == 2 {
-            directory_worker::check(std::path::Path::new(&args[0]), args[1].as_bytes())
+            if std::env::args_os().nth(1).as_deref()
+                == Some(std::ffi::OsStr::new("--probe-source-folder"))
+            {
+                directory_worker::check_probe(std::path::Path::new(&args[0]), args[1].as_bytes())
+            } else {
+                directory_worker::check(std::path::Path::new(&args[0]), args[1].as_bytes())
+            }
         } else {
             Err(
-                "--check-source-folder requires an explicitly selected folder and a candidate path"
+                "Folder diagnostics require an explicitly selected folder and a candidate path"
                     .into(),
             )
         };

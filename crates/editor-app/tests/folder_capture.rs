@@ -26,9 +26,12 @@ impl Fixture {
         Self(root)
     }
     fn command(&self, candidate: &std::ffi::OsStr) -> Command {
+        self.command_for("--check-source-folder", candidate)
+    }
+    fn command_for(&self, flag: &str, candidate: &std::ffi::OsStr) -> Command {
         let mut command = Command::new(env!("CARGO_BIN_EXE_hyprland-editor"));
         command
-            .arg("--check-source-folder")
+            .arg(flag)
             .arg(self.0.join("approved"))
             .arg(candidate)
             .env_clear()
@@ -148,8 +151,15 @@ fn actual_helper_refuses_escapes_prefix_confusion_cycles_and_fifo_without_readin
 fn unavailable_containment_or_landlock_refuses_folder_capture_without_fallback() {
     let f = Fixture::new();
     fs::write(f.0.join("approved/config.lua"), "-- source\n").unwrap();
-    for syscall in [libc::SYS_openat2, libc::SYS_landlock_create_ruleset] {
-        let mut command = f.command(std::ffi::OsStr::new("config.lua"));
+    for (flag, syscall) in ["--check-source-folder", "--probe-source-folder"]
+        .into_iter()
+        .flat_map(|flag| {
+            [libc::SYS_openat2, libc::SYS_landlock_create_ruleset]
+                .into_iter()
+                .map(move |syscall| (flag, syscall))
+        })
+    {
+        let mut command = f.command_for(flag, std::ffi::OsStr::new("config.lua"));
         // Only the fixture parent and its helpers inherit this denial, never the test runner.
         unsafe {
             command.pre_exec(move || {
@@ -199,5 +209,95 @@ fn unavailable_containment_or_landlock_refuses_folder_capture_without_fallback()
             error.contains("openat2") || error.contains("Landlock"),
             "{error}"
         );
+    }
+}
+
+fn probe(f: &Fixture, candidate: &std::ffi::OsStr) -> serde_json::Value {
+    let result = run(f.command_for("--probe-source-folder", candidate));
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    let value: serde_json::Value = serde_json::from_slice(&result.stdout).unwrap();
+    assert_eq!(value["scope"], "approved-folder-metadata-only");
+    assert_eq!(value["source_bytes_read"], false);
+    assert_eq!(value["files_written"], false);
+    assert_eq!(value["runtime_verified"], false);
+    assert!(value.get("content").is_none());
+    value["observation"].clone()
+}
+
+#[test]
+fn actual_metadata_helper_observes_nonreadable_byte_files_directory_and_fifo_without_content() {
+    let f = Fixture::new();
+    let name = std::ffi::OsStr::from_bytes(b"private-\xff.lua");
+    fs::write(f.0.join("approved").join(name), [0xff, 0, 0xfe]).unwrap();
+    fs::set_permissions(
+        f.0.join("approved").join(name),
+        fs::Permissions::from_mode(0o0),
+    )
+    .unwrap();
+    fs::create_dir(f.0.join("approved/directory")).unwrap();
+    let pipe = std::ffi::CString::new(f.0.join("approved/fifo").as_os_str().as_bytes()).unwrap();
+    assert_eq!(unsafe { libc::mkfifo(pipe.as_ptr(), 0o600) }, 0);
+    for (candidate, kind) in [
+        (name, libc::S_IFREG),
+        (std::ffi::OsStr::new("directory"), libc::S_IFDIR),
+        (std::ffi::OsStr::new("."), libc::S_IFDIR),
+        (std::ffi::OsStr::new("fifo"), libc::S_IFIFO),
+        (f.0.join("approved").as_os_str(), libc::S_IFDIR),
+    ] {
+        let observed = probe(&f, candidate);
+        assert_eq!(observed["Ok"]["status"]["kind"], "present", "{observed}");
+        let mode = observed["Ok"]["status"]["node"]["mode"].as_u64().unwrap() as u32;
+        assert_eq!(mode & libc::S_IFMT, kind);
+        assert!(observed["Ok"].get("content").is_none());
+        assert_eq!(
+            observed["Ok"]["candidate"],
+            serde_json::json!(candidate.as_bytes())
+        );
+    }
+}
+
+#[test]
+fn actual_metadata_helper_separates_absence_from_escape_denial_and_cycle() {
+    let f = Fixture::new();
+    fs::write(f.0.join("approved/file"), "inert").unwrap();
+    fs::create_dir(f.0.join("approved/locked")).unwrap();
+    symlink("missing", f.0.join("approved/broken")).unwrap();
+    symlink("../outside", f.0.join("approved/escape")).unwrap();
+    symlink("cycle", f.0.join("approved/cycle")).unwrap();
+    for (candidate, errno) in [
+        ("missing", libc::ENOENT),
+        ("broken", libc::ENOENT),
+        ("file/child", libc::ENOTDIR),
+        ("file/", libc::ENOTDIR),
+    ] {
+        let observed = probe(&f, std::ffi::OsStr::new(candidate));
+        assert_eq!(observed["Ok"]["status"]["kind"], "absent", "{observed}");
+        assert_eq!(observed["Ok"]["status"]["errno"], errno);
+        if candidate == "broken" {
+            assert_eq!(observed["Ok"]["links"].as_array().unwrap().len(), 1);
+        }
+    }
+    for (candidate, kind) in [
+        ("../outside", "needs_grant"),
+        ("escape", "needs_grant"),
+        ("cycle", "budget"),
+    ] {
+        let observed = probe(&f, std::ffi::OsStr::new(candidate));
+        assert_eq!(observed["Err"]["kind"], kind, "{observed}");
+        assert!(observed.get("Ok").is_none());
+    }
+    if unsafe { libc::geteuid() } != 0 {
+        fs::set_permissions(f.0.join("approved/locked"), fs::Permissions::from_mode(0o0)).unwrap();
+        let observed = probe(&f, std::ffi::OsStr::new("locked/missing"));
+        fs::set_permissions(
+            f.0.join("approved/locked"),
+            fs::Permissions::from_mode(0o700),
+        )
+        .unwrap();
+        assert_eq!(observed["Err"]["kind"], "permission_denied");
     }
 }

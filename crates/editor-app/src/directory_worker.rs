@@ -2,7 +2,7 @@
 use super::{capture_worker, fd_channel, process_policy};
 use hyprland_editor_core::{
     source::CapturedSource,
-    source_scope::{Identity, Scope},
+    source_scope::{Failure, Identity, Observation, Scope},
     MAX_DOCUMENT_BYTES,
 };
 use serde::{Deserialize, Serialize};
@@ -31,12 +31,28 @@ enum Request {
         identity: Identity,
         candidate: Vec<u8>,
     },
+    Probe {
+        identity: Identity,
+        candidate: Vec<u8>,
+    },
 }
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 enum Response {
-    Approved { identity: Identity, abi: u32 },
-    Captured { source: CapturedSource, abi: u32 },
+    Approved {
+        identity: Identity,
+        abi: u32,
+    },
+    Captured {
+        source: CapturedSource,
+        abi: u32,
+    },
+    Probed {
+        identity: Identity,
+        candidate: Vec<u8>,
+        observation: Box<Result<Observation, Failure>>,
+        abi: u32,
+    },
     Error(String),
 }
 pub(super) struct Grant {
@@ -56,6 +72,29 @@ pub(super) fn entry() {
         let request: Request =
             serde_json::from_slice(&message.bytes).map_err(|_| "Invalid folder capture request")?;
         match request {
+            Request::Probe {
+                identity,
+                candidate,
+            } => {
+                let node = message
+                    .descriptor
+                    .ok_or("Folder metadata probe requires a live approved descriptor")?;
+                let scope = Scope::from_descriptor(node, identity.clone())?;
+                let observation = scope.probe(&candidate);
+                // Metadata-only: after observing, no filesystem opens are
+                // allowed. No source content is read, including nonregular nodes.
+                let abi = capture_worker::restrict_to(scope.node())?;
+                process_policy::capability_reply(false)?;
+                Ok((
+                    Response::Probed {
+                        identity,
+                        candidate,
+                        observation: Box::new(observation),
+                        abi,
+                    },
+                    None,
+                ))
+            }
             Request::Approve { path } => {
                 if message.descriptor.is_some()
                     || path.first() != Some(&b'/')
@@ -243,6 +282,56 @@ pub(super) fn read(grant: &Grant, candidate: &[u8]) -> Result<CapturedSource, St
     source.identity.validate(&source.content)?;
     Ok(source)
 }
+/// Outer errors are authority/transport/isolation uncertainty, never absence.
+pub(super) fn probe(
+    grant: &Grant,
+    candidate: &[u8],
+) -> Result<Result<Observation, Failure>, String> {
+    if candidate.is_empty() || candidate.len() > 4096 || candidate.contains(&0) {
+        return Err("Invalid dependency probe candidate".into());
+    }
+    let (
+        Response::Probed {
+            identity,
+            candidate: returned,
+            observation,
+            abi,
+        },
+        None,
+    ) = run(
+        Request::Probe {
+            identity: grant.identity().clone(),
+            candidate: candidate.to_vec(),
+        },
+        Some(grant.node.try_clone().map_err(|e| e.to_string())?),
+    )?
+    else {
+        return Err("Unexpected folder metadata response".into());
+    };
+    if abi < 3 || identity != *grant.identity() || returned != candidate {
+        return Err("Folder metadata response does not match live authority/request".into());
+    }
+    if let Ok(observed) = observation.as_ref() {
+        observed.validate()?;
+        if observed.candidate != candidate
+            || observed.selected_path != grant.identity.candidate_path(candidate)?
+        {
+            return Err("Folder metadata evidence does not match candidate".into());
+        }
+    } else if let Err(failure) = observation.as_ref() {
+        if failure.detail.is_empty() || failure.detail.len() > 8192 || failure.at.len() > 4096 {
+            return Err("Invalid folder metadata failure".into());
+        }
+    }
+    Ok(*observation)
+}
+pub(super) fn check_probe(folder: &Path, candidate: &[u8]) -> Result<serde_json::Value, String> {
+    let grant = approve(folder)?;
+    let observation = probe(&grant, candidate)?;
+    Ok(
+        serde_json::json!({"scope":"approved-folder-metadata-only","folder":grant.identity(),"observation":observation,"source_bytes_read":false,"files_written":false,"runtime_verified":false}),
+    )
+}
 /// Explicit headless fixture/diagnostic entry. It never grants authority from saved source paths.
 pub(super) fn check(folder: &Path, candidate: &[u8]) -> Result<serde_json::Value, String> {
     let grant = approve(folder)?;
@@ -258,14 +347,39 @@ mod tests {
     #[test]
     fn actual_capability_transport_retains_approved_folder_and_refuses_external_targets() {
         let _test = capture_worker::TEST_LOCK.lock().unwrap();
-        let path = std::env::temp_dir().join(format!("he-folder-parent-{}", std::process::id()));
+        struct Cleanup(std::path::PathBuf);
+        impl Drop for Cleanup {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_dir_all(&self.0);
+            }
+        }
+        let path = std::env::temp_dir().join(format!(
+            "he-folder-parent-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
         std::fs::create_dir(&path).unwrap();
+        let _cleanup = Cleanup(path.clone());
         let root = path.join("approved");
         std::fs::create_dir(&root).unwrap();
         std::fs::write(root.join("config.lua"), "-- approved inode\n").unwrap();
         std::fs::write(path.join("outside.lua"), "-- outside\n").unwrap();
         std::os::unix::fs::symlink("../outside.lua", root.join("outside.lua")).unwrap();
         let grant = approve(&root).unwrap();
+        assert!(matches!(
+            probe(&grant, b"missing").unwrap().unwrap().status,
+            hyprland_editor_core::source_scope::Status::Absent {
+                errno: libc::ENOENT,
+                ..
+            }
+        ));
+        assert_eq!(
+            probe(&grant, b"outside.lua").unwrap().unwrap_err().kind,
+            hyprland_editor_core::source_scope::FailureKind::NeedsGrant
+        );
         let fd = grant.node.as_raw_fd();
         assert_ne!(
             unsafe { libc::fcntl(fd, libc::F_GETFD) } & libc::FD_CLOEXEC,
@@ -282,6 +396,17 @@ mod tests {
         std::fs::create_dir(&root).unwrap();
         std::fs::write(root.join("config.lua"), "-- replacement\n").unwrap();
         assert_eq!(
+            probe(&grant, root.join("missing").as_os_str().as_bytes())
+                .unwrap()
+                .unwrap_err()
+                .kind,
+            hyprland_editor_core::source_scope::FailureKind::AuthorityChanged
+        );
+        assert!(matches!(
+            probe(&grant, b"missing").unwrap().unwrap().status,
+            hyprland_editor_core::source_scope::Status::Absent { .. }
+        ));
+        assert_eq!(
             read(&grant, b"config.lua").unwrap().content,
             "-- approved inode\n"
         );
@@ -289,6 +414,7 @@ mod tests {
         let moved = path.join("moved");
         std::fs::set_permissions(&moved, std::fs::Permissions::from_mode(0o700)).unwrap();
         assert!(read(&grant, b"config.lua").unwrap_err().contains("changed"));
+        assert!(probe(&grant, b"missing").unwrap_err().contains("changed"));
         std::fs::set_permissions(
             &moved,
             std::fs::Permissions::from_mode(grant.identity.mode & 0o7777),
@@ -300,6 +426,14 @@ mod tests {
             Request::Read {
                 identity,
                 candidate: b"config.lua".to_vec(),
+            },
+            None,
+        );
+        assert!(result.err().unwrap().contains("live approved descriptor"));
+        let result = run(
+            Request::Probe {
+                identity: grant.identity().clone(),
+                candidate: b"missing".to_vec(),
             },
             None,
         );

@@ -72,6 +72,8 @@ The repository pins Rust through `rust-toolchain.toml` for rustup users. Existin
 
 The development branch links Lua 5.4 for compilation-only validation in the restricted worker, with 64-bit integers and IEEE double precision. It never invokes the compiled source. Install the [Lua 5.4 package](https://archlinux.org/packages/extra/x86_64/lua54/) alongside newer Lua versions; the build explicitly probes `lua5.4`.
 
+The development worker reports its compiler/library profile; the reference matrix checks Lua 5.4.6–5.4.9. See [ordered evaluation and limits](docs/ordered-module-evaluation.md). For explicitly selected private fixtures, `hyprland-editor --probe-source-folder FOLDER CANDIDATE` reports bounded metadata without reading source bytes; [the capture contract](docs/dependency-capture.md) explains the distinct missing/blocked outcomes. This diagnostic does not import or verify an effective dependency graph.
+
 A saved workspace can be checked without opening the GUI:
 
 ```sh

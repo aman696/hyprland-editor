@@ -6,6 +6,8 @@ use crate::{
     MAX_DOCUMENT_BYTES,
 };
 use serde::{Deserialize, Serialize};
+mod probe;
+pub use probe::{Failure, FailureKind, NodeEvidence, Observation, Stage, Status};
 use std::{
     ffi::CString,
     fs::File,
@@ -61,6 +63,9 @@ impl Identity {
         }
         for root in [&self.selected_path, &self.resolved_path] {
             let root = root.strip_suffix(b"/").unwrap_or(root);
+            if candidate == root {
+                return Ok(b".");
+            }
             if let Some(tail) = candidate
                 .strip_prefix(root)
                 .and_then(|p| p.strip_prefix(b"/"))
@@ -184,87 +189,20 @@ impl Scope {
     /// Resolve only beneath the held root, retaining each symlink without reading source bytes.
     /// Mount crossings need an independently selected scope, even for a bind mount.
     pub fn resolve(&self, candidate: &[u8]) -> Result<SelectedSource, String> {
-        self.validate()?;
-        if candidate.is_empty() || candidate.len() > 4096 || candidate.contains(&0) {
-            return Err("Invalid dependency path".into());
+        let mut chain = probe::Chain::default();
+        let node = self
+            .walk(candidate, &mut chain)
+            .map_err(|e| e.to_string())?;
+        let meta = node.metadata().map_err(|e| e.to_string())?;
+        if !meta.is_file() || meta.len() > MAX_DOCUMENT_BYTES as u64 {
+            return Err("Select a regular dependency no larger than 1 MiB".into());
         }
-        let relative = self.relative(candidate)?;
-        self.verify_absolute_alias(candidate)?;
-        let mut pending = source_path::components(relative);
-        let mut resolved: Vec<Vec<u8>> = Vec::new();
-        let mut links = Vec::new();
-        let mut held_links = Vec::new();
-        let mut steps = 0;
-        while let Some(part) = pending.pop_front() {
-            steps += 1;
-            if steps > 4096 {
-                return Err("Dependency path resolution exceeded its step budget".into());
-            }
-            if part == b"." {
-                continue;
-            }
-            if part == b".." {
-                if resolved.pop().is_none() {
-                    return Err(
-                        "Dependency escapes its approved folder; select its target separately"
-                            .into(),
-                    );
-                }
-                continue;
-            }
-            let joined = join_relative(&resolved, &part);
-            let node = open_beneath(&self.node, &joined)?;
-            let meta = node.metadata().map_err(|e| e.to_string())?;
-            if meta.file_type().is_symlink() {
-                if links.len() >= 32 {
-                    return Err("Dependency symlink cycle or depth limit exceeded".into());
-                }
-                if source_path::is_proc_link(&node)? {
-                    return Err("Dependency magic links are not authorized".into());
-                }
-                let target = source_path::link_bytes(&node)?;
-                links.push(LinkIdentity {
-                    encountered_path: join_absolute(&self.identity.resolved_path, &joined)?,
-                    target: target.clone(),
-                    device: meta.dev(),
-                    inode: meta.ino(),
-                    owner: meta.uid(),
-                    mode: meta.mode(),
-                    changed_seconds: meta.ctime(),
-                    changed_nanoseconds: meta.ctime_nsec(),
-                });
-                let next = if target.starts_with(b"/") {
-                    self.verify_absolute_alias(&target)?;
-                    resolved.clear();
-                    source_path::components(self.relative(&target)?)
-                } else {
-                    source_path::components(&target)
-                };
-                let mut next = next;
-                next.append(&mut pending);
-                pending = next;
-                held_links.push(node);
-                continue;
-            }
-            if !pending.is_empty() {
-                if !meta.is_dir() {
-                    return Err("A dependency path component is not a directory".into());
-                }
-                resolved.push(part);
-                continue;
-            }
-            if !meta.is_file() || meta.len() > MAX_DOCUMENT_BYTES as u64 {
-                return Err("Select a regular dependency no larger than 1 MiB".into());
-            }
-            let absolute = join_absolute(&self.identity.selected_path, relative)?;
-            return Ok(SelectedSource {
-                node,
-                absolute: PathBuf::from(std::ffi::OsStr::from_bytes(&absolute)),
-                links,
-                held_links,
-            });
-        }
-        Err("Select a dependency file, not a directory".into())
+        Ok(SelectedSource {
+            node,
+            absolute: PathBuf::from(std::ffi::OsStr::from_bytes(&self.selected_path(candidate)?)),
+            links: chain.links,
+            held_links: chain.held_links,
+        })
     }
     pub fn capture(&self, candidate: &[u8]) -> Result<CapturedSource, String> {
         self.resolve(candidate)?.capture()
@@ -279,8 +217,14 @@ impl Scope {
             return Ok(());
         }
         let tail = self.relative(candidate)?;
-        let prefix_len = candidate.len() - tail.len();
-        let root_path = &candidate[..prefix_len];
+        let root_path = if [&self.identity.selected_path, &self.identity.resolved_path]
+            .iter()
+            .any(|root| candidate == root.strip_suffix(b"/").unwrap_or(root))
+        {
+            candidate
+        } else {
+            &candidate[..candidate.len() - tail.len()]
+        };
         let current = Self::select(Path::new(std::ffi::OsStr::from_bytes(root_path)))?;
         if current.identity.device != self.identity.device
             || current.identity.inode != self.identity.inode
@@ -315,41 +259,7 @@ fn join_absolute(root: &[u8], relative: &[u8]) -> Result<Vec<u8>, String> {
     Ok(out)
 }
 fn open_beneath(root: &File, path: &[u8]) -> Result<File, String> {
-    #[repr(C)]
-    struct OpenHow {
-        flags: u64,
-        mode: u64,
-        resolve: u64,
-    }
-    let path = CString::new(path).map_err(|_| "Invalid dependency path")?;
-    let how = OpenHow {
-        flags: (libc::O_PATH | libc::O_CLOEXEC | libc::O_NOFOLLOW) as u64,
-        mode: 0,
-        resolve: 0x08 | 0x02 | 0x01,
-    }; // BENEATH | NO_MAGICLINKS | NO_XDEV
-    let fd = unsafe {
-        libc::syscall(
-            libc::SYS_openat2,
-            root.as_raw_fd(),
-            path.as_ptr(),
-            &how,
-            std::mem::size_of::<OpenHow>(),
-        )
-    };
-    if fd < 0 {
-        let e = std::io::Error::last_os_error();
-        return Err(match e.raw_os_error() {
-            Some(libc::EXDEV) => {
-                "Dependency crosses its approved folder or mount; select its target separately"
-                    .into()
-            }
-            Some(libc::ENOSYS | libc::EINVAL) => {
-                "Dependency capture requires openat2 containment support".into()
-            }
-            _ => e.to_string(),
-        });
-    }
-    Ok(unsafe { File::from_raw_fd(fd as i32) })
+    probe::open_node(root, path).map_err(|e| e.to_string())
 }
 
 #[cfg(test)]
@@ -483,5 +393,125 @@ mod tests {
         assert!(scope.validate().unwrap_err().contains("changed"));
         fs::set_permissions(&f.0, fs::Permissions::from_mode(0o700)).unwrap();
         scope.validate().unwrap();
+    }
+    #[test]
+    fn metadata_probe_reports_file_directory_fifo_and_byte_paths_without_read_access() {
+        let f = Fixture::new();
+        let name = std::ffi::OsString::from_vec(b"private-\xff.lua".to_vec());
+        fs::write(f.0.join(&name), [0xff, 0, 0xfe]).unwrap();
+        fs::set_permissions(f.0.join(&name), fs::Permissions::from_mode(0o0)).unwrap();
+        fs::create_dir(f.0.join("directory")).unwrap();
+        let pipe = CString::new(f.0.join("fifo").as_os_str().as_bytes()).unwrap();
+        assert_eq!(unsafe { libc::mkfifo(pipe.as_ptr(), 0o600) }, 0);
+        let scope = Scope::select(&f.0).unwrap();
+        for (path, kind) in [
+            (name.as_os_str().as_bytes(), libc::S_IFREG),
+            (b"directory".as_slice(), libc::S_IFDIR),
+            (b".".as_slice(), libc::S_IFDIR),
+            (f.0.as_os_str().as_bytes(), libc::S_IFDIR),
+            (b"fifo".as_slice(), libc::S_IFIFO),
+        ] {
+            let observed = scope.probe(path).unwrap();
+            observed.validate().unwrap();
+            let Status::Present { node } = observed.status else {
+                panic!("Expected metadata")
+            };
+            assert_eq!(node.mode & libc::S_IFMT, kind);
+        }
+    }
+    #[test]
+    fn missing_and_not_directory_are_distinct_from_denials_escape_and_budget() {
+        let f = Fixture::new();
+        fs::write(f.0.join("file"), "inert").unwrap();
+        fs::create_dir(f.0.join("locked")).unwrap();
+        symlink("../outside-missing", f.0.join("escape")).unwrap();
+        symlink("cycle", f.0.join("cycle")).unwrap();
+        symlink("absent", f.0.join("broken")).unwrap();
+        let scope = Scope::select(&f.0).unwrap();
+        for (path, errno) in [
+            (b"absent".as_slice(), libc::ENOENT),
+            (b"absent/child", libc::ENOENT),
+            (b"file/child", libc::ENOTDIR),
+            (b"file/", libc::ENOTDIR),
+            (b"broken", libc::ENOENT),
+        ] {
+            let observation = scope.probe(path).unwrap();
+            assert!(matches!(observation.status,Status::Absent{errno:actual,..} if actual==errno));
+            if path == b"broken" {
+                assert_eq!(observation.links.len(), 1);
+            }
+        }
+        for path in [b"../absent".as_slice(), b"escape"] {
+            assert_eq!(scope.probe(path).unwrap_err().kind, FailureKind::NeedsGrant);
+        }
+        assert_eq!(scope.probe(b"cycle").unwrap_err().kind, FailureKind::Budget);
+        assert_eq!(
+            scope.probe(b"").unwrap_err().kind,
+            FailureKind::InvalidInput
+        );
+        if unsafe { libc::geteuid() } != 0 {
+            fs::set_permissions(f.0.join("locked"), fs::Permissions::from_mode(0o0)).unwrap();
+            let denied = scope.probe(b"locked/absent");
+            fs::set_permissions(f.0.join("locked"), fs::Permissions::from_mode(0o700)).unwrap();
+            assert_eq!(denied.unwrap_err().kind, FailureKind::PermissionDenied);
+        }
+    }
+    #[test]
+    fn intermediate_links_require_manual_evidence_and_implicit_following_is_refused() {
+        let f = Fixture::new();
+        fs::create_dir(f.0.join("dir")).unwrap();
+        fs::write(f.0.join("dir/file"), "inert").unwrap();
+        symlink("dir", f.0.join("alias")).unwrap();
+        let scope = Scope::select(&f.0).unwrap();
+        let error = probe::open_node(scope.node(), b"alias/file").unwrap_err();
+        assert_eq!(error.errno, Some(libc::ELOOP));
+        let observed = scope.probe(b"alias/file").unwrap();
+        assert_eq!(observed.links.len(), 1);
+        assert!(matches!(observed.status,Status::Present{node} if node.is_regular()));
+    }
+    #[test]
+    fn changed_link_or_scope_invalidates_a_pending_negative_observation() {
+        let f = Fixture::new();
+        symlink("absent", f.0.join("link")).unwrap();
+        let scope = Scope::select(&f.0).unwrap();
+        let mut chain = probe::Chain::default();
+        let result = scope.walk(b"link", &mut chain);
+        fs::remove_file(f.0.join("link")).unwrap();
+        symlink("other", f.0.join("link")).unwrap();
+        assert_eq!(
+            scope.finish_probe(b"link", chain, result).unwrap_err().kind,
+            FailureKind::LinkChanged
+        );
+        let mut chain = probe::Chain::default();
+        let result = scope.walk(b"absent", &mut chain);
+        fs::set_permissions(&f.0, fs::Permissions::from_mode(0o755)).unwrap();
+        let invalidated = scope.finish_probe(b"absent", chain, result);
+        fs::set_permissions(&f.0, fs::Permissions::from_mode(0o700)).unwrap();
+        assert_eq!(invalidated.unwrap_err().kind, FailureKind::AuthorityChanged);
+    }
+    #[test]
+    fn renamed_absolute_alias_is_not_a_missing_file_and_records_grant_identity_only() {
+        let f = Fixture::new();
+        fs::create_dir(f.0.join("root")).unwrap();
+        let scope = Scope::select(&f.0.join("root")).unwrap();
+        fs::rename(f.0.join("root"), f.0.join("moved")).unwrap();
+        fs::create_dir(f.0.join("root")).unwrap();
+        assert_eq!(
+            scope
+                .probe(f.0.join("root/absent").as_os_str().as_bytes())
+                .unwrap_err()
+                .kind,
+            FailureKind::AuthorityChanged
+        );
+        assert!(matches!(
+            scope.probe(b"absent").unwrap().status,
+            Status::Absent { .. }
+        ));
+        let mut record = scope.probe(b"absent").unwrap();
+        record.status = Status::Absent {
+            errno: libc::EACCES,
+            at: b"absent".to_vec(),
+        };
+        assert!(record.validate().is_err());
     }
 }

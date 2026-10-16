@@ -945,10 +945,21 @@ impl<'a> Engine<'a> {
                         "Long error source-name formatting is not modeled",
                     );
                 }
-                // Lua attributes OP_CALL to the argument list's opening token,
-                // which can be on a later line than the function expression.
-                let arguments = self.required(node, "arguments")?;
-                full.extend(format!(":{}: ", arguments.start_position().row + 1).bytes());
+                // The call-line convention changed in Lua 5.4.7. Use only a
+                // verified linked-compiler profile, never a patch-level guess.
+                let position =
+                    match compiler_profile().error_call_line {
+                        Some(ErrorCallLine::Callee) => node.start_position(),
+                        Some(ErrorCallLine::Arguments) => {
+                            self.required(node, "arguments")?.start_position()
+                        }
+                        None => return self.unknown(
+                            doc,
+                            node,
+                            "This Lua compiler release has no verified error-call location profile",
+                        ),
+                    };
+                full.extend(format!(":{}: ", position.row + 1).bytes());
                 full.extend(message.iter());
                 value = self.bytes(&full)?;
             }

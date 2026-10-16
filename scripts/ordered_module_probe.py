@@ -1,6 +1,7 @@
 """Independent ordered-language/loader observations; only trusted private fixture Lua runs."""
 import argparse
 import concurrent.futures
+import copy
 import hashlib
 import json
 from pathlib import Path
@@ -86,13 +87,20 @@ CASES = [
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--check', action='store_true')
+    parser.add_argument('--output', type=Path)
     args = parser.parse_args()
     rows = [r for r in paths.MANIFEST['source_files'] if Path(r['path']).name in ['ConfigManager.cpp', 'MiscFunctions.cpp']]
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
         sources = dict(pool.map(paths.fetch, rows))
+    lua_release = subprocess.check_output(['pkg-config','--modversion','lua5.4'],text=True).strip()
+    matrix=json.loads((ROOT/'data/lua-profiles.json').read_text())
+    profile=next((p for p in matrix['profiles'] if p['release']==lua_release),None)
+    if profile is None and args.output is None:
+        raise RuntimeError(f'Unverified Lua release {lua_release}; collect it explicitly before adding a profile')
     observations = []
     # The only host-call adapter is an inert recorder. It does not stand in for field codecs.
     main = loader.MAIN.replace("__trace={};function emit(v)table.insert(__trace,v)end", "__trace={};function emit(v)table.insert(__trace,v)end;hl={config=function(v)table.insert(__trace,{__api='hl.config',value=v})end}")
+    main=main.replace('int main(int argc,char**argv){','int main(int argc,char**argv){std::cerr<<"HYE_LUA_RELEASE="<<LUA_RELEASE<<"\\n";')
     signatures = ['static std::string normalizedConfigPath', 'static void trackConfigPath', 'static bool isExplicitRequirePath', 'static bool hasGlobMeta', 'static std::string resolveRequirePath', 'static std::optional<std::string> resolveExplicitLuaRequireFile', 'static void trackWildcardParentDirectory', 'static std::expected<std::vector<std::string>, std::string> expandRequireWildcard', 'static bool pushPackageLoaded', 'static void setPackageLoaded', 'static int requireWildcard', 'static void trackRequiredLuaModulePath', 'static int safeLuaRequire']
     with tempfile.TemporaryDirectory(prefix='hye-ordered-probe-') as folder:
         root = Path(folder)
@@ -112,18 +120,40 @@ def main():
             binary = root/'probe'
             subprocess.run(['c++', '-std=c++23', '-O0', str(source), *flags, '-o', str(binary)], check=True, timeout=45)
             result = subprocess.run([str(binary), str(root)], input='\n'.join(code for _, code in CASES)+'\n', text=True, capture_output=True, check=True, timeout=6, cwd=root, env={'HOME':str(root/'home')})
+            marker=[line.removeprefix('HYE_LUA_RELEASE=Lua ') for line in result.stderr.splitlines() if line.startswith('HYE_LUA_RELEASE=')]
+            if marker != [lua_release]:
+                raise RuntimeError(f'Lua header/pkg-config profile mismatch: {marker} versus {lua_release}')
             lines = result.stdout.replace(str(root), '<root>').splitlines()
             if len(lines) != len(CASES):
                 raise RuntimeError('Ordered probe observation count differs')
             observations.extend({'version':version, 'case':name, 'source':code, **json.loads(line)} for (name, code), line in zip(CASES, lines))
             print(f'{version}: {len(lines)} ordered language/loader observations')
     content = json.dumps({'format':'hye-ordered-module-fixtures-1', 'meaning':'Real Lua 5.4 and exact pinned require/cache/searcher code, private trusted module fixtures and an inert hl.config argument recorder. No user Lua execution, field-conversion/effective-state, authorization, compositor or ABI certificate.', 'audit_manifest_sha256':hashlib.sha256((ROOT/'data/source-graph-semantics.json').read_bytes()).hexdigest(), 'module_files':FILES, 'cases':observations}, indent=2, sort_keys=True)+'\n'
-    target = ROOT/'data/ordered-module-fixtures.json'
+    target = args.output or ROOT/'data/ordered-module-fixtures.json'
     if args.check:
-        if target.read_text() != content:
-            raise RuntimeError('Ordered module observations differ')
+        expected=json.loads(target.read_text())
+        actual=json.loads(content)
+        if args.output is None:
+            expected=materialize(expected,profile)
+        if expected != actual:
+            for left, right in zip(expected['cases'], actual['cases']):
+                for field in sorted(set(left) | set(right)):
+                    if left.get(field) != right.get(field):
+                        print(json.dumps({'case':right['case'],'version':right['version'],'field':field,'expected':left.get(field),'actual':right.get(field)}),file=sys.stderr)
+            raise RuntimeError(f'Ordered module observations differ for Lua {lua_release}')
     else:
+        if args.output is None and lua_release != matrix['canonical_release']:
+            raise RuntimeError('Use --output to collect noncanonical profile observations')
         target.write_text(content)
+
+
+def materialize(base,profile):
+    expected=copy.deepcopy(base)
+    for change in profile['ordered_overrides']:
+        case=next(row for row in expected['cases'] if row['case']==change['case'] and row['version']==change['version'])
+        case.update(change['fields'])
+    return expected
+
 
 
 if __name__ == '__main__':

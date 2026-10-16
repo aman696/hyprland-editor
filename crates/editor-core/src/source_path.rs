@@ -92,6 +92,31 @@ pub(crate) fn is_proc_link(file: &File) -> Result<bool, String> {
     Ok(unsafe { fs.assume_init() }.f_type as u64 == 0x9fa0)
 }
 
+pub(crate) fn validate_held_links(
+    links: &[LinkIdentity],
+    held_links: &[File],
+) -> Result<(), String> {
+    if links.len() != held_links.len() {
+        return Err("Selected link evidence has no matching held chain".into());
+    }
+    for (record, link) in links.iter().zip(held_links) {
+        let now = link.metadata().map_err(|e| e.to_string())?;
+        if now.nlink() == 0
+            || now.dev() != record.device
+            || now.ino() != record.inode
+            || now.uid() != record.owner
+            || now.mode() != record.mode
+            || now.ctime() != record.changed_seconds
+            || now.ctime_nsec() != record.changed_nanoseconds
+        {
+            return Err(
+                "A selected source link changed during capture; retry the stable chain".into(),
+            );
+        }
+    }
+    Ok(())
+}
+
 /// A held, metadata-only leaf and its link evidence. No source bytes have been read.
 /// The capture role restricts filesystem access to this inode before capture().
 pub struct SelectedSource {
@@ -114,21 +139,7 @@ impl SelectedSource {
         let (content, after) = storage::read_regular_node(&node, MAX_DOCUMENT_BYTES)?;
         // This name refers only to our own held inode, never a saved path hint.
         let own_descriptor = CString::new(format!("/proc/self/fd/{}", node.as_raw_fd())).unwrap();
-        for (record, link) in links.iter().zip(&held_links) {
-            let now = link.metadata().map_err(|e| e.to_string())?;
-            if now.nlink() == 0
-                || now.dev() != record.device
-                || now.ino() != record.inode
-                || now.uid() != record.owner
-                || now.mode() != record.mode
-                || now.ctime() != record.changed_seconds
-                || now.ctime_nsec() != record.changed_nanoseconds
-            {
-                return Err(
-                    "A selected source link changed during capture; retry the stable chain".into(),
-                );
-            }
-        }
+        validate_held_links(&links, &held_links)?;
         let mut identity = SourceIdentity::captured(&absolute, &after, &content)?;
         // The held inode's kernel path is more accurate than a lexical hint if parents moved.
         let mut resolved_path = vec![0; 4097];

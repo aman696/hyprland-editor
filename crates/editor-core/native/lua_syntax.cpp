@@ -4,6 +4,16 @@
 #include <cstring>
 #include <limits>
 static_assert(LUA_VERSION_NUM == 504);
+extern "C" unsigned int hye_lua54_release() {
+    return LUA_VERSION_RELEASE_NUM;
+}
+extern "C" size_t hye_lua54_identity(unsigned char* output, size_t capacity) {
+    const size_t length = strnlen(lua_ident, capacity);
+    if (length == capacity)
+        return 0;
+    std::memcpy(output, lua_ident, length);
+    return length;
+}
 static_assert(sizeof(lua_Integer) == 8 && sizeof(lua_Number) == 8);
 static_assert(std::numeric_limits<lua_Integer>::digits == 63);
 static_assert(std::numeric_limits<lua_Number>::is_iec559 &&

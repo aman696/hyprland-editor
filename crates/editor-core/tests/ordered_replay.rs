@@ -62,7 +62,7 @@ fn observed(value: &Observed) -> Value {
 
 #[test]
 fn ordered_reference_observations() {
-    let fixtures: Value =
+    let mut fixtures: Value =
         serde_json::from_str(include_str!("../../../data/ordered-module-fixtures.json")).unwrap();
     assert_eq!(fixtures["format"], "hye-ordered-module-fixtures-1");
     assert_eq!(fixtures["cases"].as_array().unwrap().len(), 90);
@@ -70,6 +70,30 @@ fn ordered_reference_observations() {
         fixtures["audit_manifest_sha256"],
         source_hash(include_str!("../../../data/source-graph-semantics.json"))
     );
+    let matrix: Value =
+        serde_json::from_str(include_str!("../../../data/lua-profiles.json")).unwrap();
+    let profile = compiler_profile();
+    assert_eq!(
+        matrix["canonical_fixtures_sha256"],
+        source_hash(include_str!("../../../data/ordered-module-fixtures.json"))
+    );
+    let row = matrix["profiles"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|row| row["release"] == profile.release)
+        .expect("Unverified linked Lua profile");
+    for change in row["ordered_overrides"].as_array().unwrap() {
+        let case = fixtures["cases"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .find(|case| case["case"] == change["case"] && case["version"] == change["version"])
+            .unwrap();
+        for (field, value) in change["fields"].as_object().unwrap() {
+            case[field] = value.clone();
+        }
+    }
     let mut failures = vec![];
     for case in fixtures["cases"].as_array().unwrap() {
         let mut p = program(case["source"].as_str().unwrap());
@@ -110,6 +134,7 @@ fn ordered_reference_observations() {
             });
         };
         assert!(!report.runtime_verified);
+        assert_eq!(report.compiler_profile, profile);
         let trace: Vec<Value> = report
             .events
             .iter()

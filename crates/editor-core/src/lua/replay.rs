@@ -20,6 +20,54 @@ pub enum Profile {
     HyprlandLua54,
     SyntheticEmit,
 }
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ErrorCallLine {
+    Callee,
+    Arguments,
+}
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CompilerProfile {
+    pub release: String,
+    pub library_identity: String,
+    pub error_call_line: Option<ErrorCallLine>,
+    pub schema_sha256: String,
+}
+/// The model's linked compiler is an explicit assumption, not a detected target
+/// compositor dependency. Unknown profiles cannot supply guessed call locations.
+pub fn compiler_profile() -> CompilerProfile {
+    static PROFILE: std::sync::LazyLock<CompilerProfile> = std::sync::LazyLock::new(|| {
+        // SAFETY: original adapter returns only its compile-time header constant.
+        let code = unsafe { hye_lua54_release() };
+        let release = format!("{}.{}.{}", code / 10_000, (code / 100) % 100, code % 100);
+        let mut identity = [0u8; 512];
+        // SAFETY: original adapter writes at most this buffer's capacity.
+        let length = unsafe { hye_lua54_identity(identity.as_mut_ptr(), identity.len()) };
+        let library_identity = String::from_utf8_lossy(&identity[..length]).into_owned();
+        let source = include_str!("../../../../data/lua-profiles.json");
+        let matrix: serde_json::Value =
+            serde_json::from_str(source).expect("Bundled Lua profile schema");
+        let error_call_line = matrix["profiles"]
+            .as_array()
+            .expect("Bundled Lua profiles")
+            .iter()
+            .find(|row| {
+                row["release"] == release && library_identity.contains(&format!("Lua {release} "))
+            })
+            .map(|row| {
+                serde_json::from_value(row["error_call_line"].clone())
+                    .expect("Bundled call-line rule")
+            });
+        CompilerProfile {
+            release,
+            library_identity,
+            error_call_line,
+            schema_sha256: source_hash(source),
+        }
+    });
+    PROFILE.clone()
+}
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Document {
@@ -139,6 +187,7 @@ pub enum Halt {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Report {
+    pub compiler_profile: CompilerProfile,
     pub version: String,
     pub profile: Profile,
     pub events: Vec<Event>,
@@ -225,6 +274,8 @@ enum CompileFailure {
     Budget,
 }
 unsafe extern "C" {
+    fn hye_lua54_release() -> u32;
+    fn hye_lua54_identity(output: *mut u8, capacity: usize) -> usize;
     fn hye_lua54_compile(
         source: *const u8,
         length: usize,
@@ -758,6 +809,7 @@ pub fn replay(program: &Program) -> std::result::Result<Report, String> {
         }
     };
     Ok(Report {
+        compiler_profile: compiler_profile(),
         version: program.version.clone(),
         profile: program.profile.clone(),
         events: engine.events,

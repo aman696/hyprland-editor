@@ -22,6 +22,8 @@
         "crates/editor-core/src/lua/replay/eval.rs",
         "crates/editor-core/native/lua_syntax.cpp",
         "crates/editor-core/src/source_scope.rs",
+        "crates/editor-core/src/source_scope/probe.rs",
+        "data/lua-profiles.json",
         "crates/editor-app/src/capture_worker.rs",
         "crates/editor-app/src/directory_worker.rs",
         "crates/editor-app/src/fd_channel.rs",
@@ -32,6 +34,9 @@
         "scripts/source_graph_probe.py",
         "scripts/module_load_probe.py",
         "scripts/ordered_module_probe.py",
+        "scripts/lua_profile_probe.py",
+        "actual_metadata_helper_separates_absence_from_escape_denial_and_cycle",
+        "changed_link_or_scope_invalidates_a_pending_negative_observation",
         "ordered_reference_observations",
         "loader_edges_and_api_calls_share_actual_order_and_document_provenance",
         "ordered_modules_and_compilation_run_inside_the_restricted_worker",
@@ -43,7 +48,7 @@
         "encoded_retention_budget_refuses_atomically_and_preview_bounds_unicode_and_controls",
         "test_review"
       ],
-      "limits": "source-pinned plans/cache transitions, syntactic dependency sites, isolated selected-file and held-folder capture, bounded temporary GUI snapshots and cleanup, ordered immutable-byte evaluation under supplied resolution hypotheses with explicit unknowns and compilation-only validation; no captured-graph/evaluator integration, complete language/native/API codecs, ownership/alias/mount/concurrency certification, wildcard enumeration, graph save/reopen/history/reconciliation, source insertion/deletion, effective discovery, isolated preview, apply/recovery or resource/release acceptance"
+      "limits": "source-pinned plans/cache transitions, syntactic dependency sites, isolated selected-file and held-folder capture, typed metadata-only point observations separating absence from blocking uncertainty, bounded temporary GUI snapshots and cleanup, explicit compiler/library profiles with four-release reference checks, ordered immutable-byte evaluation under supplied resolution hypotheses with explicit unknowns and compilation-only validation; no captured-graph/evaluator integration, complete language/native/API codecs, ownership/alias/mount/concurrency certification, wildcard enumeration, graph save/reopen/history/reconciliation, source insertion/deletion, effective discovery, isolated preview, apply/recovery or resource/release acceptance"
     },
     {
       "area": "gesture draft editor",
