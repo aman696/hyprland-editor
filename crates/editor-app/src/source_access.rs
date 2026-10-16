@@ -1043,6 +1043,24 @@ pub(super) fn test_review(parent: &adw::Window, state: &Shared) {
         assert_eq!(a.captures.len(), 2);
         assert!(a.report.halt.is_none());
         assert!(!a.report.runtime_verified);
+        assert_eq!(a.config_batches.len(), 1);
+        let batch = &a.config_batches[0];
+        assert_eq!(batch.candidates.len(), 1);
+        assert!(batch.findings.is_empty());
+        let field = &batch.candidates[0];
+        assert_eq!(field.lua_key, "general.border_size");
+        assert!(!field.ambiguous);
+        assert!(field.expression.is_some());
+        let event = a
+            .report
+            .events
+            .iter()
+            .find(|e| e.order == batch.event_order)
+            .unwrap();
+        assert!(matches!(
+            field.value(event),
+            Some(hyprland_editor_core::lua::replay::Observed::Int(4))
+        ));
         Arc::downgrade(a)
     };
     let weak_dependency = Arc::downgrade(&model.borrow().as_ref().unwrap().captures[1].source);
@@ -1052,6 +1070,15 @@ pub(super) fn test_review(parent: &adw::Window, state: &Shared) {
     );
     let text = ui.analysis_view.test_call(1);
     assert!(text.contains("border_size: 4"), "{text}");
+    assert!(
+        text.contains("Registered fields: 1 · findings: 0"),
+        "{text}"
+    );
+    assert!(text.contains("general.border_size"), "{text}");
+    assert!(
+        text.contains("native value acceptance are unverified"),
+        "{text}"
+    );
     let sources = ui.analysis_view.test_sources();
     assert!(
         sources.contains("Argument 1.general.border_size"),

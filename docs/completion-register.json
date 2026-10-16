@@ -21,6 +21,8 @@
         "crates/editor-core/src/lua/replay.rs",
         "crates/editor-core/src/lua/replay/eval.rs",
         "crates/editor-core/src/lua/replay/provenance.rs",
+        "crates/editor-core/src/lua/config_table.rs",
+        "data/config-table-fixtures.json",
         "crates/editor-core/native/lua_syntax.cpp",
         "crates/editor-core/src/source_scope.rs",
         "crates/editor-core/src/source_scope/probe.rs",
@@ -39,6 +41,11 @@
         "scripts/source_graph_probe.py",
         "scripts/module_load_probe.py",
         "scripts/ordered_module_probe.py",
+        "scripts/config_table_probe.py",
+        "registry_dispatch_matches_exact_pinned_handler_observations_without_certifying_values",
+        "traversal_cycles_and_path_budgets_remain_unresolved_and_value_origins_remain_only_evidence",
+        "native_nul_key_aliases_replace_prior_values_and_copy_preserves_their_source_spelling",
+        "actual_graph_reports_registry_collisions_cycles_and_table_budget_without_writing_sources",
         "scripts/lua_profile_probe.py",
         "scripts/runtime_path_probe.py",
         "actual_graph_capture_feeds_ordered_cache_and_deferred_file_loading_without_executing_lua",
@@ -63,7 +70,7 @@
         "context_preserves_unknown_empty_and_byte_paths_and_builder_preserves_templates",
         "test_review"
       ],
-      "limits": "source-pinned plans/cache transitions, syntactic dependency sites, isolated selected-file and held-folder capture, typed metadata-only point observations separating absence from blocking uncertainty, bounded temporary GUI snapshots/analysis and cleanup, captured-resolution coordination with per-edge sequential evidence and separate load views, focused graphical files/calls inspection, supplied-context folder/template editor without added read authority, bounded per-value expression evidence and selected-value chains separate from Lua equality/cache identity, explicit compiler/library profiles with four-release reference checks, ordered immutable-byte evaluation under supplied/captured resolution contexts with explicit unknowns and compilation-only validation; no editable graph import, complete language/native/API codecs, ownership/alias/mount/concurrency certification, wildcard enumeration, graph save/reopen/history/reconciliation, source insertion/deletion, effective discovery, isolated preview, apply/recovery or resource/release acceptance"
+      "limits": "source-pinned plans/cache transitions, syntactic dependency sites, isolated selected-file and held-folder capture, typed metadata-only point observations separating absence from blocking uncertainty, bounded temporary GUI snapshots/analysis and cleanup, captured-resolution coordination with per-edge sequential evidence and separate load views, focused graphical files/calls inspection, supplied-context folder/template editor without added read authority, bounded per-value expression evidence and selected-value chains separate from Lua equality/cache identity, source-derived registry dispatch with raw-key retention and unresolved collision/cycle findings separate from native value acceptance, explicit compiler/library profiles with four-release reference checks, ordered immutable-byte evaluation under supplied/captured resolution contexts with explicit unknowns and compilation-only validation; no editable graph import, complete language/native/API codecs, ownership/alias/mount/concurrency certification, wildcard enumeration, graph save/reopen/history/reconciliation, source insertion/deletion, effective discovery, isolated preview, apply/recovery or resource/release acceptance"
     },
     {
       "area": "gesture draft editor",

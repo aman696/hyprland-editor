@@ -377,6 +377,63 @@ fn actual_graph_capture_feeds_ordered_cache_and_deferred_file_loading_without_ex
     }
 }
 #[test]
+fn actual_graph_reports_registry_collisions_cycles_and_table_budget_without_writing_sources() {
+    let f = Fixture::new();
+    let path = f.0.join("approved/main.lua");
+    for version in [
+        hyprland_editor_core::BASELINE,
+        hyprland_editor_core::AUDITED_MAIN,
+    ] {
+        let source = "hl.config{general={border_size=3},['general.border_size\\0suffix']=9}";
+        fs::write(&path, source).unwrap();
+        let value = graph(&f, version, false);
+        assert_eq!(value["model_completed"], true, "{value}");
+        let batch = &value["configuration_tables"][0];
+        assert_eq!(batch["candidates"].as_array().unwrap().len(), 2);
+        assert!(batch["candidates"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|c| c["ambiguous"] == true && c["expression"].is_number()));
+        assert_eq!(batch["findings"][0]["kind"], "ambiguous_target");
+        assert_eq!(batch["native_values_verified"], false);
+        assert_eq!(batch["order_within_call_known"], false);
+        assert_eq!(fs::read_to_string(&path).unwrap(), source);
+
+        fs::write(
+            &path,
+            "hl.config{general={border_size=4}};local t={};t.again=t;hl.config(t)",
+        )
+        .unwrap();
+        let value = graph(&f, version, false);
+        assert_eq!(value["model_completed"], false, "{value}");
+        assert!(value["report"]["halt"].is_null());
+        assert_eq!(
+            value["configuration_tables"][0]["candidates"]
+                .as_array()
+                .unwrap()
+                .len(),
+            1
+        );
+        assert_eq!(
+            value["configuration_tables"][1]["traversal_resolved"],
+            false
+        );
+        assert!(value["blocked"]
+            .as_str()
+            .unwrap()
+            .contains("traversal is unresolved"));
+
+        fs::write(&path, format!("hl.config{{['{}']=1}}", "a".repeat(4097))).unwrap();
+        let value = graph(&f, version, false);
+        assert_eq!(value["model_completed"], false, "{value}");
+        assert!(value["report"]["halt"].is_null());
+        assert!(value["configuration_tables"].as_array().unwrap().is_empty());
+        assert!(value["blocked"].as_str().unwrap().contains("byte limit"));
+        assert_eq!(value["files_written"], false);
+    }
+}
+#[test]
 fn actual_graph_records_raw_status_then_captures_the_distinct_normalized_load_target() {
     use std::os::unix::fs::MetadataExt;
     let f = Fixture::new();

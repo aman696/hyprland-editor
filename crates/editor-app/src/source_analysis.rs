@@ -2,7 +2,10 @@
 use super::{label, monitors::compact, source_graph::Analysis};
 use adw::prelude::*;
 use hyprland_editor_core::{
-    lua::replay::{Halt, LoadOutcome, Loader, Observed},
+    lua::{
+        config_table::Batch,
+        replay::{Halt, LoadOutcome, Loader, Observed},
+    },
     source::display_path_bytes,
 };
 use std::{
@@ -309,6 +312,16 @@ impl View {
                 let mut body = String::from(
                     "Settings declaration\nModeled arguments; acceptance is unverified.\n\n",
                 );
+                if let Some(batch) = analysis
+                    .config_batches
+                    .iter()
+                    .find(|b| b.event_order == e.order)
+                {
+                    body.push_str(&configuration_fields(batch));
+                } else if e.api == "hl.config" {
+                    body.push_str("Field inspection unavailable.\n\n");
+                }
+                body.push_str("Arguments\n");
                 for arg in &e.arguments {
                     value(&mut body, arg, 0);
                     body.push('\n');
@@ -357,6 +370,46 @@ impl View {
             .unwrap_or_else(|| document.into());
         view.buffer().set_text(&format!("{location}\n\n{body}"));
     }
+}
+fn configuration_fields(batch: &Batch) -> String {
+    let mut out = format!(
+        "Registered fields: {} · findings: {}\n",
+        batch.candidates.len(),
+        batch.findings.len()
+    );
+    for candidate in batch.candidates.iter().take(32) {
+        out.push_str(&format!(
+            "{} · {}{}\n",
+            short(candidate.lua_key.as_bytes()),
+            short(candidate.value_kind.as_bytes()),
+            if candidate.ambiguous {
+                " · ambiguous"
+            } else {
+                ""
+            }
+        ));
+    }
+    if batch.candidates.len() > 32 {
+        out.push_str("… More fields are retained in the analysis.\n");
+    }
+    for finding in batch.findings.iter().take(16) {
+        out.push_str(&format!(
+            "{:?}: {}\n",
+            finding.kind,
+            short(&finding.api_key)
+        ));
+    }
+    if batch.findings.len() > 16 {
+        out.push_str("… More findings are retained in the analysis.\n");
+    }
+    if !batch.traversal_resolved {
+        out.push_str("Table traversal is incomplete.\n");
+    }
+    if batch.candidates.iter().any(|c| c.ambiguous) {
+        out.push_str("Several keys address the same setting; no winning value is inferred.\n");
+    }
+    out.push_str("Field order and native value acceptance are unverified.\n\n");
+    out
 }
 fn value(out: &mut String, input: &Observed, depth: usize) {
     if out.len() > 16 * 1024 {

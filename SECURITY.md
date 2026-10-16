@@ -26,6 +26,8 @@ Use GitHub's private vulnerability reporting for a security issue (when enabled)
 - The app opens no network listener, performs no telemetry and has no compositor mutation or config publication interface. Clipboard export is an explicit user action; the desktop clipboard may be visible to other applications.
 - GTK color/font rendering and dependency vulnerabilities remain part of the platform trust boundary. This editor is not a sandbox for malicious native code.
 
+Captured configuration-table inspection retains raw keys separately from native NUL-truncated registry keys. Dotted/nested/NUL aliases addressing one setting within a call remain ambiguous; table iteration does not confer a winner. Candidate coordinates/expression IDs are evidence inside an immutable analysis, not ownership or edit capabilities. Native codec acceptance remains unverified. Cyclic unknown-table traversal and per-call budget exhaustion produce partial results. Per-call 512 KiB encoded evidence and traversal quotas share the existing coordinator/session bounds. This enables no source mutation or native operation.
+
 ## Before live apply or preview
 
 Implement the blueprint's session pinning, capability separation, watcher handling, transaction journal, independent recovery agent, bounded IPC and isolation probes. Config verification must not execute imported Lua on the host. A failed sandbox probe must not fall back to the user's live compositor. Memory and CPU budgets must be measured. These are implementation gates, not currently completed protections.

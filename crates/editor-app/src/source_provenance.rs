@@ -193,6 +193,7 @@ mod tests {
             },
             program,
             report,
+            config_batches: vec![],
             captures: vec![],
             edges: vec![],
             blocked: None,

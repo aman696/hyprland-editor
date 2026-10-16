@@ -2,7 +2,10 @@
 //! Never an atomic filesystem snapshot or a claim of effective compositor state.
 use super::{directory_worker, worker};
 use hyprland_editor_core::{
-    lua::replay::{self, Binding, Document, Halt, Loader, Program, Resolution},
+    lua::{
+        config_table,
+        replay::{self, Binding, Document, Halt, Loader, Program, Resolution},
+    },
     module_path::{self, Context, Primary, RequireMode},
     source::{CapturedSource, SourceIdentity},
     source_scope::{Identity, Observation, Status},
@@ -43,6 +46,7 @@ pub(super) struct Analysis {
     pub(super) context: Context,
     pub(super) program: Program,
     pub(super) report: replay::Report,
+    pub(super) config_batches: Vec<config_table::Batch>,
     pub(super) captures: Vec<CapturedDocument>,
     pub(super) edges: Vec<EdgeEvidence>,
     pub(super) blocked: Option<String>,
@@ -457,11 +461,33 @@ pub(super) fn analyze_with_budget(
         }
     };
     resolver.budget.retain(&report)?;
+    let catalogue = hyprland_editor_core::catalogue();
+    let mut config_batches = Vec::new();
+    for event in report.events.iter().filter(|e| e.api == "hl.config") {
+        let result = resolver.budget.check().and_then(|()| {
+            let batch = config_table::inspect(event, &program.version, &catalogue)?;
+            resolver.budget.retain(&batch)?;
+            Ok(batch)
+        });
+        match result {
+            Ok(batch) => {
+                if !batch.traversal_resolved {
+                    blocked.get_or_insert("Configuration table traversal is unresolved".into());
+                }
+                config_batches.push(batch);
+            }
+            Err(error) => {
+                blocked.get_or_insert(error);
+                break;
+            }
+        }
+    }
     let retained_bytes = resolver.budget.retained;
     Ok(Analysis {
         context,
         program,
         report,
+        config_batches,
         captures,
         edges,
         blocked,
@@ -503,6 +529,7 @@ pub(super) fn check(
         "model_completed":analysis.report.halt.is_none()&&analysis.blocked.is_none(),
         "documents":analysis.captures.iter().map(|c|serde_json::json!({"id":c.id,"identity":c.source.identity,"load_name":analysis.program.documents.iter().find(|d|d.id==c.id).map(|d|&d.load_name)})).collect::<Vec<_>>(),
         "resolution_evidence":analysis.edges,"report":analysis.report,"blocked":analysis.blocked,
+        "configuration_tables":analysis.config_batches,
         "bindings":analysis.program.bindings.len(),"files_written":false,"lua_executed":false,
         "runtime_verified":false,"atomic_filesystem_snapshot":false
     }))

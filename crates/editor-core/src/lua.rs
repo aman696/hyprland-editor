@@ -1,4 +1,5 @@
 //! Static Lua source projection and byte-preserving copy preparation. Never runs Lua.
+pub mod config_table;
 mod dependencies;
 pub mod replay;
 use crate::{parse_color, Draft, Setting, Value, AUDITED_MAIN, BASELINE, MAX_DOCUMENT_BYTES};
@@ -470,6 +471,10 @@ impl Projection<'_> {
                 self.diagnostic(field, "Computed configuration key is unresolved");
                 continue;
             };
+            // The pinned hlConfig constructs std::string(lua_tostring(key)),
+            // so the API key ends at the first NUL even though Lua retains the
+            // complete byte string. Keep source bytes intact when editing.
+            let key = key.split('\0').next().unwrap_or_default().to_string();
             if key.len() > 256 {
                 if let Some(value) = field.child_by_field_name("value") {
                     self.ignored_expression(value);
@@ -2066,6 +2071,34 @@ mod tests {
         .unwrap();
         assert!(r.draft.values.is_empty());
         assert!(r.declarations.iter().all(|d| !d.editable));
+    }
+    #[test]
+    fn native_nul_key_aliases_replace_prior_values_and_copy_preserves_their_source_spelling() {
+        let c = catalogue();
+        for version in [BASELINE, AUDITED_MAIN] {
+            let source="hl.config{general={border_size=3}};hl.config{['general\\0suffix']={['border_size\\000ignored']=9}}";
+            let report = parse(source, version, &c).unwrap();
+            assert_eq!(report.draft.values["general:border_size"], Value::Int(9));
+            let mut draft = report.draft.clone();
+            draft
+                .values
+                .insert("general:border_size".into(), Value::Int(7));
+            let doc = LuaDocument::from_report(source.into(), report, &c).unwrap();
+            let copy = doc.edited_copy(&draft, &c).unwrap();
+            assert_eq!(copy, source.replace("ignored']=9", "ignored']=7"));
+            let source = "hl.config{['general.border_size']=3,['general.border_size\\0suffix']=9}";
+            let report = parse(source, version, &c).unwrap();
+            assert!(report.draft.values.is_empty());
+            assert!(report.declarations.iter().all(|d| !d.editable));
+            let long = format!(
+                "hl.config{{['general.border_size\\0{}']=8}}",
+                "x".repeat(1000)
+            );
+            assert_eq!(
+                parse(&long, version, &c).unwrap().draft.values["general:border_size"],
+                Value::Int(8)
+            );
+        }
     }
     #[test]
     fn syntax_size_nul_and_nonfinite_rejection() {
