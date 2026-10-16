@@ -18,6 +18,7 @@ mod rules;
 mod selector_forms;
 mod source_access;
 mod source_analysis;
+mod source_context;
 mod source_graph;
 mod source_modules;
 mod worker;

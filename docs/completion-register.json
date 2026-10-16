@@ -30,7 +30,8 @@
         "crates/editor-app/src/source_modules.rs",
         "crates/editor-app/src/source_access.rs",
         "crates/editor-app/src/source_graph.rs",
-        "crates/editor-app/src/source_analysis.rs"
+        "crates/editor-app/src/source_analysis.rs",
+        "crates/editor-app/src/source_context.rs"
       ],
       "test_references": [
         "scripts/source_graph_probe.py",
@@ -53,9 +54,10 @@
         "unavailable_containment_or_landlock_refuses_folder_capture_without_fallback",
         "malformed_marker_multiple_and_truncated_descriptors_are_refused",
         "encoded_retention_budget_refuses_atomically_and_preview_bounds_unicode_and_controls",
+        "context_preserves_unknown_empty_and_byte_paths_and_builder_preserves_templates",
         "test_review"
       ],
-      "limits": "source-pinned plans/cache transitions, syntactic dependency sites, isolated selected-file and held-folder capture, typed metadata-only point observations separating absence from blocking uncertainty, bounded temporary GUI snapshots/analysis and cleanup, captured-resolution coordination with per-edge sequential evidence and separate load views, focused graphical files/calls inspection, explicit compiler/library profiles with four-release reference checks, ordered immutable-byte evaluation under supplied/captured resolution contexts with explicit unknowns and compilation-only validation; no editable graph import, complete language/native/API codecs, ownership/alias/mount/concurrency certification, wildcard enumeration, graph save/reopen/history/reconciliation, source insertion/deletion, effective discovery, isolated preview, apply/recovery or resource/release acceptance"
+      "limits": "source-pinned plans/cache transitions, syntactic dependency sites, isolated selected-file and held-folder capture, typed metadata-only point observations separating absence from blocking uncertainty, bounded temporary GUI snapshots/analysis and cleanup, captured-resolution coordination with per-edge sequential evidence and separate load views, focused graphical files/calls inspection, supplied-context folder/template editor without added read authority, explicit compiler/library profiles with four-release reference checks, ordered immutable-byte evaluation under supplied/captured resolution contexts with explicit unknowns and compilation-only validation; no editable graph import, complete language/native/API codecs, ownership/alias/mount/concurrency certification, wildcard enumeration, graph save/reopen/history/reconciliation, source insertion/deletion, effective discovery, isolated preview, apply/recovery or resource/release acceptance"
     },
     {
       "area": "gesture draft editor",

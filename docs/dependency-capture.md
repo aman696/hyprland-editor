@@ -44,7 +44,7 @@ Still required: complete ownership/alias/mount review, bounded wildcard enumerat
 
 ## Temporary analysis results
 
-After choosing a root snapshot, **Analyze File** reads referenced sources only through the current allowed folders. The focused results page separates Files from Ordered calls and renders one selection at a time. An empty permission set can still analyze supplied root bytes; a dependency requiring a read stops for approved access. The root is the selected snapshot, not a claim that this is the active Hyprland main file. Unknown home, working-directory and inherited-path context remains unknown.
+After choosing a root snapshot, **Analyze File** reads referenced sources only through the current allowed folders. The focused results page separates Files from Ordered calls and renders one selection at a time. An empty permission set can still analyze supplied root bytes; a dependency requiring a read stops for approved access. The root is the selected snapshot, not a claim that this is the active Hyprland main file. Home, working-directory and inherited-path context defaults to unknown. Analysis Context can supply explicit hypotheses for this review without granting folder access.
 
 The coordinator and GUI share the session's estimated 8 MiB retained-data budget, including prior manual captures. Results are cleared when their source is removed or a new operation starts. Forgetting folder access retains already captured bytes but no result carries a live folder capability. Closing or a changed draft cancels analysis and drops data; late results fail the generation/epoch guard. See [ordered analysis and exact limits](ordered-module-evaluation.md).
 
@@ -54,3 +54,15 @@ Native tests cover a real two-file capture/evaluation, displayed setting argumen
 
 
 Current analysis validation passes 222 ordinary tests plus the private-display native workflow (223 total), strict lint, formatting, release build and metadata checks. The native workflow also verifies completed-result invalidation after a draft change. These results cover the stated fixtures; they do not certify the remaining full graph or release obligations.
+
+## Supplied analysis context
+
+**Analysis Context** opens a separate modal editor. Home and working-directory paths use folder pickers and can be returned to Unknown. The inherited Lua search path has distinct Unknown and known-empty states. Add Search Folder inserts both conventional templates without changing existing separators; exact templates remain editable. Byte escapes preserve non-UTF-8 paths and literal backslashes. A semicolon or question mark in a selected folder cannot silently change template meaning: the builder refuses it with a diagnostic.
+
+These are supplied hypotheses, not discovered compositor values or read permissions. Home/working-directory pickers currently supply absolute paths only; arbitrary environment-derived home values still need an explicit authoring surface and resolver evidence. The GUI never copies its own home, current directory or Lua defaults into the model. The selected main snapshot remains fixed by Analyze File. Read access must come from separate live allowed-folder handles.
+
+Context changes clear completed analysis and update its operation epoch; canceling the dialog leaves context/results untouched. Changes during a pending operation are refused. Stale/closed parent sessions reject commits. Stored context contributes to the shared estimated 8 MiB budget; paths are capped at 4096 bytes and inherited templates at 64 KiB. The lossless editor bounds encoded text to 256 KiB before insertion. Analysis retains the exact supplied context separately from its resulting initial path; neither record is a runtime certificate.
+
+The native fixture supplies context through the actual editor and verifies a four-file chain using relative dofile, home-based require and named search-path fallback. It checks displayed arguments, unchanged draft/grants, cancel preservation, pending-operation refusal and invalidation when an inherited tail becomes unknown again. Pure boundary fixtures cover unknown versus empty, non-UTF-8 byte preservation, malformed escapes, template metacharacters and size/NUL refusals. File picker portal behavior remains unproven. Current validation passes 223 ordinary tests plus the private-display native workflow (224 total).
+
+![Supplied analysis context](screenshots/dependency-context.png)

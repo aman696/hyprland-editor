@@ -78,6 +78,8 @@ struct Session {
     epoch: u64,
     analysis: super::source_analysis::Model,
     analysis_cancel: Option<Arc<AtomicBool>>,
+    context: super::source_context::Options,
+    context_cost: usize,
 }
 impl Session {
     fn current(&self, state: &Shared) -> bool {
@@ -95,6 +97,7 @@ impl Session {
             .map(|f| f.cost)
             .chain(self.captures.iter().map(|f| f.cost))
             .sum::<usize>()
+            + self.context_cost
             + self
                 .analysis
                 .borrow()
@@ -149,6 +152,8 @@ impl Session {
         self.pending = false;
         self.folders.clear();
         self.captures.clear();
+        self.context = super::source_context::Options::default();
+        self.context_cost = 0;
         self.clear_analysis();
     }
     fn clear_analysis(&mut self) {
@@ -174,6 +179,7 @@ struct Controls {
     capture_details: gtk::glib::WeakRef<gtk::TextView>,
     preview: gtk::glib::WeakRef<gtk::TextView>,
     analyze: gtk::glib::WeakRef<gtk::Button>,
+    context: gtk::glib::WeakRef<gtk::Button>,
     cancel: gtk::glib::WeakRef<gtk::Button>,
     pages: gtk::glib::WeakRef<gtk::Stack>,
     analysis_view: super::source_analysis::View,
@@ -250,6 +256,7 @@ impl Controls {
             (&self.read, valid && folder.is_some()),
             (&self.remove, capture.is_some()),
             (&self.analyze, valid && capture.is_some()),
+            (&self.context, valid),
         ] {
             if let Some(button) = weak.upgrade() {
                 button.set_sensitive(!s.pending && available);
@@ -407,7 +414,7 @@ impl Controls {
             return;
         };
         let cancel = Arc::new(AtomicBool::new(false));
-        let (version, grants, budget) = {
+        let (version, grants, budget, options) = {
             let mut s = session.borrow_mut();
             s.analysis_cancel = Some(cancel.clone());
             (
@@ -417,6 +424,7 @@ impl Controls {
                     .map(|f| f.grant.clone())
                     .collect::<Vec<_>>(),
                 MAX_WORKSPACE_BYTES.saturating_sub(s.cost()),
+                s.context.clone(),
             )
         };
         if let Some(pages) = self.pages.upgrade() {
@@ -428,14 +436,20 @@ impl Controls {
         self.details();
         let context = hyprland_editor_core::module_path::Context {
             main_file: root.identity.selected_path.clone(),
-            home: None,
-            inherited_package_path: None,
+            home: options.home,
+            inherited_package_path: options.inherited_package_path,
         };
         let ui = self.clone();
         workflow::background(
             move || {
                 super::source_graph::analyze_with_budget(
-                    root, context, grants, version, None, cancel, budget,
+                    root,
+                    context,
+                    grants,
+                    version,
+                    options.working_directory,
+                    cancel,
+                    budget,
                 )
             },
             move |result| {
@@ -472,6 +486,55 @@ impl Controls {
                 ui.details();
             },
         );
+    }
+    fn set_context(&self, options: super::source_context::Options) -> Result<(), String> {
+        options.validate()?;
+        if !self.current() {
+            return Err("The draft or source changed. Reopen dependency review.".into());
+        }
+        let session = self.session.upgrade().ok_or("Dependency review closed")?;
+        let mut s = session.borrow_mut();
+        if s.pending {
+            return Err("Wait for the current operation before changing context.".into());
+        }
+        let cost = encoded_len(&options)?;
+        let analysis_cost = s.analysis.borrow().as_ref().map_or(0, |a| a.retained_bytes);
+        if s.cost()
+            .saturating_sub(s.context_cost)
+            .saturating_sub(analysis_cost)
+            .saturating_add(cost)
+            > MAX_WORKSPACE_BYTES
+        {
+            return Err("Remove captures before retaining this larger context.".into());
+        }
+        s.clear_analysis();
+        s.context = options;
+        s.context_cost = cost;
+        s.epoch += 1;
+        drop(s);
+        self.analysis_view
+            .reset("Context changed. Analyze the selected snapshot again.");
+        self.feedback("Analysis context updated for this review. Folder access and draft settings are unchanged.");
+        self.details();
+        Ok(())
+    }
+    fn edit_context(&self) -> Option<(adw::Window, super::source_context::Editor)> {
+        if !self.current() {
+            self.details();
+            return None;
+        }
+        let parent = self.window.upgrade()?;
+        let session = self.session.upgrade()?;
+        if session.borrow().pending {
+            return None;
+        }
+        let options = session.borrow().context.clone();
+        let u = self.clone();
+        Some(super::source_context::show(
+            &parent,
+            options,
+            move |options| u.set_context(options),
+        ))
     }
 }
 pub(super) fn excerpt(source: &str) -> String {
@@ -582,6 +645,12 @@ fn show(
     actions.append(&analyze);
     actions.append(&remove);
     body.append(&actions);
+    let context = gtk::Button::with_label("Analysis Context…");
+    context.set_widget_name("dependency-analysis-context");
+    context.set_tooltip_text(Some(
+        "Supply home, working directory and inherited Lua search path for this snapshot",
+    ));
+    body.append(&context);
     let (area, capture_details) = text_view("dependency-capture-details", 100, false);
     body.append(
         &gtk::Expander::builder()
@@ -641,6 +710,8 @@ fn show(
         epoch: 0,
         analysis: analysis_model,
         analysis_cancel: None,
+        context: super::source_context::Options::default(),
+        context_cost: 0,
     }));
     let ui = Controls {
         session: Rc::downgrade(&session),
@@ -657,6 +728,7 @@ fn show(
         capture_details: capture_details.downgrade(),
         preview: preview.downgrade(),
         analyze: analyze.downgrade(),
+        context: context.downgrade(),
         cancel: cancel.downgrade(),
         pages: pages.downgrade(),
         analysis_view,
@@ -669,6 +741,10 @@ fn show(
     });
     let u = ui.clone();
     analyze.connect_clicked(move |_| u.analyze());
+    let u = ui.clone();
+    context.connect_clicked(move |_| {
+        u.edit_context();
+    });
     let b = back.downgrade();
     let w = win.downgrade();
     let u = ui.clone();
@@ -992,6 +1068,137 @@ pub(super) fn test_review(parent: &adw::Window, state: &Shared) {
     assert!(model.borrow().is_none());
     assert!(weak_analysis.upgrade().is_none());
     assert!(weak_dependency.upgrade().is_none());
+    // Missing context remains partial until supplied through the actual editor.
+    let cwd = root.join("working");
+    let home = root.join("home");
+    let library = root.join("library");
+    for folder in [&cwd, &home, &library] {
+        std::fs::create_dir(folder).unwrap();
+    }
+    std::fs::write(cwd.join("relative.lua"), "return 1").unwrap();
+    std::fs::write(home.join("home.lua"), "return 2").unwrap();
+    std::fs::write(library.join("named.lua"), "return 3").unwrap();
+    std::fs::write(&main, "local a=dofile('relative.lua');local b=require('~/home');local c=require('named');hl.config{general={border_size=a+b+c}}").unwrap();
+    ui.capture(main.clone());
+    wait(|| !session.borrow().pending);
+    ui.analyze();
+    wait(|| !session.borrow().pending);
+    assert!(session
+        .borrow()
+        .analysis
+        .borrow()
+        .as_ref()
+        .unwrap()
+        .blocked
+        .as_deref()
+        .is_some_and(|s| s.contains("working directory")));
+    let old = Arc::downgrade(session.borrow().analysis.borrow().as_ref().unwrap());
+    let options = super::source_context::Options {
+        home: Some(home.as_os_str().as_bytes().to_vec()),
+        working_directory: Some(cwd.as_os_str().as_bytes().to_vec()),
+        inherited_package_path: Some([library.as_os_str().as_bytes(), b"/?.lua"].concat()),
+    };
+    let grants = session
+        .borrow()
+        .folders
+        .iter()
+        .map(|f| Arc::downgrade(&f.grant))
+        .collect::<Vec<_>>();
+    let (dialog, editor) = ui.edit_context().unwrap();
+    editor.test_set(options.clone());
+    let (minimum, _, _, _) = dialog.measure(gtk::Orientation::Horizontal, -1);
+    assert!(minimum <= 350, "Context requires {minimum}px");
+    if let Ok(path) = std::env::var("HYPRLAND_EDITOR_TEST_CAPTURE") {
+        let paintable = gtk::WidgetPaintable::new(Some(&dialog));
+        let node = RefCell::new(None);
+        wait(|| {
+            let snapshot = gtk::Snapshot::new();
+            paintable.snapshot(&snapshot, dialog.width() as f64, dialog.height() as f64);
+            *node.borrow_mut() = snapshot.to_node();
+            node.borrow().is_some()
+        });
+        dialog
+            .renderer()
+            .unwrap()
+            .render_texture(node.into_inner().unwrap(), None)
+            .save_to_png(format!("{path}.dependency-context.png"))
+            .unwrap();
+    }
+    editor.save.upgrade().unwrap().emit_clicked();
+    assert!(!dialog.is_visible());
+    drop(editor);
+    drop(dialog);
+    assert!(old.upgrade().is_none());
+    assert_eq!(session.borrow().context, options);
+    assert_eq!(session.borrow().folders.len(), grants.len());
+    assert!(grants.iter().all(|g| g.upgrade().is_some()));
+    ui.analyze();
+    assert!(ui.edit_context().is_none());
+    assert!(ui
+        .set_context(super::source_context::Options::default())
+        .is_err());
+    wait(|| !session.borrow().pending);
+    {
+        let model = session.borrow().analysis.clone();
+        let analysis = model.borrow();
+        let analysis = analysis.as_ref().unwrap();
+        assert!(analysis.blocked.is_none(), "{:?}", analysis.blocked);
+        assert!(analysis.report.halt.is_none(), "{:?}", analysis.report.halt);
+        assert_eq!(analysis.captures.len(), 4);
+        assert_eq!(analysis.context.home, options.home);
+        assert_eq!(
+            analysis.program.working_directory,
+            options.working_directory
+        );
+    }
+    assert!(ui.analysis_view.test_call(3).contains("border_size: 6"));
+    assert_eq!(state.borrow().generation, generation);
+    // Canceling edits changes no retained options or completed analysis.
+    let old = Arc::downgrade(session.borrow().analysis.borrow().as_ref().unwrap());
+    let (dialog, editor) = ui.edit_context().unwrap();
+    editor.test_set(super::source_context::Options::default());
+    dialog.close();
+    drop(editor);
+    drop(dialog);
+    assert_eq!(session.borrow().context, options);
+    assert!(old.upgrade().is_some());
+    let mut unknown = options.clone();
+    unknown.inherited_package_path = None;
+    ui.set_context(unknown).unwrap();
+    assert!(old.upgrade().is_none());
+    ui.analyze();
+    wait(|| !session.borrow().pending);
+    assert!(session
+        .borrow()
+        .analysis
+        .borrow()
+        .as_ref()
+        .unwrap()
+        .blocked
+        .as_deref()
+        .is_some_and(|s| s.contains("remaining search path is unknown")));
+    let mut empty = options;
+    empty.inherited_package_path = Some(vec![]);
+    let (dialog, editor) = ui.edit_context().unwrap();
+    editor.test_set(empty.clone());
+    editor.save.upgrade().unwrap().emit_clicked();
+    drop(editor);
+    drop(dialog);
+    assert_eq!(
+        session.borrow().context.inherited_package_path,
+        Some(vec![])
+    );
+    ui.analyze();
+    wait(|| !session.borrow().pending);
+    assert!(session
+        .borrow()
+        .analysis
+        .borrow()
+        .as_ref()
+        .unwrap()
+        .blocked
+        .as_deref()
+        .is_some_and(|s| s.contains("native/custom searchers")));
     // A result for an old imported snapshot must not attach a new folder.
     ui.approve(root.clone());
     state.borrow_mut().generation += 1;
@@ -1041,10 +1248,28 @@ pub(super) fn test_review(parent: &adw::Window, state: &Shared) {
     wait(|| ui.session.upgrade().is_some_and(|s| !s.borrow().pending));
     let session = ui.session.upgrade().unwrap();
     let weak_analysis = Arc::downgrade(session.borrow().analysis.borrow().as_ref().unwrap());
+    let (dialog, editor) = ui.edit_context().unwrap();
+    let attempted = super::source_context::Options {
+        inherited_package_path: Some(vec![]),
+        ..Default::default()
+    };
+    editor.test_set(attempted);
     state.borrow_mut().generation += 1;
+    editor.save.upgrade().unwrap().emit_clicked();
+    assert!(
+        dialog.is_visible(),
+        "Stale context must be refused, with the editor left open"
+    );
+    assert_eq!(
+        session.borrow().context,
+        super::source_context::Options::default()
+    );
     wait(|| session.borrow().analysis.borrow().is_none());
     assert!(weak_analysis.upgrade().is_none());
     assert!(!ui.analyze.upgrade().unwrap().is_sensitive());
+    dialog.close();
+    drop(editor);
+    drop(dialog);
     win.close();
     drop(session);
     drop(win);
@@ -1098,6 +1323,8 @@ mod tests {
             epoch: 0,
             analysis: Rc::new(RefCell::new(None)),
             analysis_cancel: None,
+            context: crate::source_context::Options::default(),
+            context_cost: 0,
         };
         for name in ["first.lua", "second.lua"] {
             std::fs::write(root.join(name), &content).unwrap();

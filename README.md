@@ -118,3 +118,5 @@ The setting list uses GTK's recycled list items; only the selected setting build
 The source-graph development branch now includes **Review Dependency Files → Analyze File**. It analyzes a selected root snapshot and dependencies from explicitly allowed folders, showing source files, modeled calls and partial-result reasons without running source code or changing the draft/desktop. Multi-file draft import, editing and persistence remain unfinished. See [scope and limits](docs/ordered-module-evaluation.md).
 
 For private fixtures: `hyprland-editor --check-source-graph FOLDER ROOT VERSION [CWD]` uses the same protected capture/model path. Supply an audited version and only a working directory you intend to model; no active compositor context is inferred.
+
+The dependency review’s **Analysis Context** dialog supplies home/working-directory folder hypotheses and inherited Lua search templates. Unknown context stays unknown, and these selections do not grant file access or identify the active compositor’s context.

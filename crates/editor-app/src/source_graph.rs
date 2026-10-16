@@ -40,6 +40,7 @@ pub(super) struct CapturedDocument {
     pub(super) source: Arc<CapturedSource>,
 }
 pub(super) struct Analysis {
+    pub(super) context: Context,
     pub(super) program: Program,
     pub(super) report: replay::Report,
     pub(super) captures: Vec<CapturedDocument>,
@@ -99,6 +100,9 @@ struct LoadedCapture {
 }
 impl Resolver<'_> {
     fn grant(&self, path: &[u8]) -> Result<&directory_worker::Grant, String> {
+        if !path.starts_with(b"/") {
+            return Err("A relative dependency needs its captured working directory before folder selection".into());
+        }
         let mut selected: Option<(&directory_worker::Grant, usize)> = None;
         let mut ambiguous = false;
         for grant in self.grants {
@@ -348,6 +352,7 @@ pub(super) fn analyze_with_budget(
         },
     };
     resolver.budget.retain(&program)?;
+    resolver.budget.retain(&context)?;
     resolver.budget.retain(root.as_ref())?;
     let mut captures = vec![CapturedDocument {
         id: "root".into(),
@@ -452,13 +457,15 @@ pub(super) fn analyze_with_budget(
         }
     };
     resolver.budget.retain(&report)?;
+    let retained_bytes = resolver.budget.retained;
     Ok(Analysis {
+        context,
         program,
         report,
         captures,
         edges,
         blocked,
-        retained_bytes: resolver.budget.retained,
+        retained_bytes,
     })
 }
 pub(super) fn check(
@@ -492,6 +499,7 @@ pub(super) fn check(
     )?;
     Ok(serde_json::json!({
         "scope":"authorized-sequential-snapshot-analysis",
+        "supplied_context":analysis.context,"context_runtime_verified":false,
         "model_completed":analysis.report.halt.is_none()&&analysis.blocked.is_none(),
         "documents":analysis.captures.iter().map(|c|serde_json::json!({"id":c.id,"identity":c.source.identity,"load_name":analysis.program.documents.iter().find(|d|d.id==c.id).map(|d|&d.load_name)})).collect::<Vec<_>>(),
         "resolution_evidence":analysis.edges,"report":analysis.report,"blocked":analysis.blocked,
