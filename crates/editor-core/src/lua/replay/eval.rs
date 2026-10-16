@@ -1154,12 +1154,30 @@ impl<'a> Engine<'a> {
                         .position(|d| d.id == document)
                         .unwrap();
                     let data = self.bytes(&loader_data)?;
-                    self.chunk(
-                        target,
-                        self.globals,
-                        vec![Value::Bytes(module.clone()), data.clone()],
-                    )
-                    .map(|values| (values, data))
+                    let loaded = if let Err(CompileFailure::Syntax(error)) =
+                        &self.documents[target].compile
+                    {
+                        // Both the pinned explicit loader and Lua's stock file
+                        // searcher wrap compilation errors before invoking a
+                        // chunk. Runtime errors from the chunk are not wrapped.
+                        let message = [
+                            b"error loading module '".as_slice(),
+                            module.as_ref(),
+                            b"' from file '",
+                            &loader_data,
+                            b"':\n\t",
+                            error.split(|b| *b == 0).next().unwrap_or_default(),
+                        ]
+                        .concat();
+                        Err(Failure::Lua(self.bytes(&message)?))
+                    } else {
+                        self.chunk(
+                            target,
+                            self.globals,
+                            vec![Value::Bytes(module.clone()), data.clone()],
+                        )
+                    };
+                    loaded.map(|values| (values, data))
                 }
                 // The miss itself is supplied, but no actual Lua searcher
                 // diagnostic was captured. Its prefix is known to propagate

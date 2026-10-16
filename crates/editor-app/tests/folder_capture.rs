@@ -46,7 +46,10 @@ impl Drop for Fixture {
         fs::remove_dir_all(&self.0).unwrap();
     }
 }
-fn run(mut command: Command) -> std::process::Output {
+fn run(command: Command) -> std::process::Output {
+    run_for(command, Duration::from_secs(7))
+}
+fn run_for(mut command: Command, deadline: Duration) -> std::process::Output {
     use std::io::Read;
     let mut child = command.spawn().unwrap();
     let mut stdout = child.stdout.take().unwrap();
@@ -66,7 +69,7 @@ fn run(mut command: Command) -> std::process::Output {
         if let Some(status) = child.try_wait().unwrap() {
             break status;
         }
-        if start.elapsed() > Duration::from_secs(7) {
+        if start.elapsed() > deadline {
             let _ = child.kill();
             let _ = child.wait();
             panic!("Private folder capture exceeded its deadline");
@@ -299,5 +302,214 @@ fn actual_metadata_helper_separates_absence_from_escape_denial_and_cycle() {
         )
         .unwrap();
         assert_eq!(observed["Err"]["kind"], "permission_denied");
+    }
+}
+
+fn graph(f: &Fixture, version: &str, cwd: bool) -> serde_json::Value {
+    let mut command = f.command_for("--check-source-graph", std::ffi::OsStr::new("main.lua"));
+    command.arg(version);
+    if cwd {
+        command.arg(f.0.join("approved"));
+    }
+    let result = run_for(command, Duration::from_secs(20));
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    let value: serde_json::Value = serde_json::from_slice(&result.stdout).unwrap();
+    assert_eq!(value["scope"], "authorized-sequential-snapshot-analysis");
+    for flag in [
+        "files_written",
+        "lua_executed",
+        "runtime_verified",
+        "atomic_filesystem_snapshot",
+    ] {
+        assert_eq!(value[flag], false);
+    }
+    value
+}
+fn border(value: &serde_json::Value) -> i64 {
+    use hyprland_editor_core::lua::replay::Observed;
+    fn field(value: Observed, name: &str) -> Observed {
+        let Observed::Table(rows) = value else {
+            panic!("Expected table");
+        };
+        rows.into_iter()
+            .find(|(key, _)| *key == Observed::Bytes(name.as_bytes().to_vec()))
+            .unwrap()
+            .1
+    }
+    let observed: Observed =
+        serde_json::from_value(value["report"]["events"][0]["arguments"][0].clone()).unwrap();
+    let Observed::Int(size) = field(field(observed, "general"), "border_size") else {
+        panic!("Expected integer");
+    };
+    size
+}
+#[test]
+fn actual_graph_capture_feeds_ordered_cache_and_deferred_file_loading_without_executing_lua() {
+    let f = Fixture::new();
+    fs::write(f.0.join("approved/main.lua"),"local a=require('part');a.n=a.n+1;local b=require('part');local f=loadfile('extra.lua');hl.config{general={border_size=b.n+f()}}").unwrap();
+    fs::write(f.0.join("approved/part.lua"), "return {n=2}").unwrap();
+    fs::write(f.0.join("approved/extra.lua"), "return 4").unwrap();
+    for version in [
+        hyprland_editor_core::BASELINE,
+        hyprland_editor_core::AUDITED_MAIN,
+    ] {
+        let value = graph(&f, version, true);
+        assert_eq!(value["model_completed"], true, "{value}");
+        assert!(value["blocked"].is_null());
+        assert!(value["report"]["halt"].is_null());
+        assert_eq!(value["documents"].as_array().unwrap().len(), 3);
+        assert_eq!(value["bindings"], 2);
+        assert_eq!(value["report"]["loads"].as_array().unwrap().len(), 3);
+        assert_eq!(value["report"]["loads"][1]["outcome"]["kind"], "cached");
+        assert_eq!(border(&value), 7);
+        assert_eq!(
+            value["resolution_evidence"][0]["request"]["package_path_unknown_tail"],
+            true
+        );
+        assert_eq!(
+            value["resolution_evidence"][1]["request"]["package_path_unknown_tail"],
+            false
+        );
+    }
+}
+#[test]
+fn actual_graph_records_raw_status_then_captures_the_distinct_normalized_load_target() {
+    use std::os::unix::fs::MetadataExt;
+    let f = Fixture::new();
+    fs::create_dir_all(f.0.join("approved/branch/deep")).unwrap();
+    symlink("branch/deep", f.0.join("approved/alias")).unwrap();
+    fs::write(f.0.join("approved/branch/target.lua"), "return 99").unwrap();
+    fs::write(f.0.join("approved/target.lua"), "return 3").unwrap();
+    fs::write(
+        f.0.join("approved/main.lua"),
+        "hl.config{general={border_size=require('./alias/../target.lua')}}",
+    )
+    .unwrap();
+    let raw = fs::metadata(f.0.join("approved/branch/target.lua")).unwrap();
+    let loaded = fs::metadata(f.0.join("approved/target.lua")).unwrap();
+    assert_ne!(raw.ino(), loaded.ino());
+    for version in [
+        hyprland_editor_core::BASELINE,
+        hyprland_editor_core::AUDITED_MAIN,
+    ] {
+        let value = graph(&f, version, false);
+        assert_eq!(value["model_completed"], true, "{value}");
+        assert_eq!(border(&value), 3);
+        assert_eq!(
+            value["documents"][1]["identity"]["sha256"],
+            hyprland_editor_core::lua::source_hash("return 3")
+        );
+        assert_eq!(
+            value["resolution_evidence"][0]["probes"][0]["outcome"]["Observed"]["status"]["node"]
+                ["inode"],
+            raw.ino()
+        );
+        assert_eq!(value["documents"][1]["identity"]["inode"], loaded.ino());
+    }
+}
+#[test]
+fn actual_graph_does_not_turn_unknown_paths_denials_nonregular_nodes_or_escape_into_absence() {
+    let f = Fixture::new();
+    let pipe =
+        std::ffi::CString::new(f.0.join("approved/fifo.lua").as_os_str().as_bytes()).unwrap();
+    assert_eq!(unsafe { libc::mkfifo(pipe.as_ptr(), 0o600) }, 0);
+    symlink("../outside.lua", f.0.join("approved/escape.lua")).unwrap();
+    fs::write(f.0.join("outside.lua"), "return 15").unwrap();
+    fs::write(f.0.join("approved/denied.lua"), "return 15").unwrap();
+    fs::set_permissions(
+        f.0.join("approved/denied.lua"),
+        fs::Permissions::from_mode(0o0),
+    )
+    .unwrap();
+    let mut cases = vec![
+        ("missing", "remaining search path is unknown"),
+        ("fifo", "nonregular"),
+        ("./escape.lua", "NeedsGrant"),
+    ];
+    if unsafe { libc::geteuid() } != 0 {
+        cases.push(("denied", "Permission denied"));
+    }
+    for (module, message) in cases {
+        fs::write(f.0.join("approved/main.lua"),format!("hl.config{{general={{border_size=2}}}};require('{module}');hl.config{{general={{border_size=9}}}}" )).unwrap();
+        let value = graph(&f, hyprland_editor_core::BASELINE, false);
+        assert_eq!(value["model_completed"], false, "{value}");
+        assert!(
+            value["blocked"].as_str().unwrap().contains(message),
+            "{value}"
+        );
+        assert_eq!(value["report"]["halt"]["kind"], "needs_resolution");
+        assert_eq!(value["bindings"], 0);
+        assert_eq!(value["report"]["events"].as_array().unwrap().len(), 1);
+        assert_eq!(border(&value), 2);
+    }
+}
+
+#[test]
+fn actual_graph_wraps_loader_compile_errors_and_keeps_runtime_errors_unwrapped() {
+    let f = Fixture::new();
+    fs::write(
+        f.0.join("approved/main.lua"),
+        "local ok,message=pcall(__require,'bad');return message",
+    )
+    .unwrap();
+    for (source, compile) in [
+        ("local value <const> = 1;value=2", true),
+        ("error('runtime-only',0)", false),
+    ] {
+        fs::write(f.0.join("approved/bad.lua"), source).unwrap();
+        for version in [
+            hyprland_editor_core::BASELINE,
+            hyprland_editor_core::AUDITED_MAIN,
+        ] {
+            let value = graph(&f, version, false);
+            assert_eq!(value["model_completed"], true, "{value}");
+            let result: hyprland_editor_core::lua::replay::Observed =
+                serde_json::from_value(value["report"]["returns"][0].clone()).unwrap();
+            let hyprland_editor_core::lua::replay::Observed::Bytes(bytes) = result else {
+                panic!("Expected error bytes");
+            };
+            let message = String::from_utf8(bytes).unwrap();
+            if compile {
+                assert!(
+                    message.starts_with(&format!(
+                        "error loading module 'bad' from file '{}':\n\t",
+                        f.0.join("approved/bad.lua").display()
+                    )),
+                    "{message}"
+                );
+                assert!(message.contains("attempt to assign to const variable 'value'"));
+            } else {
+                assert_eq!(message, "runtime-only");
+            }
+        }
+    }
+}
+
+#[test]
+fn actual_graph_keeps_hardlinked_module_load_views_and_cache_keys_distinct() {
+    let f = Fixture::new();
+    fs::write(f.0.join("approved/main.lua"),"local a=require('same');a.n=3;local b=require('./alias.lua');hl.config{general={border_size=a.n+b.n}}").unwrap();
+    fs::write(f.0.join("approved/same.lua"), "return {n=2}").unwrap();
+    fs::hard_link(
+        f.0.join("approved/same.lua"),
+        f.0.join("approved/alias.lua"),
+    )
+    .unwrap();
+    for version in [
+        hyprland_editor_core::BASELINE,
+        hyprland_editor_core::AUDITED_MAIN,
+    ] {
+        let value = graph(&f, version, false);
+        assert_eq!(value["model_completed"], true, "{value}");
+        assert_eq!(border(&value), 5);
+        let docs = value["documents"].as_array().unwrap();
+        assert_eq!(docs.len(), 3);
+        assert_eq!(docs[1]["identity"]["inode"], docs[2]["identity"]["inode"]);
+        assert_eq!(docs[1]["identity"]["sha256"], docs[2]["identity"]["sha256"]);
+        assert_ne!(docs[1]["load_name"], docs[2]["load_name"]);
     }
 }

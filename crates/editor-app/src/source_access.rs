@@ -1,4 +1,4 @@
-//! Temporary, explicitly selected dependency captures. No evaluator, draft reducer or writer.
+//! Temporary authorized snapshots and model analysis. No draft reducer or writer.
 use super::{directory_worker, label, monitors::compact, workflow, Shared};
 use adw::prelude::*;
 use hyprland_editor_core::{
@@ -12,6 +12,7 @@ use std::{
     os::unix::ffi::OsStrExt,
     path::PathBuf,
     rc::{Rc, Weak},
+    sync::atomic::{AtomicBool, Ordering},
     sync::Arc,
 };
 const MAX_FOLDERS: usize = 8;
@@ -75,6 +76,8 @@ struct Session {
     pending: bool,
     alive: bool,
     epoch: u64,
+    analysis: super::source_analysis::Model,
+    analysis_cancel: Option<Arc<AtomicBool>>,
 }
 impl Session {
     fn current(&self, state: &Shared) -> bool {
@@ -91,7 +94,12 @@ impl Session {
             .iter()
             .map(|f| f.cost)
             .chain(self.captures.iter().map(|f| f.cost))
-            .sum()
+            .sum::<usize>()
+            + self
+                .analysis
+                .borrow()
+                .as_ref()
+                .map_or(0, |a| a.retained_bytes)
     }
     fn add_folder(&mut self, folder: Folder) -> Result<usize, String> {
         let prior = self
@@ -138,8 +146,16 @@ impl Session {
     }
     fn clear(&mut self) {
         self.epoch += 1;
+        self.pending = false;
         self.folders.clear();
         self.captures.clear();
+        self.clear_analysis();
+    }
+    fn clear_analysis(&mut self) {
+        if let Some(cancel) = self.analysis_cancel.take() {
+            cancel.store(true, Ordering::Relaxed);
+        }
+        self.analysis.borrow_mut().take();
     }
 }
 #[derive(Clone)]
@@ -157,6 +173,10 @@ struct Controls {
     folder_details: gtk::glib::WeakRef<gtk::TextView>,
     capture_details: gtk::glib::WeakRef<gtk::TextView>,
     preview: gtk::glib::WeakRef<gtk::TextView>,
+    analyze: gtk::glib::WeakRef<gtk::Button>,
+    cancel: gtk::glib::WeakRef<gtk::Button>,
+    pages: gtk::glib::WeakRef<gtk::Stack>,
+    analysis_view: super::source_analysis::View,
 }
 impl Controls {
     fn current(&self) -> bool {
@@ -229,17 +249,34 @@ impl Controls {
             (&self.forget, folder.is_some()),
             (&self.read, valid && folder.is_some()),
             (&self.remove, capture.is_some()),
+            (&self.analyze, valid && capture.is_some()),
         ] {
             if let Some(button) = weak.upgrade() {
                 button.set_sensitive(!s.pending && available);
             }
+        }
+        if let Some(button) = self.cancel.upgrade() {
+            button.set_visible(
+                s.pending
+                    && s.analysis_cancel.is_some()
+                    && self
+                        .pages
+                        .upgrade()
+                        .is_some_and(|p| p.visible_child_name().as_deref() == Some("analysis")),
+            );
+            button.set_sensitive(
+                s.pending
+                    && s.analysis_cancel
+                        .as_ref()
+                        .is_some_and(|c| !c.load(Ordering::Relaxed)),
+            );
         }
         if let Some(details) = self.folder_details.upgrade() {
             let text=folder.map_or_else(||"No folder allowed. Choose one to capture files for review.".into(),|f|format!("Selected: {}\nResolved at approval: {}\nDevice/inode: {}/{} · mount {}\nOwner/group: {}/{} · mode {:o}\nThis live folder handle is temporary. Captured paths do not restore its access after closure.",display_path_bytes(&f.evidence.selected_path),display_path_bytes(&f.evidence.resolved_path),f.evidence.device,f.evidence.inode,f.evidence.mount_id,f.evidence.owner,f.evidence.group,f.evidence.mode & 0o7777));
             details.buffer().set_text(&text);
         }
         if let Some(details) = self.capture_details.upgrade() {
-            let text=capture.map_or_else(||"No file captured.".into(),|c|format!("Selected: {}\nResolved: {}\nSHA-256: {}\n{} bytes · {} symlinks\nApproved folder: {}\nThis capture has not been evaluated as part of the configuration.",display_path_bytes(&c.source.identity.selected_path),c.source.identity.resolved_path.as_deref().map(display_path_bytes).unwrap_or_default(),c.source.identity.sha256,c.source.content.len(),c.source.identity.links.len(),display_path_bytes(&c.folder.selected_path)));
+            let text=capture.map_or_else(||"No file captured.".into(),|c|format!("Selected: {}\nResolved: {}\nSHA-256: {}\n{} bytes · {} symlinks\nApproved folder: {}\nAnalyze File treats this snapshot as the main configuration. Capturing and analysis do not change the draft or desktop.",display_path_bytes(&c.source.identity.selected_path),c.source.identity.resolved_path.as_deref().map(display_path_bytes).unwrap_or_default(),c.source.identity.sha256,c.source.content.len(),c.source.identity.links.len(),display_path_bytes(&c.folder.selected_path)));
             details.buffer().set_text(&text);
         }
         if let Some(preview) = self.preview.upgrade() {
@@ -265,9 +302,11 @@ impl Controls {
             return None;
         }
         s.pending = true;
+        s.clear_analysis();
         s.epoch += 1;
         let epoch = s.epoch;
         drop(s);
+        self.analysis_view.reset("No current analysis.");
         self.details();
         Some(epoch)
     }
@@ -352,8 +391,90 @@ impl Controls {
             },
         );
     }
+    fn analyze(&self) {
+        let (Some(session), Some(pick)) = (self.session.upgrade(), self.captures.upgrade()) else {
+            return;
+        };
+        let Some(root) = session
+            .borrow()
+            .captures
+            .get(pick.selected() as usize)
+            .map(|c| c.source.clone())
+        else {
+            return;
+        };
+        let Some(epoch) = self.begin() else {
+            return;
+        };
+        let cancel = Arc::new(AtomicBool::new(false));
+        let (version, grants, budget) = {
+            let mut s = session.borrow_mut();
+            s.analysis_cancel = Some(cancel.clone());
+            (
+                s.version.clone(),
+                s.folders
+                    .iter()
+                    .map(|f| f.grant.clone())
+                    .collect::<Vec<_>>(),
+                MAX_WORKSPACE_BYTES.saturating_sub(s.cost()),
+            )
+        };
+        if let Some(pages) = self.pages.upgrade() {
+            pages.set_visible_child_name("analysis");
+        }
+        self.analysis_view
+            .reset("Reading referenced files from allowed folders…");
+        self.feedback("Analyzing the selected root snapshot…");
+        self.details();
+        let context = hyprland_editor_core::module_path::Context {
+            main_file: root.identity.selected_path.clone(),
+            home: None,
+            inherited_package_path: None,
+        };
+        let ui = self.clone();
+        workflow::background(
+            move || {
+                super::source_graph::analyze_with_budget(
+                    root, context, grants, version, None, cancel, budget,
+                )
+            },
+            move |result| {
+                let Some(session) = ui.finish(epoch) else {
+                    ui.analysis_view
+                        .reset("The draft or source changed. Reopen dependency review.");
+                    return;
+                };
+                session.borrow_mut().analysis_cancel = None;
+                match result {
+                    Ok(analysis) => {
+                        if session
+                            .borrow()
+                            .cost()
+                            .saturating_add(analysis.retained_bytes)
+                            > MAX_WORKSPACE_BYTES
+                        {
+                            ui.analysis_view
+                                .reset("Remove captures before retaining a larger analysis.");
+                        } else {
+                            *session.borrow().analysis.borrow_mut() = Some(Arc::new(analysis));
+                            ui.analysis_view.render();
+                            ui.feedback(
+                                "Analysis is ready. Draft and desktop settings are unchanged.",
+                            );
+                        }
+                    }
+                    Err(error) => {
+                        ui.analysis_view
+                            .reset(&display_path_bytes(error.as_bytes()));
+                        ui.feedback(&error);
+                    }
+                }
+                ui.details();
+            },
+        );
+    }
 }
-fn excerpt(source: &str) -> String {
+pub(super) fn excerpt(source: &str) -> String {
     let mut end = source.len().min(16 * 1024);
     while !source.is_char_boundary(end) {
         end -= 1;
@@ -402,7 +523,8 @@ fn show(
         .build();
     win.set_size_request(350, 420);
     let root = gtk::Box::new(gtk::Orientation::Vertical, 0);
-    root.append(&adw::HeaderBar::new());
+    let header = adw::HeaderBar::new();
+    root.append(&header);
     let body = gtk::Box::new(gtk::Orientation::Vertical, 12);
     body.set_margin_start(16);
     body.set_margin_end(16);
@@ -450,7 +572,16 @@ fn show(
     body.append(&area);
     let remove = gtk::Button::with_label("Remove Capture");
     remove.set_widget_name("dependency-remove-capture");
-    body.append(&remove);
+    let analyze = gtk::Button::with_label("Analyze File…");
+    analyze.set_widget_name("dependency-analyze-root");
+    analyze.set_tooltip_text(Some(
+        "Use this snapshot as the main file and read dependencies only from allowed folders",
+    ));
+    let actions = gtk::Box::new(gtk::Orientation::Horizontal, 8);
+    analyze.set_hexpand(true);
+    actions.append(&analyze);
+    actions.append(&remove);
+    body.append(&actions);
     let (area, capture_details) = text_view("dependency-capture-details", 100, false);
     body.append(
         &gtk::Expander::builder()
@@ -461,13 +592,43 @@ fn show(
     let feedback = label("No files read. Folder and file selection are required.");
     feedback.set_widget_name("dependency-feedback");
     body.append(&feedback);
-    root.append(
+    let pages = gtk::Stack::new();
+    pages.set_vexpand(true);
+    pages.add_named(
         &gtk::ScrolledWindow::builder()
             .child(&body)
             .hscrollbar_policy(gtk::PolicyType::Never)
             .vexpand(true)
             .build(),
+        Some("files"),
     );
+    let analysis_model = Rc::new(RefCell::new(None));
+    let (analysis_body, analysis_view) = super::source_analysis::build(&analysis_model);
+    for set in [
+        gtk::Widget::set_margin_start,
+        gtk::Widget::set_margin_end,
+        gtk::Widget::set_margin_top,
+        gtk::Widget::set_margin_bottom,
+    ] {
+        set(analysis_body.upcast_ref(), 16);
+    }
+    let back = gtk::Button::from_icon_name("go-previous-symbolic");
+    back.set_tooltip_text(Some("Back to files"));
+    back.update_property(&[gtk::accessible::Property::Label("Back to files")]);
+    back.set_visible(false);
+    back.set_widget_name("dependency-analysis-back");
+    let cancel = gtk::Button::with_label("Stop");
+    cancel.set_widget_name("dependency-analysis-stop");
+    header.pack_start(&back);
+    header.pack_end(&cancel);
+    pages.add_named(
+        &gtk::ScrolledWindow::builder()
+            .child(&analysis_body)
+            .hscrollbar_policy(gtk::PolicyType::Never)
+            .build(),
+        Some("analysis"),
+    );
+    root.append(&pages);
     win.set_content(Some(&root));
     let session = Rc::new(RefCell::new(Session {
         version,
@@ -478,6 +639,8 @@ fn show(
         pending: false,
         alive: true,
         epoch: 0,
+        analysis: analysis_model,
+        analysis_cancel: None,
     }));
     let ui = Controls {
         session: Rc::downgrade(&session),
@@ -493,12 +656,68 @@ fn show(
         folder_details: folder_details.downgrade(),
         capture_details: capture_details.downgrade(),
         preview: preview.downgrade(),
+        analyze: analyze.downgrade(),
+        cancel: cancel.downgrade(),
+        pages: pages.downgrade(),
+        analysis_view,
     };
     win.connect_close_request(move |_| {
         let mut s = session.borrow_mut();
         s.alive = false;
         s.clear();
         gtk::glib::Propagation::Proceed
+    });
+    let u = ui.clone();
+    analyze.connect_clicked(move |_| u.analyze());
+    let b = back.downgrade();
+    let w = win.downgrade();
+    let u = ui.clone();
+    pages.connect_visible_child_name_notify(move |pages| {
+        let analyzing = pages.visible_child_name().as_deref() == Some("analysis");
+        if let Some(b) = b.upgrade() {
+            b.set_visible(analyzing);
+        }
+        if let Some(w) = w.upgrade() {
+            w.set_title(Some(if analyzing {
+                "Source analysis"
+            } else {
+                "Dependency files"
+            }));
+        }
+        u.details();
+    });
+    let p = pages.downgrade();
+    back.connect_clicked(move |_| {
+        if let Some(p) = p.upgrade() {
+            p.set_visible_child_name("files");
+        }
+    });
+    let u = ui.clone();
+    cancel.connect_clicked(move |_| {
+        if let Some(s) = u.session.upgrade() {
+            if let Some(cancel) = s.borrow().analysis_cancel.as_ref() {
+                cancel.store(true, Ordering::Relaxed);
+            }
+        }
+        u.feedback("Stopping analysis…");
+        u.details();
+    });
+    let u = ui.clone();
+    gtk::glib::timeout_add_local(std::time::Duration::from_millis(500), move || {
+        let Some(session) = u.session.upgrade() else {
+            return gtk::glib::ControlFlow::Break;
+        };
+        if !session.borrow().alive {
+            return gtk::glib::ControlFlow::Break;
+        }
+        if !u.current() {
+            session.borrow_mut().clear();
+            u.analysis_view
+                .reset("The draft or source changed. Reopen dependency review.");
+            u.refresh(None, None);
+            return gtk::glib::ControlFlow::Break;
+        }
+        gtk::glib::ControlFlow::Continue
     });
     let u = ui.clone();
     folders.connect_selected_notify(move |_| u.details());
@@ -571,9 +790,12 @@ fn show(
         let index = pick.selected() as usize;
         if index < s.captures.len() {
             s.captures.remove(index);
+            s.clear_analysis();
         }
         drop(s);
         u.refresh(None, None);
+        u.analysis_view
+            .reset("Analysis cleared with its source capture.");
         u.feedback("Capture removed.");
     });
     ui.refresh(None, None);
@@ -715,6 +937,61 @@ pub(super) fn test_review(parent: &adw::Window, state: &Shared) {
     ui.remove.upgrade().unwrap().emit_clicked();
     assert!(session.borrow().captures.is_empty());
     assert!(weak_source.upgrade().is_none());
+    // Actual captured resolution now feeds a focused, read-only graphical model.
+    let main = root.join("main.lua");
+    std::fs::write(
+        &main,
+        "local part=require('part');hl.config{general={border_size=part}}",
+    )
+    .unwrap();
+    std::fs::write(root.join("part.lua"), "return 4").unwrap();
+    ui.approve(root.clone());
+    wait(|| !session.borrow().pending);
+    ui.capture(main.clone());
+    wait(|| !session.borrow().pending);
+    ui.analyze.upgrade().unwrap().emit_clicked();
+    wait(|| !session.borrow().pending);
+    let model = session.borrow().analysis.clone();
+    let weak_analysis = {
+        let m = model.borrow();
+        let a = m.as_ref().expect("No graphical analysis");
+        assert_eq!(a.captures.len(), 2);
+        assert!(a.report.halt.is_none());
+        assert!(!a.report.runtime_verified);
+        Arc::downgrade(a)
+    };
+    let weak_dependency = Arc::downgrade(&model.borrow().as_ref().unwrap().captures[1].source);
+    assert_eq!(
+        ui.pages.upgrade().unwrap().visible_child_name().as_deref(),
+        Some("analysis")
+    );
+    let text = ui.analysis_view.test_call(1);
+    assert!(text.contains("border_size: 4"), "{text}");
+    assert_eq!(state.borrow().generation, generation);
+    let (minimum, _, _, _) = win.measure(gtk::Orientation::Horizontal, -1);
+    assert!(minimum <= 350, "Analysis requires {minimum}px");
+    if let Ok(path) = std::env::var("HYPRLAND_EDITOR_TEST_CAPTURE") {
+        // A render node can precede the tab's final CSS transition frame.
+        let transition = std::time::Instant::now();
+        wait(|| transition.elapsed() >= std::time::Duration::from_millis(300));
+        let paintable = gtk::WidgetPaintable::new(Some(&win));
+        let node = RefCell::new(None);
+        wait(|| {
+            let snapshot = gtk::Snapshot::new();
+            paintable.snapshot(&snapshot, win.width() as f64, win.height() as f64);
+            *node.borrow_mut() = snapshot.to_node();
+            node.borrow().is_some()
+        });
+        win.renderer()
+            .unwrap()
+            .render_texture(node.into_inner().unwrap(), None)
+            .save_to_png(format!("{path}.dependency-analysis.png"))
+            .unwrap();
+    }
+    ui.remove.upgrade().unwrap().emit_clicked();
+    assert!(model.borrow().is_none());
+    assert!(weak_analysis.upgrade().is_none());
+    assert!(weak_dependency.upgrade().is_none());
     // A result for an old imported snapshot must not attach a new folder.
     ui.approve(root.clone());
     state.borrow_mut().generation += 1;
@@ -746,6 +1023,56 @@ pub(super) fn test_review(parent: &adw::Window, state: &Shared) {
     drop(win);
     wait(|| weak_grant.upgrade().is_none() && weak_session.upgrade().is_none());
     assert_eq!(state.borrow().generation, generation);
+    // Completed results also become invalid when the draft changes while idle.
+    let (win, ui) = show(
+        parent,
+        state,
+        state.borrow().draft.version.clone(),
+        state.borrow().sources[&state.borrow().draft.version]
+            .report
+            .source_sha256
+            .clone(),
+    );
+    ui.approve(root.clone());
+    wait(|| ui.session.upgrade().is_some_and(|s| !s.borrow().pending));
+    ui.capture(main.clone());
+    wait(|| ui.session.upgrade().is_some_and(|s| !s.borrow().pending));
+    ui.analyze();
+    wait(|| ui.session.upgrade().is_some_and(|s| !s.borrow().pending));
+    let session = ui.session.upgrade().unwrap();
+    let weak_analysis = Arc::downgrade(session.borrow().analysis.borrow().as_ref().unwrap());
+    state.borrow_mut().generation += 1;
+    wait(|| session.borrow().analysis.borrow().is_none());
+    assert!(weak_analysis.upgrade().is_none());
+    assert!(!ui.analyze.upgrade().unwrap().is_sensitive());
+    win.close();
+    drop(session);
+    drop(win);
+    state.borrow_mut().generation = generation;
+    // Closing during analysis cancels future steps and releases captured results.
+    let (win, ui) = show(
+        parent,
+        state,
+        state.borrow().draft.version.clone(),
+        state.borrow().sources[&state.borrow().draft.version]
+            .report
+            .source_sha256
+            .clone(),
+    );
+    ui.approve(root.clone());
+    wait(|| ui.session.upgrade().is_some_and(|s| !s.borrow().pending));
+    ui.capture(main);
+    wait(|| ui.session.upgrade().is_some_and(|s| !s.borrow().pending));
+    let session = ui.session.upgrade().unwrap();
+    let weak_session = Rc::downgrade(&session);
+    let weak_grant = Arc::downgrade(&session.borrow().folders[0].grant);
+    ui.analyze();
+    let cancel = session.borrow().analysis_cancel.clone().unwrap();
+    win.close();
+    assert!(cancel.load(Ordering::Relaxed));
+    drop(session);
+    drop(win);
+    wait(|| weak_session.upgrade().is_none() && weak_grant.upgrade().is_none());
     std::fs::remove_dir_all(root).unwrap();
 }
 
@@ -769,6 +1096,8 @@ mod tests {
             pending: false,
             alive: true,
             epoch: 0,
+            analysis: Rc::new(RefCell::new(None)),
+            analysis_cancel: None,
         };
         for name in ["first.lua", "second.lua"] {
             std::fs::write(root.join(name), &content).unwrap();

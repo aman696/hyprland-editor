@@ -146,7 +146,7 @@ fn ordered_reference_observations() {
     let mut fixtures: Value =
         serde_json::from_str(include_str!("../../../data/ordered-module-fixtures.json")).unwrap();
     assert_eq!(fixtures["format"], "hye-ordered-module-fixtures-1");
-    assert_eq!(fixtures["cases"].as_array().unwrap().len(), 90);
+    assert_eq!(fixtures["cases"].as_array().unwrap().len(), 92);
     assert_eq!(
         fixtures["audit_manifest_sha256"],
         source_hash(include_str!("../../../data/source-graph-semantics.json"))

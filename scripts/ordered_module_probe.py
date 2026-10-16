@@ -59,6 +59,7 @@ CASES = [
     ('default_error_location_prevents_prefix_match', "local a=require('default_prefix');local b=require('default_prefix');emit(a==b)"),
     ('non_table_global_loaded', "package.loaded=false;local a=require('fail');local b=require('fail');emit(a==b)"),
     ('module_semantic_compile_error', "local a=require('bad');local b=require('bad');emit({same=a==b,a=a})"),
+    ('original_compile_error_includes_loader_name', "local ok,message=pcall(__require,'bad');emit({ok,message})"),
     ('root_semantic_compile_error', "emit('must-not-run');local value <const> = 1;value=2"),
     ('loadfile_delayed_and_multiple_returns', "local f=loadfile(__fixture_root..'/config/file.lua');emit('before');emit({f(4,5)})"),
     ('loadfile_function_identity', "local f=loadfile(__fixture_root..'/config/file.lua');local g=loadfile(__fixture_root..'/config/file.lua');emit(f==g)"),

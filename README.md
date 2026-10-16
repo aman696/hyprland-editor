@@ -113,3 +113,8 @@ The setting list uses GTK's recycled list items; only the selected setting build
 ## Provenance and license
 
 [Catalogue provenance](data/provenance.json) pins the audited Hyprland and wiki commits. `audited-main` is not automatically the latest version. Generated metadata records link each setting to its source. [Third-party notices](THIRD_PARTY_NOTICES.md) explain the distinction between source-derived facts and executable dependencies. Original project code is MIT licensed. Contributions should preserve upstream provenance and never treat the audit catalogue as runtime-certified.
+
+
+The source-graph development branch now includes **Review Dependency Files → Analyze File**. It analyzes a selected root snapshot and dependencies from explicitly allowed folders, showing source files, modeled calls and partial-result reasons without running source code or changing the draft/desktop. Multi-file draft import, editing and persistence remain unfinished. See [scope and limits](docs/ordered-module-evaluation.md).
+
+For private fixtures: `hyprland-editor --check-source-graph FOLDER ROOT VERSION [CWD]` uses the same protected capture/model path. Supply an audited version and only a working directory you intend to model; no active compositor context is inferred.

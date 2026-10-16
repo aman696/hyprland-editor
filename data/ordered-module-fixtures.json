@@ -463,6 +463,22 @@
       ]
     },
     {
+      "case": "original_compile_error_includes_loader_name",
+      "error_count": 0,
+      "global_loaded": {},
+      "ok": true,
+      "registry_loaded": {},
+      "source": "local ok,message=pcall(__require,'bad');emit({ok,message})",
+      "trace": [
+        [
+          false,
+          "error loading module 'bad' from file '<root>/config/bad.lua':\n\t<root>/config/bad.lua:1: attempt to assign to const variable 'value'"
+        ]
+      ],
+      "version": "baseline",
+      "watched": []
+    },
+    {
       "case": "root_semantic_compile_error",
       "error_count": 0,
       "global_loaded": {},
@@ -1321,6 +1337,22 @@
       "watched": [
         "<root>/config/bad.lua"
       ]
+    },
+    {
+      "case": "original_compile_error_includes_loader_name",
+      "error_count": 0,
+      "global_loaded": {},
+      "ok": true,
+      "registry_loaded": {},
+      "source": "local ok,message=pcall(__require,'bad');emit({ok,message})",
+      "trace": [
+        [
+          false,
+          "error loading module 'bad' from file '<root>/config/bad.lua':\n\t<root>/config/bad.lua:1: attempt to assign to const variable 'value'"
+        ]
+      ],
+      "version": "current",
+      "watched": []
     },
     {
       "case": "root_semantic_compile_error",
