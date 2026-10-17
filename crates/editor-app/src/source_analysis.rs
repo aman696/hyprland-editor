@@ -36,6 +36,8 @@ pub(super) struct View {
     #[cfg(test)]
     tabs: gtk::glib::WeakRef<gtk::Stack>,
     source_expander: gtk::glib::WeakRef<gtk::Expander>,
+    compare: gtk::glib::WeakRef<gtk::Button>,
+    change_window: Rc<RefCell<Option<gtk::glib::WeakRef<adw::Window>>>>,
 }
 fn short(bytes: &[u8]) -> String {
     let text = display_path_bytes(&bytes[..bytes.len().min(4096)]);
@@ -92,6 +94,10 @@ pub(super) fn build(model: &Model) -> (gtk::Box, View) {
     calls.set_widget_name("dependency-analysis-call");
     calls.update_property(&[gtk::accessible::Property::Label("Calls in modeled order")]);
     calls_page.append(&calls);
+    let compare = gtk::Button::with_label("Compare a Source Change");
+    compare.set_sensitive(false);
+    compare.set_halign(gtk::Align::Start);
+    calls_page.append(&compare);
     let (area, detail) = text_area("dependency-analysis-call-details");
     calls_page.append(&area);
     let detail_area = area.downgrade();
@@ -175,14 +181,78 @@ pub(super) fn build(model: &Model) -> (gtk::Box, View) {
         #[cfg(test)]
         tabs: tabs.downgrade(),
         source_expander: source_expander.downgrade(),
+        compare: compare.downgrade(),
+        change_window: Rc::new(RefCell::new(None)),
     };
     let v = view.clone();
     files.connect_selected_notify(move |_| v.file());
     let v = view.clone();
     calls.connect_selected_notify(move |_| v.call());
+    let v = view.clone();
+    compare.connect_clicked(move |_| v.compare());
     (body, view)
 }
 impl View {
+    #[cfg(test)]
+    pub(super) fn test_compare(&self) -> adw::Window {
+        self.compare.upgrade().unwrap().emit_clicked();
+        gtk::Window::list_toplevels()
+            .into_iter()
+            .filter_map(|w| w.downcast::<adw::Window>().ok())
+            .find(|w| w.title().as_deref() == Some("Compare a Source Change") && w.is_visible())
+            .unwrap()
+    }
+    fn close_change(&self) {
+        if let Some(window) = self
+            .change_window
+            .borrow_mut()
+            .take()
+            .and_then(|w| w.upgrade())
+        {
+            window.close();
+        }
+    }
+    fn compare(&self) {
+        if let Some(window) = self
+            .change_window
+            .borrow()
+            .as_ref()
+            .and_then(|w| w.upgrade())
+        {
+            if window.is_visible() {
+                window.present();
+                return;
+            }
+        }
+        let (Some(model), Some(pick), Some(button)) = (
+            self.model.upgrade(),
+            self.calls.upgrade(),
+            self.compare.upgrade(),
+        ) else {
+            return;
+        };
+        let Some(Call::Api(index)) = self.order.borrow().get(pick.selected() as usize).copied()
+        else {
+            return;
+        };
+        let Some(analysis) = model.borrow().clone() else {
+            return;
+        };
+        let event = &analysis.report.events[index];
+        if event.api != "hl.config"
+            || !analysis
+                .config_batches
+                .iter()
+                .any(|b| b.event_order == event.order && !b.candidates.is_empty())
+        {
+            return;
+        }
+        let Some(parent) = button.root().and_downcast::<gtk::Window>() else {
+            return;
+        };
+        let window = super::source_changes::open(&parent, &model, event.order);
+        *self.change_window.borrow_mut() = Some(window.downgrade());
+    }
     #[cfg(test)]
     pub(super) fn test_raw(&self) -> String {
         let expander = self.raw_expander.upgrade().unwrap();
@@ -237,6 +307,10 @@ impl View {
             .into()
     }
     pub(super) fn reset(&self, message: &str) {
+        self.close_change();
+        if let Some(button) = self.compare.upgrade() {
+            button.set_sensitive(false);
+        }
         if let Some(model) = self.model.upgrade() {
             model.borrow_mut().take();
         }
@@ -264,6 +338,7 @@ impl View {
         }
     }
     pub(super) fn render(&self) {
+        self.close_change();
         let Some(analysis) = self.model.upgrade().and_then(|m| m.borrow().clone()) else {
             return;
         };
@@ -379,6 +454,7 @@ impl View {
         ));
     }
     fn call(&self) {
+        self.close_change();
         let (Some(analysis), Some(pick), Some(view)) = (
             self.model.upgrade().and_then(|m| m.borrow().clone()),
             self.calls.upgrade(),
@@ -387,6 +463,9 @@ impl View {
             return;
         };
         let Some(row) = self.order.borrow().get(pick.selected() as usize).copied() else {
+            if let Some(button) = self.compare.upgrade() {
+                button.set_sensitive(false);
+            }
             view.buffer()
                 .set_text("No calls were observed before analysis stopped.");
             for weak in [&self.provenance, &self.raw] {
@@ -402,6 +481,18 @@ impl View {
             }
             return;
         };
+        if let Some(button) = self.compare.upgrade() {
+            button.set_sensitive(match row {
+                Call::Api(i) => {
+                    analysis.report.events[i].api == "hl.config"
+                        && analysis.config_batches.iter().any(|b| {
+                            b.event_order == analysis.report.events[i].order
+                                && !b.candidates.is_empty()
+                        })
+                }
+                _ => false,
+            });
+        }
         for weak in [&self.raw_expander, &self.source_expander] {
             if let Some(e) = weak.upgrade() {
                 e.set_visible(matches!(row, Call::Api(_)));
@@ -577,7 +668,7 @@ fn configuration_fields(batch: &Batch) -> String {
 
     out
 }
-fn value(out: &mut String, input: &Observed, depth: usize) {
+pub(super) fn value(out: &mut String, input: &Observed, depth: usize) {
     if out.len() > 16 * 1024 {
         out.push('…');
         return;

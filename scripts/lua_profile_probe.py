@@ -25,6 +25,8 @@ BRIDGE_PROBE = r'''
 #include <cassert>
 #include <cstring>
 #include <cstdint>
+#include <cmath>
+#include <limits>
 extern "C" unsigned int hye_lua54_release();
 extern "C" size_t hye_lua54_identity(unsigned char*, size_t);
 extern "C" int hye_lua54_compile(const unsigned char*, size_t, const char*, unsigned char*, size_t, size_t*);
@@ -65,6 +67,17 @@ int main() {
     assert(hye_lua54_convert(state,1,0,0,nullptr,0,&out,text,sizeof(text))==0);
     assert(out.flags==8&&out.integer==0);
     hye_lua54_coercions_close(state);
+    // Trusted literal-printer reference only: no libraries or user source are loaded.
+    auto* literals=luaL_newstate();assert(literals);
+    const char* code=R"lua(return -0.0,3.0,(-9223372036854775807 - 1),"\";os.execute('never') --\010\\é")lua";
+    assert(luaL_loadbufferx(literals,code,std::strlen(code),"@trusted-printers","t")==LUA_OK);
+    assert(lua_pcall(literals,0,4,0)==LUA_OK);
+    assert(!lua_isinteger(literals,1)&&std::signbit(lua_tonumber(literals,1))&&lua_tonumber(literals,1)==0);
+    assert(!lua_isinteger(literals,2)&&lua_tonumber(literals,2)==3.0);
+    assert(lua_isinteger(literals,3)&&lua_tointeger(literals,3)==std::numeric_limits<lua_Integer>::min());
+    const char* wanted="\";os.execute('never') --\n\\é";size_t size=0;
+    const char* result=lua_tolstring(literals,4,&size);assert(size==std::strlen(wanted)&&std::memcmp(result,wanted,size)==0);
+    lua_close(literals);
 }
 '''
 

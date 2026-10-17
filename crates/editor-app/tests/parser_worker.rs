@@ -43,6 +43,35 @@ fn request(request: Value) -> Value {
     serde_json::from_slice(&data).unwrap()
 }
 #[test]
+fn typed_source_comparisons_rebuild_coordinates_and_native_validation_in_the_worker() {
+    use hyprland_editor_core::{
+        lua::{
+            config_inspection,
+            replay::{scalar_edit::*, *},
+        },
+        Value,
+    };
+    let p = replay_program("hl.config({general={border_size=2}})");
+    let report = replay(&p).unwrap();
+    let inspection = config_inspection::inspect(&report.events, &p.version).unwrap();
+    let c = &inspection.batches[0].candidates[0];
+    let change = Change {
+        event_order: c.event_order,
+        location: c.location.clone(),
+        setting_id: c.setting_id.clone(),
+        selection: Selection::SelectedExpression,
+        value: Value::Int(4),
+    };
+    let expected = serde_json::to_value(compare(&p, &change).unwrap()).unwrap();
+    let actual = request(json!({"CompareScalarSource":{"program":p,"change":change}}));
+    assert_eq!(actual["ScalarSourceComparison"], expected);
+    let mut wrong = change.clone();
+    wrong.location = vec![9];
+    assert!(
+        request(json!({"CompareScalarSource":{"program":p,"change":wrong}}))["Error"].is_string()
+    );
+}
+#[test]
 fn source_edit_review_uses_immutable_revisions_inside_the_restricted_worker() {
     use hyprland_editor_core::lua::{
         replay::{edits::*, *},

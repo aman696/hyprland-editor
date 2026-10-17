@@ -5,6 +5,7 @@ mod eval;
 mod observed_float;
 mod path_sources;
 mod provenance;
+pub mod scalar_edit;
 mod storage_sources;
 use super::{named, source_hash, syntax_tree, text};
 use crate::{

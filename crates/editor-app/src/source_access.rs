@@ -1209,6 +1209,28 @@ pub(super) fn test_review(parent: &adw::Window, state: &Shared) {
         "{sources}"
     );
     assert!(sources.contains("If · truthy"), "{sources}");
+    let comparison = ui.analysis_view.test_compare();
+    assert_eq!(
+        ui.analysis_view.test_compare(),
+        comparison,
+        "Repeated opening must reuse the active comparison"
+    );
+    super::source_changes::test_editor(&comparison, &model);
+    let reopened = ui.analysis_view.test_compare();
+    assert_ne!(
+        reopened, comparison,
+        "A closed comparison must not be reused with its closed session"
+    );
+    reopened.close();
+    assert_eq!(
+        std::fs::read_to_string(&main).unwrap(),
+        "local part=require('part');if part==4 then hl.config{general={border_size=part}}end"
+    );
+    assert_eq!(
+        std::fs::read_to_string(root.join("part.lua")).unwrap(),
+        "return 4"
+    );
+    assert_eq!(state.borrow().generation, generation);
     if let Ok(path) = std::env::var("HYPRLAND_EDITOR_TEST_CAPTURE") {
         win.set_default_size(700, 860);
         let start = std::time::Instant::now();

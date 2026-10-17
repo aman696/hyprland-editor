@@ -25,6 +25,8 @@
         "crates/editor-core/src/lua/replay/storage_sources.rs",
         "crates/editor-core/src/lua/replay/path_sources.rs",
         "crates/editor-core/src/lua/replay/edits.rs",
+        "crates/editor-core/src/lua/replay/scalar_edit.rs",
+        "crates/editor-app/src/source_changes.rs",
         "crates/editor-core/src/lua/config_table.rs",
         "crates/editor-core/src/lua/scalar_codec.rs",
         "crates/editor-core/src/lua/registration.rs",
@@ -77,6 +79,13 @@
         "unchanged_modeled_calls_do_not_certify_unexecuted_callable_effects",
         "changed_computed_loader_context_does_not_reuse_a_different_modules_resolution",
         "source_edit_review_uses_immutable_revisions_inside_the_restricted_worker",
+        "selected_read_and_original_shared_literal_have_distinct_source_and_impact",
+        "computed_expression_replacement_is_explicit_and_never_guesses_an_original_operand",
+        "primitive_printers_preserve_float_kind_signed_zero_integer_min_and_string_data",
+        "native_version_constraints_wrong_types_nonfinite_and_unknown_coordinates_are_not_bypassed",
+        "a_cross_document_original_literal_exposes_changed_branch_effects",
+        "typed_source_comparisons_rebuild_coordinates_and_native_validation_in_the_worker",
+        "source_changes::test_editor",
         "scripts/source_graph_probe.py",
         "scripts/module_load_probe.py",
         "scripts/ordered_module_probe.py",
@@ -120,7 +129,7 @@
         "context_preserves_unknown_empty_and_byte_paths_and_builder_preserves_templates",
         "test_review"
       ],
-      "limits": "source-pinned plans/cache transitions, syntactic dependency sites, isolated selected-file and held-folder capture, typed metadata-only point observations separating absence from blocking uncertainty, bounded temporary GUI snapshots/analysis and cleanup, captured-resolution coordination with per-edge sequential evidence and separate load views, focused graphical files/calls inspection, supplied-context folder/template editor without added read authority, bounded per-value expression evidence and selected-value chains separate from Lua equality/cache identity, modeled storage writes with key insertion/overwrite/delete histories and alias/cell identity, bounded executed branch/loop history with immutable observation prefixes (including unrelated earlier decisions) separate from complete control/future-effect/edit ownership, source-derived registry dispatch with raw-key retention and unresolved collision/cycle findings separate from native value acceptance, explicit compiler/library profiles with four-release reference checks, restricted-worker primitive family models separating native parsing from representable editor values under explicit fixture descriptors and C locale, exact registration/default/constraint flow for 755 standard rows plus device/bootstrap observations, version-specific typed call inspection with explicit unsupported-effect barriers, ordered immutable-byte evaluation under supplied/captured resolution contexts with explicit unknowns and compilation-only validation; frozen graph inputs with model/compiler pins, private save/reopen and shared retention undo; immutable multi-document patch plans with exact byte/context/schema/compiler pins, private reparse/compilation and expected/unaffected modeled-call/load/path/return comparisons, separate from graphical source editing, persisted graph revisions and ownership or write authority; no complete editable graph import, language/native/API codecs, ownership/alias/mount/concurrency certification, wildcard enumeration, editable graph history/reconciliation, source insertion/deletion, effective discovery, isolated preview, apply/recovery or resource/release acceptance"
+      "limits": "source-pinned plans/cache transitions, syntactic dependency sites, isolated selected-file and held-folder capture, typed metadata-only point observations separating absence from blocking uncertainty, bounded temporary GUI snapshots/analysis and cleanup, captured-resolution coordination with per-edge sequential evidence and separate load views, focused graphical files/calls inspection, supplied-context folder/template editor without added read authority, bounded per-value expression evidence and selected-value chains separate from Lua equality/cache identity, modeled storage writes with key insertion/overwrite/delete histories and alias/cell identity, bounded executed branch/loop history with immutable observation prefixes (including unrelated earlier decisions) separate from complete control/future-effect/edit ownership, source-derived registry dispatch with raw-key retention and unresolved collision/cycle findings separate from native value acceptance, explicit compiler/library profiles with four-release reference checks, restricted-worker primitive family models separating native parsing from representable editor values under explicit fixture descriptors and C locale, exact registration/default/constraint flow for 755 standard rows plus device/bootstrap observations, version-specific typed call inspection with explicit unsupported-effect barriers, ordered immutable-byte evaluation under supplied/captured resolution contexts with explicit unknowns and compilation-only validation; frozen graph inputs with model/compiler pins, private save/reopen and shared retention undo; immutable multi-document patch plans with exact byte/context/schema/compiler pins, private reparse/compilation and expected/unaffected modeled-call/load/path/return comparisons, primitive graphical source comparisons with selected-expression/original-literal choices, native-validated typed controls and epoch/model/lifetime guards; no persisted source revisions, complete graphical graph editor, ownership or write authority; no complete editable graph import, language/native/API codecs, ownership/alias/mount/concurrency certification, wildcard enumeration, editable graph history/reconciliation, source insertion/deletion, effective discovery, isolated preview, apply/recovery or resource/release acceptance"
     },
     {
       "area": "gesture draft editor",

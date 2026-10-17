@@ -32,6 +32,10 @@ pub enum Request {
         program: lua::replay::Program,
         plan: lua::replay::edits::EditPlan,
     },
+    CompareScalarSource {
+        program: lua::replay::Program,
+        change: lua::replay::scalar_edit::Change,
+    },
     DecodePrimitives(Vec<lua::scalar_codec::Case>),
     InspectConfiguration {
         events: Vec<lua::replay::Event>,
@@ -57,6 +61,7 @@ pub enum Response {
     Dependencies(lua::DependencyInventory),
     Replayed(Box<lua::replay::Report>),
     SourceEditReview(Box<lua::replay::edits::EditReview>),
+    ScalarSourceComparison(Box<lua::replay::scalar_edit::Comparison>),
     Primitives {
         profile: lua::replay::CompilerProfile,
         numeric_locale: String,
@@ -126,6 +131,10 @@ pub fn entry() {
             }
             Request::ReplayModules(program) => {
                 lua::replay::replay(&program).map(|report| Response::Replayed(Box::new(report)))
+            }
+            Request::CompareScalarSource { program, change } => {
+                lua::replay::scalar_edit::compare(&program, &change)
+                    .map(|result| Response::ScalarSourceComparison(Box::new(result)))
             }
             Request::ReviewSourceEdits { program, plan } => {
                 lua::replay::edits::review(&program, &plan)

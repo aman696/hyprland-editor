@@ -89,7 +89,7 @@ pub struct EditReview {
     pub ownership_verified: bool,
     pub runtime_verified: bool,
 }
-fn fingerprint(value: &impl Serialize) -> Result<String, String> {
+pub(super) fn fingerprint(value: &impl Serialize) -> Result<String, String> {
     struct Hash {
         hash: Sha256,
         bytes: usize,
@@ -434,6 +434,16 @@ fn compare(
 pub fn review(program: &Program, plan: &EditPlan) -> Result<EditReview, String> {
     validate(program, plan)?;
     let before = replay(program)?;
+    review_with_before(program, plan, before)
+}
+// Only callers holding a report freshly rebuilt from this exact immutable
+// program may use this internal entry point. Never accepts a saved GUI report.
+pub(super) fn review_with_before(
+    program: &Program,
+    plan: &EditPlan,
+    before: Report,
+) -> Result<EditReview, String> {
+    validate(program, plan)?;
     if program
         .bindings
         .iter()
