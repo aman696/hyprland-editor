@@ -1,6 +1,6 @@
 # Immutable source change plans
 
-The source engine can now prepare and review multi-document byte-range changes against an immutable ordered-model input. The [graphical primitive comparison](source-change-gui.md) now consumes this backend. Persisting edited graph revisions, general graphical graph edits, exporting a changed graph and writing imported files remain unfinished.
+The source engine can now prepare and review multi-document byte-range changes against an immutable ordered-model input. The [graphical primitive comparison](source-change-gui.md) now consumes this backend. [Private revisions](private-source-revisions.md) now support guarded keep/save/reopen and within-session undo. General graphical graph edits, complete reconciliation/export and writing imported files remain unfinished.
 
 An `EditPlan` pins the entire original program (including all document bytes/load views, snapshot version, loader inputs and supplied path context), current generated model schema and compiler/library profile. Every edit names a logical document, its original content hash, an original UTF-8 byte range, the hash of those exact old bytes, replacement bytes and bounded semantic-target review labels. Labels are data, not feature or filesystem permissions. Preparing sorts edits and expected calls; consuming a plan rejects noncanonical ordering, overlaps, ambiguous adjacent insertions, invalid character boundaries, stale hashes, empty changes and limits violations. The unchanged source remains intact after every success or failure.
 

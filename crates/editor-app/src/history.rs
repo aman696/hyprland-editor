@@ -344,11 +344,20 @@ pub(super) struct History {
     entries: VecDeque<Undo>,
 }
 impl History {
+    #[cfg(test)]
+    pub(super) fn previous_graph(&self) -> Option<Option<String>> {
+        match self.entries.back() {
+            Some(Undo::Graph { previous, .. }) => {
+                Some(previous.as_ref().map(|g| g.fingerprint.clone()))
+            }
+            _ => None,
+        }
+    }
     pub fn graph(
         &mut self,
         previous: Option<Arc<super::source_graph::Saved>>,
     ) -> Result<(), String> {
-        let retained_bytes = previous.as_ref().map_or(0, |g| g.cost);
+        let retained_bytes = previous.as_ref().map_or(0, |g| g.history_cost);
         self.push(Undo::Graph {
             previous,
             retained_bytes,
@@ -402,7 +411,13 @@ impl History {
                             document,
                             document_bytes,
                             ..
-                        } if sources.insert(Arc::as_ptr(document) as usize) => *document_bytes,
+                        } if sources.insert((0, Arc::as_ptr(document) as usize)) => *document_bytes,
+                        Undo::Graph {
+                            previous: Some(graph),
+                            ..
+                        } if sources.insert((1, Arc::as_ptr(&graph.bundle.sources) as usize)) => {
+                            graph.shared_cost
+                        }
                         _ => 0,
                     }
             })
@@ -413,6 +428,10 @@ impl History {
         let single = entry.bytes()
             + match &entry {
                 Undo::Source { document_bytes, .. } => *document_bytes,
+                Undo::Graph {
+                    previous: Some(graph),
+                    ..
+                } => graph.shared_cost,
                 _ => 0,
             };
         if single + 2 * size_of::<Undo>() > MAX_BYTES {

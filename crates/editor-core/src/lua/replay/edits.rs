@@ -133,7 +133,7 @@ pub fn prepare(
         edits,
         expected_calls,
     };
-    validate(program, &plan)?;
+    validate_plan(program, &plan)?;
     Ok(plan)
 }
 fn document<'a>(program: &'a Program, id: &str) -> Result<&'a Document, String> {
@@ -143,7 +143,7 @@ fn document<'a>(program: &'a Program, id: &str) -> Result<&'a Document, String> 
         .find(|d| d.id == id)
         .ok_or_else(|| "Edit references an unknown logical document".into())
 }
-fn validate(program: &Program, plan: &EditPlan) -> Result<(), String> {
+pub(crate) fn validate_plan(program: &Program, plan: &EditPlan) -> Result<(), String> {
     validate_program(program)?;
     if plan.format != "hye-source-edit-plan-1"
         || plan.schema_sha256 != workspace_graph::schema_sha256()
@@ -432,7 +432,7 @@ fn compare(
 /// Reparse and compare immutable proposed bytes only. This function has no path,
 /// filesystem, compositor or write capability, and cannot certify ownership.
 pub fn review(program: &Program, plan: &EditPlan) -> Result<EditReview, String> {
-    validate(program, plan)?;
+    validate_plan(program, plan)?;
     let before = replay(program)?;
     review_with_before(program, plan, before)
 }
@@ -443,7 +443,7 @@ pub(super) fn review_with_before(
     plan: &EditPlan,
     before: Report,
 ) -> Result<EditReview, String> {
-    validate(program, plan)?;
+    validate_plan(program, plan)?;
     if program
         .bindings
         .iter()

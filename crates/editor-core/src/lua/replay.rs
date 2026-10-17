@@ -1018,6 +1018,21 @@ pub fn validate_program(program: &Program) -> std::result::Result<(), String> {
     Ok(())
 }
 
+pub fn validate_document(document: &Document) -> std::result::Result<(), String> {
+    if document.source.len() > MAX_DOCUMENT_BYTES
+        || document.load_name.len() > 4096
+        || document.source.as_bytes().contains(&0)
+        || document.load_name.contains(&0)
+        || document.sha256 != source_hash(&document.source)
+    {
+        return Err("Invalid private source syntax input".into());
+    }
+    if compile(document).is_err() || syntax_tree(&document.source)?.root_node().has_error() {
+        return Err("Private source revision does not compile and reparse".into());
+    }
+    Ok(())
+}
+
 pub fn replay(program: &Program) -> std::result::Result<Report, String> {
     validate_program(program)?;
     let root = program

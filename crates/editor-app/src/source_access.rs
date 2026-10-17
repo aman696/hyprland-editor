@@ -750,7 +750,38 @@ fn show(
         Some("files"),
     );
     let analysis_model = Rc::new(RefCell::new(None));
-    let (analysis_body, analysis_view) = super::source_analysis::build(&analysis_model);
+    let session = Rc::new(RefCell::new(Session {
+        version,
+        root_hash,
+        generation: state.borrow().generation,
+        folders: vec![],
+        captures: vec![],
+        pending: false,
+        kept: false,
+        alive: true,
+        epoch: 0,
+        analysis: analysis_model.clone(),
+        analysis_cancel: None,
+        context: super::source_context::Options::default(),
+        context_cost: 0,
+        #[cfg(test)]
+        finished_epoch: 0,
+    }));
+    let changed = Rc::downgrade(&session);
+    let changed_state = Rc::downgrade(state);
+    let (analysis_body, analysis_view) = super::source_analysis::build(
+        &analysis_model,
+        state,
+        Some(Rc::new(move || {
+            if let (Some(session), Some(state)) = (changed.upgrade(), changed_state.upgrade()) {
+                let mut s = session.borrow_mut();
+                if s.alive {
+                    s.generation = state.borrow().generation;
+                    s.kept = true;
+                }
+            }
+        })),
+    );
     let keep = gtk::Button::with_label("Keep Analyzed Files in Draft");
     keep.set_widget_name("dependency-keep-graph");
     keep.set_tooltip_text(Some("Requires the imported root at its exact recorded revision; saves no files until Save Draft"));
@@ -791,23 +822,6 @@ fn show(
     root.append(&pages);
     root.append(&footer);
     win.set_content(Some(&root));
-    let session = Rc::new(RefCell::new(Session {
-        version,
-        root_hash,
-        generation: state.borrow().generation,
-        folders: vec![],
-        captures: vec![],
-        pending: false,
-        kept: false,
-        alive: true,
-        epoch: 0,
-        analysis: analysis_model,
-        analysis_cancel: None,
-        context: super::source_context::Options::default(),
-        context_cost: 0,
-        #[cfg(test)]
-        finished_epoch: 0,
-    }));
     let ui = Controls {
         session: Rc::downgrade(&session),
         state: Rc::downgrade(state),
@@ -1599,6 +1613,11 @@ pub(super) fn test_retained_graph(parent: &adw::ApplicationWindow) {
     assert!(find_status()
         .text()
         .contains("folder access were not reopened"));
+    super::source_changes::test_keep_in_draft(&saved, &state);
+    super::workflow::test_graph_persistence(parent, &state, &root);
+    assert!(find_status()
+        .text()
+        .contains("Private source revisions modeled"));
     let (minimum, _, _, _) = saved.measure(gtk::Orientation::Horizontal, -1);
     assert!(minimum <= 350, "Saved graph view requires {minimum}px");
     if let Ok(path) = std::env::var("HYPRLAND_EDITOR_TEST_CAPTURE") {

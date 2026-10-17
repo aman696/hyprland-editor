@@ -43,6 +43,40 @@ fn request(request: Value) -> Value {
     serde_json::from_slice(&data).unwrap()
 }
 #[test]
+fn private_source_pieces_round_trip_inside_the_restricted_worker_without_rewriting_base() {
+    use hyprland_editor_core::lua::{replay::edits::*, source_hash};
+    let base = replay_program("hl.config({general={border_size=2}})");
+    let doc = &base.documents[0];
+    let start = doc.source.find('2').unwrap();
+    let e = SourceEdit {
+        document: doc.id.clone(),
+        base_sha256: doc.sha256.clone(),
+        span: start..start + 1,
+        old_bytes_sha256: source_hash("2"),
+        replacement: "6".into(),
+        semantic_targets: vec!["general:border_size".into()],
+    };
+    let plan = prepare(&base, vec![e], vec![]).unwrap();
+    let result = request(json!({"ApplySourceRevision":{"base":base,"revisions":[],"plan":plan}}));
+    let revisions = result["SourceRevisions"].clone();
+    assert!(revisions.is_array(), "{result}");
+    let materialized =
+        request(json!({"MaterializeSourceRevisions":{"base":base,"revisions":revisions}}));
+    assert!(
+        materialized["SourceRevisionProgram"]["documents"][0]["source"]
+            .as_str()
+            .unwrap()
+            .contains("border_size=6")
+    );
+    assert!(base.documents[0].source.contains("border_size=2"));
+    let mut forged = revisions.clone();
+    forged[0]["sha256"] = "0".repeat(64).into();
+    assert!(
+        request(json!({"MaterializeSourceRevisions":{"base":base,"revisions":forged}}))["Error"]
+            .is_string()
+    );
+}
+#[test]
 fn typed_source_comparisons_rebuild_coordinates_and_native_validation_in_the_worker() {
     use hyprland_editor_core::{
         lua::{

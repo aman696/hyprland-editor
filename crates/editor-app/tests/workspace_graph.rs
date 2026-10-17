@@ -117,6 +117,7 @@ fn fixture_source(root: &Path, version: &str, source: &str) -> Workspace {
         .collect();
     let bundle = Bundle {
         graph: Graph {
+            revisions: vec![],
             format: "hye-workspace-graph-1".into(),
             schema_sha256: hyprland_editor_core::workspace_graph::schema_sha256(),
             compiler: report.compiler_profile,
@@ -133,7 +134,7 @@ fn fixture_source(root: &Path, version: &str, source: &str) -> Workspace {
                 .collect(),
             bindings: program.bindings,
         },
-        sources,
+        sources: std::sync::Arc::new(sources),
     };
     let mut draft = Draft::new(version);
     draft
@@ -154,6 +155,66 @@ fn root() -> std::path::PathBuf {
     ));
     fs::create_dir(&root).unwrap();
     root
+}
+#[test]
+fn private_piece_revisions_reopen_without_originals_and_preserve_captured_identities() {
+    for version in [BASELINE, AUDITED_MAIN] {
+        let root = root();
+        let mut snapshot = fixture(&root, version);
+        let graph = snapshot.source_graph.as_ref().unwrap();
+        let base = graph
+            .program(&snapshot.sources, snapshot.root_source.as_deref(), version)
+            .unwrap();
+        let part = &base.documents[1];
+        let start = part.source.find('3').unwrap();
+        let plan = replay::edits::prepare(
+            &base,
+            vec![replay::edits::SourceEdit {
+                document: part.id.clone(),
+                base_sha256: part.sha256.clone(),
+                span: start..start + 1,
+                old_bytes_sha256: lua::source_hash("3"),
+                replacement: "7".into(),
+                semantic_targets: vec!["general:border_size".into()],
+            }],
+            vec![],
+        )
+        .unwrap();
+        let revisions =
+            hyprland_editor_core::workspace_graph::revisions::apply(&base, &[], &plan).unwrap();
+        let expected =
+            hyprland_editor_core::workspace_graph::revisions::program(base, &revisions).unwrap();
+        assert_eq!(
+            replay::replay(&expected).unwrap().events[0].arguments[0],
+            Observed::Table(vec![(
+                Observed::Bytes(b"general".to_vec()),
+                Observed::Table(vec![(
+                    Observed::Bytes(b"border_size".to_vec()),
+                    Observed::Int(7)
+                )])
+            )])
+        );
+        snapshot.source_graph.as_mut().unwrap().revisions = revisions;
+        let path = workspace::save(&root, &snapshot, &catalogue()).unwrap();
+        let (ok, output) = check(&path);
+        assert!(ok, "{output}");
+        let result: serde_json::Value = serde_json::from_str(&output).unwrap();
+        assert_eq!(result["source_graph_revisions"], 1);
+        assert_eq!(result["original_paths_opened"], false);
+        assert_eq!(result["folder_access_restored"], false);
+        let reopened = workspace::read(&path, &catalogue()).unwrap();
+        assert_eq!(reopened.sources[1].content, "return 3");
+        assert_eq!(reopened.sources[1].origin, snapshot.sources[1].origin);
+        assert_eq!(reopened.draft.values, snapshot.draft.values);
+        let mut forged: serde_json::Value =
+            serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        forged["source_graph"]["revisions"][0]["buffers"][0] = "9".into();
+        let bad = root.join("forged.hye");
+        fs::write(&bad, serde_json::to_vec(&forged).unwrap()).unwrap();
+        assert!(!check(&bad).0);
+        assert!(!root.join("originals").exists());
+        fs::remove_dir_all(root).unwrap();
+    }
 }
 #[test]
 fn application_replays_all_saved_graph_inputs_without_original_files_or_folder_access() {

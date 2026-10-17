@@ -22,6 +22,8 @@ enum Call {
 }
 #[derive(Clone)]
 pub(super) struct View {
+    state: Weak<RefCell<super::State>>,
+    after_keep: Option<Rc<dyn Fn()>>,
     model: Weak<RefCell<Option<Arc<Analysis>>>>,
     summary: gtk::glib::WeakRef<gtk::Label>,
     status: gtk::glib::WeakRef<gtk::Label>,
@@ -68,7 +70,11 @@ fn text_area(name: &str) -> (gtk::ScrolledWindow, gtk::TextView) {
         view,
     )
 }
-pub(super) fn build(model: &Model) -> (gtk::Box, View) {
+pub(super) fn build(
+    model: &Model,
+    state: &super::Shared,
+    after_keep: Option<Rc<dyn Fn()>>,
+) -> (gtk::Box, View) {
     let body = gtk::Box::new(gtk::Orientation::Vertical, 10);
     let summary = label("No analysis yet.");
     summary.set_widget_name("dependency-analysis-summary");
@@ -96,6 +102,7 @@ pub(super) fn build(model: &Model) -> (gtk::Box, View) {
     calls_page.append(&calls);
     let compare = gtk::Button::with_label("Compare a Source Change");
     compare.set_sensitive(false);
+    compare.set_widget_name("source-analysis-compare");
     compare.set_halign(gtk::Align::Start);
     calls_page.append(&compare);
     let (area, detail) = text_area("dependency-analysis-call-details");
@@ -167,6 +174,8 @@ pub(super) fn build(model: &Model) -> (gtk::Box, View) {
     body.append(&switcher);
     body.append(&tabs);
     let view = View {
+        state: Rc::downgrade(state),
+        after_keep,
         model: Rc::downgrade(model),
         summary: summary.downgrade(),
         status: status.downgrade(),
@@ -250,7 +259,22 @@ impl View {
         let Some(parent) = button.root().and_downcast::<gtk::Window>() else {
             return;
         };
-        let window = super::source_changes::open(&parent, &model, event.order);
+        let Some(state) = self.state.upgrade() else {
+            return;
+        };
+        let view = self.clone();
+        let window = super::source_changes::open(
+            &parent,
+            &model,
+            event.order,
+            &state,
+            Rc::new(move || {
+                if let Some(callback) = &view.after_keep {
+                    callback();
+                }
+                view.render();
+            }),
+        );
         *self.change_window.borrow_mut() = Some(window.downgrade());
     }
     #[cfg(test)]
@@ -342,12 +366,20 @@ impl View {
         let Some(analysis) = self.model.upgrade().and_then(|m| m.borrow().clone()) else {
             return;
         };
+        let edited = analysis
+            .frozen
+            .as_ref()
+            .is_some_and(|b| !b.graph.revisions.is_empty());
         let complete = analysis.blocked.is_none() && analysis.report.halt.is_none();
         if let Some(label) = self.summary.upgrade() {
             label.set_text(&format!(
                 "{} · {} files · {} calls",
                 if complete {
-                    "Snapshot analysis finished"
+                    if edited {
+                        "Private source revision analysis finished"
+                    } else {
+                        "Snapshot analysis finished"
+                    }
                 } else {
                     "Partial analysis"
                 },
@@ -387,7 +419,9 @@ impl View {
                 },
                 |r| format!("Stopped: {}", display_path_bytes(r.as_bytes())),
             );
-            label.set_text(&if analysis.restored {
+            label.set_text(&if edited {
+                format!("Private source revisions modeled. Original captures and separate value overrides are preserved. Reconcile source revisions with overrides before export. {message}")
+            }else if analysis.restored {
                 format!("Saved resolution inputs replayed. Original files and folder access were not reopened. {message}")
             }else{message});
         }
@@ -452,6 +486,13 @@ impl View {
             doc.sha256,
             super::source_access::excerpt(&doc.source)
         ));
+        if let Some(bundle) = &analysis.frozen {
+            if bundle.graph.revisions.iter().any(|r| r.document == doc.id) {
+                if let Some(original) = bundle.sources.iter().find(|s| s.id == doc.id) {
+                    view.buffer().set_text(&format!("{}\nPrivate draft SHA-256: {}\nOriginal capture SHA-256: {}\n\nPrivate source revision\n{}\n\nOriginal captured bytes (unchanged)\n{}",display_path_bytes(&doc.load_name),doc.sha256,original.origin.sha256,super::source_access::excerpt(&doc.source),super::source_access::excerpt(&original.content)));
+                }
+            }
+        }
     }
     fn call(&self) {
         self.close_change();
@@ -751,7 +792,7 @@ pub(super) fn show_saved(
         }
     }
     let window = adw::Window::builder()
-        .title("Saved source files")
+        .title("Draft source files")
         .transient_for(parent)
         .default_width(700)
         .default_height(660)
@@ -761,7 +802,23 @@ pub(super) fn show_saved(
     let root = gtk::Box::new(gtk::Orientation::Vertical, 0);
     root.append(&adw::HeaderBar::new());
     let model: Model = Rc::new(RefCell::new(None));
-    let (body, view) = build(&model);
+    let changed = window.downgrade();
+    let changed_state = Rc::downgrade(state);
+    let (body, view) = build(
+        &model,
+        state,
+        Some(Rc::new(move || {
+            if let (Some(window), Some(state)) = (changed.upgrade(), changed_state.upgrade()) {
+                let s = state.borrow();
+                if let Some(graph) = s.source_graphs.get(&s.draft.version) {
+                    window.set_widget_name(&format!(
+                        "saved-source-graph-{}-{}-{}",
+                        graph.version, graph.fingerprint, s.generation
+                    ));
+                }
+            }
+        })),
+    );
     for set in [
         gtk::Widget::set_margin_start,
         gtk::Widget::set_margin_end,

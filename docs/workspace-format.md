@@ -22,3 +22,6 @@ Accepted comparisons change the draft and stored root snapshot in memory, then r
 
 
 See [retained graph inputs](source-graph-workspace.md) for the optional `source_graph` record. Its source-model and compiler pins are separate from the original scalar/schema identity. An old app rejects that unknown field instead of silently discarding it. A saved resolution describes a past supplied input; it cannot restore live metadata observations, folder grants, a current absence certificate or source-edit authority.
+
+
+Private source graphs may include optional `revisions`: document/base/current hashes, shared inserted text buffers and ordered original/inserted piece ranges. Captured `sources` and their `origin` identities retain original bytes. Reopening validates these inputs and rebuilds the private draft without reopening original paths or restoring grants. See [private revision representation and limits](private-source-revisions.md). Current revision state persists; operation history across restarts does not.

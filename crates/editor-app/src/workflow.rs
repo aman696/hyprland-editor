@@ -56,7 +56,7 @@ fn read_import(
         let graph = if let Some(graph) = &workspace.source_graph {
             let bundle = hyprland_editor_core::workspace_graph::Bundle {
                 graph: graph.clone(),
-                sources: workspace.sources.clone(),
+                sources: std::sync::Arc::new(workspace.sources.clone()),
             };
             super::source_graph::restore(&bundle, &workspace.draft.version)?;
             Some(std::sync::Arc::new(super::source_graph::Saved::new(
@@ -136,6 +136,7 @@ pub(super) fn check_workspace(path: PathBuf) -> Result<serde_json::Value, String
         "source_graph_replayed":imported.graph.is_some(),
         "source_graph_documents":imported.graph.as_ref().map_or(0,|g|g.bundle.sources.len()),
         "source_graph_bindings":imported.graph.as_ref().map_or(0,|g|g.bundle.graph.bindings.len()),
+        "source_graph_revisions":imported.graph.as_ref().map_or(0,|g|g.bundle.graph.revisions.len()),
         "folder_access_restored":false,
         "runtime_verified":false,"original_paths_opened":false}),
     )
@@ -733,10 +734,22 @@ pub(super) fn test_graph_persistence(
         "Single-root reconciliation must not erase a graph"
     );
     // An older successful graph save cannot clear an intervening undo.
+    let previous = state
+        .borrow()
+        .undo
+        .previous_graph()
+        .expect("Expected graph inverse before late save");
     button.emit_clicked();
     state.borrow_mut().undo_last();
     wait();
-    assert!(!state.borrow().source_graphs.contains_key(BASELINE));
+    assert_eq!(
+        state
+            .borrow()
+            .source_graphs
+            .get(BASELINE)
+            .map(|g| g.fingerprint.clone()),
+        previous
+    );
     assert!(state.borrow().dirty());
     state.borrow_mut().keep_graph(graph).unwrap();
     assert!(!state.borrow().dirty());

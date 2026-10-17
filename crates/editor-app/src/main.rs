@@ -35,6 +35,7 @@ use std::{cell::RefCell, collections::BTreeMap, rc::Rc, sync::Arc};
 
 type Shared = Rc<RefCell<State>>;
 struct State {
+    main_status: gtk::glib::WeakRef<gtk::Label>,
     catalogue: Vec<Setting>,
     draft: Draft,
     undo: history::History,
@@ -278,6 +279,13 @@ impl State {
         self.generation += 1;
     }
     fn export_lua(&self) -> Result<String, String> {
+        if self
+            .source_graphs
+            .get(&self.draft.version)
+            .is_some_and(|g| !g.bundle.graph.revisions.is_empty())
+        {
+            return Err("This draft includes private source revisions. Save the full workspace; override-only export would omit them. Source/override reconciliation is still required.".into());
+        }
         let mut text = self.draft.export_lua(&self.catalogue)?;
         if let Some(rules) = self.monitors.get(&self.draft.version) {
             if !rules.is_empty() {
@@ -462,7 +470,7 @@ fn label(text: &str) -> gtk::Label {
 fn summary(state: &Shared, status: &gtk::Label) {
     let s = state.borrow();
     status.set_text(&format!(
-        "{} {} in draft{}{}{}{}{}{}{} · {}",
+        "{} {} in draft{}{}{}{}{}{}{}{} · {}",
         s.draft.values.len(),
         if s.draft.values.len() == 1 {
             "setting"
@@ -505,6 +513,13 @@ fn summary(state: &Shared, status: &gtk::Label) {
             .map_or(String::new(), |g| format!(
                 " · {} gesture declarations",
                 g.declarations.len()
+            )),
+        s.source_graphs
+            .get(&s.draft.version)
+            .filter(|g| !g.bundle.graph.revisions.is_empty())
+            .map_or(String::new(), |g| format!(
+                " · {} source revisions",
+                g.bundle.graph.revisions.len()
             )),
         if s.dirty_version(&s.draft.version) {
             "Unsaved changes"
@@ -753,6 +768,7 @@ fn refill(
 }
 fn initial_state() -> Shared {
     Rc::new(RefCell::new(State {
+        main_status: gtk::glib::WeakRef::new(),
         catalogue: catalogue(),
         draft: Draft::new(BASELINE),
         undo: history::History::default(),
@@ -948,6 +964,7 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
         .ellipsize(gtk::pango::EllipsizeMode::End)
         .build();
     status.add_css_class("caption");
+    state.borrow_mut().main_status = status.downgrade();
     status.add_css_class("dim-label");
     content.append(&status);
     let sidebar_page = adw::NavigationPage::new(&sidebar_box, "Hyprland Editor");

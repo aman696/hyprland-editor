@@ -36,6 +36,15 @@ pub enum Request {
         program: lua::replay::Program,
         change: lua::replay::scalar_edit::Change,
     },
+    MaterializeSourceRevisions {
+        base: lua::replay::Program,
+        revisions: Vec<hyprland_editor_core::workspace_graph::revisions::Revision>,
+    },
+    ApplySourceRevision {
+        base: lua::replay::Program,
+        revisions: Vec<hyprland_editor_core::workspace_graph::revisions::Revision>,
+        plan: lua::replay::edits::EditPlan,
+    },
     DecodePrimitives(Vec<lua::scalar_codec::Case>),
     InspectConfiguration {
         events: Vec<lua::replay::Event>,
@@ -62,6 +71,8 @@ pub enum Response {
     Replayed(Box<lua::replay::Report>),
     SourceEditReview(Box<lua::replay::edits::EditReview>),
     ScalarSourceComparison(Box<lua::replay::scalar_edit::Comparison>),
+    SourceRevisionProgram(lua::replay::Program),
+    SourceRevisions(Vec<hyprland_editor_core::workspace_graph::revisions::Revision>),
     Primitives {
         profile: lua::replay::CompilerProfile,
         numeric_locale: String,
@@ -132,6 +143,25 @@ pub fn entry() {
             Request::ReplayModules(program) => {
                 lua::replay::replay(&program).map(|report| Response::Replayed(Box::new(report)))
             }
+            Request::MaterializeSourceRevisions { base, revisions } => {
+                let program =
+                    hyprland_editor_core::workspace_graph::revisions::program(base, &revisions)?;
+                for revision in &revisions {
+                    let doc = program
+                        .documents
+                        .iter()
+                        .find(|d| d.id == revision.document)
+                        .ok_or("Unknown private source revision")?;
+                    lua::replay::validate_document(doc)?;
+                }
+                Ok(Response::SourceRevisionProgram(program))
+            }
+            Request::ApplySourceRevision {
+                base,
+                revisions,
+                plan,
+            } => hyprland_editor_core::workspace_graph::revisions::apply(&base, &revisions, &plan)
+                .map(Response::SourceRevisions),
             Request::CompareScalarSource { program, change } => {
                 lua::replay::scalar_edit::compare(&program, &change)
                     .map(|result| Response::ScalarSourceComparison(Box::new(result)))

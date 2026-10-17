@@ -43,6 +43,7 @@ pub(super) struct CapturedDocument {
     pub(super) source: Arc<CapturedSource>,
 }
 pub(super) struct Analysis {
+    pub(super) frozen: Option<Arc<hyprland_editor_core::workspace_graph::Bundle>>,
     pub(super) restored: bool,
     pub(super) context: Context,
     pub(super) program: Program,
@@ -466,6 +467,7 @@ pub(super) fn analyze_with_budget(
     let mut budget = resolver.budget;
     finish(
         Analysis {
+            frozen: None,
             restored: false,
             context,
             program,
@@ -569,7 +571,8 @@ pub(super) struct Saved {
     pub(super) bundle: hyprland_editor_core::workspace_graph::Bundle,
     pub(super) fingerprint: String,
     pub(super) version: String,
-    pub(super) cost: usize,
+    pub(super) shared_cost: usize,
+    pub(super) history_cost: usize,
 }
 impl Saved {
     pub(super) fn new(
@@ -579,11 +582,9 @@ impl Saved {
         hyprland_editor_core::workspace::Workspace::new(hyprland_editor_core::Draft::new(version))
             .with_graph(&bundle)
             .validate(&hyprland_editor_core::catalogue())?;
-        let fingerprint = bundle.fingerprint()?;
-        let cost = serde_json::to_vec(&bundle)
-            .map_err(|e| e.to_string())?
-            .len()
-            .saturating_mul(2);
+        let (fingerprint, bytes) = bundle.fingerprint_with_size()?;
+        let cost = bytes.saturating_mul(2);
+        let (shared, metadata) = bundle.component_sizes()?;
         if cost > 8 * MAX_DOCUMENT_BYTES {
             return Err("Retained source graph exceeds its data budget".into());
         }
@@ -591,19 +592,24 @@ impl Saved {
             bundle,
             fingerprint,
             version: version.into(),
-            cost,
+            shared_cost: shared.saturating_mul(2),
+            history_cost: metadata.saturating_mul(2),
         })
     }
 }
 pub(super) fn freeze(
     analysis: &Analysis,
 ) -> Result<hyprland_editor_core::workspace_graph::Bundle, String> {
+    if let Some(bundle) = &analysis.frozen {
+        return Ok(bundle.as_ref().clone());
+    }
     use hyprland_editor_core::{
         workspace::{SourceLanguage, SourceSnapshot},
         workspace_graph::{Bundle, Graph, View},
     };
     let bundle = Bundle {
         graph: Graph {
+            revisions: vec![],
             format: "hye-workspace-graph-1".into(),
             schema_sha256: hyprland_editor_core::workspace_graph::schema_sha256(),
             compiler: analysis.report.compiler_profile.clone(),
@@ -621,16 +627,18 @@ pub(super) fn freeze(
                 .collect(),
             bindings: analysis.program.bindings.clone(),
         },
-        sources: analysis
-            .captures
-            .iter()
-            .map(|c| SourceSnapshot {
-                id: c.id.clone(),
-                language: SourceLanguage::Lua,
-                content: c.source.content.clone(),
-                origin: c.source.identity.clone(),
-            })
-            .collect(),
+        sources: Arc::new(
+            analysis
+                .captures
+                .iter()
+                .map(|c| SourceSnapshot {
+                    id: c.id.clone(),
+                    language: SourceLanguage::Lua,
+                    content: c.source.content.clone(),
+                    origin: c.source.identity.clone(),
+                })
+                .collect(),
+        ),
     };
     hyprland_editor_core::workspace::Workspace::new(hyprland_editor_core::Draft::new(
         &analysis.program.version,
@@ -644,7 +652,7 @@ pub(super) fn restore(
     bundle: &hyprland_editor_core::workspace_graph::Bundle,
     version: &str,
 ) -> Result<Analysis, String> {
-    let program = bundle
+    let mut program = bundle
         .graph
         .program(&bundle.sources, Some(&bundle.graph.root), version)?;
     let mut budget = Budget {
@@ -655,8 +663,10 @@ pub(super) fn restore(
         limit: 8 * MAX_DOCUMENT_BYTES,
     };
     budget.retain(bundle)?;
+    let before_program = budget.retained;
     budget.retain(&program)?;
-    let worker::Response::Replayed(report) =
+    let original_program_cost = budget.retained - before_program;
+    let worker::Response::Replayed(mut report) =
         worker::run(worker::Request::ReplayModules(program.clone()))?
     else {
         return Err("Unexpected saved-graph evaluator response".into());
@@ -698,6 +708,40 @@ pub(super) fn restore(
             return Err("Saved graph contains a source view that no loader reaches".into());
         }
     }
+    // Reachability above concerns the original captured graph. Private edits
+    // may intentionally make a declaration or dependency unreachable; preserve
+    // all base evidence rather than silently dropping it from the workspace.
+    if !bundle.graph.revisions.is_empty() {
+        let expected = hyprland_editor_core::workspace_graph::revisions::program(
+            program.clone(),
+            &bundle.graph.revisions,
+        )?;
+        let worker::Response::SourceRevisionProgram(revised) =
+            worker::run(worker::Request::MaterializeSourceRevisions {
+                base: program,
+                revisions: bundle.graph.revisions.clone(),
+            })?
+        else {
+            return Err("Unexpected private revision response".into());
+        };
+        if hyprland_editor_core::workspace_graph::program_fingerprint(&revised)?
+            != hyprland_editor_core::workspace_graph::program_fingerprint(&expected)?
+        {
+            return Err("Private revision worker returned different source inputs".into());
+        }
+        program = expected;
+        budget.retained = budget.retained.saturating_sub(original_program_cost);
+        budget.retain(&program)?;
+        let worker::Response::Replayed(revised) =
+            worker::run(worker::Request::ReplayModules(program.clone()))?
+        else {
+            return Err("Unexpected private source analysis response".into());
+        };
+        if revised.compiler_profile != bundle.graph.compiler || revised.runtime_verified {
+            return Err("Private source model profile changed".into());
+        }
+        report = revised;
+    }
     budget.check()?;
     budget.retain(report.as_ref())?;
     let captures = bundle
@@ -713,6 +757,7 @@ pub(super) fn restore(
         .collect();
     finish(
         Analysis {
+            frozen: Some(Arc::new(bundle.clone())),
             restored: true,
             context: bundle.graph.context.clone(),
             program,
@@ -726,6 +771,43 @@ pub(super) fn restore(
         },
         &mut budget,
     )
+}
+pub(super) fn apply_revision(
+    bundle: &hyprland_editor_core::workspace_graph::Bundle,
+    version: &str,
+    plan: hyprland_editor_core::lua::replay::edits::EditPlan,
+) -> Result<(Arc<Saved>, Analysis), String> {
+    let base = bundle
+        .graph
+        .program(&bundle.sources, Some(&bundle.graph.root), version)?;
+    // Byte generation stays in the trusted client. Parser results validate an
+    // exact private input; they cannot substitute different output source text.
+    let mut revisions = hyprland_editor_core::workspace_graph::revisions::prepare_pieces(
+        &base,
+        &bundle.graph.revisions,
+        &plan,
+    )?;
+    // Reuse equal immutable buffers across documents as well as within a
+    // revision, so undo does not retain copies of inserted text.
+    let shared = bundle
+        .graph
+        .revisions
+        .iter()
+        .flat_map(|r| &r.buffers)
+        .map(|b| (b.as_ref(), b))
+        .collect::<std::collections::BTreeMap<_, _>>();
+    for revision in &mut revisions {
+        for buffer in &mut revision.buffers {
+            if let Some(previous) = shared.get(buffer.as_ref()) {
+                *buffer = (*previous).clone();
+            }
+        }
+    }
+    let mut next = bundle.clone();
+    next.graph.revisions = revisions;
+    let saved = Arc::new(Saved::new(next, version)?);
+    let analysis = restore(&saved.bundle, version)?;
+    Ok((saved, analysis))
 }
 pub(super) fn check(
     folder: &std::path::Path,

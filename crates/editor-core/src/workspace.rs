@@ -241,7 +241,7 @@ impl Workspace {
     }
     pub fn with_graph(mut self, bundle: &crate::workspace_graph::Bundle) -> Self {
         self.root_source = Some(bundle.graph.root.clone());
-        self.sources = bundle.sources.clone();
+        self.sources = bundle.sources.as_ref().clone();
         self.source_graph = Some(bundle.graph.clone());
         self
     }

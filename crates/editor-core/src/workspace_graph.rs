@@ -8,7 +8,10 @@ use crate::{
     workspace::{SourceLanguage, SourceSnapshot, MAX_SOURCE_DOCUMENTS},
 };
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
+use std::sync::Arc;
+pub mod revisions;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -19,6 +22,8 @@ pub struct View {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Graph {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub revisions: Vec<revisions::Revision>,
     pub format: String,
     pub schema_sha256: String,
     pub compiler: CompilerProfile,
@@ -32,7 +37,7 @@ pub struct Graph {
 #[derive(Clone, Debug, Serialize)]
 pub struct Bundle {
     pub graph: Graph,
-    pub sources: Vec<SourceSnapshot>,
+    pub sources: Arc<Vec<SourceSnapshot>>,
 }
 pub fn schema_sha256() -> String {
     lua::source_hash(include_str!("../../../data/graph-model.json"))
@@ -100,15 +105,48 @@ impl Graph {
             working_directory: self.working_directory.clone(),
         };
         replay::validate_program(&program)?;
+        revisions::validate(&program, &self.revisions)?;
         Ok(program)
     }
 }
 impl Bundle {
     pub fn fingerprint(&self) -> Result<String, String> {
-        let bytes = serde_json::to_string(self).map_err(|e| e.to_string())?;
-        if bytes.len() > crate::workspace::MAX_WORKSPACE_BYTES {
-            return Err("Saved graph exceeds its 8 MiB envelope".into());
-        }
-        Ok(lua::source_hash(&bytes))
+        self.fingerprint_with_size().map(|v| v.0)
     }
+    pub fn fingerprint_with_size(&self) -> Result<(String, usize), String> {
+        encoded(self)
+    }
+    pub fn component_sizes(&self) -> Result<(usize, usize), String> {
+        Ok((encoded(self.sources.as_ref())?.1, encoded(&self.graph)?.1))
+    }
+}
+fn encoded(value: &impl Serialize) -> Result<(String, usize), String> {
+    struct Hash {
+        hash: Sha256,
+        bytes: usize,
+    }
+    impl std::io::Write for Hash {
+        fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+            self.bytes = self.bytes.saturating_add(bytes.len());
+            if self.bytes > crate::workspace::MAX_WORKSPACE_BYTES {
+                return Err(std::io::Error::other("saved graph envelope limit"));
+            }
+            self.hash.update(bytes);
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+    let mut hash = Hash {
+        hash: Sha256::new(),
+        bytes: 0,
+    };
+    serde_json::to_writer(&mut hash, value)
+        .map_err(|_| "Saved graph exceeds its 8 MiB envelope".to_string())?;
+    Ok((format!("{:x}", hash.hash.finalize()), hash.bytes))
+}
+pub fn program_fingerprint(program: &Program) -> Result<String, String> {
+    replay::validate_program(program)?;
+    encoded(program).map(|v| v.0)
 }

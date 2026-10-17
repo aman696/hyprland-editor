@@ -51,6 +51,8 @@ struct Session {
 }
 #[derive(Clone)]
 struct Controls {
+    state: Weak<RefCell<super::State>>,
+    refresh: Rc<dyn Fn()>,
     session: Weak<RefCell<Session>>,
     model: Weak<RefCell<Option<Arc<Analysis>>>>,
     analysis: std::sync::Weak<Analysis>,
@@ -60,6 +62,7 @@ struct Controls {
     status: gtk::glib::WeakRef<gtk::Label>,
     output: gtk::glib::WeakRef<gtk::TextView>,
     compare: gtk::glib::WeakRef<gtk::Button>,
+    keep: gtk::glib::WeakRef<gtk::Button>,
 }
 fn input_form(
     initial: &Value,
@@ -256,6 +259,13 @@ impl Controls {
         });
         if let Some(button) = self.compare.upgrade() {
             button.set_sensitive(ready);
+        }
+        let keep = self.session.upgrade().is_some_and(|s| {
+            let s = s.borrow();
+            !s.closed && !s.blocked && s.pending.is_none() && s.result.is_some()
+        });
+        if let Some(button) = self.keep.upgrade() {
+            button.set_sensitive(keep);
         }
     }
     fn invalidate(&self) {
@@ -502,6 +512,158 @@ impl Controls {
             },
         );
     }
+    fn keep(&self) {
+        if !self.current() {
+            self.stale();
+            return;
+        }
+        let (Some(session), Some(analysis), Some(state)) = (
+            self.session.upgrade(),
+            self.analysis.upgrade(),
+            self.state.upgrade(),
+        ) else {
+            return;
+        };
+        let (epoch, plan) = {
+            let s = session.borrow();
+            if s.closed || s.blocked || s.pending.is_some() {
+                return;
+            }
+            let Some(result) = &s.result else {
+                return;
+            };
+            (s.epoch, result.plan.clone())
+        };
+        let bundle = match super::source_graph::freeze(&analysis) {
+            Ok(bundle) => bundle,
+            Err(error) => {
+                self.message(&error);
+                return;
+            }
+        };
+        let fingerprint = match bundle.fingerprint() {
+            Ok(v) => v,
+            Err(error) => {
+                self.message(&error);
+                return;
+            }
+        };
+        let version = analysis.program.version.clone();
+        let (generation, expected, shared_bundle) = {
+            let s = state.borrow();
+            let root = bundle
+                .sources
+                .iter()
+                .find(|source| source.id == bundle.graph.root);
+            if s.draft.version != version
+                || root.is_none_or(|root| {
+                    s.source_origins.get(&version) != Some(&root.origin)
+                        || s.sources
+                            .get(&version)
+                            .is_none_or(|d| d.source != root.content)
+                })
+            {
+                self.message("Import this captured root at its recorded revision before keeping source changes in the draft.");
+                return;
+            }
+            let expected = s.source_graphs.get(&version).map(|g| g.fingerprint.clone());
+            if expected.as_ref().is_some_and(|fp| fp != &fingerprint) {
+                self.message("The retained source draft changed. Open its current source view before editing again.");
+                return;
+            }
+            (
+                s.generation,
+                expected,
+                s.source_graphs.get(&version).map(|g| g.bundle.clone()),
+            )
+        };
+        let bundle = shared_bundle.unwrap_or(bundle);
+        if COMPARING
+            .compare_exchange(
+                false,
+                true,
+                std::sync::atomic::Ordering::AcqRel,
+                std::sync::atomic::Ordering::Acquire,
+            )
+            .is_err()
+        {
+            self.message("A source operation is still finishing. Try again shortly.");
+            return;
+        }
+        let permit = Permit;
+        session.borrow_mut().pending = Some(epoch);
+        self.message("Preparing a private source revision…");
+        self.sensitive();
+        let ui = self.clone();
+        let work_version = version.clone();
+        workflow::background(
+            move || {
+                let _permit = permit;
+                super::source_graph::apply_revision(&bundle, &work_version, plan)
+            },
+            move |result| {
+                let (Some(session), Some(state), Some(model)) =
+                    (ui.session.upgrade(), ui.state.upgrade(), ui.model.upgrade())
+                else {
+                    return;
+                };
+                let mut s = session.borrow_mut();
+                if s.closed || s.pending != Some(epoch) {
+                    return;
+                }
+                s.pending = None;
+                if s.epoch != epoch || !ui.current() {
+                    drop(s);
+                    ui.message("The comparison changed before the source revision was kept. Compare again.");
+                    ui.sensitive();
+                    return;
+                }
+                let mut draft = state.borrow_mut();
+                if draft.generation != generation
+                    || draft.draft.version != version
+                    || draft
+                        .source_graphs
+                        .get(&version)
+                        .map(|g| g.fingerprint.clone())
+                        != expected
+                {
+                    drop(draft);
+                    drop(s);
+                    ui.message("The draft changed while preparing this revision. No source change was kept.");
+                    ui.sensitive();
+                    return;
+                }
+                match result {
+                    Ok((saved, analysis)) => match draft.keep_graph(saved) {
+                        Ok(()) => {
+                            *model.borrow_mut() = Some(Arc::new(analysis));
+                            drop(draft);
+                            s.result = None;
+                            drop(s);
+                            if let Some(status) = state.borrow().main_status.upgrade() {
+                                super::summary(&state, &status);
+                            }
+                            (ui.refresh)();
+                        }
+                        Err(error) => {
+                            drop(draft);
+                            drop(s);
+                            ui.message(&error);
+                            ui.sensitive();
+                        }
+                    },
+                    Err(error) => {
+                        drop(draft);
+                        drop(s);
+                        ui.message(&display_path_bytes(
+                            &error.as_bytes()[..error.len().min(1024)],
+                        ));
+                        ui.sensitive();
+                    }
+                }
+            },
+        );
+    }
 }
 fn describe(analysis: &Analysis, result: &Comparison) -> Result<String, String> {
     use std::fmt::Write;
@@ -610,7 +772,13 @@ fn describe(analysis: &Analysis, result: &Comparison) -> Result<String, String> 
     }
     Ok(text)
 }
-pub(super) fn open(parent: &gtk::Window, model: &Model, event: usize) -> adw::Window {
+pub(super) fn open(
+    parent: &gtk::Window,
+    model: &Model,
+    event: usize,
+    state: &super::Shared,
+    refresh: Rc<dyn Fn()>,
+) -> adw::Window {
     let analysis = model
         .borrow()
         .clone()
@@ -656,7 +824,7 @@ pub(super) fn open(parent: &gtk::Window, model: &Model, event: usize) -> adw::Wi
     ] {
         set(body.upcast_ref(), 16);
     }
-    body.append(&label("Try a change on a private copy. This window does not save source edits or change your desktop."));
+    body.append(&label("Compare a change, then keep it in your private draft. Original files and the desktop stay unchanged."));
     let names = session
         .borrow()
         .rows
@@ -713,7 +881,14 @@ pub(super) fn open(parent: &gtk::Window, model: &Model, event: usize) -> adw::Wi
         .hscrollbar_policy(gtk::PolicyType::Never)
         .build();
     body.append(&scroll);
-    outer.append(&body);
+    outer.append(
+        &gtk::ScrolledWindow::builder()
+            .child(&body)
+            .vexpand(true)
+            .min_content_height(140)
+            .hscrollbar_policy(gtk::PolicyType::Never)
+            .build(),
+    );
     body.set_vexpand(true);
     let footer = gtk::Box::new(gtk::Orientation::Vertical, 10);
     footer.set_margin_start(16);
@@ -722,13 +897,24 @@ pub(super) fn open(parent: &gtk::Window, model: &Model, event: usize) -> adw::Wi
     let status = label("");
     status.set_widget_name("source-change-status");
     footer.append(&status);
-    let compare = gtk::Button::with_label("Compare Change");
+    let compare = gtk::Button::with_label("Compare");
     compare.set_widget_name("source-change-compare");
-    compare.add_css_class("suggested-action");
-    footer.append(&compare);
+    let actions = gtk::Box::new(gtk::Orientation::Horizontal, 8);
+    compare.set_hexpand(true);
+    actions.append(&compare);
+    let keep = gtk::Button::with_label("Keep in Draft");
+    keep.set_widget_name("source-change-keep");
+    keep.set_sensitive(false);
+    keep.set_hexpand(true);
+    keep.add_css_class("suggested-action");
+    actions.append(&keep);
+    footer.append(&actions);
+    footer.append(&label("Source revisions and value overrides stay separate. Reconcile before export; Save Draft keeps the private workspace."));
     outer.append(&footer);
     window.set_content(Some(&outer));
     let ui = Controls {
+        state: Rc::downgrade(state),
+        refresh,
         session: Rc::downgrade(&session),
         model: Rc::downgrade(model),
         analysis: Arc::downgrade(&analysis),
@@ -738,6 +924,7 @@ pub(super) fn open(parent: &gtk::Window, model: &Model, event: usize) -> adw::Wi
         status: status.downgrade(),
         output: output.downgrade(),
         compare: compare.downgrade(),
+        keep: keep.downgrade(),
     };
     let u = ui.clone();
     targets.connect_selected_notify(move |_| u.select());
@@ -745,6 +932,8 @@ pub(super) fn open(parent: &gtk::Window, model: &Model, event: usize) -> adw::Wi
     scope.connect_selected_notify(move |_| u.invalidate());
     let u = ui.clone();
     compare.connect_clicked(move |_| u.start());
+    let u = ui.clone();
+    keep.connect_clicked(move |_| u.keep());
     window.connect_close_request(move |_| {
         let mut s = session.borrow_mut();
         s.closed = true;
@@ -926,4 +1115,144 @@ pub(super) fn test_editor(window: &adw::Window, model: &Model) -> HeldComparison
     pick.set_selected(1);
     assert_eq!(getter().unwrap(), Value::String("two".into()));
     held
+}
+
+#[cfg(test)]
+pub(super) fn test_keep_in_draft(parent: &adw::Window, state: &super::Shared) {
+    fn named(root: &gtk::Widget, name: &str) -> Option<gtk::Widget> {
+        if root.widget_name() == name {
+            return Some(root.clone());
+        }
+        let mut child = root.first_child();
+        while let Some(w) = child {
+            if let Some(found) = named(&w, name) {
+                return Some(found);
+            }
+            child = w.next_sibling();
+        }
+        None
+    }
+    fn wait(mut check: impl FnMut() -> bool) {
+        let start = std::time::Instant::now();
+        loop {
+            while gtk::glib::MainContext::default().pending() {
+                gtk::glib::MainContext::default().iteration(false);
+            }
+            if check() {
+                break;
+            }
+            assert!(
+                start.elapsed() < std::time::Duration::from_secs(10),
+                "Private revision timed out"
+            );
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        }
+    }
+    let before = state.borrow().source_graphs[hyprland_editor_core::BASELINE].clone();
+    let calls = named(parent.upcast_ref(), "dependency-analysis-call")
+        .unwrap()
+        .downcast::<gtk::DropDown>()
+        .unwrap();
+    let stack = calls
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .downcast::<gtk::Stack>()
+        .unwrap();
+    stack.set_visible_child_name("calls");
+    calls.set_selected(1);
+    let open = named(parent.upcast_ref(), "source-analysis-compare")
+        .unwrap()
+        .downcast::<gtk::Button>()
+        .unwrap();
+    assert!(open.is_sensitive());
+    open.emit_clicked();
+    let window = gtk::Window::list_toplevels()
+        .into_iter()
+        .filter_map(|w| w.downcast::<adw::Window>().ok())
+        .find(|w| w.is_visible() && w.title().as_deref() == Some("Compare a Source Change"))
+        .unwrap();
+    let input = named(window.upcast_ref(), "source-change-value")
+        .unwrap()
+        .downcast::<gtk::Entry>()
+        .unwrap();
+    assert_eq!(input.text(), "4");
+    input.set_text("6");
+    let compare = named(window.upcast_ref(), "source-change-compare")
+        .unwrap()
+        .downcast::<gtk::Button>()
+        .unwrap();
+    compare.emit_clicked();
+    wait(|| compare.is_sensitive());
+    let keep = named(window.upcast_ref(), "source-change-keep")
+        .unwrap()
+        .downcast::<gtk::Button>()
+        .unwrap();
+    assert!(keep.is_sensitive());
+    // A source operation must not commit across an independently edited draft.
+    keep.emit_clicked();
+    {
+        let mut s = state.borrow_mut();
+        s.draft
+            .values
+            .insert("general:border_size".into(), Value::Int(9));
+        s.generation += 1;
+    }
+    wait(|| keep.is_sensitive());
+    let status = named(window.upcast_ref(), "source-change-status")
+        .unwrap()
+        .downcast::<gtk::Label>()
+        .unwrap();
+    assert!(status.text().contains("draft changed"), "{}", status.text());
+    assert_eq!(
+        state.borrow().source_graphs[hyprland_editor_core::BASELINE].fingerprint,
+        before.fingerprint
+    );
+    let generation = state.borrow().generation;
+    keep.emit_clicked();
+    wait(|| !window.is_visible());
+    let after = state.borrow().source_graphs[hyprland_editor_core::BASELINE].clone();
+    assert_eq!(state.borrow().generation, generation + 1);
+    assert!(state.borrow().dirty());
+    assert_eq!(
+        state.borrow().draft.values["general:border_size"],
+        Value::Int(9),
+        "Keeping a source revision must not overwrite a separate value override"
+    );
+    assert_eq!(after.bundle.graph.revisions.len(), 1);
+    assert!(Arc::ptr_eq(&before.bundle.sources, &after.bundle.sources));
+    assert!(state.borrow().export_lua().is_err());
+    assert_eq!(
+        before.bundle.sources[0].content,
+        after.bundle.sources[0].content
+    );
+    assert_eq!(
+        before.bundle.sources[0].origin,
+        after.bundle.sources[0].origin
+    );
+    assert!(after.bundle.graph.revisions[0].sha256 != after.bundle.graph.revisions[0].base_sha256);
+    let model = super::source_graph::restore(&after.bundle, &after.version).unwrap();
+    assert!(model.program.documents[0].source.contains("border_size=6"));
+    assert!(model.frozen.is_some());
+    assert!(!model.report.runtime_verified);
+    if let Ok(path) = std::env::var("HYPRLAND_EDITOR_TEST_CAPTURE") {
+        stack.set_visible_child_name("files");
+        let start = std::time::Instant::now();
+        wait(|| start.elapsed() >= std::time::Duration::from_millis(300));
+        let paintable = gtk::WidgetPaintable::new(Some(parent));
+        let node = RefCell::new(None);
+        wait(|| {
+            let snapshot = gtk::Snapshot::new();
+            paintable.snapshot(&snapshot, parent.width() as f64, parent.height() as f64);
+            *node.borrow_mut() = snapshot.to_node();
+            node.borrow().is_some()
+        });
+        parent
+            .renderer()
+            .unwrap()
+            .render_texture(node.into_inner().unwrap(), None)
+            .save_to_png(format!("{path}.source-revision.png"))
+            .unwrap();
+    }
 }

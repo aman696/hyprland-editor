@@ -372,6 +372,7 @@ mod tests {
         let report = replay::replay(&program).unwrap();
         assert!(report.halt.is_none(), "{:?}", report.halt);
         Analysis {
+            frozen: None,
             restored: false,
             context: Context {
                 main_file: name,
