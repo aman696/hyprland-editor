@@ -455,6 +455,10 @@ pub(super) fn form(
             );
             input.set_widget_name("device-pressure-value");
             input.set_sensitive(!automatic.is_active());
+            // Formatting a stored value to six display digits must not become an edit.
+            let manual_changed = Rc::new(Cell::new(false));
+            let flag = manual_changed.clone();
+            input.connect_changed(move |_| flag.set(true));
             panel.append(&label("Negative source values use the tool's hardware default. The device's measured pressure range is not detected here."));
             let changed = Rc::new(Cell::new(false));
             let flag = changed.clone();
@@ -472,6 +476,8 @@ pub(super) fn form(
                     } else {
                         -1.0
                     }
+                } else if value >= 0.0 && !manual_changed.get() {
+                    value
                 } else {
                     input.update();
                     input.value()

@@ -619,6 +619,19 @@ pub(super) fn test_editor(window: &adw::ApplicationWindow) {
         hyprland_editor_core::Value::Float(-0.5)
     );
     parent.destroy();
+    // The display's six decimal places do not silently round an untouched draft.
+    let body = gtk::Box::new(gtk::Orientation::Vertical, 0);
+    let parent = adw::Window::new();
+    sentinel.fields.insert(
+        "pressure_range_max".into(),
+        hyprland_editor_core::Value::Float(0.123456789),
+    );
+    let get = device_forms::form(setting, &sentinel, &body, &parent, None);
+    assert_eq!(
+        get().unwrap()["pressure_range_max"],
+        hyprland_editor_core::Value::Float(0.123456789)
+    );
+    parent.destroy();
     property.set_selected(
         fields
             .iter()

@@ -1,4 +1,14 @@
-# Session checkpoint — 14 October 2026
+# Session checkpoint — 17 October 2026
+
+The full editor goal is active and unfinished. Work is on `codex/source-graph`, [draft PR #8](https://github.com/aman696/hyprland-editor/pull/8); keep it draft until the complete editable multi-file workflow is ready. Main remains the experimental 0.12 milestone. No overall completion percentage is certified: the historical 45.6% figure below describes partial foundations, not finished engineering.
+
+The published device-additions milestone is `8ae04410ecf8f5de0c3a64a9778435c07d6cdb0a`. It adds four source-discovered tablet-tool controls, bringing the device catalogue to 47 fields per snapshot. Static Lua round trips, private save/reopen, undo, negative-default preservation and exact legacy-subset schema compatibility are tested. A follow-up preserves untouched positive pressure precision despite rounded display formatting. Local verification covers 241 ordinary tests plus the native graphical workflow (242 total), strict lint, formatting, release build and generated metadata. Hosted checks for the device additions are still pending at this checkpoint; no hosted success is inferred.
+
+Registration-aware source inspection remains a model under pinned Lua/library/C-locale assumptions, never effective compositor state or source write authority. The original 1,453 contracts and five supplemental source obligations remain mandatory and unproven. Ordinary form/native-constraint integration, generated-config handling, five complex value codecs, complete language/APIs/effects and source ownership are unfinished. Continue editable graph import, schema-pinned graph save/reopen/history/reconciliation and lossless source edits, then effective discovery, isolated compositor preview, independent recovery and guarded apply. Resource, hardware, accessibility/localization, packaging and all original security/release gates remain required. The last whole-GUI memory measurement exceeded the 100 MiB target; bounded data structures do not certify that target.
+
+Reference source downloads/builds for completed probes were removed; pinned hashes and derived fixtures remain. Private-display tests do not change the user's compositor or configuration. See [current implementation status](implementation-status.md) and [completion obligations](completion-register.md).
+
+## Historical checkpoint — 14 October 2026
 
 The user explicitly paused the unfinished complete-editor goal before switching off. The goal was subsequently resumed on 14 October. The exact monitor checkpoint has now completed local and hosted verification; see [validation evidence](validation.md#monitor-draft-editor-05). The complete-editor goal remains unfinished.
 
