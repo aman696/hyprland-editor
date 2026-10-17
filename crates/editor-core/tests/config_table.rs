@@ -127,7 +127,9 @@ fn traversal_cycles_and_path_budgets_remain_unresolved_and_value_origins_remain_
         rows: vec![ValueSource {
             expression: Some(11),
             rows: vec![],
+            ..Default::default()
         }],
+        ..Default::default()
     }];
     let batch = config_table::inspect(&event, BASELINE, &catalogue).unwrap();
     assert_eq!(batch.candidates[0].expression, Some(11));

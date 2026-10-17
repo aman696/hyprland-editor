@@ -1,10 +1,10 @@
 //! Bounded detail text for expression evidence; no mutation or ownership inference.
 use super::source_graph::Analysis;
 use hyprland_editor_core::{
-    lua::replay::{Event, Observed, ValueSource},
+    lua::replay::{Event, KeySource, Observed, ValueSource, WriteKind},
     source::display_path_bytes,
 };
-use std::fmt::Write;
+use std::{collections::BTreeSet, fmt::Write};
 
 struct Text<'a> {
     analysis: &'a Analysis,
@@ -12,11 +12,15 @@ struct Text<'a> {
     leaves: usize,
     nodes: usize,
     truncated: bool,
+    seen: BTreeSet<(u8, u32)>,
 }
 impl Text<'_> {
     fn node(&mut self, id: u32, depth: usize) {
         if depth > 8 || self.nodes >= 96 || self.out.len() > 12 * 1024 {
             self.truncated = true;
+            return;
+        }
+        if !self.seen.insert((0, id)) {
             return;
         }
         let Some(node) = self.analysis.report.expression_sources.get(id as usize) else {
@@ -63,14 +67,109 @@ impl Text<'_> {
                 self.truncated = true;
             }
         }
+        if let Some(write) = node.storage_write {
+            self.write(write, depth + 1);
+        }
     }
-    fn value(&mut self, value: &Observed, source: &ValueSource, path: &str, depth: usize) {
+    fn write(&mut self, id: u32, depth: usize) {
+        if depth > 8 || self.nodes >= 96 || self.out.len() > 12 * 1024 {
+            self.truncated = true;
+            return;
+        }
+        if !self.seen.insert((1, id)) {
+            return;
+        }
+        let Some(write) = self.analysis.report.storage_writes.get(id as usize) else {
+            self.out.push_str("  Assignment evidence is unavailable.\n");
+            return;
+        };
+        self.nodes += 1;
+        let kind = match write.kind {
+            WriteKind::LocalDeclaration => "Local declaration",
+            WriteKind::Assignment => "Assignment",
+            WriteKind::FunctionDeclaration => "Function binding",
+            WriteKind::TableConstructor => "Table field construction",
+            WriteKind::Parameter => "Parameter binding at call",
+            WriteKind::NumericFor => "Loop binding",
+            WriteKind::Rawset => "Raw table assignment",
+            WriteKind::ModeledIntrinsic => "Modeled loader/library assignment",
+        };
+        writeln!(
+            self.out,
+            "{}{}{}",
+            "  ".repeat(depth + 1),
+            kind,
+            if write.deletes_slot {
+                " · removes the slot"
+            } else {
+                ""
+            }
+        )
+        .unwrap();
+        if let Some(site) = &write.site {
+            if let Some(document) = self.analysis.program.documents.get(site.document) {
+                let name = display_path_bytes(&document.load_name)
+                    .chars()
+                    .take(180)
+                    .collect::<String>();
+                let raw = document.source.get(site.span.clone()).unwrap_or_default();
+                let snippet = raw.chars().take(120).collect::<String>();
+                writeln!(
+                    self.out,
+                    "{}{} · line {}\n{}{}",
+                    "  ".repeat(depth + 2),
+                    name,
+                    site.line,
+                    "  ".repeat(depth + 2),
+                    display_path_bytes(snippet.as_bytes())
+                )
+                .unwrap();
+            }
+        } else {
+            self.out
+                .push_str("  No editable source location is claimed for this intrinsic write.\n");
+        }
+        if let Some(expression) = write.value_expression {
+            self.node(expression, depth + 1);
+        }
+        if let Some(key) = write.key_expression {
+            self.out.push_str("  Address key expression:\n");
+            self.node(key, depth + 1);
+        }
+        if let Some(receiver) = write.receiver_expression {
+            self.out.push_str("  Assigned through:\n");
+            self.node(receiver, depth + 1);
+        } else if let Some(receiver) = write.receiver_write {
+            self.write(receiver, depth + 1);
+        }
+        if let Some(value) = write.value_write {
+            self.out.push_str("  Value forwarded from:\n");
+            self.write(value, depth + 1);
+        }
+        if let Some(previous) = write.previous {
+            self.out.push_str("  Earlier write to the same storage:\n");
+            self.write(previous, depth + 1);
+        }
+    }
+    fn value(
+        &mut self,
+        value: &Observed,
+        source: &ValueSource,
+        path: &str,
+        depth: usize,
+        key: Option<&KeySource>,
+    ) {
         if self.leaves >= 32 || depth > 8 || self.out.len() > 12 * 1024 {
             self.truncated = true;
             return;
         }
         if let Observed::Table(rows) = value {
             if !rows.is_empty() {
+                if let Some(write) = source.storage_write {
+                    writeln!(self.out, "\n{path} · Table binding").unwrap();
+                    self.write(write, depth);
+                }
+                let source_keys = &source.keys;
                 for (i, ((key, value), source)) in rows.iter().zip(&source.rows).enumerate() {
                     let key = match key {
                         Observed::Bytes(bytes)
@@ -100,12 +199,18 @@ impl Text<'_> {
                         Observed::Int(n) => format!("[{n}]"),
                         _ => format!("[row {}]", i + 1),
                     };
-                    self.value(value, source, &format!("{path}{key}"), depth + 1);
+                    self.value(
+                        value,
+                        source,
+                        &format!("{path}{key}"),
+                        depth + 1,
+                        source_keys.get(i),
+                    );
                     if self.truncated {
                         break;
                     }
                 }
-                if rows.len() != source.rows.len() {
+                if rows.len() != source.rows.len() || rows.len() != source.keys.len() {
                     self.truncated = true;
                 }
                 return;
@@ -113,6 +218,12 @@ impl Text<'_> {
         }
         self.leaves += 1;
         writeln!(self.out, "\n{path}").unwrap();
+        if let Some(key) = key {
+            if key.introduced_by != key.latest_write {
+                self.out
+                    .push_str("  The present key slot was introduced by an earlier write.\n");
+            }
+        }
         if let Some(id) = source.expression {
             self.node(id, 0);
         } else {
@@ -120,18 +231,24 @@ impl Text<'_> {
                 "  No source expression is recorded for this intrinsic or generated value.\n",
             );
         }
+        if let Some(write) = source.storage_write {
+            self.write(write, 0);
+        }
+        if let Some(introduction) = key.and_then(|k| k.introduced_by) {
+            self.write(introduction, 0);
+        }
     }
 }
 
 pub(super) fn describe(analysis: &Analysis, event: &Event) -> String {
-    let mut text=Text{analysis,out:"Expression evidence only. Complete dependencies, literal ownership and editing rights are not verified. Table-key origins are not recorded.\n".into(),leaves:0,nodes:0,truncated:false};
+    let mut text=Text{analysis,out:"Value, key and assignment evidence only. Complete control dependencies, future effects, literal ownership and editing rights are not verified.\n".into(),leaves:0,nodes:0,truncated:false,seen:BTreeSet::new()};
     for (i, (value, source)) in event
         .arguments
         .iter()
         .zip(&event.argument_sources)
         .enumerate()
     {
-        text.value(value, source, &format!("Argument {}", i + 1), 0);
+        text.value(value, source, &format!("Argument {}", i + 1), 0, None);
         if text.truncated {
             break;
         }
@@ -201,6 +318,26 @@ mod tests {
             blocked: None,
             retained_bytes: 0,
         }
+    }
+    #[test]
+    fn assignment_details_preserve_current_value_key_and_prior_write_roles() {
+        let a =
+            analysis("local old='border_size';local now=old;local t={[old]=2};t[now]=4;emit(t)");
+        let text = describe(&a, &a.report.events[0]);
+        for item in [
+            "Argument 1.border_size",
+            "earlier write",
+            "Address key expression",
+            "Table field construction",
+            "Assignment",
+            "Literal",
+            "old",
+            "now",
+        ] {
+            assert!(text.contains(item), "Missing {item}: {text}");
+        }
+        assert!(text.contains("editing rights are not verified"));
+        assert!(text.len() <= 16 * 1024 + 100);
     }
     #[test]
     fn evidence_paths_distinguish_dotted_keys_from_nested_values_and_bound_shared_expansion() {

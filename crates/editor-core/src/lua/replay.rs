@@ -3,6 +3,7 @@
 mod eval;
 mod observed_float;
 mod provenance;
+mod storage_sources;
 use super::{named, source_hash, syntax_tree, text};
 use crate::{
     module_cache::{self, CachedValue},
@@ -15,6 +16,8 @@ use std::{
     ops::Range,
     sync::Arc,
 };
+use storage_sources::{Address, WriteContext};
+pub use storage_sources::{KeySource, StorageKey, StoragePlace, WriteKind, WriteSite, WriteSource};
 use tree_sitter::{Node, Tree};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -206,6 +209,8 @@ pub struct Report {
     pub profile: Profile,
     pub events: Vec<Event>,
     pub expression_sources: Vec<ExpressionSource>,
+    #[serde(default)]
+    pub storage_writes: Vec<WriteSource>,
     pub loads: Vec<LoadEvent>,
     pub returns: Vec<Observed>,
     pub halt: Option<Halt>,
@@ -232,10 +237,15 @@ enum Kind {
 struct Value {
     kind: Kind,
     origin: Option<u32>,
+    storage_write: Option<u32>,
 }
 impl From<Kind> for Value {
     fn from(kind: Kind) -> Self {
-        Self { kind, origin: None }
+        Self {
+            kind,
+            origin: None,
+            storage_write: None,
+        }
     }
 }
 // Provenance is editor metadata, never part of Lua equality or cache identity.
@@ -314,8 +324,13 @@ struct Env {
     varargs: Vec<Value>,
     variadic: bool,
 }
+struct SlotSource {
+    introduced_by: Option<u32>,
+    latest_write: u32,
+}
 struct Table {
     values: BTreeMap<Key, Value>,
+    slot_sources: BTreeMap<Key, SlotSource>,
     unknown: bool,
 }
 struct Closure<'a> {
@@ -412,6 +427,8 @@ struct Engine<'a> {
     expression_sources: Vec<ExpressionSource>,
     source_frames: Vec<Vec<u32>>,
     source_edges: usize,
+    storage_writes: Vec<WriteSource>,
+    track_writes: bool,
 }
 impl<'a> Engine<'a> {
     fn budget<T>(&self, reason: &str) -> Result<T> {
@@ -441,17 +458,13 @@ impl<'a> Engine<'a> {
         let id = self.tables.len();
         self.tables.push(Table {
             values: BTreeMap::new(),
+            slot_sources: BTreeMap::new(),
             unknown,
         });
         Ok(id)
     }
     fn cell(&mut self, value: Value) -> Result<usize> {
-        if self.cells.len() >= 16_384 {
-            return self.budget("Static replay cell limit exceeded");
-        }
-        let id = self.cells.len();
-        self.cells.push(value);
-        Ok(id)
+        self.cell_at(value, WriteContext::intrinsic())
     }
     fn name(&mut self, name: &str) -> Result<Arc<str>> {
         self.bytes = self.bytes.saturating_add(name.len());
@@ -527,17 +540,27 @@ impl<'a> Engine<'a> {
         })
     }
     fn get(&self, table: usize, key: &Key) -> Value {
-        self.tables[table]
-            .values
-            .get(key)
-            .cloned()
-            .unwrap_or(if self.tables[table].unknown {
-                Value::from(Kind::Unknown("Unmodeled library field"))
-            } else {
-                Value::from(Kind::Nil)
-            })
+        let table = &self.tables[table];
+        let mut value = table.values.get(key).cloned().unwrap_or(if table.unknown {
+            Value::from(Kind::Unknown("Unmodeled library field"))
+        } else {
+            Value::from(Kind::Nil)
+        });
+        if let Some(slot) = table.slot_sources.get(key) {
+            value.storage_write = Some(slot.latest_write);
+        }
+        value
     }
     fn set(&mut self, table: usize, key: Key, value: Value) -> Result<()> {
+        self.set_at(table, key, value, WriteContext::intrinsic())
+    }
+    fn set_at(
+        &mut self,
+        table: usize,
+        key: Key,
+        mut value: Value,
+        context: WriteContext,
+    ) -> Result<()> {
         self.tick()?;
         if table == self.searchers {
             return Err(Failure::Unknown(
@@ -546,9 +569,43 @@ impl<'a> Engine<'a> {
                 "Custom package.searchers changes require a modeled searcher pipeline".into(),
             ));
         }
-        if !self.tables[table].values.contains_key(&key) && self.entries >= 16_384 {
+        let present = self.tables[table].values.contains_key(&key);
+        if !present && self.entries >= 16_384 {
             return self.budget("Static replay table-entry limit exceeded");
         }
+        let previous = self.tables[table]
+            .slot_sources
+            .get(&key)
+            .map(|s| s.latest_write);
+        let write = self.write_source(
+            StoragePlace::Table {
+                identity: table,
+                key: StorageKey::from(&key),
+            },
+            previous,
+            &value,
+            context,
+        )?;
+        if let Some(write) = write {
+            let introduced_by = if value.is_nil() {
+                None
+            } else if present {
+                self.tables[table]
+                    .slot_sources
+                    .get(&key)
+                    .and_then(|s| s.introduced_by)
+            } else {
+                Some(write)
+            };
+            self.tables[table].slot_sources.insert(
+                key.clone(),
+                SlotSource {
+                    introduced_by,
+                    latest_write: write,
+                },
+            );
+        }
+        value.storage_write = write;
         if value.is_nil() {
             if self.tables[table].values.remove(&key).is_some() {
                 self.entries -= 1;
@@ -588,6 +645,8 @@ impl<'a> Engine<'a> {
             expression_sources: vec![],
             source_frames: vec![],
             source_edges: 0,
+            storage_writes: vec![],
+            track_writes: false,
         };
         e.globals = e.table(program.profile == Profile::HyprlandLua54)?;
         e.package = e.table(true)?;
@@ -690,6 +749,7 @@ impl<'a> Engine<'a> {
         let version = e.bytes(b"Lua 5.4")?;
         e.field_set(e.globals, b"_VERSION", version)?;
         e.searchers = searchers;
+        e.track_writes = true;
         Ok(e)
     }
     fn cache(&self, module: &[u8]) -> Result<module_cache::Cache<Value>> {
@@ -1005,16 +1065,33 @@ pub fn replay(program: &Program) -> std::result::Result<Report, String> {
             (vec![], Some(halt))
         }
     };
-    Ok(Report {
+    let report = Report {
         compiler_profile: compiler_profile(),
         version: program.version.clone(),
         profile: program.profile.clone(),
         events: engine.events,
         expression_sources: engine.expression_sources,
+        storage_writes: engine.storage_writes,
         loads: engine.loads,
         returns,
         halt,
         logged_module_errors: engine.logged,
         runtime_verified: false,
-    })
+    };
+    struct Count(usize);
+    impl std::io::Write for Count {
+        fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+            self.0 = self.0.saturating_add(bytes.len());
+            if self.0 > 2 * MAX_DOCUMENT_BYTES {
+                return Err(std::io::Error::other("Replay report exceeds 2 MiB"));
+            }
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+    serde_json::to_writer(&mut Count(0), &report)
+        .map_err(|_| "Replay report exceeds its serialized envelope".to_string())?;
+    Ok(report)
 }

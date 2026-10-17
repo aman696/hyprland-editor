@@ -754,10 +754,16 @@ fn show(
     let keep = gtk::Button::with_label("Keep Analyzed Files in Draft");
     keep.set_widget_name("dependency-keep-graph");
     keep.set_tooltip_text(Some("Requires the imported root at its exact recorded revision; saves no files until Save Draft"));
-    analysis_body.append(&keep);
+    let footer = gtk::Box::new(gtk::Orientation::Vertical, 8);
+    footer.set_margin_start(16);
+    footer.set_margin_end(16);
+    footer.set_margin_top(8);
+    footer.set_margin_bottom(12);
+    footer.append(&keep);
     let keep_feedback = label("");
     keep_feedback.set_widget_name("dependency-keep-status");
-    analysis_body.append(&keep_feedback);
+    footer.append(&keep_feedback);
+    footer.set_visible(false);
     for set in [
         gtk::Widget::set_margin_start,
         gtk::Widget::set_margin_end,
@@ -783,6 +789,7 @@ fn show(
         Some("analysis"),
     );
     root.append(&pages);
+    root.append(&footer);
     win.set_content(Some(&root));
     let session = Rc::new(RefCell::new(Session {
         version,
@@ -840,8 +847,12 @@ fn show(
     let b = back.downgrade();
     let w = win.downgrade();
     let u = ui.clone();
+    let footer = footer.downgrade();
     pages.connect_visible_child_name_notify(move |pages| {
         let analyzing = pages.visible_child_name().as_deref() == Some("analysis");
+        if let Some(footer) = footer.upgrade() {
+            footer.set_visible(analyzing);
+        }
         if let Some(b) = b.upgrade() {
             b.set_visible(analyzing);
         }
@@ -1191,6 +1202,27 @@ pub(super) fn test_review(parent: &adw::Window, state: &Shared) {
         sources.contains("part.lua") && sources.contains("Literal"),
         "{sources}"
     );
+    assert!(sources.contains("Table field construction"), "{sources}");
+    assert!(sources.contains("Address key expression"), "{sources}");
+    if let Ok(path) = std::env::var("HYPRLAND_EDITOR_TEST_CAPTURE") {
+        win.set_default_size(700, 860);
+        let start = std::time::Instant::now();
+        wait(|| start.elapsed() >= std::time::Duration::from_millis(300));
+        let paintable = gtk::WidgetPaintable::new(Some(&win));
+        let node = RefCell::new(None);
+        wait(|| {
+            let snapshot = gtk::Snapshot::new();
+            paintable.snapshot(&snapshot, win.width() as f64, win.height() as f64);
+            *node.borrow_mut() = snapshot.to_node();
+            node.borrow().is_some()
+        });
+        win.renderer()
+            .unwrap()
+            .render_texture(node.into_inner().unwrap(), None)
+            .save_to_png(format!("{path}.source-history.png"))
+            .unwrap();
+        win.set_default_size(700, 660);
+    }
     ui.analysis_view.test_collapse_sources();
     assert_eq!(state.borrow().generation, generation);
     let (minimum, _, _, _) = win.measure(gtk::Orientation::Horizontal, -1);

@@ -1,14 +1,14 @@
 {
-  "canonical_fixtures_sha256": "a191a059b53d172d3f46033c7320cff9a647cedaeb35dc78e71a8e96f29d5055",
+  "canonical_fixtures_sha256": "70fa37b04df70528694fb861250fdbdcb965f6f0d50c9a82d74d11898f416ec6",
   "canonical_release": "5.4.9",
   "format": "hye-lua-profiles-1",
-  "meaning": "Hash-pinned official Lua releases; 92 ordered reference observations and the hash-pinned runtime path fixtures and 592 primitive scalar parse observations verified for each. Only the recorded call-line differences are applied; other differences fail. This is a partial language/compiler profile, not full dependency ABI or target-compositor certification. Original source archives/builds are temporary and removed.",
+  "meaning": "Hash-pinned official Lua releases; 96 ordered reference observations and the hash-pinned runtime path fixtures and 592 primitive scalar parse observations verified for each. Only the recorded call-line differences are applied; other differences fail. This is a partial language/compiler profile, not full dependency ABI or target-compositor certification. Original source archives/builds are temporary and removed.",
   "profiles": [
     {
       "archive_sha256": "7d5ea1b9cb6aa0b59ca3dde1c6adcb57ef83a1ba8e5432c0ecd06bf439b3ad88",
       "archive_url": "https://www.lua.org/ftp/lua-5.4.6.tar.gz",
       "error_call_line": "callee",
-      "observations_sha256": "f9bdfb0eaba6135d0edd2154093afdcd7370a76ad077a22daad8274607d03336",
+      "observations_sha256": "7b5adf14fc5159bc81dc5f1bd848624a8e1102840ba4886ef9b5d69a2315b21a",
       "ordered_overrides": [
         {
           "case": "error_location_uses_argument_opening_line",
@@ -36,7 +36,7 @@
       "archive_sha256": "9fbf5e28ef86c69858f6d3d34eccc32e911c1a28b4120ff3e84aaa70cfbf1e30",
       "archive_url": "https://www.lua.org/ftp/lua-5.4.7.tar.gz",
       "error_call_line": "arguments",
-      "observations_sha256": "a191a059b53d172d3f46033c7320cff9a647cedaeb35dc78e71a8e96f29d5055",
+      "observations_sha256": "70fa37b04df70528694fb861250fdbdcb965f6f0d50c9a82d74d11898f416ec6",
       "ordered_overrides": [],
       "release": "5.4.7",
       "primitive_conversion_profile": "hye-primitive-coercions-1"
@@ -45,7 +45,7 @@
       "archive_sha256": "4f18ddae154e793e46eeab727c59ef1c0c0c2b744e7b94219710d76f530629ae",
       "archive_url": "https://www.lua.org/ftp/lua-5.4.8.tar.gz",
       "error_call_line": "arguments",
-      "observations_sha256": "a191a059b53d172d3f46033c7320cff9a647cedaeb35dc78e71a8e96f29d5055",
+      "observations_sha256": "70fa37b04df70528694fb861250fdbdcb965f6f0d50c9a82d74d11898f416ec6",
       "ordered_overrides": [],
       "release": "5.4.8",
       "primitive_conversion_profile": "hye-primitive-coercions-1"
@@ -54,7 +54,7 @@
       "archive_sha256": "2335b6c582a52654f94612bf10d2f4672805d05329aa6568b1d8cd9e5c6fb8e6",
       "archive_url": "https://www.lua.org/ftp/lua-5.4.9.tar.gz",
       "error_call_line": "arguments",
-      "observations_sha256": "a191a059b53d172d3f46033c7320cff9a647cedaeb35dc78e71a8e96f29d5055",
+      "observations_sha256": "70fa37b04df70528694fb861250fdbdcb965f6f0d50c9a82d74d11898f416ec6",
       "ordered_overrides": [],
       "release": "5.4.9",
       "primitive_conversion_profile": "hye-primitive-coercions-1"

@@ -36,6 +36,8 @@ FILES = {
     'where.lua': "local ok,e=pcall(function()error\n(\n'x'\n)end);emit(e);return true",
 }
 CASES = [
+    ('key_overwrite_delete_reinsert', "local first='border_size';local second=first;local t={[first]=1};local alias=t;alias[second]=2;emit({value=t.border_size});rawset(alias,second,nil);emit({value=t.border_size});alias[second]=3;emit({value=t.border_size})"),
+    ('shadow_parameter_nil_history', "local x=1;local function f(x)x=x+1;return x end;do local x=4;emit(x)end;emit(f(x));x=nil;emit(x==nil)"),
     ('captured_cells', "local x=1;local function f()return x end;x=2;emit(f())"),
     ('later_local_not_visible', "local function f()return later end;local later=7;emit(f()==nil)"),
     ('block_shadowing_outer_mutation', "local x=1;do local f=function()x=x+1 end;f();local x=9 end;emit(x)"),

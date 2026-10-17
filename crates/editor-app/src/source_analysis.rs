@@ -94,6 +94,7 @@ pub(super) fn build(model: &Model) -> (gtk::Box, View) {
     calls_page.append(&calls);
     let (area, detail) = text_area("dependency-analysis-call-details");
     calls_page.append(&area);
+    let detail_area = area.downgrade();
     let (raw_area, raw) = text_area("dependency-raw-arguments");
     raw.update_property(&[gtk::accessible::Property::Label(
         "Raw modeled settings arguments",
@@ -114,21 +115,46 @@ pub(super) fn build(model: &Model) -> (gtk::Box, View) {
         .child(&area)
         .build();
     calls_page.append(&source_expander);
+    let reflow: Rc<dyn Fn()> = Rc::new({
+        let raw = raw_expander.downgrade();
+        let source = source_expander.downgrade();
+        let detail = detail_area;
+        move || {
+            let (Some(raw), Some(source), Some(detail)) =
+                (raw.upgrade(), source.upgrade(), detail.upgrade())
+            else {
+                return;
+            };
+            let expanded = raw.is_expanded() || source.is_expanded();
+            detail.set_vexpand(!expanded);
+            detail.set_min_content_height(if expanded { 100 } else { 180 });
+            for expander in [raw, source] {
+                expander.set_vexpand(expander.is_expanded());
+                if let Some(child) = expander.child() {
+                    child.set_vexpand(expander.is_expanded());
+                }
+            }
+        }
+    });
     let weak = source_expander.downgrade();
+    let resize = reflow.clone();
     raw_expander.connect_expanded_notify(move |e| {
         if e.is_expanded() {
             if let Some(other) = weak.upgrade() {
                 other.set_expanded(false);
             }
         }
+        resize();
     });
     let weak = raw_expander.downgrade();
+    let resize = reflow;
     source_expander.connect_expanded_notify(move |e| {
         if e.is_expanded() {
             if let Some(other) = weak.upgrade() {
                 other.set_expanded(false);
             }
         }
+        resize();
     });
     tabs.add_titled(&calls_page, Some("calls"), "Ordered calls");
     let switcher = gtk::StackSwitcher::builder().stack(&tabs).build();

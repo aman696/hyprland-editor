@@ -251,10 +251,13 @@ impl<'a> Engine<'a> {
                             && !text(field, source).trim_start().starts_with('[')
                         {
                             let v = self.bytes(text(name, source).as_bytes())?;
-                            Some(self.key(v)?)
+                            let v = self.literal_key(doc, name, v)?;
+                            let origin = v.origin;
+                            Some((self.key(v)?, origin))
                         } else {
                             let v = self.one(doc, name, env, depth + 1)?;
-                            Some(self.key(v)?)
+                            let origin = v.origin;
+                            Some((self.key(v)?, origin))
                         }
                     } else {
                         None
@@ -265,7 +268,7 @@ impl<'a> Engine<'a> {
                         vec![self.one(doc, expression, env, depth + 1)?]
                     };
                     for value in values {
-                        let k = key.clone().unwrap_or_else(|| {
+                        let k = key.as_ref().map(|(key, _)| key.clone()).unwrap_or_else(|| {
                             let key = Key::Int(array);
                             array += 1;
                             key
@@ -277,7 +280,9 @@ impl<'a> Engine<'a> {
                                 "Duplicate constructor writes have unspecified storage order",
                             );
                         }
-                        self.set(id, k, value)?;
+                        let mut context = WriteContext::at(doc, field, WriteKind::TableConstructor);
+                        context.key_expression = key.as_ref().and_then(|(_, origin)| *origin);
+                        self.set_at(id, k, value, context)?;
                     }
                 }
                 Value::from(Kind::Table(id))
@@ -650,16 +655,26 @@ impl<'a> Engine<'a> {
         }
         Ok(Value::from(Kind::Float(v)))
     }
-    fn place(&mut self, doc: usize, node: Node<'a>, env: &mut Env) -> Result<Place> {
+    fn place(&mut self, doc: usize, node: Node<'a>, env: &mut Env) -> Result<Address> {
         let source = &self.documents[doc].document.source;
         if node.kind() == "identifier" {
             let name = text(node, source);
             if let Some(id) = env.locals.get(name) {
-                return Ok(Place::Cell(*id));
+                return Ok(Address::cell(*id));
             }
             let global = self.variable(env, "_ENV")?;
+            let receiver_expression = global.origin;
+            let receiver_write = global.storage_write;
             let table = self.table_id(doc, node, global)?;
-            return Ok(Place::Field(table, Key::Bytes(Arc::from(name.as_bytes()))));
+            let value = self.bytes(name.as_bytes())?;
+            let value = self.literal_key(doc, node, value)?;
+            let key_expression = value.origin;
+            return Ok(Address {
+                place: Place::Field(table, self.key(value)?),
+                key_expression,
+                receiver_expression,
+                receiver_write,
+            });
         }
         if [
             "dot_index_expression",
@@ -669,6 +684,8 @@ impl<'a> Engine<'a> {
         .contains(&node.kind())
         {
             let value = self.one(doc, self.required(node, "table")?, env, 0)?;
+            let receiver_expression = value.origin;
+            let receiver_write = value.storage_write;
             let table = self.table_id(doc, node, value)?;
             let field = self.required(
                 node,
@@ -681,15 +698,33 @@ impl<'a> Engine<'a> {
             let value = if node.kind() == "bracket_index_expression" {
                 self.one(doc, field, env, 0)?
             } else {
-                self.bytes(text(field, source).as_bytes())?
+                let value = self.bytes(text(field, source).as_bytes())?;
+                self.literal_key(doc, field, value)?
             };
-            return Ok(Place::Field(table, self.key(value)?));
+            let key_expression = value.origin;
+            return Ok(Address {
+                place: Place::Field(table, self.key(value)?),
+                key_expression,
+                receiver_expression,
+                receiver_write,
+            });
         }
         self.unknown(doc, node, "Assignment target is not modeled")
     }
-    fn store(&mut self, doc: usize, node: Node<'a>, place: Place, value: Value) -> Result<()> {
-        match place {
-            Place::Cell(id) => self.cells[id] = value,
+    fn store(
+        &mut self,
+        doc: usize,
+        node: Node<'a>,
+        address: Address,
+        value: Value,
+        kind: WriteKind,
+    ) -> Result<()> {
+        let mut context = WriteContext::at(doc, node, kind);
+        context.key_expression = address.key_expression;
+        context.receiver_expression = address.receiver_expression;
+        context.receiver_write = address.receiver_write;
+        match address.place {
+            Place::Cell(id) => self.cell_set(id, value, context)?,
             Place::Field(id, key) => {
                 if id == self.package
                     && key == Key::Bytes(Arc::from(b"searchers".as_slice()))
@@ -701,7 +736,7 @@ impl<'a> Engine<'a> {
                         "Replacing package.searchers needs a modeled searcher pipeline",
                     );
                 }
-                self.set(id, key, value)?;
+                self.set_at(id, key, value, context)?;
             }
         }
         Ok(())
@@ -767,7 +802,10 @@ impl<'a> Engine<'a> {
                 } else {
                     for var in &vars {
                         let place = self.place(doc, *var, env)?;
-                        if places.contains(&place) {
+                        if places
+                            .iter()
+                            .any(|prior: &Address| prior.place == place.place)
+                        {
                             return self.unknown(doc,node,"Repeated assignment addresses need an explicit Lua storage-order model");
                         }
                         places.push(place);
@@ -782,11 +820,14 @@ impl<'a> Engine<'a> {
                 for (i, var) in vars.into_iter().enumerate() {
                     let value = values.get(i).cloned().unwrap_or(Value::from(Kind::Nil));
                     if local {
-                        let id = self.cell(value)?;
+                        let id = self.cell_at(
+                            value,
+                            WriteContext::at(doc, var, WriteKind::LocalDeclaration),
+                        )?;
                         env.locals.insert(self.name(text(var, source))?, id);
                     } else {
                         let place = places.remove(0);
-                        self.store(doc, var, place, value)?;
+                        self.store(doc, var, place, value, WriteKind::Assignment)?;
                     }
                 }
             }
@@ -794,15 +835,18 @@ impl<'a> Engine<'a> {
                 let name = self.required(node, "name")?;
                 let local = node.child(0).is_some_and(|token| token.kind() == "local");
                 let place = if local {
-                    let id = self.cell(Value::from(Kind::Nil))?;
+                    let id = self.cell_at(
+                        Value::from(Kind::Nil),
+                        WriteContext::at(doc, name, WriteKind::LocalDeclaration),
+                    )?;
                     env.locals.insert(self.name(text(name, source))?, id);
-                    Place::Cell(id)
+                    Address::cell(id)
                 } else {
                     self.place(doc, name, env)?
                 };
                 let value =
                     self.closure(doc, node, env, name.kind() == "method_index_expression")?;
-                self.store(doc, name, place, value)?;
+                self.store(doc, name, place, value, WriteKind::FunctionDeclaration)?;
             }
             "if_statement" => {
                 let condition = self.one(doc, self.required(node, "condition")?, env, 0)?;
@@ -927,7 +971,14 @@ impl<'a> Engine<'a> {
                 } {
                     self.tick()?;
                     let mut inner = self.copied(env)?;
-                    let id = self.cell(Value::from(Kind::Int(current)))?;
+                    let id = self.cell_at(
+                        Value::from(Kind::Int(current)),
+                        WriteContext::at(
+                            doc,
+                            self.required(clause, "name")?,
+                            WriteKind::NumericFor,
+                        ),
+                    )?;
                     inner
                         .locals
                         .insert(self.name(text(self.required(clause, "name")?, source))?, id);
@@ -1008,7 +1059,10 @@ impl<'a> Engine<'a> {
                     vec![]
                 };
                 for (i, name) in params.into_iter().enumerate() {
-                    let id = self.cell(args.get(i).cloned().unwrap_or(Value::from(Kind::Nil)))?;
+                    let id = self.cell_at(
+                        args.get(i).cloned().unwrap_or(Value::from(Kind::Nil)),
+                        WriteContext::at(doc, node, WriteKind::Parameter),
+                    )?;
                     env.locals.insert(name, id);
                 }
                 if let Some(body) = body {
@@ -1166,6 +1220,7 @@ impl<'a> Engine<'a> {
                 {
                     return Ok(vec![Value::from(Kind::Nil)]);
                 }
+                let key_expression = value.origin;
                 let key = self.key(value)?;
                 if matches!(
                     function,
@@ -1179,8 +1234,14 @@ impl<'a> Engine<'a> {
                     self.store(
                         doc,
                         node,
-                        Place::Field(id, key),
+                        Address {
+                            place: Place::Field(id, key),
+                            key_expression,
+                            receiver_expression: args.first().and_then(|v| v.origin),
+                            receiver_write: args.first().and_then(|v| v.storage_write),
+                        },
                         args.get(2).cloned().unwrap_or(Value::from(Kind::Nil)),
+                        WriteKind::Rawset,
                     )?;
                     Ok(vec![Value::from(Kind::Table(id))])
                 }

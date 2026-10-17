@@ -49,7 +49,7 @@ These are explicit editor limits, not Hyprland semantic limits or a measured who
 
 ## Verification and remaining work
 
-`scripts/ordered_module_probe.py --check` fetches exact hash-pinned Hyprland loader helpers into memory and compiles them in a temporary directory with real Lua 5.4. Only private trusted fixture programs execute. Ninety-two observations across the two audited snapshots are stored in `data/ordered-module-fixtures.json`, including source/module bytes and the audit-manifest hash. The inert `hl.config` fixture records its argument only; it does not stand in for field codecs. Temporary upstream originals are deleted on exit.
+`scripts/ordered_module_probe.py --check` fetches exact hash-pinned Hyprland loader helpers into memory and compiles them in a temporary directory with real Lua 5.4. Only private trusted fixture programs execute. Ninety-six observations across the two audited snapshots are stored in `data/ordered-module-fixtures.json`, including source/module bytes and the audit-manifest hash. The inert `hl.config` fixture records its argument only; it does not stand in for field codecs. Temporary upstream originals are deleted on exit.
 
 `data/lua-profiles.json` pins official [Lua archive checksums](https://www.lua.org/ftp/), the canonical observation hash and exact release-specific differences. `scripts/lua_profile_probe.py --check` separately builds Lua 5.4.6, 5.4.7, 5.4.8 and 5.4.9, checks the application compilation adapter against each, then compares all 92 observations for each release (368 comparisons, not 368 distinct cases). Sources and builds are removed on exit. Unexpected differences fail with the affected case/field; unknown versions cannot silently refresh canonical observations. This is a partial tested profile, not a complete language, ABI, platform or target-compositor certificate.
 
@@ -88,3 +88,6 @@ The arena permits 8,192 result nodes, 32,768 edges and 256 active expression fra
 Tests cover both audited versions, distinct equal literals, imported values, aliases and mutation, closure/multiple returns, cached table identity, expression ranges/lines, acyclic backward references, serialization, cycles and budget refusal. Existing 92 reference observations still match modeled values. The native workflow displays an imported literal's source and checks the measured 350-pixel minimum width. The stale-result fixture now waits for the exact completed operation rather than assuming cleared UI pending state means a helper finished. Current local validation passes 227 ordinary tests plus one private-display native workflow (228 total), strict lint, formatting, release and metadata checks.
 
 ![Expression sources in captured analysis](screenshots/value-sources.png)
+
+
+The model now records [keys and storage write history](storage-provenance.md) independently of value equality and cache/table identity. The reference matrix contains 96 ordered observations per Lua release, including copied-value mutation checkpoints and shadowed/parameter/nil bindings. Control/future-effect and full edit ownership remain unproven.

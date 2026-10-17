@@ -136,6 +136,16 @@ fn ordered_modules_and_compilation_run_inside_the_restricted_worker() {
     assert!(result["Replayed"]["halt"].is_null());
     assert_eq!(result["Replayed"]["events"].as_array().unwrap().len(), 1);
     assert_eq!(result["Replayed"]["runtime_verified"], false);
+    assert!(!result["Replayed"]["storage_writes"]
+        .as_array()
+        .unwrap()
+        .is_empty());
+    assert!(
+        !result["Replayed"]["events"][0]["argument_sources"][0]["keys"]
+            .as_array()
+            .unwrap()
+            .is_empty()
+    );
     let bad = replay_program("hl.config({general={border_size=2}});local x <const> = 1;x=2");
     let result = self::request(json!({"ReplayModules":bad}));
     assert_eq!(result["Replayed"]["halt"]["kind"], "lua_error");
