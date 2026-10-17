@@ -9,6 +9,11 @@ use std::{
 const MAX_OPERATIONS: usize = 1000;
 const MAX_BYTES: usize = 8 * 1024 * 1024;
 pub(super) enum Undo {
+    Graph {
+        previous: Option<Arc<super::source_graph::Saved>>,
+        changes: Vec<(String, Option<Value>)>,
+        retained_bytes: usize,
+    },
     Field {
         id: String,
         previous: Option<Value>,
@@ -323,6 +328,15 @@ impl Undo {
                         + changes_bytes(changes)
                         + origin_bytes(origin)
                 }
+                Self::Graph {
+                    changes,
+                    retained_bytes,
+                    ..
+                } => {
+                    *retained_bytes
+                        + changes.capacity() * size_of::<(String, Option<Value>)>()
+                        + changes_bytes(changes)
+                }
                 Self::Gestures { retained_bytes, .. }
                 | Self::Animations { retained_bytes, .. }
                 | Self::Rules { retained_bytes, .. }
@@ -339,6 +353,27 @@ pub(super) struct History {
     entries: VecDeque<Undo>,
 }
 impl History {
+    #[cfg(test)]
+    pub(super) fn previous_graph(&self) -> Option<Option<String>> {
+        match self.entries.back() {
+            Some(Undo::Graph { previous, .. }) => {
+                Some(previous.as_ref().map(|g| g.fingerprint.clone()))
+            }
+            _ => None,
+        }
+    }
+    pub fn graph(
+        &mut self,
+        previous: Option<Arc<super::source_graph::Saved>>,
+        changes: Vec<(String, Option<Value>)>,
+    ) -> Result<(), String> {
+        let retained_bytes = previous.as_ref().map_or(0, |g| g.history_cost);
+        self.push(Undo::Graph {
+            previous,
+            changes,
+            retained_bytes,
+        })
+    }
     pub fn gestures(
         &mut self,
         previous: hyprland_editor_core::gesture::Draft,
@@ -387,7 +422,13 @@ impl History {
                             document,
                             document_bytes,
                             ..
-                        } if sources.insert(Arc::as_ptr(document) as usize) => *document_bytes,
+                        } if sources.insert((0, Arc::as_ptr(document) as usize)) => *document_bytes,
+                        Undo::Graph {
+                            previous: Some(graph),
+                            ..
+                        } if sources.insert((1, Arc::as_ptr(&graph.bundle.sources) as usize)) => {
+                            graph.shared_cost
+                        }
                         _ => 0,
                     }
             })
@@ -398,6 +439,10 @@ impl History {
         let single = entry.bytes()
             + match &entry {
                 Undo::Source { document_bytes, .. } => *document_bytes,
+                Undo::Graph {
+                    previous: Some(graph),
+                    ..
+                } => graph.shared_cost,
                 _ => 0,
             };
         if single + 2 * size_of::<Undo>() > MAX_BYTES {
@@ -648,5 +693,20 @@ mod tests {
             .field("too-large", Some(Value::String("x".repeat(MAX_BYTES))))
             .is_err());
         assert_eq!(history.entries.len(), 1);
+    }
+    #[test]
+    fn graph_and_override_inverse_budget_failure_preserves_existing_history() {
+        let mut history = History::default();
+        history.field("previous", Some(Value::Int(3))).unwrap();
+        assert!(history
+            .graph(
+                None,
+                vec![("large".into(), Some(Value::String("x".repeat(MAX_BYTES))))]
+            )
+            .is_err());
+        assert!(
+            matches!(history.pop(),Some(Undo::Field{id,previous:Some(Value::Int(3))}) if id=="previous")
+        );
+        assert!(history.is_empty());
     }
 }

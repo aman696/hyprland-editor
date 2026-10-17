@@ -508,6 +508,7 @@ pub(super) fn test_editor(window: &adw::ApplicationWindow) {
     target.set_expanded(false);
     assert_eq!(current(&state)[0].normalized_name(), "Example-USB-keyboard");
     let fields = device::catalogue(&state.borrow().draft.version);
+    assert_eq!(fields.len(), 47);
     let property = pick(&win, "device-field");
     for (index, setting) in fields.iter().enumerate() {
         property.set_selected(index as u32);
@@ -532,6 +533,105 @@ pub(super) fn test_editor(window: &adw::ApplicationWindow) {
                 .text()
         );
     }
+    // Newly discovered tablet-tool controls use the same draft/undo path.
+    property.set_selected(
+        fields
+            .iter()
+            .position(|s| s.lua_key == "eraser_button_mode")
+            .unwrap() as u32,
+    );
+    pick(&win, "device-eraser-mode").set_selected(2);
+    let mode = descendants(win.upcast_ref())
+        .into_iter()
+        .find(|w| w.widget_name() == "device-eraser-other-mode")
+        .unwrap()
+        .downcast::<gtk::SpinButton>()
+        .unwrap();
+    mode.set_value(5.0);
+    click(&win, "Update Device Draft");
+    assert_eq!(
+        current(&state)[0].fields["eraser_button_mode"],
+        hyprland_editor_core::Value::Int(5)
+    );
+    state.borrow_mut().undo_last();
+    assert_eq!(
+        current(&state)[0].fields["eraser_button_mode"],
+        hyprland_editor_core::Value::Int(0)
+    );
+    property.set_selected(
+        fields
+            .iter()
+            .position(|s| s.lua_key == "eraser_button_override")
+            .unwrap() as u32,
+    );
+    pick(&win, "device-eraser-button").set_selected(1);
+    click(&win, "Update Device Draft");
+    assert_eq!(
+        current(&state)[0].fields["eraser_button_override"],
+        hyprland_editor_core::Value::Int(331)
+    );
+    property.set_selected(
+        fields
+            .iter()
+            .position(|s| s.lua_key == "pressure_range_min")
+            .unwrap() as u32,
+    );
+    let automatic = descendants(win.upcast_ref())
+        .into_iter()
+        .find(|w| w.widget_name() == "device-pressure-default")
+        .unwrap()
+        .downcast::<gtk::CheckButton>()
+        .unwrap();
+    automatic.set_active(false);
+    let pressure = descendants(win.upcast_ref())
+        .into_iter()
+        .find(|w| w.widget_name() == "device-pressure-value")
+        .unwrap()
+        .downcast::<gtk::SpinButton>()
+        .unwrap();
+    pressure.set_value(0.25);
+    click(&win, "Update Device Draft");
+    assert_eq!(
+        current(&state)[0].fields["pressure_range_min"],
+        hyprland_editor_core::Value::Float(0.25)
+    );
+    automatic.set_active(true);
+    click(&win, "Update Device Draft");
+    assert_eq!(
+        current(&state)[0].fields["pressure_range_min"],
+        hyprland_editor_core::Value::Float(-1.0)
+    );
+    // Opening a preserved negative sentinel must not normalize it on its own.
+    let setting = fields
+        .iter()
+        .find(|s| s.lua_key == "pressure_range_max")
+        .unwrap();
+    let mut sentinel = Spec::new("sentinel", "Pen");
+    sentinel.fields.insert(
+        "pressure_range_max".into(),
+        hyprland_editor_core::Value::Float(-0.5),
+    );
+    let body = gtk::Box::new(gtk::Orientation::Vertical, 0);
+    let parent = adw::Window::new();
+    let get = device_forms::form(setting, &sentinel, &body, &parent, None);
+    assert_eq!(
+        get().unwrap()["pressure_range_max"],
+        hyprland_editor_core::Value::Float(-0.5)
+    );
+    parent.destroy();
+    // The display's six decimal places do not silently round an untouched draft.
+    let body = gtk::Box::new(gtk::Orientation::Vertical, 0);
+    let parent = adw::Window::new();
+    sentinel.fields.insert(
+        "pressure_range_max".into(),
+        hyprland_editor_core::Value::Float(0.123456789),
+    );
+    let get = device_forms::form(setting, &sentinel, &body, &parent, None);
+    assert_eq!(
+        get().unwrap()["pressure_range_max"],
+        hyprland_editor_core::Value::Float(0.123456789)
+    );
+    parent.destroy();
     property.set_selected(
         fields
             .iter()
@@ -755,6 +855,24 @@ pub(super) fn test_editor(window: &adw::ApplicationWindow) {
             .unwrap()
             .render_texture(&node, None)
             .save_to_png(format!("{path}.devices.png"))
+            .unwrap();
+    }
+    property.set_selected(
+        fields
+            .iter()
+            .position(|s| s.lua_key == "pressure_range_max")
+            .unwrap() as u32,
+    );
+    settle();
+    if let Ok(path) = std::env::var("HYPRLAND_EDITOR_TEST_CAPTURE") {
+        let paintable = gtk::WidgetPaintable::new(Some(&win));
+        let snapshot = gtk::Snapshot::new();
+        paintable.snapshot(&snapshot, win.width() as f64, win.height() as f64);
+        let node = snapshot.to_node().unwrap();
+        win.renderer()
+            .unwrap()
+            .render_texture(&node, None)
+            .save_to_png(format!("{path}.tablet-tool.png"))
             .unwrap();
     }
     win.destroy();

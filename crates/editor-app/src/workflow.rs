@@ -32,6 +32,7 @@ pub(super) fn background<T: Send + 'static>(
     });
 }
 struct Imported {
+    graph: Option<std::sync::Arc<super::source_graph::Saved>>,
     draft: Draft,
     source: Option<LuaDocument>,
     origin: Option<SourceIdentity>,
@@ -52,7 +53,20 @@ fn read_import(
 ) -> Result<Imported, String> {
     if path.extension().is_some_and(|extension| extension == "hye") {
         let workspace = workspace::read(&path, &catalogue)?;
-        if workspace.sources.len() > 1 {
+        let graph = if let Some(graph) = &workspace.source_graph {
+            let bundle = hyprland_editor_core::workspace_graph::Bundle {
+                graph: graph.clone(),
+                sources: std::sync::Arc::new(workspace.sources.clone()),
+            };
+            super::source_graph::restore(&bundle, &workspace.draft.version)?;
+            Some(std::sync::Arc::new(super::source_graph::Saved::new(
+                bundle,
+                &workspace.draft.version,
+            )?))
+        } else {
+            None
+        };
+        if workspace.sources.len() > 1 && graph.is_none() {
             return Err("Multi-file workspace reopening needs the source-graph editor; this revision will not silently drop attached files".into());
         }
         let (source, origin) = if let Some(root) = workspace.root() {
@@ -71,25 +85,25 @@ fn read_import(
         let diagnostics = source
             .as_ref()
             .map_or(0, |doc| doc.report.diagnostics.len());
-        return Ok(Imported { draft:workspace.draft,source,origin,saved_json:true,monitors:workspace.monitors,devices:workspace.devices,bindings:workspace.bindings,workspace_rules:workspace.workspace_rules,rules:workspace.rules,animations:workspace.animations,gestures:workspace.gestures,
+        return Ok(Imported { graph,draft:workspace.draft,source,origin,saved_json:true,monitors:workspace.monitors,devices:workspace.devices,bindings:workspace.bindings,workspace_rules:workspace.workspace_rules,rules:workspace.rules,animations:workspace.animations,gestures:workspace.gestures,
             message:format!("Saved draft reopened with {diagnostics} source diagnostics. Source snapshots were reparsed; recorded original paths were not opened. Desktop state is separate.") });
     }
     let captured = if path
         .extension()
         .is_some_and(|extension| extension == "lua" || extension == "conf")
     {
-        hyprland_editor_core::source_path::read_selected(&path)?
+        super::capture_worker::read_selected(&path)?
     } else {
         storage::read_source(&path)?
     };
     match path.extension().and_then(|s|s.to_str()) {
-        Some("json")=>Draft::from_json(&captured.content,&catalogue).map(|draft|Imported{draft,source:None,origin:None,monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),message:"Validated value-only draft loaded".into(),saved_json:true}),
-        Some("conf")=>import::legacy(&captured.content,&catalogue).map(|r|Imported{message:format!("Imported {} literal overrides; {} lines skipped; {} repeated keys. Includes and variables remain unresolved. Active state is separate.",r.draft.values.len(),r.skipped.len(),r.duplicate_keys.len()),draft:r.draft,source:None,origin:None,monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),saved_json:false}),
+        Some("json")=>Draft::from_json(&captured.content,&catalogue).map(|draft|Imported{graph:None,draft,source:None,origin:None,monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),message:"Validated value-only draft loaded".into(),saved_json:true}),
+        Some("conf")=>import::legacy(&captured.content,&catalogue).map(|r|Imported{graph:None,message:format!("Imported {} literal overrides; {} lines skipped; {} repeated keys. Includes and variables remain unresolved. Active state is separate.",r.draft.values.len(),r.skipped.len(),r.duplicate_keys.len()),draft:r.draft,source:None,origin:None,monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),saved_json:false}),
         Some("lua")=>{
             let doc=parse_source(captured.content,version,&catalogue)?;
             let mut message=format!("Imported {} scalar declarations, {} monitor rules and {} device rules; {} diagnostics. Effective values are not inferred by executing Lua.",doc.report.draft.values.len(),doc.report.monitors.len(),doc.report.devices.len(),doc.report.diagnostics.len());
             if doc.report.opaque_effects{message.push_str(" Opaque code remains in the source; this is a partial projection.");}
-            Ok(Imported{draft:doc.report.draft.clone(),monitors:doc.report.monitors.clone(),devices:doc.report.devices.clone(),bindings:doc.report.bindings.clone(),workspace_rules:doc.report.workspace_rules.clone(),rules:doc.report.rules.clone(),animations:doc.report.animations.clone(),gestures:doc.report.gestures.clone(),source:Some(doc),origin:Some(captured.identity),message,saved_json:false})
+            Ok(Imported{graph:None,draft:doc.report.draft.clone(),monitors:doc.report.monitors.clone(),devices:doc.report.devices.clone(),bindings:doc.report.bindings.clone(),workspace_rules:doc.report.workspace_rules.clone(),rules:doc.report.rules.clone(),animations:doc.report.animations.clone(),gestures:doc.report.gestures.clone(),source:Some(doc),origin:Some(captured.identity),message,saved_json:false})
         },_=>Err("Select saved .hye workspace, draft JSON, legacy .conf or Lua .lua source".into()),
     }
 }
@@ -119,6 +133,11 @@ pub(super) fn check_workspace(path: PathBuf) -> Result<serde_json::Value, String
         "source_sha256":imported.source.as_ref().map(|s|s.report.source_sha256.as_str()),
         "opaque_effects":imported.source.as_ref().is_some_and(|s|s.report.opaque_effects),
         "source_diagnostics":imported.source.as_ref().map_or(0,|s|s.report.diagnostics.len()),
+        "source_graph_replayed":imported.graph.is_some(),
+        "source_graph_documents":imported.graph.as_ref().map_or(0,|g|g.bundle.sources.len()),
+        "source_graph_bindings":imported.graph.as_ref().map_or(0,|g|g.bundle.graph.bindings.len()),
+        "source_graph_revisions":imported.graph.as_ref().map_or(0,|g|g.bundle.graph.revisions.len()),
+        "folder_access_restored":false,
         "runtime_verified":false,"original_paths_opened":false}),
     )
 }
@@ -129,6 +148,9 @@ pub(super) fn source_workspace(
         return Err("Comparison requires a saved .hye workspace".into());
     }
     let imported = read_import(path, hyprland_editor_core::catalogue(), BASELINE.into())?;
+    if imported.graph.is_some() {
+        return Err("Graph reconciliation must account for every saved file; single-root comparison is unavailable for this workspace.".into());
+    }
     Ok((
         imported.draft,
         imported
@@ -163,7 +185,9 @@ fn connect_save_at(
         let Some(win)=win.upgrade() else{return;};
         let (generation,catalogue,workspace)={
             let s=state.borrow();let mut snapshot=Workspace::new(s.draft.clone()).with_monitors(s.monitors.get(&s.draft.version).cloned().unwrap_or_default()).with_devices(s.devices.get(&s.draft.version).cloned().unwrap_or_default()).with_bindings(s.bindings.get(&s.draft.version).cloned().unwrap_or_default()).with_workspace_rules(s.workspace_rules.get(&s.draft.version).cloned().unwrap_or_default()).with_rules(s.rules.get(&s.draft.version).cloned().unwrap_or_default()).with_animations(s.animations.get(&s.draft.version).cloned().unwrap_or_default()).with_gestures(s.gestures.get(&s.draft.version).cloned().unwrap_or_default());
-            if let Some(doc)=s.sources.get(&s.draft.version) {
+            if let Some(graph)=s.source_graphs.get(&s.draft.version) {
+                snapshot=snapshot.with_graph(&graph.bundle);
+            } else if let Some(doc)=s.sources.get(&s.draft.version) {
                 let Some(origin)=s.source_origins.get(&s.draft.version) else {
                     notice(&win,"Source identity missing","Reimport the original source before saving its context.");return;
                 };
@@ -173,6 +197,7 @@ fn connect_save_at(
         };
         let saved_gestures=workspace.gestures.clone();let saved_animations=workspace.animations.clone();let saved_rules=workspace.rules.clone();let saved_workspaces=workspace.workspace_rules.clone();let saved_bindings=workspace.bindings.clone();let saved_devices=workspace.devices.clone();let saved_monitors=workspace.monitors.clone();let saved_values=workspace.draft.values.clone();let saved_version=workspace.draft.version.clone();
         let saved_origin=workspace.root().map(|root|root.origin.clone());
+        let saved_graph=state.borrow().source_graphs.get(&saved_version).map(|g|g.fingerprint.clone());
         let root=root.clone();
         button.set_sensitive(false);status.set_text("Saving a private draft and source snapshot…");
         let button=button.downgrade();let state=state.clone();let status=status.clone();let win=win.downgrade();
@@ -188,7 +213,7 @@ fn connect_save_at(
                 Ok(path)=>{
                     let mut s=state.borrow_mut();
                     if s.generation==generation {
-                        s.saved.insert(saved_version.clone(),saved_values);s.saved_monitors.insert(saved_version.clone(),saved_monitors);s.saved_devices.insert(saved_version.clone(),saved_devices);s.saved_bindings.insert(saved_version.clone(),saved_bindings);s.saved_rules.insert(saved_version.clone(),saved_rules);s.saved_animations.insert(saved_version.clone(),saved_animations);s.saved_gestures.insert(saved_version.clone(),saved_gestures);s.saved_workspace_rules.insert(saved_version.clone(),saved_workspaces);s.saved_source_origins.insert(saved_version,saved_origin);
+                        s.saved.insert(saved_version.clone(),saved_values);s.saved_monitors.insert(saved_version.clone(),saved_monitors);s.saved_devices.insert(saved_version.clone(),saved_devices);s.saved_bindings.insert(saved_version.clone(),saved_bindings);s.saved_rules.insert(saved_version.clone(),saved_rules);s.saved_animations.insert(saved_version.clone(),saved_animations);s.saved_gestures.insert(saved_version.clone(),saved_gestures);s.saved_workspace_rules.insert(saved_version.clone(),saved_workspaces);s.saved_source_origins.insert(saved_version.clone(),saved_origin);s.saved_source_graphs.insert(saved_version,saved_graph);
                         drop(s);status.set_text(&format!("Private draft and source snapshot saved: {}",path.display()));
                     } else {drop(s);status.set_text(&format!("An earlier draft revision was saved to {}. Current edits remain unsaved.",path.display()));}
                 },Err(e)=>{super::summary(&state,&status);notice(&win,"Could not save draft",&e);}
@@ -304,6 +329,7 @@ pub(super) fn connect_source_copy(
     let state = state.clone();
     button.connect_clicked(move|button|{
         let Some(window)=win.upgrade()else{return;};let s=state.borrow();let Some(doc)=s.sources.get(&s.draft.version).cloned()else{drop(s);notice(&window,"Lua source required","Import a Lua source file first. JSON drafts and legacy imports have no Lua source spans to preserve.");return;};
+        if s.source_graphs.contains_key(&s.draft.version) {drop(s);notice(&window,"Graph source editing pending","This workspace retains multiple-file resolution inputs. A single-file copy cannot preserve their ownership and dependencies; save the full private workspace.");return;}
         if s.monitors.get(&s.draft.version).map(Vec::as_slice).unwrap_or(&[]) != doc.report.monitors.as_slice() { drop(s);notice(&window,"Monitor source edits pending","Monitor drafts can be saved and reviewed as Lua. Updating their original source spans is not implemented yet; a scalar source copy would omit those edits.");return; }
         if !hyprland_editor_core::device::same_declarations(s.devices.get(&s.draft.version).map(Vec::as_slice).unwrap_or(&[]),&doc.report.devices) {drop(s);notice(&window,"Device source edits pending","Device drafts can be saved and reviewed as Lua. Device source editing is not implemented; a scalar source copy would omit these changes.");return;}
         let bindings=s.bindings.get(&s.draft.version).cloned().unwrap_or_default();if !bindings.same_declarations(&doc.report.bindings,&s.draft.version){drop(s);notice(&window,"Binding source edits pending","Binding drafts can be saved/exported. Original binding source editing is not implemented; a scalar copy would omit your binding edits.");return;}
@@ -333,6 +359,17 @@ fn apply_import(
         1
     });
     let mut s = state.borrow_mut();
+    let graph_fingerprint = imported.graph.as_ref().map(|g| g.fingerprint.clone());
+    if let Some(graph) = imported.graph {
+        s.source_graphs
+            .insert(imported.draft.version.clone(), graph);
+    } else {
+        s.source_graphs.remove(&imported.draft.version);
+    }
+    if imported.saved_json {
+        s.saved_source_graphs
+            .insert(imported.draft.version.clone(), graph_fingerprint);
+    }
     if imported.saved_json {
         s.saved_source_origins
             .insert(imported.draft.version.clone(), imported.origin.clone());
@@ -433,7 +470,7 @@ pub(super) fn connect_reattach(
             let Some(button)=button.upgrade()else{return;};button.set_sensitive(false);
             let button=button.downgrade();let win=win.downgrade();
             background(move||{
-                let captured=hyprland_editor_core::source_path::read_selected(&path)?;
+                let captured=super::capture_worker::read_selected(&path)?;
                 let comparison=origin.compare_selected(&captured)?;
                 let doc=parse_source(captured.content,version,&catalogue)?;
                 Ok((comparison,doc,captured.identity))
@@ -525,6 +562,7 @@ pub(super) fn test_source_persistence(window: &adw::ApplicationWindow) {
     let panel = gtk::Box::new(gtk::Orientation::Vertical, 0);
     apply_import(
         Imported {
+            graph: None,
             draft,
             source: Some(doc),
             origin: Some(captured.identity.clone()),
@@ -648,4 +686,85 @@ pub(super) fn test_source_persistence(window: &adw::ApplicationWindow) {
         hyprland_editor_core::Value::Int(5)
     );
     std::fs::remove_dir_all(root).unwrap();
+}
+
+#[cfg(test)]
+pub(super) fn test_graph_persistence(
+    window: &adw::ApplicationWindow,
+    state: &Shared,
+    root: &std::path::Path,
+) {
+    let saved_files = || {
+        std::fs::read_dir(root.join("hyprland-editor"))
+            .into_iter()
+            .flatten()
+            .map(|entry| entry.unwrap().path())
+            .collect::<std::collections::BTreeSet<_>>()
+    };
+    let before = saved_files();
+    let button = gtk::Button::new();
+    let status = gtk::Label::new(None);
+    connect_save_at(&button, window, state, &status, Some(root.into()));
+    let wait = || {
+        let start = std::time::Instant::now();
+        let context = gtk::glib::MainContext::default();
+        while !button.is_sensitive() {
+            while context.pending() {
+                context.iteration(false);
+            }
+            assert!(start.elapsed() < Duration::from_secs(5));
+            std::thread::sleep(Duration::from_millis(10));
+        }
+    };
+    button.emit_clicked();
+    wait();
+    assert!(!state.borrow().dirty(), "{}", status.text());
+    // Multiple snapshots coexist. Directory enumeration order must never pick
+    // an older snapshot when this helper verifies the newly saved revision.
+    let new_files = saved_files()
+        .difference(&before)
+        .cloned()
+        .collect::<Vec<_>>();
+    assert_eq!(
+        new_files.len(),
+        1,
+        "A successful save must create one new private snapshot"
+    );
+    let path = new_files[0].clone();
+    let imported = read_import(
+        path.clone(),
+        state.borrow().catalogue.clone(),
+        BASELINE.into(),
+    )
+    .unwrap();
+    let graph = imported.graph.unwrap();
+    assert_eq!(graph.bundle.sources.len(), 2);
+    assert_eq!(
+        graph.fingerprint,
+        state.borrow().source_graphs[BASELINE].fingerprint
+    );
+    assert!(
+        source_workspace(path).is_err(),
+        "Single-root reconciliation must not erase a graph"
+    );
+    // An older successful graph save cannot clear an intervening undo.
+    let previous = state
+        .borrow()
+        .undo
+        .previous_graph()
+        .expect("Expected graph inverse before late save");
+    button.emit_clicked();
+    state.borrow_mut().undo_last();
+    wait();
+    assert_eq!(
+        state
+            .borrow()
+            .source_graphs
+            .get(BASELINE)
+            .map(|g| g.fingerprint.clone()),
+        previous
+    );
+    assert!(state.borrow().dirty());
+    state.borrow_mut().keep_graph(graph).unwrap();
+    assert!(!state.borrow().dirty());
 }

@@ -30,7 +30,7 @@ Names and feedback use the [HIG writing guidance](https://developer.gnome.org/hi
 
 Use native spacing, typography, symbolic icons, control states and [system styling](https://developer.gnome.org/hig/guidelines/ui-styling.html). No fixed colors, wallpaper, blur layer, custom font or animation loop is added. The application inherits the system's GTK/libadwaita styling; it has no explicit Caelestia theme integration.
 
-Editing controls have explicit accessible names, including coordinate axes, gap sides and gradient stops. Navigation, menus and controls retain native keyboard behavior. Gradient stops scroll within their card instead of widening the whole window. The main list recycles rows, only the selected setting creates a form, and occasional tools open on demand. No new background process or polling is introduced.
+Editing controls have explicit accessible names, including coordinate axes, gap sides and gradient stops. Navigation, menus and controls retain native keyboard behavior. Gradient stops scroll within their card instead of widening the whole window. The main list recycles rows, only the selected setting creates a form, and occasional tools open on demand. The main editing surface adds no resident background process or filesystem polling. An open dependency review additionally checks in-memory draft/generation tokens every half second to discard stale analysis; that temporary UI timer stops on closure.
 
 Screen-reader sessions, high-contrast modes, large text and localization still need dedicated certification. Native widget use and spoken labels are a foundation, not an accessibility audit result.
 
@@ -46,8 +46,20 @@ The native graphical test constructs and validates all 755 version-specific scal
 
 This is an engineering and visual review, not a completed usability study with external users.
 
+## Dependency file review
+
+The module inspector opens temporary dependency review in a separate focused window. Folder selection precedes file selection; only one captured source is rendered at a time, with an explicit 16 KiB excerpt bound. Folder and capture evidence remain collapsed. Forget and Remove remain available as cleanup actions, while changed drafts disable new reads and reject pending results. The native workflow checks measured 350-pixel minimum width and resource release on close. The window inherits native styling; full portal, accessibility, large-text and translation reviews remain open. See [capture scope](dependency-capture.md).
+
 ## Changed-source comparison
 
 The main menu opens a focused comparison after explicit source selection. A compact page selector switches between setting changes, previous file and selected file. A searchable setting selector marks rows requiring a choice; only one row creates its result control. Automatic independent changes are visible and can be overridden. Unresolved incoming absence has no remove/adopt option. Partial projections require an acknowledgement before acceptance. File identity remains in a collapsed, height-bounded disclosure. Acceptance changes only the private in-memory draft/snapshot; Undo restores both. Native tests cover conflict and partial acknowledgement controls at a 360-pixel window request.
 
 ![Narrow source revision comparison](screenshots/source-comparison.png)
+
+## Captured-source analysis navigation
+
+Analyze File opens a focused results page within dependency review. Back navigation lives in the header; Stop appears only while analysis is pending. Files and Ordered calls have separate tabs and render one selection each. Read-only scope and partial results stay visible above the data; identity evidence and source text remain separate from editable draft controls. Native checks exercise the selected call, bound memory retention and release, close-time cancellation and measured 350-pixel minimum width. Long argument values and source previews are explicitly excerpts; complete pagination and accessibility/translation certification remain open.
+
+Analysis Context uses a separate modal window to keep optional resolution assumptions out of the file/call panes. Folder pickers handle ordinary home, working-directory and search-folder choices. Unknown context stays explicit. Exact templates and byte escapes support advanced path spellings; applying context reruns no analysis by itself and changes no draft or folder permissions.
+
+Value sources stay collapsed under the selected settings call. The evidence pane shows only bounded locations and expression chains, with excerpt markers and a visible ownership limitation. This keeps provenance available without adding a second permanent inspector column or implying a safe edit target.

@@ -43,10 +43,341 @@ fn request(request: Value) -> Value {
     serde_json::from_slice(&data).unwrap()
 }
 #[test]
+fn private_source_pieces_round_trip_inside_the_restricted_worker_without_rewriting_base() {
+    use hyprland_editor_core::lua::{replay::edits::*, source_hash};
+    let base = replay_program("hl.config({general={border_size=2}})");
+    let doc = &base.documents[0];
+    let start = doc.source.find('2').unwrap();
+    let e = SourceEdit {
+        document: doc.id.clone(),
+        base_sha256: doc.sha256.clone(),
+        span: start..start + 1,
+        old_bytes_sha256: source_hash("2"),
+        replacement: "6".into(),
+        semantic_targets: vec!["general:border_size".into()],
+    };
+    let plan = prepare(&base, vec![e], vec![]).unwrap();
+    let result = request(json!({"ApplySourceRevision":{"base":base,"revisions":[],"plan":plan}}));
+    let revisions = result["SourceRevisions"].clone();
+    assert!(revisions.is_array(), "{result}");
+    let materialized =
+        request(json!({"MaterializeSourceRevisions":{"base":base,"revisions":revisions}}));
+    assert!(
+        materialized["SourceRevisionProgram"]["documents"][0]["source"]
+            .as_str()
+            .unwrap()
+            .contains("border_size=6")
+    );
+    assert!(base.documents[0].source.contains("border_size=2"));
+    let mut forged = revisions.clone();
+    forged[0]["sha256"] = "0".repeat(64).into();
+    assert!(
+        request(json!({"MaterializeSourceRevisions":{"base":base,"revisions":forged}}))["Error"]
+            .is_string()
+    );
+}
+#[test]
+fn typed_source_comparisons_rebuild_coordinates_and_native_validation_in_the_worker() {
+    use hyprland_editor_core::{
+        lua::{
+            config_inspection,
+            replay::{scalar_edit::*, *},
+        },
+        Value,
+    };
+    let p = replay_program("hl.config({general={border_size=2}})");
+    let report = replay(&p).unwrap();
+    let inspection = config_inspection::inspect(&report.events, &p.version).unwrap();
+    let c = &inspection.batches[0].candidates[0];
+    let change = Change {
+        event_order: c.event_order,
+        location: c.location.clone(),
+        setting_id: c.setting_id.clone(),
+        selection: Selection::SelectedExpression,
+        value: Value::Int(4),
+    };
+    let expected = serde_json::to_value(compare(&p, &change).unwrap()).unwrap();
+    let actual = request(json!({"CompareScalarSource":{"program":p,"change":change}}));
+    assert_eq!(actual["ScalarSourceComparison"], expected);
+    let mut wrong = change.clone();
+    wrong.location = vec![9];
+    assert!(
+        request(json!({"CompareScalarSource":{"program":p,"change":wrong}}))["Error"].is_string()
+    );
+}
+#[test]
+fn source_override_review_and_resolution_rebuild_evidence_in_the_restricted_worker() {
+    use hyprland_editor_core::{lua::replay::override_review::*, Draft, Value};
+    let p = replay_program("hl.config({general={border_size=2}})");
+    let mut d = Draft::new(&p.version);
+    d.values.insert("general:border_size".into(), Value::Int(7));
+    let reviewed = request(json!({"ReviewSourceOverrides":{"program":p,"draft":d}}));
+    let r: Review = serde_json::from_value(reviewed["SourceOverrideReview"].clone()).unwrap();
+    assert!(r.model_complete);
+    assert!(matches!(
+        r.rows[0].source,
+        SourceValue::Parsed {
+            value: Value::Int(2),
+            ..
+        }
+    ));
+    let choices = [("general:border_size".to_string(), Choice::WriteOverride)].into();
+    let expected = resolve(&p, &d, &r, &choices).unwrap();
+    let actual = request(
+        json!({"ResolveSourceOverrides":{"program":p,"draft":d,"review":r,"choices":choices}}),
+    );
+    assert_eq!(
+        actual["SourceOverrideResolution"],
+        serde_json::to_value(&expected).unwrap()
+    );
+    validate_resolution(&d, &r, &choices, &expected).unwrap();
+    let mut forged = r.clone();
+    forged.rows[0].override_value = Value::Int(3);
+    assert!(request(
+        json!({"ResolveSourceOverrides":{"program":p,"draft":d,"review":forged,"choices":choices}})
+    )["Error"]
+        .is_string());
+    let mut other = d.clone();
+    other
+        .values
+        .insert("general:border_size".into(), Value::Int(8));
+    assert!(request(
+        json!({"ResolveSourceOverrides":{"program":p,"draft":other,"review":r,"choices":choices}})
+    )["Error"]
+        .is_string());
+}
+#[test]
+fn source_edit_review_uses_immutable_revisions_inside_the_restricted_worker() {
+    use hyprland_editor_core::lua::{
+        replay::{edits::*, *},
+        source_hash,
+    };
+    let p = replay_program("hl.config({general={border_size=2}})");
+    let d = &p.documents[0];
+    let start = d.source.find('2').unwrap();
+    let edit = SourceEdit {
+        document: d.id.clone(),
+        base_sha256: d.sha256.clone(),
+        span: start..start + 1,
+        old_bytes_sha256: source_hash("2"),
+        replacement: "4".into(),
+        semantic_targets: vec!["general:border_size".into()],
+    };
+    let event = &replay(&p).unwrap().events[0];
+    let after = Observed::Table(vec![(
+        Observed::Bytes(b"general".to_vec()),
+        Observed::Table(vec![(
+            Observed::Bytes(b"border_size".to_vec()),
+            Observed::Int(4),
+        )]),
+    )]);
+    let plan = prepare(
+        &p,
+        vec![edit],
+        vec![ExpectedCall {
+            order: 0,
+            before_arguments: event.arguments.clone(),
+            after_arguments: vec![after],
+        }],
+    )
+    .unwrap();
+    let expected = serde_json::to_value(review(&p, &plan).unwrap()).unwrap();
+    let result = request(json!({"ReviewSourceEdits":{"program":p,"plan":plan}}));
+    assert_eq!(result["SourceEditReview"], expected);
+    assert_eq!(
+        result["SourceEditReview"]["modeled_observations_match"],
+        true
+    );
+    assert_eq!(result["SourceEditReview"]["ownership_verified"], false);
+    assert_eq!(result["SourceEditReview"]["runtime_verified"], false);
+    let mut bad = plan.clone();
+    bad.edits[0].old_bytes_sha256 = source_hash("stale");
+    assert!(request(json!({"ReviewSourceEdits":{"program":p,"plan":bad}}))["Error"].is_string());
+}
+#[test]
 fn filesystem_and_network_are_denied() {
     let result = request(json!("Probe"));
     assert_eq!(result["Probe"]["file_denied"], true);
     assert_eq!(result["Probe"]["network_denied"], true);
+}
+
+fn replay_program(source: &str) -> hyprland_editor_core::lua::replay::Program {
+    use hyprland_editor_core::lua::{replay::*, source_hash};
+    Program {
+        version: "0.56.2".into(),
+        profile: Profile::HyprlandLua54,
+        root: "root".into(),
+        documents: vec![Document {
+            id: "root".into(),
+            source: source.into(),
+            sha256: source_hash(source),
+            load_name: b"/private-fixture/main.lua".to_vec(),
+        }],
+        bindings: vec![],
+        initial_package_path_unknown_tail: false,
+        initial_package_path: None,
+        working_directory: None,
+    }
+}
+
+#[test]
+fn restricted_worker_keeps_partial_search_paths_distinct_from_literal_replacements() {
+    use hyprland_editor_core::lua::replay::*;
+    let mut p=replay_program("local saved=package.path;require('first');package.path='/vendor/?.lua';require('second');package.path=saved;require('third')");
+    p.initial_package_path = Some(b"/private-fixture/?.lua;/private-fixture/?/init.lua".to_vec());
+    p.initial_package_path_unknown_tail = true;
+    let part = "return 1";
+    p.documents.push(Document {
+        id: "part".into(),
+        source: part.into(),
+        sha256: hyprland_editor_core::lua::source_hash(part),
+        load_name: b"/private-fixture/part.lua".to_vec(),
+    });
+    for (module, unknown, path) in [
+        ("first", true, p.initial_package_path.clone().unwrap()),
+        ("second", false, b"/vendor/?.lua".to_vec()),
+        ("third", true, p.initial_package_path.clone().unwrap()),
+    ] {
+        let reply = request(json!({"ReplayModules":p}));
+        let pending: Request =
+            serde_json::from_value(reply["Replayed"]["halt"]["request"].clone()).unwrap();
+        assert_eq!(pending.module, module.as_bytes());
+        assert_eq!(pending.package_path, Some(path));
+        assert_eq!(pending.package_path_unknown_tail, unknown);
+        assert_eq!(reply["Replayed"]["runtime_verified"], false);
+        p.bindings.push(Binding {
+            request: pending,
+            resolution: Resolution::Loaded {
+                document: "part".into(),
+                loader_data: vec![],
+            },
+        });
+    }
+    assert!(request(json!({"ReplayModules":p}))["Replayed"]["halt"].is_null());
+    p.initial_package_path = None;
+    assert!(request(json!({"ReplayModules":p}))["Error"].is_string());
+}
+
+#[test]
+fn ordered_modules_and_compilation_run_inside_the_restricted_worker() {
+    use hyprland_editor_core::lua::{replay::*, source_hash};
+    let mut p = replay_program(
+        "local a=require('part');if a.n==2 then a.n=a.n+1;hl.config({general={border_size=require('part').n}})end",
+    );
+    let first = request(json!({"ReplayModules":p}));
+    let request: Request =
+        serde_json::from_value(first["Replayed"]["halt"]["request"].clone()).unwrap();
+    assert!(first["Replayed"]["events"].as_array().unwrap().is_empty());
+    let source = "return {n=2}";
+    p.documents.push(Document {
+        id: "part".into(),
+        source: source.into(),
+        sha256: source_hash(source),
+        load_name: b"/private-fixture/part.lua".to_vec(),
+    });
+    p.bindings.push(Binding {
+        request,
+        resolution: Resolution::Loaded {
+            document: "part".into(),
+            loader_data: b"/private-fixture/part.lua".to_vec(),
+        },
+    });
+    let expected = serde_json::to_value(replay(&p).unwrap()).unwrap();
+    let result = self::request(json!({"ReplayModules":p}));
+    assert_eq!(result["Replayed"], expected);
+    assert!(result["Replayed"]["halt"].is_null());
+    assert_eq!(result["Replayed"]["events"].as_array().unwrap().len(), 1);
+    assert_eq!(result["Replayed"]["runtime_verified"], false);
+    assert_eq!(result["Replayed"]["events"][0]["path_prefix"], 1);
+    assert_eq!(result["Replayed"]["path_decisions"][0]["kind"], "if");
+    assert!(!result["Replayed"]["storage_writes"]
+        .as_array()
+        .unwrap()
+        .is_empty());
+    assert!(
+        !result["Replayed"]["events"][0]["argument_sources"][0]["keys"]
+            .as_array()
+            .unwrap()
+            .is_empty()
+    );
+    let bad = replay_program("hl.config({general={border_size=2}});local x <const> = 1;x=2");
+    let result = self::request(json!({"ReplayModules":bad}));
+    assert_eq!(result["Replayed"]["halt"]["kind"], "lua_error");
+    assert_eq!(result["Replayed"]["events"], json!([]));
+}
+
+#[test]
+fn replay_compiler_and_native_operations_never_execute_source() {
+    let marker =
+        std::env::temp_dir().join(format!("he-replay-never-execute-{}", std::process::id()));
+    let p = replay_program(&format!(
+        "os.execute('touch {}');hl.config({{general={{border_size=2}}}})",
+        marker.display()
+    ));
+    let result = request(json!({"ReplayModules":p}));
+    assert_eq!(result["Replayed"]["halt"]["kind"], "unresolved");
+    assert_eq!(result["Replayed"]["events"], json!([]));
+    assert!(!marker.exists());
+    let denied = request(json!("Probe"));
+    assert_eq!(denied["Probe"]["file_denied"], true);
+    assert_eq!(denied["Probe"]["network_denied"], true);
+}
+
+#[test]
+fn replay_budgets_bound_control_flow_and_alias_expansion_in_actual_worker() {
+    for source in [
+        "while true do end",
+        "local t={v=1};for i=1,24 do t={t,t}end;hl.config(t)",
+        "local function f()return f()end;pcall(f)",
+    ] {
+        let result = request(json!({"ReplayModules":replay_program(source)}));
+        assert_eq!(result["Replayed"]["halt"]["kind"], "budget", "{result}");
+        assert!(serde_json::to_vec(&result).unwrap().len() < 4 * 1024 * 1024);
+    }
+    let mut constants = String::from("return {");
+    for i in 0..90_000 {
+        use std::fmt::Write;
+        write!(&mut constants, "k{i}=1,").unwrap();
+    }
+    constants.push('}');
+    let result = request(json!({"ReplayModules":replay_program(&constants)}));
+    assert_eq!(result["Replayed"]["halt"]["kind"], "budget");
+    assert!(result["Replayed"]["halt"]["reason"]
+        .as_str()
+        .unwrap()
+        .contains("compilation"));
+    let name = "a".repeat(5000);
+    let result = request(
+        json!({"ReplayModules":replay_program(&format!("local {name} <const> = 1;{name}=2"))}),
+    );
+    assert_eq!(result["Replayed"]["halt"]["kind"], "budget");
+    {
+        use hyprland_editor_core::lua::{replay::*, source_hash};
+        let mut p = replay_program("pcall(require,'huge');hl.config{never=true}");
+        let source = format!("local {name} <const> = 1;{name}=2");
+        p.documents.push(Document {
+            id: "huge".into(),
+            sha256: source_hash(&source),
+            source,
+            load_name: b"/private-fixture/huge.lua".to_vec(),
+        });
+        let pending = request(json!({"ReplayModules":p}));
+        p.bindings.push(Binding {
+            request: serde_json::from_value(pending["Replayed"]["halt"]["request"].clone())
+                .unwrap(),
+            resolution: Resolution::Loaded {
+                document: "huge".into(),
+                loader_data: b"/private-fixture/huge.lua".to_vec(),
+            },
+        });
+        let result = request(json!({"ReplayModules":p}));
+        assert_eq!(result["Replayed"]["halt"]["kind"], "budget");
+        assert_eq!(result["Replayed"]["logged_module_errors"], 0);
+        assert_eq!(result["Replayed"]["events"], json!([]));
+    }
+    let mut p = replay_program("hl.config({general={border_size=2}})");
+    p.documents[0].sha256 = "0".repeat(64);
+    assert!(request(json!({"ReplayModules":p}))["Error"].is_string());
 }
 #[test]
 fn real_worker_imports_and_prepares_a_preserved_copy() {
@@ -258,4 +589,140 @@ fn actual_restricted_worker_projects_inert_rule_groups_and_preserves_copy() {
     );
     assert_eq!(tainted["Parsed"]["opaque_effects"], true);
     assert_eq!(tainted["Parsed"]["rules"], json!([]));
+}
+
+#[test]
+fn module_candidate_plans_use_only_supplied_bytes_and_reject_amplification() {
+    let input = json!({"PlanModules":{
+        "context":{"main_file":b"/synthetic/config/main.lua","home":null,"inherited_package_path":null},
+        "modules":[b"./theme".to_vec(),b"named.theme".to_vec()],"version":"0.56.2"
+    }});
+    let response = request(input.clone());
+    let plans = response["ModulePlans"].as_array().unwrap();
+    assert_eq!(plans.len(), 2);
+    assert_eq!(plans[0]["primary"]["kind"], "explicit_files");
+    assert_eq!(
+        plans[0]["primary"]["base"],
+        json!(b"/synthetic/config/theme")
+    );
+    assert_eq!(plans[1]["inherited_search_unknown"], true);
+    let mut original = input.clone();
+    original["PlanModules"]["modules"] = json!([b"./parts/*".to_vec()]);
+    original["PlanModules"]["mode"] = json!("original");
+    assert_eq!(
+        request(original.clone())["ModulePlans"][0]["primary"]["kind"],
+        "named"
+    );
+    original["PlanModules"]["mode"] = json!("safe");
+    assert_eq!(
+        request(original)["ModulePlans"][0]["primary"]["kind"],
+        "explicit_wildcard"
+    );
+    let mut denied = input;
+    denied["PlanModules"]["context"]["inherited_package_path"] = json!(b"/x/?.lua;".repeat(500));
+    denied["PlanModules"]["modules"] = json!(vec![vec![b'a'; 4096]]);
+    assert!(request(denied)["Error"].as_str().unwrap().contains("1 MiB"));
+}
+
+#[test]
+fn dependency_inspection_reports_scopes_and_aliases_without_running_config_or_opening_targets() {
+    let marker = std::env::temp_dir().join(format!("he-dependency-marker-{}", std::process::id()));
+    assert!(!marker.exists());
+    let source=format!("local r=require;local p='./theme';r(p);local callback=function()dofile('/etc/passwd')end;os.execute('touch {}')",marker.display());
+    let response = request(json!({"InspectDependencies":{"source":source,"version":"0.56.2"}}));
+    let inventory: hyprland_editor_core::lua::DependencyInventory =
+        serde_json::from_value(response["Dependencies"].clone()).unwrap();
+    inventory.validate(&source, "0.56.2").unwrap();
+    assert_eq!(inventory.sites.len(), 2);
+    assert_eq!(inventory.sites[0].module.as_deref(), Some("./theme"));
+    assert_eq!(
+        inventory.sites[0].binding,
+        hyprland_editor_core::lua::DependencyBinding::CapturedCandidate
+    );
+    assert_eq!(
+        inventory.sites[1].scope,
+        hyprland_editor_core::lua::DependencyScope::FunctionBody
+    );
+    assert_eq!(inventory.sites[1].module.as_deref(), Some("/etc/passwd"));
+    assert!(!marker.exists());
+}
+
+#[test]
+fn primitive_coercion_stays_in_the_restricted_worker_and_refuses_batch_budgets() {
+    use hyprland_editor_core::lua::{
+        replay::Observed,
+        scalar_codec::{Case, Codec},
+    };
+    let marker =
+        std::env::temp_dir().join(format!("he-coercion-never-execute-{}", std::process::id()));
+    let script = format!("os.execute('touch {}')", marker.display());
+    let cases = vec![
+        Case {
+            codec: Codec::Bool,
+            input: Observed::Bytes(b" 0x1p0 ".to_vec()),
+        },
+        Case {
+            codec: Codec::Float {
+                minimum: None,
+                maximum: None,
+            },
+            input: Observed::Int(16777217),
+        },
+        Case {
+            codec: Codec::String { validator: None },
+            input: Observed::Bytes(script.as_bytes().to_vec()),
+        },
+        Case {
+            codec: Codec::String {
+                validator: Some("unknown".into()),
+            },
+            input: Observed::Bytes(b"text".to_vec()),
+        },
+    ];
+    let mut cases = cases;
+    for bits in [0xfff8000000000000, 0x7ff0000000000000] {
+        cases.push(Case {
+            codec: Codec::Float {
+                minimum: None,
+                maximum: None,
+            },
+            input: Observed::Float(f64::from_bits(bits)),
+        });
+    }
+    let reply = request(json!({"DecodePrimitives":cases}));
+    let values = &reply["Primitives"]["outcomes"];
+    assert_eq!(values[0]["native"]["value"], true, "{reply}");
+    assert_eq!(values[1]["native"]["value"], 0x4b800000u32, "{reply}");
+    assert_eq!(
+        values[2]["representation"]["value"]["value"], script,
+        "{reply}"
+    );
+    assert_eq!(values[3]["kind"], "unresolved", "{reply}");
+    assert_eq!(values[4]["native"]["value"], 0xffc00000u32, "{reply}");
+    assert_eq!(values[5]["native"]["value"], 0x7f800000u32, "{reply}");
+    assert_eq!(
+        values[4]["representation"]["kind"], "unavailable",
+        "{reply}"
+    );
+    assert_eq!(reply["Primitives"]["numeric_locale"], "C");
+    assert!(reply["Primitives"]["profile"]["release"].is_string());
+    assert!(!marker.exists(), "Primitive text was executed");
+    assert!(request(json!({"DecodePrimitives":[]}))["Error"]
+        .as_str()
+        .unwrap()
+        .contains("1–256"));
+    let small = Case {
+        codec: Codec::Bool,
+        input: Observed::Bool(false),
+    };
+    assert!(request(json!({"DecodePrimitives":vec![small;257]}))["Error"].is_string());
+    let large = Case {
+        codec: Codec::String { validator: None },
+        input: Observed::Bytes(vec![b'x'; 65536]),
+    };
+    assert!(request(json!({"DecodePrimitives":vec![large;9]}))["Error"]
+        .as_str()
+        .unwrap()
+        .contains("2 MiB"));
+    assert!(!marker.exists());
 }
