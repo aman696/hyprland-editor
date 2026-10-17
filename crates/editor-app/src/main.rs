@@ -1116,9 +1116,10 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     let win = window.downgrade();
     coverage.connect_clicked(move |_|{
         let Some(win) = win.upgrade() else { return; };
-        let dialog=adw::Window::builder().title("Audited feature coverage").transient_for(&win).default_width(850).default_height(600).build();let b=gtk::Box::new(gtk::Orientation::Vertical,12);b.set_margin_top(16);b.set_margin_start(16);b.set_margin_end(16);b.set_margin_bottom(16);b.append(&label("1,453 audited feature contracts. Scalar draft controls are implemented; other feature families below are engineering requirements, not completed controls."));
+        let dialog=adw::Window::builder().title("Audited feature coverage").transient_for(&win).default_width(850).default_height(600).build();let b=gtk::Box::new(gtk::Orientation::Vertical,12);b.set_margin_top(16);b.set_margin_start(16);b.set_margin_end(16);b.set_margin_bottom(16);b.append(&label("1,453 original audit contracts plus 5 source-discovered requirements. Draft editors cover parts of these families; full acceptance remains unproven."));
         // Loaded on demand. A single text buffer avoids constructing 1,453 widgets.
         let data:serde_json::Value=serde_json::from_str(include_str!("../../../data/features.json")).unwrap();let mut text=String::new();for feature in data.as_array().unwrap(){text.push_str(&format!("{}  ·  {}  ·  {}\n",feature["id"].as_str().unwrap_or("?"),feature["engine"].as_str().unwrap_or("?"),feature["version_membership"]));}
+        let additions:serde_json::Value=serde_json::from_str(include_str!("../../../data/source-additions.json")).unwrap();text.push_str("\nAdditional source-discovered requirements (full acceptance unproven)\n");for requirement in additions["requirements"].as_array().unwrap(){text.push_str(&format!("{}  ·  {}  ·  {}\n",requirement["id"].as_str().unwrap(),requirement["engine"].as_str().unwrap(),requirement["versions"]));}
         let view=gtk::TextView::builder().editable(false).monospace(true).build();view.buffer().set_text(&text);b.append(&gtk::ScrolledWindow::builder().child(&view).vexpand(true).build());dialog.set_content(Some(&b));dialog.present();
     });
     workflow::connect_close(&window, &state);

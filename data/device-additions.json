@@ -1,0 +1,98 @@
+[
+  {
+    "id": "device:eraser_button_mode",
+    "version": "0.56.2",
+    "kind": "Int",
+    "lua_key": "eraser_button_mode",
+    "default_expression": "0",
+    "bounds": {
+      "min": 0,
+      "max": 6
+    },
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/values/ConfigValues.cpp#L381"
+  },
+  {
+    "id": "device:eraser_button_override",
+    "version": "0.56.2",
+    "kind": "Int",
+    "lua_key": "eraser_button_override",
+    "default_expression": "0",
+    "bounds": {
+      "min": 0,
+      "max": null
+    },
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/values/ConfigValues.cpp#L385"
+  },
+  {
+    "id": "device:pressure_range_max",
+    "version": "0.56.2",
+    "kind": "Float",
+    "lua_key": "pressure_range_max",
+    "default_expression": "-1.0",
+    "bounds": {
+      "min": -1.0,
+      "max": 1.0
+    },
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/values/ConfigValues.cpp#L392"
+  },
+  {
+    "id": "device:pressure_range_min",
+    "version": "0.56.2",
+    "kind": "Float",
+    "lua_key": "pressure_range_min",
+    "default_expression": "-1.0",
+    "bounds": {
+      "min": -1.0,
+      "max": 1.0
+    },
+    "source": "https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/values/ConfigValues.cpp#L389"
+  },
+  {
+    "id": "device:eraser_button_mode",
+    "version": "audited-main",
+    "kind": "Int",
+    "lua_key": "eraser_button_mode",
+    "default_expression": "0",
+    "bounds": {
+      "min": 0,
+      "max": 6
+    },
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/values/ConfigValues.cpp#L465"
+  },
+  {
+    "id": "device:eraser_button_override",
+    "version": "audited-main",
+    "kind": "Int",
+    "lua_key": "eraser_button_override",
+    "default_expression": "0",
+    "bounds": {
+      "min": 0,
+      "max": null
+    },
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/values/ConfigValues.cpp#L469"
+  },
+  {
+    "id": "device:pressure_range_max",
+    "version": "audited-main",
+    "kind": "Float",
+    "lua_key": "pressure_range_max",
+    "default_expression": "-1.0",
+    "bounds": {
+      "min": -1.0,
+      "max": 1.0
+    },
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/values/ConfigValues.cpp#L476"
+  },
+  {
+    "id": "device:pressure_range_min",
+    "version": "audited-main",
+    "kind": "Float",
+    "lua_key": "pressure_range_min",
+    "default_expression": "-1.0",
+    "bounds": {
+      "min": -1.0,
+      "max": 1.0
+    },
+    "source": "https://github.com/hyprwm/Hyprland/blob/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/values/ConfigValues.cpp#L473"
+  }
+]

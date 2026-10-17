@@ -18,4 +18,12 @@ for row in rows:
 features = json.loads((root / 'data/features.json').read_text())
 assert len(features) == 1453
 assert len({r['id'] for r in features}) == len(features)
-print('Validated 755 versioned scalar records and 1453 feature contracts')
+base=json.loads((root/'data/devices.json').read_text())
+added=json.loads((root/'data/device-additions.json').read_text())
+assert len(added)==8
+assert len({(r['version'],r['id']) for r in base+added})==94
+for version in ['0.56.2','audited-main']:
+    assert sum(r['version']==version for r in base+added)==47
+supplement=json.loads((root/'data/source-additions.json').read_text())
+assert len(supplement['requirements'])==5
+print('Validated 755 versioned scalar records, 1453 original feature contracts, 5 additional requirements and 47 device fields per snapshot')

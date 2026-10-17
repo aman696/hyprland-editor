@@ -243,6 +243,14 @@ fn device_drafts_survive_application_reopen_and_schema_drift_is_rejected() {
     let mut spec = Spec::new("edited", "keyboard");
     spec.fields
         .insert("kb_layout".into(), Value::String("de".into()));
+    spec.fields
+        .insert("eraser_button_mode".into(), Value::Int(1));
+    spec.fields
+        .insert("eraser_button_override".into(), Value::Int(331));
+    spec.fields
+        .insert("pressure_range_min".into(), Value::Float(0.1));
+    spec.fields
+        .insert("pressure_range_max".into(), Value::Float(0.9));
     let snapshot = fixture(&root, source).with_devices(vec![spec.clone()]);
     let path = workspace::save(&root, &snapshot, &catalogue()).unwrap();
     fs::remove_file(root.join("original.lua")).unwrap();
@@ -251,9 +259,25 @@ fn device_drafts_survive_application_reopen_and_schema_drift_is_rejected() {
     let result: serde_json::Value = serde_json::from_str(&output).unwrap();
     assert_eq!(result["device_rules"], 1);
     assert_eq!(result["source_reparsed"], true);
+    assert_eq!(result["original_paths_opened"], false);
     assert_eq!(
         workspace::read(&path, &catalogue()).unwrap().devices,
         vec![spec]
+    );
+    let mut legacy = snapshot.clone();
+    for key in hyprland_editor_core::device::ADDED_KEYS {
+        legacy.devices[0].fields.remove(*key);
+    }
+    legacy.device_schema_sha256 =
+        Some("f555d3d357acca4e74b4472f9a7fc441c6f347b8a2b47c8b6d466dbde45966b7".into());
+    fs::write(&path, legacy.to_json(&catalogue()).unwrap()).unwrap();
+    let (success, output, error) = run(&path);
+    assert!(success, "{error}");
+    let report: serde_json::Value = serde_json::from_str(&output).unwrap();
+    assert_eq!(report["original_paths_opened"], false);
+    assert_eq!(
+        workspace::read(&path, &catalogue()).unwrap().devices,
+        legacy.devices
     );
     let mut forged: serde_json::Value =
         serde_json::from_slice(&snapshot.to_json(&catalogue()).unwrap()).unwrap();

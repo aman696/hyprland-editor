@@ -157,12 +157,11 @@ impl Workspace {
         }
         crate::monitor::validate(&self.monitors, &self.draft.version)?;
         crate::device::validate(&self.devices, &self.draft.version)?;
-        let device_hash = crate::device::schema_hash();
-        if (!self.devices.is_empty() && self.device_schema_sha256.as_deref() != Some(&device_hash))
+        if (!self.devices.is_empty() && self.device_schema_sha256.is_none())
             || self
                 .device_schema_sha256
                 .as_ref()
-                .is_some_and(|h| *h != device_hash)
+                .is_some_and(|h| !crate::device::compatible_schema(h, &self.devices))
         {
             return Err("Device schema differs from the audited fields".into());
         }

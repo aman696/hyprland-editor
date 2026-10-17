@@ -198,15 +198,19 @@
         "crates/editor-core/src/xkb.rs",
         "crates/editor-app/src/devices.rs",
         "crates/editor-app/src/device_forms.rs",
-        "data/devices.json"
+        "data/devices.json",
+        "data/device-additions.json",
+        "data/source-additions.json"
       ],
       "test_references": [
         "every_device_field_round_trips_the_pinned_static_lua_codec",
+        "tablet_tool_additions_round_trip_source_and_private_drafts_without_inserting_unset_fields",
+        "exact_legacy_device_schema_remains_compatible_only_for_its_original_overrides",
         "test_editor",
         "actual_worker_projects_devices_and_rejects_external_keyboard_entities",
         "device_drafts_survive_application_reopen_and_schema_drift_is_rejected"
       ],
-      "limits": "43 audited fields and name selector (four native tablet-tool fields remain missing), author category hints, linked XKB choices from installed metadata, numeric acceleration/scroll builders, ordered drafts and private persistence; no hardware capability discovery, effective global/default merge, tag-to-bind analysis, keyboard compilation, source editing, live input recovery or activation/preview certificates"
+      "limits": "47 fields (43 original plus four native tablet-tool additions) and name selector, pressure/default and eraser/button forms, exact legacy-subset schema compatibility without inserted overrides, author category hints, linked XKB choices from installed metadata, numeric acceleration/scroll builders, ordered drafts and private persistence; no hardware capability discovery, effective global/default merge, tag-to-bind analysis, keyboard compilation, source editing, live input recovery or activation/preview certificates"
     },
     {
       "area": "monitor draft editor",

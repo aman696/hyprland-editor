@@ -3,11 +3,24 @@ use crate::{quote_lua, Setting, Value, AUDITED_MAIN, BASELINE, MAX_DOCUMENT_BYTE
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 pub const MAX_DEVICES: usize = 128;
+const BASE_FIELDS: &str = include_str!("../../../data/devices.json");
+const ADDED_FIELDS: &str = include_str!("../../../data/device-additions.json");
+const LEGACY_SCHEMA: &str = "f555d3d357acca4e74b4472f9a7fc441c6f347b8a2b47c8b6d466dbde45966b7";
+pub const ADDED_KEYS: &[&str] = &[
+    "eraser_button_mode",
+    "eraser_button_override",
+    "pressure_range_min",
+    "pressure_range_max",
+];
 pub fn catalogue(version: &str) -> Vec<Setting> {
     static ALL: std::sync::OnceLock<Vec<Setting>> = std::sync::OnceLock::new();
     ALL.get_or_init(|| {
-        serde_json::from_str(include_str!("../../../data/devices.json"))
-            .expect("checked device catalogue")
+        let mut fields: Vec<Setting> =
+            serde_json::from_str(BASE_FIELDS).expect("checked device catalogue");
+        fields.extend(
+            serde_json::from_str::<Vec<Setting>>(ADDED_FIELDS).expect("checked device additions"),
+        );
+        fields
     })
     .iter()
     .filter(|s| s.version == version)
@@ -15,7 +28,26 @@ pub fn catalogue(version: &str) -> Vec<Setting> {
     .collect()
 }
 pub fn schema_hash() -> String {
-    crate::lua::source_hash(include_str!("../../../data/devices.json"))
+    static HASH: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| {
+        crate::lua::source_hash(&format!(
+            "hyprland-editor-device-fields-2\n{}\n{}",
+            crate::lua::source_hash(BASE_FIELDS),
+            crate::lua::source_hash(ADDED_FIELDS)
+        ))
+    });
+    HASH.clone()
+}
+/// A known additive old schema remains valid for its original field subset.
+/// No value/default is inserted and recorded paths are never consulted.
+pub fn compatible_schema(pin: &str, specs: &[Spec]) -> bool {
+    pin == schema_hash()
+        || pin == LEGACY_SCHEMA
+            && crate::lua::source_hash(BASE_FIELDS) == LEGACY_SCHEMA
+            && specs.iter().all(|s| {
+                s.fields
+                    .keys()
+                    .all(|key| !ADDED_KEYS.contains(&key.as_str()))
+            })
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -85,7 +117,11 @@ pub fn relevance(key: &str) -> &'static [Kind] {
         | "region_size"
         | "absolute_region_position"
         | "active_area_position"
-        | "active_area_size" => &[Tablet],
+        | "active_area_size"
+        | "eraser_button_mode"
+        | "eraser_button_override"
+        | "pressure_range_min"
+        | "pressure_range_max" => &[Tablet],
         "transform" | "output" => &[Tablet, Touch],
         "left_handed" => &[Pointer, Touchpad, Tablet],
         _ => &[Keyboard, Pointer, Touchpad, Tablet, Touch, Virtual],
@@ -133,7 +169,7 @@ impl Spec {
             return Err("Choose a nonempty device name without control characters".into());
         }
         let c = catalogue(version);
-        if self.fields.len() > 43 {
+        if self.fields.len() > c.len() {
             return Err("Too many device fields".into());
         }
         for (key, value) in &self.fields {
@@ -367,7 +403,7 @@ mod tests {
     fn every_device_field_round_trips_the_pinned_static_lua_codec() {
         for version in [BASELINE, AUDITED_MAIN] {
             let fields = catalogue(version);
-            assert_eq!(fields.len(), 43);
+            assert_eq!(fields.len(), 47);
             for setting in fields {
                 let mut spec = Spec::new("round-trip", "Example USB keyboard");
                 let value = setting

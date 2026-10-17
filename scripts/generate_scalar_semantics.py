@@ -10,6 +10,8 @@ import struct
 ROOT=Path(__file__).resolve().parents[1]
 OUTPUT=ROOT/'data/scalar-semantics.json'
 FINDINGS=ROOT/'docs/registration-scope-findings.json'
+DEVICE_ADDITIONS=ROOT/'data/device-additions.json'
+SCOPE_ADDITIONS=ROOT/'data/source-additions.json'
 VERSIONS={'baseline':'0.56.2','current':'audited-main'}
 
 
@@ -73,7 +75,7 @@ def main():
     catalogue=json.loads((ROOT/'data/scalars.json').read_text())
     catalogue={(r['version'],r['id']):r for r in catalogue}
     contracts=json.loads((ROOT/'docs/hyprland-implementation-contracts.json').read_text())
-    entries=[];findings=[]
+    entries=[];findings=[];device_additions=[];scope_additions={}
     for snapshot in fixture['snapshots']:
         version=VERSIONS[snapshot['version']]
         sources={r['id']:r for r in all_sources[snapshot['version']]}
@@ -110,17 +112,35 @@ def main():
         if missing!=['eraser_button_mode','eraser_button_override','pressure_range_max','pressure_range_min'] or audited-native!={'tags'}:
             raise ValueError('Reconcile changed device audit scope explicitly')
         findings.append({'version':version,'kind':'device_fields_missing_from_original_register','fields':missing,'state':'required_unfinished','note':'Native value constructor has 46 fields; tags is handled separately, making 47 public fields before the name selector. Original device register has 43.'})
+        for key in missing:
+            parent=first_parent[key];identifier=decoded(parent['id_hex']);kind=parent['kind']
+            if kind not in ['Int','Float']:raise ValueError('Review new device addition representation')
+            def bound(name):
+                value=parent.get(name)
+                return None if value is None else number(value) if kind=='Float' else value
+            default=parent['native_default']
+            expression=repr(number(default)) if kind=='Float' else str(default)
+            device_additions.append({'id':'device:'+key,'version':version,'kind':kind,'lua_key':key,
+                'default_expression':expression,'bounds':{'min':bound('minimum'),'max':bound('maximum')},
+                'source':sources[identifier]['source']})
+            scope=scope_additions.setdefault('native-addition:DEVICE:'+key,{'id':'native-addition:DEVICE:'+key,'engine':'DEVICE','field':key,'versions':[],
+                'requirement':'Complete per-device control, source codec, persistence/history, version-specific semantics, discovery/preview/apply/recovery and original release/security gates','complete':False})
+            scope['versions'].append(version)
         for value in snapshot['runtime_registry_additions']:
             key=decoded(value['lua_key_hex'])
             row=entry('bootstrap',version,key,value['lua']['kind'],value['lua'])
             entries.append(row)
             findings.append({'version':version,'kind':'runtime_registration_missing_from_scalar_catalogue','lua_key':key,'state':'required_unfinished','note':'Separate generated-configuration marker registration. Its control/source-ownership handling and supplementary contract remain required.'})
+            scope=scope_additions.setdefault('native-addition:SOURCE:'+key,{'id':'native-addition:SOURCE:'+key,'engine':'SOURCE','field':key,'versions':[],
+                'requirement':'Complete generated-configuration marker control, source-ownership handling and original release/security gates','complete':False})
+            scope['versions'].append(version)
     keys={(r['role'],r['version'],r['id']) for r in entries}
     if len(keys)!=len(entries) or len(entries)!=849:raise ValueError('Unexpected registration semantics scope')
     result={'format':'hye-scalar-semantics-1','registration_sha256':digest(fixture_path),
             'meaning':'Frozen registration models, not target runtime state or edit authority. Declared generic metadata differs from Lua-consumed constraints by version. Complex codecs/defaults remain unmodeled. Device rows exclude separately handled tags/name. Bootstrap entries supplement the original catalogue.',
             'entries':entries}
-    outputs=[(OUTPUT,result),(FINDINGS,{'format':'hye-registration-findings-1','registration_sha256':digest(fixture_path),'original_contracts_preserved':1453,'findings':findings,'complete':False})]
+    outputs=[(OUTPUT,result),(FINDINGS,{'format':'hye-registration-findings-1','registration_sha256':digest(fixture_path),'original_contracts_preserved':1453,'findings':findings,'complete':False}),
+             (DEVICE_ADDITIONS,device_additions),(SCOPE_ADDITIONS,{'format':'hye-source-additions-1','requirements':list(scope_additions.values())})]
     for path,value in outputs:
         encoded=json.dumps(value,indent=2)+'\n'
         if path==OUTPUT:
