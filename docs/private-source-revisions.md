@@ -4,7 +4,7 @@ After a graphical source comparison, **Keep in Draft** retains its proposed chan
 
 The action requires the imported root at its exact recorded revision. It checks the comparison epoch, immutable analysis identity, current graph fingerprint, selected snapshot and draft generation. If another edit changes the draft while a revision is being prepared, its result is discarded. A retry can keep the source change without overwriting a separate value override. The native workflow exercises that race explicitly.
 
-Source revisions and ordinary value overrides are separate draft layers. The application preserves both. **Override-only export is blocked while source revisions exist**, because it would omit the revised source and could contradict it. Full graph/source/override reconciliation remains unfinished. Keeping a private revision does not certify source ownership, native behavior or live publication.
+Source revisions and ordinary value overrides are separate draft layers. The application preserves both. **Override-only export is blocked while source revisions exist**, because it would omit the revised source and could contradict it. [Explicit scalar source/override reconciliation](source-override-review.md) is available in Source analysis. Full feature-family and external-revision reconciliation, and complete source export, remain unfinished. Keeping a private revision does not certify source ownership, native behavior or live publication.
 
 ![Private source and original capture](screenshots/source-revision.png)
 

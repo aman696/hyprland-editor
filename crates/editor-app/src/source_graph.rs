@@ -777,16 +777,24 @@ pub(super) fn apply_revision(
     version: &str,
     plan: hyprland_editor_core::lua::replay::edits::EditPlan,
 ) -> Result<(Arc<Saved>, Analysis), String> {
+    apply_revisions(bundle, version, &[plan])
+}
+pub(super) fn apply_revisions(
+    bundle: &hyprland_editor_core::workspace_graph::Bundle,
+    version: &str,
+    plans: &[hyprland_editor_core::lua::replay::edits::EditPlan],
+) -> Result<(Arc<Saved>, Analysis), String> {
     let base = bundle
         .graph
         .program(&bundle.sources, Some(&bundle.graph.root), version)?;
     // Byte generation stays in the trusted client. Parser results validate an
     // exact private input; they cannot substitute different output source text.
-    let mut revisions = hyprland_editor_core::workspace_graph::revisions::prepare_pieces(
-        &base,
-        &bundle.graph.revisions,
-        &plan,
-    )?;
+    let mut revisions = bundle.graph.revisions.clone();
+    for plan in plans {
+        revisions = hyprland_editor_core::workspace_graph::revisions::prepare_pieces(
+            &base, &revisions, plan,
+        )?;
+    }
     // Reuse equal immutable buffers across documents as well as within a
     // revision, so undo does not retain copies of inserted text.
     let shared = bundle

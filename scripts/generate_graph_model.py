@@ -15,7 +15,7 @@ def main():
     args = parser.parse_args()
     paths = list((ROOT / "crates/editor-core/src").rglob("*.rs"))
     paths += [ROOT / path for path in [
-        "Cargo.lock", "crates/editor-core/build.rs", "crates/editor-core/native/lua_syntax.cpp",
+        "Cargo.toml", "Cargo.lock", "crates/editor-core/Cargo.toml", "crates/editor-app/Cargo.toml", "crates/editor-core/build.rs", "crates/editor-core/native/lua_syntax.cpp",
         "crates/editor-app/src/source_graph.rs", "crates/editor-app/src/worker.rs",
         "crates/editor-app/src/process_policy.rs", "data/source-graph-semantics.json",
         "data/lua-profiles.json", "data/scalar-semantics.json", "data/scalars.json",

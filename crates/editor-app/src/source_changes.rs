@@ -1,4 +1,4 @@
-//! Private typed source comparisons. No draft reducer or filesystem writer is connected.
+//! Private typed source comparisons and guarded draft revisions. No filesystem writer.
 use super::{label, source_analysis::Model, source_graph::Analysis, worker, workflow};
 use adw::prelude::*;
 use hyprland_editor_core::{
@@ -26,7 +26,24 @@ impl Drop for HeldComparison {
         HOLD_COMPARISON.store(false, std::sync::atomic::Ordering::Release);
     }
 }
-struct Permit;
+pub(super) struct Permit;
+impl Permit {
+    pub(super) fn acquire() -> Result<Self, String> {
+        COMPARING
+            .compare_exchange(
+                false,
+                true,
+                std::sync::atomic::Ordering::AcqRel,
+                std::sync::atomic::Ordering::Acquire,
+            )
+            .map(|_| Self)
+            .map_err(|_| "A source operation is still finishing. Try again shortly.".into())
+    }
+    #[cfg(test)]
+    pub(super) fn running() -> bool {
+        COMPARING.load(std::sync::atomic::Ordering::Acquire)
+    }
+}
 impl Drop for Permit {
     fn drop(&mut self) {
         COMPARING.store(false, std::sync::atomic::Ordering::Release);
@@ -428,19 +445,13 @@ impl Controls {
             },
             value,
         };
-        if COMPARING
-            .compare_exchange(
-                false,
-                true,
-                std::sync::atomic::Ordering::AcqRel,
-                std::sync::atomic::Ordering::Acquire,
-            )
-            .is_err()
-        {
-            self.message("A source comparison is still finishing. Try again shortly.");
-            return;
-        }
-        let permit = Permit;
+        let permit = match Permit::acquire() {
+            Ok(p) => p,
+            Err(e) => {
+                self.message(&e);
+                return;
+            }
+        };
         {
             let mut s = session.borrow_mut();
             s.pending = Some(epoch);
@@ -578,19 +589,13 @@ impl Controls {
             )
         };
         let bundle = shared_bundle.unwrap_or(bundle);
-        if COMPARING
-            .compare_exchange(
-                false,
-                true,
-                std::sync::atomic::Ordering::AcqRel,
-                std::sync::atomic::Ordering::Acquire,
-            )
-            .is_err()
-        {
-            self.message("A source operation is still finishing. Try again shortly.");
-            return;
-        }
-        let permit = Permit;
+        let permit = match Permit::acquire() {
+            Ok(p) => p,
+            Err(e) => {
+                self.message(&e);
+                return;
+            }
+        };
         session.borrow_mut().pending = Some(epoch);
         self.message("Preparing a private source revision…");
         self.sensitive();
@@ -909,7 +914,7 @@ pub(super) fn open(
     keep.add_css_class("suggested-action");
     actions.append(&keep);
     footer.append(&actions);
-    footer.append(&label("Source revisions and value overrides stay separate. Reconcile before export; Save Draft keeps the private workspace."));
+    footer.append(&label("Source revisions and value overrides stay separate. Review Value Overrides can reconcile scalar layers; Save Draft keeps the private workspace."));
     outer.append(&footer);
     window.set_content(Some(&outer));
     let ui = Controls {

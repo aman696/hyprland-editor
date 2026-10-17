@@ -694,6 +694,14 @@ pub(super) fn test_graph_persistence(
     state: &Shared,
     root: &std::path::Path,
 ) {
+    let saved_files = || {
+        std::fs::read_dir(root.join("hyprland-editor"))
+            .into_iter()
+            .flatten()
+            .map(|entry| entry.unwrap().path())
+            .collect::<std::collections::BTreeSet<_>>()
+    };
+    let before = saved_files();
     let button = gtk::Button::new();
     let status = gtk::Label::new(None);
     connect_save_at(&button, window, state, &status, Some(root.into()));
@@ -711,12 +719,18 @@ pub(super) fn test_graph_persistence(
     button.emit_clicked();
     wait();
     assert!(!state.borrow().dirty(), "{}", status.text());
-    let path = std::fs::read_dir(root.join("hyprland-editor"))
-        .unwrap()
-        .next()
-        .unwrap()
-        .unwrap()
-        .path();
+    // Multiple snapshots coexist. Directory enumeration order must never pick
+    // an older snapshot when this helper verifies the newly saved revision.
+    let new_files = saved_files()
+        .difference(&before)
+        .cloned()
+        .collect::<Vec<_>>();
+    assert_eq!(
+        new_files.len(),
+        1,
+        "A successful save must create one new private snapshot"
+    );
+    let path = new_files[0].clone();
     let imported = read_import(
         path.clone(),
         state.borrow().catalogue.clone(),

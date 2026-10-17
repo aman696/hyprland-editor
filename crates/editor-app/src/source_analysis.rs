@@ -39,6 +39,7 @@ pub(super) struct View {
     tabs: gtk::glib::WeakRef<gtk::Stack>,
     source_expander: gtk::glib::WeakRef<gtk::Expander>,
     compare: gtk::glib::WeakRef<gtk::Button>,
+    overrides: gtk::glib::WeakRef<gtk::Button>,
     change_window: Rc<RefCell<Option<gtk::glib::WeakRef<adw::Window>>>>,
 }
 fn short(bytes: &[u8]) -> String {
@@ -82,6 +83,11 @@ pub(super) fn build(
     let status=label("Only files in allowed folders can be read. Source code is never executed, and drafts and desktop settings stay unchanged.");
     status.set_widget_name("dependency-analysis-status");
     body.append(&status);
+    let overrides = gtk::Button::with_label("Review Value Overrides");
+    overrides.set_widget_name("source-analysis-overrides");
+    overrides.set_halign(gtk::Align::Start);
+    overrides.set_sensitive(false);
+    body.append(&overrides);
     let tabs = gtk::Stack::new();
     let files_page = gtk::Box::new(gtk::Orientation::Vertical, 8);
     let files = gtk::DropDown::from_strings(&[]);
@@ -191,6 +197,7 @@ pub(super) fn build(
         tabs: tabs.downgrade(),
         source_expander: source_expander.downgrade(),
         compare: compare.downgrade(),
+        overrides: overrides.downgrade(),
         change_window: Rc::new(RefCell::new(None)),
     };
     let v = view.clone();
@@ -199,9 +206,40 @@ pub(super) fn build(
     calls.connect_selected_notify(move |_| v.call());
     let v = view.clone();
     compare.connect_clicked(move |_| v.compare());
+    let v = view.clone();
+    overrides.connect_clicked(move |_| v.overrides());
     (body, view)
 }
 impl View {
+    fn overrides(&self) {
+        let (Some(model), Some(state), Some(button)) = (
+            self.model.upgrade(),
+            self.state.upgrade(),
+            self.overrides.upgrade(),
+        ) else {
+            return;
+        };
+        if model.borrow().is_none() {
+            return;
+        }
+        let Some(parent) = button.root().and_downcast::<gtk::Window>() else {
+            return;
+        };
+        self.close_change();
+        let view = self.clone();
+        let window = super::source_overrides::open(
+            &parent,
+            &model,
+            &state,
+            Rc::new(move || {
+                if let Some(callback) = &view.after_keep {
+                    callback();
+                }
+                view.render();
+            }),
+        );
+        *self.change_window.borrow_mut() = Some(window.downgrade());
+    }
     #[cfg(test)]
     pub(super) fn test_compare(&self) -> adw::Window {
         self.compare.upgrade().unwrap().emit_clicked();
@@ -332,6 +370,9 @@ impl View {
     }
     pub(super) fn reset(&self, message: &str) {
         self.close_change();
+        if let Some(button) = self.overrides.upgrade() {
+            button.set_sensitive(false);
+        }
         if let Some(button) = self.compare.upgrade() {
             button.set_sensitive(false);
         }
@@ -366,6 +407,12 @@ impl View {
         let Some(analysis) = self.model.upgrade().and_then(|m| m.borrow().clone()) else {
             return;
         };
+        if let Some(button) = self.overrides.upgrade() {
+            button.set_sensitive(self.state.upgrade().is_some_and(|s| {
+                let s = s.borrow();
+                s.draft.version == analysis.program.version && !s.draft.values.is_empty()
+            }));
+        }
         let edited = analysis
             .frozen
             .as_ref()
@@ -420,7 +467,7 @@ impl View {
                 |r| format!("Stopped: {}", display_path_bytes(r.as_bytes())),
             );
             label.set_text(&if edited {
-                format!("Private source revisions modeled. Original captures and separate value overrides are preserved. Reconcile source revisions with overrides before export. {message}")
+                format!("Private source revisions modeled. Original captures and separate value overrides are preserved. Review Value Overrides can reconcile scalar layers. Full source export remains unfinished. {message}")
             }else if analysis.restored {
                 format!("Saved resolution inputs replayed. Original files and folder access were not reopened. {message}")
             }else{message});

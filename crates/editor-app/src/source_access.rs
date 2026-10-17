@@ -1541,8 +1541,8 @@ pub(super) fn test_retained_graph(parent: &adw::ApplicationWindow) {
             std::thread::sleep(std::time::Duration::from_millis(10));
         }
     }
-    let root = std::env::temp_dir().join(format!("he-retained-graph-{}", std::process::id()));
-    std::fs::create_dir(&root).unwrap();
+    let fixture = super::test_support::TempDir::new("he-retained-graph");
+    let root = fixture.path().to_path_buf();
     let originals = root.join("originals");
     std::fs::create_dir(&originals).unwrap();
     let main = originals.join("main.lua");
@@ -1614,6 +1614,7 @@ pub(super) fn test_retained_graph(parent: &adw::ApplicationWindow) {
         .text()
         .contains("folder access were not reopened"));
     super::source_changes::test_keep_in_draft(&saved, &state);
+    super::source_overrides::test_review(&saved, &state);
     super::workflow::test_graph_persistence(parent, &state, &root);
     assert!(find_status()
         .text()

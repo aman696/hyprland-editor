@@ -36,6 +36,16 @@ pub enum Request {
         program: lua::replay::Program,
         change: lua::replay::scalar_edit::Change,
     },
+    ReviewSourceOverrides {
+        program: lua::replay::Program,
+        draft: Draft,
+    },
+    ResolveSourceOverrides {
+        program: lua::replay::Program,
+        draft: Draft,
+        review: lua::replay::override_review::Review,
+        choices: std::collections::BTreeMap<String, lua::replay::override_review::Choice>,
+    },
     MaterializeSourceRevisions {
         base: lua::replay::Program,
         revisions: Vec<hyprland_editor_core::workspace_graph::revisions::Revision>,
@@ -71,6 +81,8 @@ pub enum Response {
     Replayed(Box<lua::replay::Report>),
     SourceEditReview(Box<lua::replay::edits::EditReview>),
     ScalarSourceComparison(Box<lua::replay::scalar_edit::Comparison>),
+    SourceOverrideReview(Box<lua::replay::override_review::Review>),
+    SourceOverrideResolution(Box<lua::replay::override_review::Resolution>),
     SourceRevisionProgram(lua::replay::Program),
     SourceRevisions(Vec<hyprland_editor_core::workspace_graph::revisions::Revision>),
     Primitives {
@@ -166,6 +178,17 @@ pub fn entry() {
                 lua::replay::scalar_edit::compare(&program, &change)
                     .map(|result| Response::ScalarSourceComparison(Box::new(result)))
             }
+            Request::ReviewSourceOverrides { program, draft } => {
+                lua::replay::override_review::prepare(&program, &draft)
+                    .map(|result| Response::SourceOverrideReview(Box::new(result)))
+            }
+            Request::ResolveSourceOverrides {
+                program,
+                draft,
+                review,
+                choices,
+            } => lua::replay::override_review::resolve(&program, &draft, &review, &choices)
+                .map(|result| Response::SourceOverrideResolution(Box::new(result))),
             Request::ReviewSourceEdits { program, plan } => {
                 lua::replay::edits::review(&program, &plan)
                     .map(|report| Response::SourceEditReview(Box::new(report)))

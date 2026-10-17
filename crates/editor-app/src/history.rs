@@ -11,6 +11,7 @@ const MAX_BYTES: usize = 8 * 1024 * 1024;
 pub(super) enum Undo {
     Graph {
         previous: Option<Arc<super::source_graph::Saved>>,
+        changes: Vec<(String, Option<Value>)>,
         retained_bytes: usize,
     },
     Field {
@@ -327,8 +328,16 @@ impl Undo {
                         + changes_bytes(changes)
                         + origin_bytes(origin)
                 }
-                Self::Graph { retained_bytes, .. }
-                | Self::Gestures { retained_bytes, .. }
+                Self::Graph {
+                    changes,
+                    retained_bytes,
+                    ..
+                } => {
+                    *retained_bytes
+                        + changes.capacity() * size_of::<(String, Option<Value>)>()
+                        + changes_bytes(changes)
+                }
+                Self::Gestures { retained_bytes, .. }
                 | Self::Animations { retained_bytes, .. }
                 | Self::Rules { retained_bytes, .. }
                 | Self::Bindings { retained_bytes, .. }
@@ -356,10 +365,12 @@ impl History {
     pub fn graph(
         &mut self,
         previous: Option<Arc<super::source_graph::Saved>>,
+        changes: Vec<(String, Option<Value>)>,
     ) -> Result<(), String> {
         let retained_bytes = previous.as_ref().map_or(0, |g| g.history_cost);
         self.push(Undo::Graph {
             previous,
+            changes,
             retained_bytes,
         })
     }
@@ -682,5 +693,20 @@ mod tests {
             .field("too-large", Some(Value::String("x".repeat(MAX_BYTES))))
             .is_err());
         assert_eq!(history.entries.len(), 1);
+    }
+    #[test]
+    fn graph_and_override_inverse_budget_failure_preserves_existing_history() {
+        let mut history = History::default();
+        history.field("previous", Some(Value::Int(3))).unwrap();
+        assert!(history
+            .graph(
+                None,
+                vec![("large".into(), Some(Value::String("x".repeat(MAX_BYTES))))]
+            )
+            .is_err());
+        assert!(
+            matches!(history.pop(),Some(Undo::Field{id,previous:Some(Value::Int(3))}) if id=="previous")
+        );
+        assert!(history.is_empty());
     }
 }

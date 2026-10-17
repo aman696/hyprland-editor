@@ -22,7 +22,10 @@ mod source_changes;
 mod source_context;
 mod source_graph;
 mod source_modules;
+mod source_overrides;
 mod source_provenance;
+#[cfg(test)]
+mod test_support;
 mod worker;
 mod workflow;
 mod workspaces;
@@ -189,6 +192,36 @@ impl State {
         Ok(())
     }
     fn keep_graph(&mut self, graph: Arc<source_graph::Saved>) -> Result<(), String> {
+        self.keep_graph_and_overrides(graph, self.draft.clone())
+    }
+    fn keep_graph_and_overrides(
+        &mut self,
+        graph: Arc<source_graph::Saved>,
+        draft: Draft,
+    ) -> Result<(), String> {
+        draft.validate(&self.catalogue)?;
+        if draft.version != self.draft.version
+            || draft.values.iter().any(|(id, value)| {
+                self.draft
+                    .values
+                    .get(id)
+                    .is_none_or(|old| match (old, value) {
+                        (Value::Float(a), Value::Float(b)) => a.to_bits() != b.to_bits(),
+                        _ => old != value,
+                    })
+            })
+        {
+            return Err(
+                "Source reconciliation can only remove explicitly reviewed overrides".into(),
+            );
+        }
+        let changes = self
+            .draft
+            .values
+            .iter()
+            .filter(|(id, _)| !draft.values.contains_key(*id))
+            .map(|(id, v)| (id.clone(), Some(v.clone())))
+            .collect::<Vec<_>>();
         let version = &self.draft.version;
         let root = graph
             .bundle
@@ -205,15 +238,18 @@ impl State {
         {
             return Err("Analyze the imported root at its exact recorded revision before retaining the graph.".into());
         }
-        if self
-            .source_graphs
-            .get(version)
-            .is_some_and(|g| g.fingerprint == graph.fingerprint)
+        if changes.is_empty()
+            && self
+                .source_graphs
+                .get(version)
+                .is_some_and(|g| g.fingerprint == graph.fingerprint)
         {
             return Ok(());
         }
-        self.undo.graph(self.source_graphs.get(version).cloned())?;
+        self.undo
+            .graph(self.source_graphs.get(version).cloned(), changes)?;
         self.source_graphs.insert(version.clone(), graph);
+        self.draft = draft;
         self.generation += 1;
         Ok(())
     }
@@ -222,11 +258,20 @@ impl State {
             return;
         };
         match operation {
-            history::Undo::Graph { previous, .. } => {
+            history::Undo::Graph {
+                previous, changes, ..
+            } => {
                 if let Some(graph) = previous {
                     self.source_graphs.insert(self.draft.version.clone(), graph);
                 } else {
                     self.source_graphs.remove(&self.draft.version);
+                }
+                for (id, previous) in changes {
+                    if let Some(value) = previous {
+                        self.draft.values.insert(id, value);
+                    } else {
+                        self.draft.values.remove(&id);
+                    }
                 }
             }
             history::Undo::Field { id, previous } => {
@@ -284,7 +329,7 @@ impl State {
             .get(&self.draft.version)
             .is_some_and(|g| !g.bundle.graph.revisions.is_empty())
         {
-            return Err("This draft includes private source revisions. Save the full workspace; override-only export would omit them. Source/override reconciliation is still required.".into());
+            return Err("This draft includes private source revisions. Save the full workspace; override-only export would omit them. Full source export is not available yet.".into());
         }
         let mut text = self.draft.export_lua(&self.catalogue)?;
         if let Some(rules) = self.monitors.get(&self.draft.version) {

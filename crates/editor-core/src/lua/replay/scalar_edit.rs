@@ -56,6 +56,67 @@ fn print(value: &Observed) -> Result<String, String> {
         _ => return Err("Unsupported primitive source printer".into()),
     })
 }
+pub(super) fn proposed(
+    meta: &registration::Entry,
+    value: &Value,
+) -> Result<(Observed, scalar_codec::Outcome), String> {
+    let codec = meta
+        .codec
+        .as_ref()
+        .ok_or("This setting's native value codec is unfinished")?;
+    let mut proposed = input(value, &meta.kind)?;
+    let mut outcomes = scalar_codec::decode_batch(&[scalar_codec::Case {
+        codec: codec.clone(),
+        input: proposed.clone(),
+    }])?;
+    // Native names may represent values which the numeric overload rejects.
+    // Preserve that native route rather than silently loosening numeric bounds.
+    if !matches!(
+        outcomes[0],
+        scalar_codec::Outcome::Accepted {
+            representation: scalar_codec::Representation::Value { .. },
+            ..
+        }
+    ) {
+        if let (
+            Value::Int(value),
+            scalar_codec::Codec::Int {
+                names: Some(names), ..
+            },
+        ) = (value, codec)
+        {
+            for name in names.iter().filter(|n| n.value == *value) {
+                let trial = Observed::Bytes(name.name.clone());
+                let outcome = scalar_codec::decode_batch(&[scalar_codec::Case {
+                    codec: codec.clone(),
+                    input: trial.clone(),
+                }])?
+                .remove(0);
+                if matches!(
+                    outcome,
+                    scalar_codec::Outcome::Accepted {
+                        representation: scalar_codec::Representation::Value { .. },
+                        ..
+                    }
+                ) {
+                    proposed = trial;
+                    outcomes[0] = outcome;
+                    break;
+                }
+            }
+        }
+    }
+    if !matches!(
+        outcomes[0],
+        scalar_codec::Outcome::Accepted {
+            representation: scalar_codec::Representation::Value { .. },
+            ..
+        }
+    ) {
+        return Err("The pinned native parser rejects this value or cannot verify it".into());
+    }
+    Ok((proposed, outcomes.remove(0)))
+}
 pub fn compare(program: &Program, change: &Change) -> Result<Comparison, String> {
     if change.location.is_empty() || change.location.len() > 33 || change.setting_id.len() > 128 {
         return Err("Invalid selected setting coordinates".into());
@@ -88,61 +149,7 @@ pub fn compare(program: &Program, change: &Change) -> Result<Comparison, String>
     }
     let meta = registration::by_lua_key(&program.version, &candidate.lua_key)
         .ok_or("Missing registered setting metadata")?;
-    let codec = meta
-        .codec
-        .as_ref()
-        .ok_or("This setting's native value codec is unfinished")?;
-    let mut proposed = input(&change.value, &meta.kind)?;
-    let mut outcomes = scalar_codec::decode_batch(&[scalar_codec::Case {
-        codec: codec.clone(),
-        input: proposed.clone(),
-    }])?;
-    // Native names may represent values which the numeric overload rejects.
-    // Preserve that native route rather than silently loosening numeric bounds.
-    if !matches!(
-        outcomes[0],
-        scalar_codec::Outcome::Accepted {
-            representation: scalar_codec::Representation::Value { .. },
-            ..
-        }
-    ) {
-        if let (
-            Value::Int(value),
-            scalar_codec::Codec::Int {
-                names: Some(names), ..
-            },
-        ) = (&change.value, codec)
-        {
-            for name in names.iter().filter(|n| n.value == *value) {
-                let trial = Observed::Bytes(name.name.clone());
-                let outcome = scalar_codec::decode_batch(&[scalar_codec::Case {
-                    codec: codec.clone(),
-                    input: trial.clone(),
-                }])?
-                .remove(0);
-                if matches!(
-                    outcome,
-                    scalar_codec::Outcome::Accepted {
-                        representation: scalar_codec::Representation::Value { .. },
-                        ..
-                    }
-                ) {
-                    proposed = trial;
-                    outcomes[0] = outcome;
-                    break;
-                }
-            }
-        }
-    }
-    if !matches!(
-        outcomes[0],
-        scalar_codec::Outcome::Accepted {
-            representation: scalar_codec::Representation::Value { .. },
-            ..
-        }
-    ) {
-        return Err("The pinned native parser rejects this value or cannot verify it".into());
-    }
+    let (proposed, outcome) = proposed(meta, &change.value)?;
     let mut id = candidate
         .expression
         .ok_or("No exact source expression is recorded for this value")?;
@@ -207,7 +214,7 @@ pub fn compare(program: &Program, change: &Change) -> Result<Comparison, String>
     let comparison = Comparison {
         plan,
         review,
-        proposed_native_value: outcomes.remove(0),
+        proposed_native_value: outcome,
     };
     edits::fingerprint(&comparison)?;
     Ok(comparison)

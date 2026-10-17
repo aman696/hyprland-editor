@@ -106,6 +106,47 @@ fn typed_source_comparisons_rebuild_coordinates_and_native_validation_in_the_wor
     );
 }
 #[test]
+fn source_override_review_and_resolution_rebuild_evidence_in_the_restricted_worker() {
+    use hyprland_editor_core::{lua::replay::override_review::*, Draft, Value};
+    let p = replay_program("hl.config({general={border_size=2}})");
+    let mut d = Draft::new(&p.version);
+    d.values.insert("general:border_size".into(), Value::Int(7));
+    let reviewed = request(json!({"ReviewSourceOverrides":{"program":p,"draft":d}}));
+    let r: Review = serde_json::from_value(reviewed["SourceOverrideReview"].clone()).unwrap();
+    assert!(r.model_complete);
+    assert!(matches!(
+        r.rows[0].source,
+        SourceValue::Parsed {
+            value: Value::Int(2),
+            ..
+        }
+    ));
+    let choices = [("general:border_size".to_string(), Choice::WriteOverride)].into();
+    let expected = resolve(&p, &d, &r, &choices).unwrap();
+    let actual = request(
+        json!({"ResolveSourceOverrides":{"program":p,"draft":d,"review":r,"choices":choices}}),
+    );
+    assert_eq!(
+        actual["SourceOverrideResolution"],
+        serde_json::to_value(&expected).unwrap()
+    );
+    validate_resolution(&d, &r, &choices, &expected).unwrap();
+    let mut forged = r.clone();
+    forged.rows[0].override_value = Value::Int(3);
+    assert!(request(
+        json!({"ResolveSourceOverrides":{"program":p,"draft":d,"review":forged,"choices":choices}})
+    )["Error"]
+        .is_string());
+    let mut other = d.clone();
+    other
+        .values
+        .insert("general:border_size".into(), Value::Int(8));
+    assert!(request(
+        json!({"ResolveSourceOverrides":{"program":p,"draft":other,"review":r,"choices":choices}})
+    )["Error"]
+        .is_string());
+}
+#[test]
 fn source_edit_review_uses_immutable_revisions_inside_the_restricted_worker() {
     use hyprland_editor_core::lua::{
         replay::{edits::*, *},
