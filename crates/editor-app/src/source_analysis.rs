@@ -272,7 +272,7 @@ impl View {
                 None => None,
             });
         if let Some(label) = self.status.upgrade() {
-            label.set_text(&reason.map_or_else(
+            let message = reason.map_or_else(
                 || {
                     let errors = if analysis.report.logged_module_errors == 0 {
                         String::new()
@@ -285,7 +285,10 @@ impl View {
                     )
                 },
                 |r| format!("Stopped: {}", display_path_bytes(r.as_bytes())),
-            ));
+            );
+            label.set_text(&if analysis.restored {
+                format!("Saved resolution inputs replayed. Original files and folder access were not reopened. {message}")
+            }else{message});
         }
         if let Some(pick) = self.files.upgrade() {
             let names = analysis
@@ -599,4 +602,106 @@ fn value(out: &mut String, input: &Observed, depth: usize) {
         Observed::Function(_) => out.push_str("function"),
         Observed::Cycle(_) => out.push_str("shared or cyclic table"),
     }
+}
+
+pub(super) fn show_saved(
+    parent: &impl IsA<gtk::Window>,
+    state: &super::Shared,
+) -> Result<adw::Window, String> {
+    let (saved, generation) = {
+        let s = state.borrow();
+        (
+            s.source_graphs
+                .get(&s.draft.version)
+                .cloned()
+                .ok_or("No saved source graph in this draft")?,
+            s.generation,
+        )
+    };
+    // Repeated inspection must not create another retained model or worker.
+    let prefix = format!("saved-source-graph-{}-", saved.version);
+    let tag = format!("{prefix}{}-{generation}", saved.fingerprint);
+    for window in gtk::Window::list_toplevels()
+        .into_iter()
+        .filter_map(|w| w.downcast::<adw::Window>().ok())
+    {
+        if window.is_visible() && window.widget_name().starts_with(&prefix) {
+            if window.widget_name() == tag {
+                window.present();
+                return Ok(window);
+            }
+            window.close();
+        }
+    }
+    let window = adw::Window::builder()
+        .title("Saved source files")
+        .transient_for(parent)
+        .default_width(700)
+        .default_height(660)
+        .build();
+    window.set_size_request(350, 420);
+    window.set_widget_name(&tag);
+    let root = gtk::Box::new(gtk::Orientation::Vertical, 0);
+    root.append(&adw::HeaderBar::new());
+    let model: Model = Rc::new(RefCell::new(None));
+    let (body, view) = build(&model);
+    for set in [
+        gtk::Widget::set_margin_start,
+        gtk::Widget::set_margin_end,
+        gtk::Widget::set_margin_top,
+        gtk::Widget::set_margin_bottom,
+    ] {
+        set(body.upcast_ref(), 16);
+    }
+    root.append(
+        &gtk::ScrolledWindow::builder()
+            .child(&body)
+            .hscrollbar_policy(gtk::PolicyType::Never)
+            .vexpand(true)
+            .build(),
+    );
+    window.set_content(Some(&root));
+    view.reset("Rebuilding analysis from saved source bytes…");
+    let close_model = model.clone();
+    window.connect_close_request(move |_| {
+        close_model.borrow_mut().take();
+        gtk::glib::Propagation::Proceed
+    });
+    let weak = window.downgrade();
+    let shared = Rc::downgrade(state);
+    let expected = saved.fingerprint.clone();
+    let version = saved.version.clone();
+    let weak_model = Rc::downgrade(&model);
+    super::workflow::background(
+        move || super::source_graph::restore(&saved.bundle, &saved.version),
+        move |result| {
+            let (Some(window), Some(state), Some(model)) =
+                (weak.upgrade(), shared.upgrade(), weak_model.upgrade())
+            else {
+                return;
+            };
+            if !window.is_visible() {
+                return;
+            }
+            let s = state.borrow();
+            if s.generation != generation
+                || s.source_graphs
+                    .get(&version)
+                    .is_none_or(|g| g.fingerprint != expected)
+            {
+                view.reset("Draft changed. Reopen the saved source view.");
+                return;
+            }
+            drop(s);
+            match result {
+                Ok(analysis) => {
+                    *model.borrow_mut() = Some(Arc::new(analysis));
+                    view.render();
+                }
+                Err(e) => view.reset(&display_path_bytes(e.as_bytes())),
+            }
+        },
+    );
+    window.present();
+    Ok(window)
 }

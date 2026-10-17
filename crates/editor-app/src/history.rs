@@ -9,6 +9,10 @@ use std::{
 const MAX_OPERATIONS: usize = 1000;
 const MAX_BYTES: usize = 8 * 1024 * 1024;
 pub(super) enum Undo {
+    Graph {
+        previous: Option<Arc<super::source_graph::Saved>>,
+        retained_bytes: usize,
+    },
     Field {
         id: String,
         previous: Option<Value>,
@@ -323,7 +327,8 @@ impl Undo {
                         + changes_bytes(changes)
                         + origin_bytes(origin)
                 }
-                Self::Gestures { retained_bytes, .. }
+                Self::Graph { retained_bytes, .. }
+                | Self::Gestures { retained_bytes, .. }
                 | Self::Animations { retained_bytes, .. }
                 | Self::Rules { retained_bytes, .. }
                 | Self::Bindings { retained_bytes, .. }
@@ -339,6 +344,16 @@ pub(super) struct History {
     entries: VecDeque<Undo>,
 }
 impl History {
+    pub fn graph(
+        &mut self,
+        previous: Option<Arc<super::source_graph::Saved>>,
+    ) -> Result<(), String> {
+        let retained_bytes = previous.as_ref().map_or(0, |g| g.cost);
+        self.push(Undo::Graph {
+            previous,
+            retained_bytes,
+        })
+    }
     pub fn gestures(
         &mut self,
         previous: hyprland_editor_core::gesture::Draft,

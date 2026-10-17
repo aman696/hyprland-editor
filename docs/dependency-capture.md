@@ -1,5 +1,8 @@
 # Approved dependency captures
 
+Current extension: an analysis of the exact imported root can now be explicitly retained in the draft and saved/reopened as frozen graph inputs. Closing a capture session still releases folder authority; retained source bytes grant no access. See [graph workspace behavior and limits](source-graph-workspace.md). Complete editable graph import, ownership and reconciliation remain required.
+
+
 **Inspect Source Modules → Review Dependency Files** opens a focused native window for temporary source review. Choose **Allow Folder**, then **Choose File** within the selected allowed folder. The source snapshot, path/hash evidence and folder evidence can be inspected without running Lua, changing a draft or writing a configuration. Technical evidence stays collapsed. The **Analyze File** action now builds a temporary captured dependency bundle and shows modeled calls on a separate results page. This does not import an editable multi-file configuration into the draft.
 
 ![Temporary dependency review](screenshots/dependency-files.png)

@@ -854,7 +854,7 @@ impl<'a> Engine<'a> {
     }
 }
 
-pub fn replay(program: &Program) -> std::result::Result<Report, String> {
+pub fn validate_program(program: &Program) -> std::result::Result<(), String> {
     if ![BASELINE, AUDITED_MAIN].contains(&program.version.as_str())
         || program.documents.is_empty()
         || program.documents.len() > 32
@@ -894,7 +894,7 @@ pub fn replay(program: &Program) -> std::result::Result<Report, String> {
     if bytes > 4 * MAX_DOCUMENT_BYTES {
         return Err("Replay source bundle exceeds 4 MiB".into());
     }
-    let root = program
+    program
         .documents
         .iter()
         .position(|d| d.id == program.root)
@@ -942,6 +942,16 @@ pub fn replay(program: &Program) -> std::result::Result<Report, String> {
             }
         }
     }
+    Ok(())
+}
+
+pub fn replay(program: &Program) -> std::result::Result<Report, String> {
+    validate_program(program)?;
+    let root = program
+        .documents
+        .iter()
+        .position(|d| d.id == program.root)
+        .ok_or("Missing replay root")?;
     let documents = program
         .documents
         .iter()

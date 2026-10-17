@@ -1,5 +1,8 @@
 # Source graph implementation work
 
+Current extension: an analysis of the exact imported root can now be explicitly retained in the draft and saved/reopened as frozen graph inputs. Closing a capture session still releases folder authority; retained source bytes grant no access. See [graph workspace behavior and limits](source-graph-workspace.md). Complete editable graph import, ownership and reconciliation remain required.
+
+
 This branch starts E03/E05. It is not yet a multi-file editor, and it does not relax the application's refusal to reopen unsupported multi-file workspaces. The full audit remains authoritative; no additional feature contract or security gate is marked complete.
 
 ## Implemented candidate planner

@@ -43,6 +43,7 @@ pub(super) struct CapturedDocument {
     pub(super) source: Arc<CapturedSource>,
 }
 pub(super) struct Analysis {
+    pub(super) restored: bool,
     pub(super) context: Context,
     pub(super) program: Program,
     pub(super) report: replay::Report,
@@ -462,6 +463,27 @@ pub(super) fn analyze_with_budget(
         }
     };
     resolver.budget.retain(&report)?;
+    let mut budget = resolver.budget;
+    finish(
+        Analysis {
+            restored: false,
+            context,
+            program,
+            report,
+            captures,
+            edges,
+            blocked,
+            config_batches: vec![],
+            config_profile: None,
+            retained_bytes: 0,
+        },
+        &mut budget,
+    )
+}
+fn finish(mut analysis: Analysis, budget: &mut Budget) -> Result<Analysis, String> {
+    let program = &analysis.program;
+    let report = &analysis.report;
+    let mut blocked = analysis.blocked.take();
     let mut config_batches = Vec::new();
     let mut config_profile = None;
     let events = report
@@ -472,7 +494,7 @@ pub(super) fn analyze_with_budget(
         .collect::<Vec<_>>();
     if !events.is_empty() {
         let result = (|| {
-            resolver.budget.check()?;
+            budget.check()?;
             let expected_orders = events.iter().map(|e| e.order).collect::<Vec<_>>();
             let worker::Response::Configuration(inspection) =
                 worker::run(worker::Request::InspectConfiguration {
@@ -508,15 +530,14 @@ pub(super) fn analyze_with_budget(
                     "Configuration model observations do not match captured call order".into(),
                 );
             }
-            resolver.budget.check()?;
+            budget.check()?;
             Ok(inspection)
         })();
         match result {
             Ok(inspection) => {
-                let retain_context = resolver
-                    .budget
+                let retain_context = budget
                     .retain(&inspection.context)
-                    .and_then(|()| resolver.budget.retain(&inspection.stopped));
+                    .and_then(|()| budget.retain(&inspection.stopped));
                 if let Err(reason) = retain_context {
                     blocked.get_or_insert(reason);
                 } else {
@@ -525,11 +546,7 @@ pub(super) fn analyze_with_budget(
                         blocked.get_or_insert(reason);
                     }
                     for batch in inspection.batches {
-                        if let Err(reason) = resolver
-                            .budget
-                            .check()
-                            .and_then(|()| resolver.budget.retain(&batch))
-                        {
+                        if let Err(reason) = budget.check().and_then(|()| budget.retain(&batch)) {
                             blocked.get_or_insert(reason);
                             break;
                         }
@@ -542,18 +559,173 @@ pub(super) fn analyze_with_budget(
             }
         }
     }
-    let retained_bytes = resolver.budget.retained;
-    Ok(Analysis {
-        context,
-        program,
-        report,
-        config_batches,
-        config_profile,
-        captures,
-        edges,
-        blocked,
-        retained_bytes,
-    })
+    analysis.config_batches = config_batches;
+    analysis.config_profile = config_profile;
+    analysis.blocked = blocked;
+    analysis.retained_bytes = budget.retained;
+    Ok(analysis)
+}
+pub(super) struct Saved {
+    pub(super) bundle: hyprland_editor_core::workspace_graph::Bundle,
+    pub(super) fingerprint: String,
+    pub(super) version: String,
+    pub(super) cost: usize,
+}
+impl Saved {
+    pub(super) fn new(
+        bundle: hyprland_editor_core::workspace_graph::Bundle,
+        version: &str,
+    ) -> Result<Self, String> {
+        hyprland_editor_core::workspace::Workspace::new(hyprland_editor_core::Draft::new(version))
+            .with_graph(&bundle)
+            .validate(&hyprland_editor_core::catalogue())?;
+        let fingerprint = bundle.fingerprint()?;
+        let cost = serde_json::to_vec(&bundle)
+            .map_err(|e| e.to_string())?
+            .len()
+            .saturating_mul(2);
+        if cost > 8 * MAX_DOCUMENT_BYTES {
+            return Err("Retained source graph exceeds its data budget".into());
+        }
+        Ok(Self {
+            bundle,
+            fingerprint,
+            version: version.into(),
+            cost,
+        })
+    }
+}
+pub(super) fn freeze(
+    analysis: &Analysis,
+) -> Result<hyprland_editor_core::workspace_graph::Bundle, String> {
+    use hyprland_editor_core::{
+        workspace::{SourceLanguage, SourceSnapshot},
+        workspace_graph::{Bundle, Graph, View},
+    };
+    let bundle = Bundle {
+        graph: Graph {
+            format: "hye-workspace-graph-1".into(),
+            schema_sha256: hyprland_editor_core::workspace_graph::schema_sha256(),
+            compiler: analysis.report.compiler_profile.clone(),
+            root: analysis.program.root.clone(),
+            context: analysis.context.clone(),
+            working_directory: analysis.program.working_directory.clone(),
+            views: analysis
+                .program
+                .documents
+                .iter()
+                .map(|d| View {
+                    document: d.id.clone(),
+                    load_name: d.load_name.clone(),
+                })
+                .collect(),
+            bindings: analysis.program.bindings.clone(),
+        },
+        sources: analysis
+            .captures
+            .iter()
+            .map(|c| SourceSnapshot {
+                id: c.id.clone(),
+                language: SourceLanguage::Lua,
+                content: c.source.content.clone(),
+                origin: c.source.identity.clone(),
+            })
+            .collect(),
+    };
+    hyprland_editor_core::workspace::Workspace::new(hyprland_editor_core::Draft::new(
+        &analysis.program.version,
+    ))
+    .with_graph(&bundle)
+    .validate(&hyprland_editor_core::catalogue())?;
+    bundle.fingerprint()?;
+    Ok(bundle)
+}
+pub(super) fn restore(
+    bundle: &hyprland_editor_core::workspace_graph::Bundle,
+    version: &str,
+) -> Result<Analysis, String> {
+    let program = bundle
+        .graph
+        .program(&bundle.sources, Some(&bundle.graph.root), version)?;
+    let mut budget = Budget {
+        start: Instant::now(),
+        probes: 0,
+        retained: 0,
+        cancelled: Arc::new(AtomicBool::new(false)),
+        limit: 8 * MAX_DOCUMENT_BYTES,
+    };
+    budget.retain(bundle)?;
+    budget.retain(&program)?;
+    let worker::Response::Replayed(report) =
+        worker::run(worker::Request::ReplayModules(program.clone()))?
+    else {
+        return Err("Unexpected saved-graph evaluator response".into());
+    };
+    if report.compiler_profile != bundle.graph.compiler || report.runtime_verified {
+        return Err("Saved graph compiler profile differs; explicit reanalysis is required".into());
+    }
+    // A saved location/span is not proof of a reached loader. Rebuild and check it.
+    for binding in &program.bindings {
+        if !report.loads.iter().any(|load| {
+            load.request == binding.request
+                && match (&load.outcome, &binding.resolution) {
+                    (
+                        replay::LoadOutcome::SuppliedSnapshot {
+                            document: a,
+                            loader_data: x,
+                        },
+                        Resolution::Loaded {
+                            document: b,
+                            loader_data: y,
+                        },
+                    ) => a == b && x == y,
+                    (replay::LoadOutcome::SuppliedMissing, Resolution::Missing) => true,
+                    _ => false,
+                }
+        }) {
+            return Err(
+                "Saved graph contains an unreachable or inconsistent resolution input".into(),
+            );
+        }
+    }
+    for document in &program.documents {
+        if document.id != program.root
+            && !report.loads.iter().any(|load| {
+                matches!(&load.outcome,
+            replay::LoadOutcome::SuppliedSnapshot {document:target,..} if target==&document.id)
+            })
+        {
+            return Err("Saved graph contains a source view that no loader reaches".into());
+        }
+    }
+    budget.check()?;
+    budget.retain(report.as_ref())?;
+    let captures = bundle
+        .sources
+        .iter()
+        .map(|source| CapturedDocument {
+            id: source.id.clone(),
+            source: Arc::new(CapturedSource {
+                content: source.content.clone(),
+                identity: source.origin.clone(),
+            }),
+        })
+        .collect();
+    finish(
+        Analysis {
+            restored: true,
+            context: bundle.graph.context.clone(),
+            program,
+            report: *report,
+            captures,
+            edges: vec![],
+            blocked: None,
+            config_batches: vec![],
+            config_profile: None,
+            retained_bytes: 0,
+        },
+        &mut budget,
+    )
 }
 pub(super) fn check(
     folder: &std::path::Path,

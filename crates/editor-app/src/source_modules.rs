@@ -175,7 +175,27 @@ fn show(parent: &adw::ApplicationWindow, state: &Shared) -> Result<adw::Window, 
     ] {
         setter(body.upcast_ref(), 16);
     }
-    body.append(&label("Inspect module and file-loader calls in the imported snapshot. Referenced files are not opened. Multi-file import is still in development."));
+    if state.borrow().source_graphs.contains_key(&version) {
+        let saved = gtk::Button::with_label("View Retained Source Files");
+        saved.set_widget_name("view-saved-source-graph");
+        body.append(&saved);
+        let shared = Rc::downgrade(state);
+        let parent = win.downgrade();
+        saved.connect_clicked(move |_| {
+            if let (Some(state), Some(parent)) = (shared.upgrade(), parent.upgrade()) {
+                if let Err(error) = super::source_analysis::show_saved(&parent, &state) {
+                    let dialog = adw::MessageDialog::new(
+                        Some(&parent),
+                        Some("Cannot inspect saved graph"),
+                        Some(&error),
+                    );
+                    dialog.add_response("close", "Close");
+                    dialog.present();
+                }
+            }
+        });
+    }
+    body.append(&label("Inspect module and file-loader calls in the imported snapshot. Referenced files are not opened by this view. Retained files can be reopened from a private workspace; source graph editing is still in development."));
     let location = origin.as_ref().map_or_else(
         || "Location unavailable".into(),
         |o| display_path_bytes(&o.selected_path),

@@ -33,6 +33,9 @@ struct Review {
 fn input(state: &Shared) -> Result<Input, String> {
     let s = state.borrow();
     let version = &s.draft.version;
+    if s.source_graphs.contains_key(version) {
+        return Err("Saved graph reconciliation must include every file. Single-root comparison would invalidate its resolution inputs.".into());
+    }
     Ok(Input {
         base: s
             .sources

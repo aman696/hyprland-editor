@@ -18,6 +18,7 @@ pub mod source_path;
 pub mod source_scope;
 pub mod storage;
 pub mod workspace;
+pub mod workspace_graph;
 pub mod workspace_rule;
 pub mod workspace_selector;
 pub mod xkb;

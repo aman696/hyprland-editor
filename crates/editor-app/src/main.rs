@@ -42,6 +42,8 @@ struct State {
     category: Option<String>,
     sources: BTreeMap<String, Arc<hyprland_editor_core::lua::LuaDocument>>,
     source_origins: BTreeMap<String, SourceIdentity>,
+    source_graphs: BTreeMap<String, Arc<source_graph::Saved>>,
+    saved_source_graphs: BTreeMap<String, Option<String>>,
     saved_source_origins: BTreeMap<String, Option<SourceIdentity>>,
     active: Option<hyprland_editor_discovery::Snapshot>,
     generation: u64,
@@ -127,6 +129,14 @@ impl State {
                     .map(Vec::as_slice)
                     .unwrap_or(&[])
             || values_changed
+            || self
+                .source_graphs
+                .get(version)
+                .map(|g| g.fingerprint.as_str())
+                != self
+                    .saved_source_graphs
+                    .get(version)
+                    .and_then(Option::as_deref)
             || source_changed
             || monitors != saved_monitors
             || self.devices.get(version).map(Vec::as_slice).unwrap_or(&[])
@@ -150,6 +160,9 @@ impl State {
         origin: SourceIdentity,
         draft: Draft,
     ) -> Result<(), String> {
+        if self.source_graphs.contains_key(&self.draft.version) {
+            return Err("This workspace retains a source graph. Single-file replacement would invalidate its inputs; graph reconciliation is still required.".into());
+        }
         draft.validate(&self.catalogue)?;
         origin.validate(&document.source)?;
         if draft.version != self.draft.version || document.report.draft.version != draft.version {
@@ -173,11 +186,47 @@ impl State {
         self.generation += 1;
         Ok(())
     }
+    fn keep_graph(&mut self, graph: Arc<source_graph::Saved>) -> Result<(), String> {
+        let version = &self.draft.version;
+        let root = graph
+            .bundle
+            .sources
+            .iter()
+            .find(|s| s.id == graph.bundle.graph.root)
+            .ok_or("Graph root missing")?;
+        if graph.version != *version
+            || self.source_origins.get(version) != Some(&root.origin)
+            || self
+                .sources
+                .get(version)
+                .is_none_or(|d| d.source != root.content)
+        {
+            return Err("Analyze the imported root at its exact recorded revision before retaining the graph.".into());
+        }
+        if self
+            .source_graphs
+            .get(version)
+            .is_some_and(|g| g.fingerprint == graph.fingerprint)
+        {
+            return Ok(());
+        }
+        self.undo.graph(self.source_graphs.get(version).cloned())?;
+        self.source_graphs.insert(version.clone(), graph);
+        self.generation += 1;
+        Ok(())
+    }
     fn undo_last(&mut self) {
         let Some(operation) = self.undo.pop() else {
             return;
         };
         match operation {
+            history::Undo::Graph { previous, .. } => {
+                if let Some(graph) = previous {
+                    self.source_graphs.insert(self.draft.version.clone(), graph);
+                } else {
+                    self.source_graphs.remove(&self.draft.version);
+                }
+            }
             history::Undo::Field { id, previous } => {
                 if let Some(value) = previous {
                     self.draft.values.insert(id, value);
@@ -711,6 +760,8 @@ fn initial_state() -> Shared {
         category: None,
         sources: BTreeMap::new(),
         source_origins: BTreeMap::new(),
+        source_graphs: BTreeMap::new(),
+        saved_source_graphs: BTreeMap::new(),
         saved_source_origins: BTreeMap::new(),
         active: None,
         generation: 0,
@@ -1479,6 +1530,7 @@ mod tests {
         animations::test_editor(&window);
         gestures::test_editor(&window);
         source_modules::test_view(&window);
+        source_access::test_retained_graph(&window);
         rule_forms::test_forms();
         window.close();
         assert!(

@@ -74,6 +74,7 @@ struct Session {
     folders: Vec<Folder>,
     captures: Vec<Capture>,
     pending: bool,
+    kept: bool,
     alive: bool,
     epoch: u64,
     analysis: super::source_analysis::Model,
@@ -159,6 +160,7 @@ impl Session {
         self.clear_analysis();
     }
     fn clear_analysis(&mut self) {
+        self.kept = false;
         if let Some(cancel) = self.analysis_cancel.take() {
             cancel.store(true, Ordering::Relaxed);
         }
@@ -181,6 +183,8 @@ struct Controls {
     capture_details: gtk::glib::WeakRef<gtk::TextView>,
     preview: gtk::glib::WeakRef<gtk::TextView>,
     analyze: gtk::glib::WeakRef<gtk::Button>,
+    keep: gtk::glib::WeakRef<gtk::Button>,
+    keep_feedback: gtk::glib::WeakRef<gtk::Label>,
     context: gtk::glib::WeakRef<gtk::Button>,
     cancel: gtk::glib::WeakRef<gtk::Button>,
     pages: gtk::glib::WeakRef<gtk::Stack>,
@@ -259,9 +263,25 @@ impl Controls {
             (&self.remove, capture.is_some()),
             (&self.analyze, valid && capture.is_some()),
             (&self.context, valid),
+            (
+                &self.keep,
+                valid && !s.kept && s.analysis.borrow().is_some(),
+            ),
         ] {
             if let Some(button) = weak.upgrade() {
                 button.set_sensitive(!s.pending && available);
+            }
+        }
+        if let Some(button) = self.keep.upgrade() {
+            button.set_label(if s.kept {
+                "Files Kept in Draft"
+            } else {
+                "Keep Analyzed Files in Draft"
+            });
+        }
+        if s.analysis.borrow().is_none() {
+            if let Some(label) = self.keep_feedback.upgrade() {
+                label.set_text("");
             }
         }
         if let Some(button) = self.cancel.upgrade() {
@@ -494,6 +514,57 @@ impl Controls {
             },
         );
     }
+    fn keep(&self) {
+        if !self.current() {
+            self.details();
+            return;
+        }
+        let Some(session) = self.session.upgrade() else {
+            return;
+        };
+        let analysis = {
+            let mut s = session.borrow_mut();
+            if s.pending {
+                return;
+            }
+            let Some(analysis) = s.analysis.borrow().clone() else {
+                return;
+            };
+            s.pending = true;
+            s.epoch += 1;
+            (analysis, s.epoch)
+        };
+        self.details();
+        let ui = self.clone();
+        let (analysis, epoch) = analysis;
+        workflow::background(
+            move || {
+                let bundle = super::source_graph::freeze(&analysis)?;
+                super::source_graph::Saved::new(bundle, &analysis.program.version).map(Arc::new)
+            },
+            move |result| {
+                let Some(session) = ui.finish(epoch) else {
+                    return;
+                };
+                let Some(state) = ui.state.upgrade() else {
+                    return;
+                };
+                match result.and_then(|graph| state.borrow_mut().keep_graph(graph)) {
+                    Ok(()) => {
+                        session.borrow_mut().generation = state.borrow().generation;
+                        ui.feedback("Analyzed files retained in this draft. Save Draft to persist them; folder access remains temporary.");
+                    }
+                    Err(error) => {
+                        if let Some(label) = ui.keep_feedback.upgrade() {
+                            label.set_text(&display_path_bytes(error.as_bytes()));
+                        }
+                        ui.feedback(&error)
+                    }
+                }
+                ui.details();
+            },
+        );
+    }
     fn set_context(&self, options: super::source_context::Options) -> Result<(), String> {
         options.validate()?;
         if !self.current() {
@@ -580,7 +651,7 @@ fn text_view(name: &str, height: i32, code: bool) -> (gtk::ScrolledWindow, gtk::
     )
 }
 fn show(
-    parent: &adw::Window,
+    parent: &impl IsA<gtk::Window>,
     state: &Shared,
     version: String,
     root_hash: String,
@@ -600,7 +671,7 @@ fn show(
     body.set_margin_end(16);
     body.set_margin_top(16);
     body.set_margin_bottom(16);
-    let introduction=label("Allow a folder, then choose files to capture for review. Closing this window discards these temporary captures. Multi-file editing and saving are still in development.");
+    let introduction=label("Allow a folder, then choose files to capture for review. Closing this window discards temporary captures. Analyze the imported root, then keep its analyzed files in the draft to save them. Source editing remains in development.");
     introduction.set_selectable(false);
     body.append(&introduction);
     let add = gtk::Button::with_label("Allow Folder…");
@@ -680,6 +751,13 @@ fn show(
     );
     let analysis_model = Rc::new(RefCell::new(None));
     let (analysis_body, analysis_view) = super::source_analysis::build(&analysis_model);
+    let keep = gtk::Button::with_label("Keep Analyzed Files in Draft");
+    keep.set_widget_name("dependency-keep-graph");
+    keep.set_tooltip_text(Some("Requires the imported root at its exact recorded revision; saves no files until Save Draft"));
+    analysis_body.append(&keep);
+    let keep_feedback = label("");
+    keep_feedback.set_widget_name("dependency-keep-status");
+    analysis_body.append(&keep_feedback);
     for set in [
         gtk::Widget::set_margin_start,
         gtk::Widget::set_margin_end,
@@ -713,6 +791,7 @@ fn show(
         folders: vec![],
         captures: vec![],
         pending: false,
+        kept: false,
         alive: true,
         epoch: 0,
         analysis: analysis_model,
@@ -737,6 +816,8 @@ fn show(
         capture_details: capture_details.downgrade(),
         preview: preview.downgrade(),
         analyze: analyze.downgrade(),
+        keep: keep.downgrade(),
+        keep_feedback: keep_feedback.downgrade(),
         context: context.downgrade(),
         cancel: cancel.downgrade(),
         pages: pages.downgrade(),
@@ -750,6 +831,8 @@ fn show(
     });
     let u = ui.clone();
     analyze.connect_clicked(move |_| u.analyze());
+    let u = ui.clone();
+    keep.connect_clicked(move |_| u.keep());
     let u = ui.clone();
     context.connect_clicked(move |_| {
         u.edit_context();
@@ -1075,6 +1158,14 @@ pub(super) fn test_review(parent: &adw::Window, state: &Shared) {
         Arc::downgrade(a)
     };
     let weak_dependency = Arc::downgrade(&model.borrow().as_ref().unwrap().captures[1].source);
+    ui.keep.upgrade().unwrap().emit_clicked();
+    wait(|| !session.borrow().pending);
+    assert!(
+        state.borrow().source_graphs.is_empty(),
+        "An unrelated analyzed root must not replace imported source context"
+    );
+    assert_eq!(state.borrow().generation, generation);
+
     assert_eq!(
         ui.pages.upgrade().unwrap().visible_child_name().as_deref(),
         Some("analysis")
@@ -1363,6 +1454,120 @@ pub(super) fn test_review(parent: &adw::Window, state: &Shared) {
 }
 
 #[cfg(test)]
+pub(super) fn test_retained_graph(parent: &adw::ApplicationWindow) {
+    use hyprland_editor_core::BASELINE;
+    fn wait(test: impl Fn() -> bool) {
+        let start = std::time::Instant::now();
+        let context = gtk::glib::MainContext::default();
+        while !test() {
+            while context.pending() {
+                context.iteration(false);
+            }
+            assert!(start.elapsed() < std::time::Duration::from_secs(8));
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+    }
+    let root = std::env::temp_dir().join(format!("he-retained-graph-{}", std::process::id()));
+    std::fs::create_dir(&root).unwrap();
+    let originals = root.join("originals");
+    std::fs::create_dir(&originals).unwrap();
+    let main = originals.join("main.lua");
+    let source = "local part=require('part');hl.config{general={border_size=part}}";
+    std::fs::write(&main, source).unwrap();
+    std::fs::write(originals.join("part.lua"), "return 4").unwrap();
+    let captured = super::capture_worker::read_selected(&main).unwrap();
+    let state = super::initial_state();
+    let doc = workflow::parse_source(captured.content, BASELINE.into(), &state.borrow().catalogue)
+        .unwrap();
+    state
+        .borrow_mut()
+        .sources
+        .insert(BASELINE.into(), Arc::new(doc));
+    state
+        .borrow_mut()
+        .source_origins
+        .insert(BASELINE.into(), captured.identity);
+    let hash = hyprland_editor_core::lua::source_hash(source);
+    let (window, ui) = show(parent, &state, BASELINE.into(), hash);
+    ui.approve(originals.clone());
+    wait(|| ui.session.upgrade().is_some_and(|s| !s.borrow().pending));
+    ui.capture(main);
+    wait(|| ui.session.upgrade().is_some_and(|s| !s.borrow().pending));
+    ui.analyze();
+    wait(|| ui.session.upgrade().is_some_and(|s| !s.borrow().pending));
+    ui.keep.upgrade().unwrap().emit_clicked();
+    wait(|| ui.session.upgrade().is_some_and(|s| !s.borrow().pending));
+    assert_eq!(
+        state.borrow().source_graphs[BASELINE].bundle.sources.len(),
+        2
+    );
+    assert!(state.borrow().dirty());
+    assert_eq!(state.borrow().generation, 1);
+    window.close();
+    drop(window);
+    drop(ui);
+    std::fs::remove_dir_all(&originals).unwrap();
+    super::workflow::test_graph_persistence(parent, &state, &root);
+    let saved = super::source_analysis::show_saved(parent, &state).unwrap();
+    let reopened = super::source_analysis::show_saved(parent, &state).unwrap();
+    assert_eq!(
+        saved, reopened,
+        "Repeated inspection must reuse the existing saved model window"
+    );
+    drop(reopened);
+    let find_status = || {
+        fn find(w: &gtk::Widget) -> Option<gtk::Label> {
+            if w.widget_name() == "dependency-analysis-status" {
+                return w.clone().downcast().ok();
+            }
+            let mut child = w.first_child();
+            while let Some(w) = child {
+                if let Some(v) = find(&w) {
+                    return Some(v);
+                }
+                child = w.next_sibling();
+            }
+            None
+        }
+        find(saved.upcast_ref()).unwrap()
+    };
+    wait(|| {
+        find_status()
+            .text()
+            .starts_with("Saved resolution inputs replayed")
+    });
+    assert!(find_status()
+        .text()
+        .contains("folder access were not reopened"));
+    let (minimum, _, _, _) = saved.measure(gtk::Orientation::Horizontal, -1);
+    assert!(minimum <= 350, "Saved graph view requires {minimum}px");
+    if let Ok(path) = std::env::var("HYPRLAND_EDITOR_TEST_CAPTURE") {
+        let start = std::time::Instant::now();
+        wait(|| {
+            start.elapsed() >= std::time::Duration::from_millis(300)
+                && saved.width() >= 350
+                && saved.height() >= 420
+        });
+        let paintable = gtk::WidgetPaintable::new(Some(&saved));
+        let node = RefCell::new(None);
+        wait(|| {
+            let snapshot = gtk::Snapshot::new();
+            paintable.snapshot(&snapshot, saved.width() as f64, saved.height() as f64);
+            *node.borrow_mut() = snapshot.to_node();
+            node.borrow().is_some()
+        });
+        saved
+            .renderer()
+            .unwrap()
+            .render_texture(node.into_inner().unwrap(), None)
+            .save_to_png(format!("{path}.saved-graph.png"))
+            .unwrap();
+    }
+    saved.close();
+    std::fs::remove_dir_all(root).unwrap();
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
     #[test]
@@ -1380,6 +1585,7 @@ mod tests {
             folders: vec![],
             captures: vec![],
             pending: false,
+            kept: false,
             alive: true,
             epoch: 0,
             analysis: Rc::new(RefCell::new(None)),

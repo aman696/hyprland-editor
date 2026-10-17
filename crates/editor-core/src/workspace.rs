@@ -48,6 +48,8 @@ pub struct SourceSnapshot {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Workspace {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_graph: Option<crate::workspace_graph::Graph>,
     pub format: String,
     pub schema: SchemaPin,
     pub draft: Draft,
@@ -85,6 +87,7 @@ pub struct Workspace {
 impl Workspace {
     pub fn new(draft: Draft) -> Self {
         Self {
+            source_graph: None,
             format: WORKSPACE_FORMAT.into(),
             schema: SchemaPin::for_version(&draft.version),
             draft,
@@ -227,7 +230,20 @@ impl Workspace {
         {
             return Err("Invalid workspace source root".into());
         }
+        if let Some(graph) = &self.source_graph {
+            graph.program(
+                &self.sources,
+                self.root_source.as_deref(),
+                &self.draft.version,
+            )?;
+        }
         Ok(())
+    }
+    pub fn with_graph(mut self, bundle: &crate::workspace_graph::Bundle) -> Self {
+        self.root_source = Some(bundle.graph.root.clone());
+        self.sources = bundle.sources.clone();
+        self.source_graph = Some(bundle.graph.clone());
+        self
     }
     pub fn to_json(&self, catalogue: &[Setting]) -> Result<Vec<u8>, String> {
         self.validate(catalogue)?;

@@ -42,9 +42,18 @@
         "crates/editor-app/src/source_graph.rs",
         "crates/editor-app/src/source_analysis.rs",
         "crates/editor-app/src/source_context.rs",
-        "crates/editor-app/src/source_provenance.rs"
+        "crates/editor-app/src/source_provenance.rs",
+        "crates/editor-core/src/workspace_graph.rs",
+        "crates/editor-app/src/workflow.rs",
+        "crates/editor-app/src/history.rs",
+        "data/graph-model.json"
       ],
       "test_references": [
+        "application_replays_all_saved_graph_inputs_without_original_files_or_folder_access",
+        "graph_reopen_refuses_inconsistent_profiles_views_hashes_and_unreached_bindings",
+        "saved_load_aliases_remain_distinct_and_a_stopped_model_stays_partial",
+        "test_retained_graph",
+        "scripts/generate_graph_model.py",
         "scripts/source_graph_probe.py",
         "scripts/module_load_probe.py",
         "scripts/ordered_module_probe.py",
@@ -88,7 +97,7 @@
         "context_preserves_unknown_empty_and_byte_paths_and_builder_preserves_templates",
         "test_review"
       ],
-      "limits": "source-pinned plans/cache transitions, syntactic dependency sites, isolated selected-file and held-folder capture, typed metadata-only point observations separating absence from blocking uncertainty, bounded temporary GUI snapshots/analysis and cleanup, captured-resolution coordination with per-edge sequential evidence and separate load views, focused graphical files/calls inspection, supplied-context folder/template editor without added read authority, bounded per-value expression evidence and selected-value chains separate from Lua equality/cache identity, source-derived registry dispatch with raw-key retention and unresolved collision/cycle findings separate from native value acceptance, explicit compiler/library profiles with four-release reference checks, restricted-worker primitive family models separating native parsing from representable editor values under explicit fixture descriptors and C locale, exact registration/default/constraint flow for 755 standard rows plus device/bootstrap observations, version-specific typed call inspection with explicit unsupported-effect barriers, ordered immutable-byte evaluation under supplied/captured resolution contexts with explicit unknowns and compilation-only validation; no editable graph import, complete language/native/API codecs, ownership/alias/mount/concurrency certification, wildcard enumeration, graph save/reopen/history/reconciliation, source insertion/deletion, effective discovery, isolated preview, apply/recovery or resource/release acceptance"
+      "limits": "source-pinned plans/cache transitions, syntactic dependency sites, isolated selected-file and held-folder capture, typed metadata-only point observations separating absence from blocking uncertainty, bounded temporary GUI snapshots/analysis and cleanup, captured-resolution coordination with per-edge sequential evidence and separate load views, focused graphical files/calls inspection, supplied-context folder/template editor without added read authority, bounded per-value expression evidence and selected-value chains separate from Lua equality/cache identity, source-derived registry dispatch with raw-key retention and unresolved collision/cycle findings separate from native value acceptance, explicit compiler/library profiles with four-release reference checks, restricted-worker primitive family models separating native parsing from representable editor values under explicit fixture descriptors and C locale, exact registration/default/constraint flow for 755 standard rows plus device/bootstrap observations, version-specific typed call inspection with explicit unsupported-effect barriers, ordered immutable-byte evaluation under supplied/captured resolution contexts with explicit unknowns and compilation-only validation; frozen graph inputs with model/compiler pins, private save/reopen and shared retention undo; no complete editable graph import, language/native/API codecs, ownership/alias/mount/concurrency certification, wildcard enumeration, editable graph history/reconciliation, source insertion/deletion, effective discovery, isolated preview, apply/recovery or resource/release acceptance"
     },
     {
       "area": "gesture draft editor",
