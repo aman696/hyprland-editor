@@ -23,6 +23,7 @@
         "crates/editor-core/src/lua/replay/eval.rs",
         "crates/editor-core/src/lua/replay/provenance.rs",
         "crates/editor-core/src/lua/replay/storage_sources.rs",
+        "crates/editor-core/src/lua/replay/path_sources.rs",
         "crates/editor-core/src/lua/config_table.rs",
         "crates/editor-core/src/lua/scalar_codec.rs",
         "crates/editor-core/src/lua/registration.rs",
@@ -60,6 +61,11 @@
         "cached_module_aliases_keep_shared_table_identity_and_cross_document_field_writes",
         "provenance_growth_fails_without_later_effects_or_dangling_write_references",
         "assignment_details_preserve_current_value_key_and_prior_write_roles",
+        "branches_and_short_circuits_preserve_executed_tests_and_never_invent_skipped_effects",
+        "loop_paths_freeze_observations_and_include_false_termination_and_integer_boundaries",
+        "history_remains_conservative_across_returns_caught_errors_and_loaded_modules",
+        "path_history_is_bounded_and_failure_cannot_be_swallowed_by_pcall",
+        "path_details_show_only_the_observation_prefix_and_bound_earlier_history",
         "scripts/source_graph_probe.py",
         "scripts/module_load_probe.py",
         "scripts/ordered_module_probe.py",
@@ -103,7 +109,7 @@
         "context_preserves_unknown_empty_and_byte_paths_and_builder_preserves_templates",
         "test_review"
       ],
-      "limits": "source-pinned plans/cache transitions, syntactic dependency sites, isolated selected-file and held-folder capture, typed metadata-only point observations separating absence from blocking uncertainty, bounded temporary GUI snapshots/analysis and cleanup, captured-resolution coordination with per-edge sequential evidence and separate load views, focused graphical files/calls inspection, supplied-context folder/template editor without added read authority, bounded per-value expression evidence and selected-value chains separate from Lua equality/cache identity, modeled storage writes with key insertion/overwrite/delete histories and alias/cell identity separate from complete control/future-effect/edit ownership, source-derived registry dispatch with raw-key retention and unresolved collision/cycle findings separate from native value acceptance, explicit compiler/library profiles with four-release reference checks, restricted-worker primitive family models separating native parsing from representable editor values under explicit fixture descriptors and C locale, exact registration/default/constraint flow for 755 standard rows plus device/bootstrap observations, version-specific typed call inspection with explicit unsupported-effect barriers, ordered immutable-byte evaluation under supplied/captured resolution contexts with explicit unknowns and compilation-only validation; frozen graph inputs with model/compiler pins, private save/reopen and shared retention undo; no complete editable graph import, language/native/API codecs, ownership/alias/mount/concurrency certification, wildcard enumeration, editable graph history/reconciliation, source insertion/deletion, effective discovery, isolated preview, apply/recovery or resource/release acceptance"
+      "limits": "source-pinned plans/cache transitions, syntactic dependency sites, isolated selected-file and held-folder capture, typed metadata-only point observations separating absence from blocking uncertainty, bounded temporary GUI snapshots/analysis and cleanup, captured-resolution coordination with per-edge sequential evidence and separate load views, focused graphical files/calls inspection, supplied-context folder/template editor without added read authority, bounded per-value expression evidence and selected-value chains separate from Lua equality/cache identity, modeled storage writes with key insertion/overwrite/delete histories and alias/cell identity, bounded executed branch/loop history with immutable observation prefixes (including unrelated earlier decisions) separate from complete control/future-effect/edit ownership, source-derived registry dispatch with raw-key retention and unresolved collision/cycle findings separate from native value acceptance, explicit compiler/library profiles with four-release reference checks, restricted-worker primitive family models separating native parsing from representable editor values under explicit fixture descriptors and C locale, exact registration/default/constraint flow for 755 standard rows plus device/bootstrap observations, version-specific typed call inspection with explicit unsupported-effect barriers, ordered immutable-byte evaluation under supplied/captured resolution contexts with explicit unknowns and compilation-only validation; frozen graph inputs with model/compiler pins, private save/reopen and shared retention undo; no complete editable graph import, language/native/API codecs, ownership/alias/mount/concurrency certification, wildcard enumeration, editable graph history/reconciliation, source insertion/deletion, effective discovery, isolated preview, apply/recovery or resource/release acceptance"
     },
     {
       "area": "gesture draft editor",

@@ -36,6 +36,8 @@ FILES = {
     'where.lua': "local ok,e=pcall(function()error\n(\n'x'\n)end);emit(e);return true",
 }
 CASES = [
+    ('branch_short_circuit_history', "local x=0;if false then emit('never')elseif 0 then x=2 else emit('never')end;local y=false and emit('never');local z=true or emit('never');local a=true and (emit(x) or 4);local b=false or 5;emit(b)"),
+    ('loop_decision_boundaries', "local n=0;while n<2 do n=n+1;emit(n)end;repeat n=n-1;emit(n)until n==0;for i=2,0,-1 do emit(i)end;for j=2,1 do emit('never')end;for k=9223372036854775807,9223372036854775807 do emit(k)end;emit('after')"),
     ('key_overwrite_delete_reinsert', "local first='border_size';local second=first;local t={[first]=1};local alias=t;alias[second]=2;emit({value=t.border_size});rawset(alias,second,nil);emit({value=t.border_size});alias[second]=3;emit({value=t.border_size})"),
     ('shadow_parameter_nil_history', "local x=1;local function f(x)x=x+1;return x end;do local x=4;emit(x)end;emit(f(x));x=nil;emit(x==nil)"),
     ('captured_cells', "local x=1;local function f()return x end;x=2;emit(f())"),

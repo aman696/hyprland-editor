@@ -1120,7 +1120,7 @@ pub(super) fn test_review(parent: &adw::Window, state: &Shared) {
     let main = root.join("main.lua");
     std::fs::write(
         &main,
-        "local part=require('part');hl.config{general={border_size=part}}",
+        "local part=require('part');if part==4 then hl.config{general={border_size=part}}end",
     )
     .unwrap();
     std::fs::write(root.join("part.lua"), "return 4").unwrap();
@@ -1204,6 +1204,11 @@ pub(super) fn test_review(parent: &adw::Window, state: &Shared) {
     );
     assert!(sources.contains("Table field construction"), "{sources}");
     assert!(sources.contains("Address key expression"), "{sources}");
+    assert!(
+        sources.contains("Executed branch and loop history"),
+        "{sources}"
+    );
+    assert!(sources.contains("If · truthy"), "{sources}");
     if let Ok(path) = std::env::var("HYPRLAND_EDITOR_TEST_CAPTURE") {
         win.set_default_size(700, 860);
         let start = std::time::Instant::now();

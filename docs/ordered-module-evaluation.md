@@ -90,4 +90,4 @@ Tests cover both audited versions, distinct equal literals, imported values, ali
 ![Expression sources in captured analysis](screenshots/value-sources.png)
 
 
-The model now records [keys and storage write history](storage-provenance.md) independently of value equality and cache/table identity. The reference matrix contains 96 ordered observations per Lua release, including copied-value mutation checkpoints and shadowed/parameter/nil bindings. Control/future-effect and full edit ownership remain unproven.
+The model now records [keys and storage write history](storage-provenance.md) independently of value equality and cache/table identity. The reference matrix contains 100 ordered observations per Lua release, including copied-value mutation checkpoints and shadowed/parameter/nil bindings. Control/future-effect and full edit ownership remain unproven.

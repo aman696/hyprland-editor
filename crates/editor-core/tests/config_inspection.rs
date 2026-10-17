@@ -8,6 +8,7 @@ use hyprland_editor_core::{
 };
 fn event(order: usize, key: &[u8], value: Observed) -> Event {
     Event {
+        path_prefix: 0,
         order,
         document: "root".into(),
         span: 0..1,

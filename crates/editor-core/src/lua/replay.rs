@@ -2,6 +2,7 @@
 //! Module resolutions are supplied observations, never filesystem permissions or path guesses.
 mod eval;
 mod observed_float;
+mod path_sources;
 mod provenance;
 mod storage_sources;
 use super::{named, source_hash, syntax_tree, text};
@@ -9,6 +10,7 @@ use crate::{
     module_cache::{self, CachedValue},
     AUDITED_MAIN, BASELINE, MAX_DOCUMENT_BYTES,
 };
+pub use path_sources::{DecisionKind, DecisionOutcome, PathDecision};
 pub use provenance::{ExpressionKind, ExpressionSource, ValueSource};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -163,6 +165,9 @@ pub struct Event {
     pub arguments: Vec<Observed>,
     /// Value rows align with Observed::Table row order. Key provenance is not inferred.
     pub argument_sources: Vec<ValueSource>,
+    /// Conservative prefix of Report.path_decisions at observation time.
+    #[serde(default)]
+    pub path_prefix: usize,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
@@ -182,6 +187,8 @@ pub struct LoadEvent {
     pub order: usize,
     pub request: Request,
     pub outcome: LoadOutcome,
+    #[serde(default)]
+    pub path_prefix: usize,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
@@ -211,6 +218,8 @@ pub struct Report {
     pub expression_sources: Vec<ExpressionSource>,
     #[serde(default)]
     pub storage_writes: Vec<WriteSource>,
+    #[serde(default)]
+    pub path_decisions: Vec<PathDecision>,
     pub loads: Vec<LoadEvent>,
     pub returns: Vec<Observed>,
     pub halt: Option<Halt>,
@@ -429,6 +438,7 @@ struct Engine<'a> {
     source_edges: usize,
     storage_writes: Vec<WriteSource>,
     track_writes: bool,
+    path_decisions: Vec<PathDecision>,
 }
 impl<'a> Engine<'a> {
     fn budget<T>(&self, reason: &str) -> Result<T> {
@@ -646,6 +656,7 @@ impl<'a> Engine<'a> {
             source_frames: vec![],
             source_edges: 0,
             storage_writes: vec![],
+            path_decisions: vec![],
             track_writes: false,
         };
         e.globals = e.table(program.profile == Profile::HyprlandLua54)?;
@@ -1072,6 +1083,7 @@ pub fn replay(program: &Program) -> std::result::Result<Report, String> {
         events: engine.events,
         expression_sources: engine.expression_sources,
         storage_writes: engine.storage_writes,
+        path_decisions: engine.path_decisions,
         loads: engine.loads,
         returns,
         halt,

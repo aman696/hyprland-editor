@@ -110,7 +110,7 @@ fn restricted_worker_keeps_partial_search_paths_distinct_from_literal_replacemen
 fn ordered_modules_and_compilation_run_inside_the_restricted_worker() {
     use hyprland_editor_core::lua::{replay::*, source_hash};
     let mut p = replay_program(
-        "local a=require('part');a.n=a.n+1;hl.config({general={border_size=require('part').n}})",
+        "local a=require('part');if a.n==2 then a.n=a.n+1;hl.config({general={border_size=require('part').n}})end",
     );
     let first = request(json!({"ReplayModules":p}));
     let request: Request =
@@ -136,6 +136,8 @@ fn ordered_modules_and_compilation_run_inside_the_restricted_worker() {
     assert!(result["Replayed"]["halt"].is_null());
     assert_eq!(result["Replayed"]["events"].as_array().unwrap().len(), 1);
     assert_eq!(result["Replayed"]["runtime_verified"], false);
+    assert_eq!(result["Replayed"]["events"][0]["path_prefix"], 1);
+    assert_eq!(result["Replayed"]["path_decisions"][0]["kind"], "if");
     assert!(!result["Replayed"]["storage_writes"]
         .as_array()
         .unwrap()

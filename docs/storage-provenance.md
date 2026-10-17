@@ -22,6 +22,6 @@ The independent native Lua fixtures now include value copies at mutation checkpo
 
 ## Remaining ownership work
 
-Complete control dependencies, callable escapes and future callback effects, all language/native APIs, generated/config-manager ownership, literal exclusivity and edit-impact proofs remain unfinished. Known writes do not prove that every possible write was observed. Intrinsic or unavailable key origins remain unresolved. Native configuration table iteration order and NUL-key collisions keep their existing ambiguity rules.
+[Executed branch/loop history](executed-path-evidence.md) now supplies conservative frozen prefixes, including earlier unrelated choices. Complete control dependencies, callable escapes and future callback effects, all language/native APIs, generated/config-manager ownership, literal exclusivity and edit-impact proofs remain unfinished. Known writes do not prove that every possible write was observed. Intrinsic or unavailable key origins remain unresolved. Native configuration table iteration order and NUL-key collisions keep their existing ambiguity rules.
 
 Graphical source changes still require source-bound patch plans, reparse and intended/unaffected semantic comparisons, shared-value impact review, lossless insertion/deletion and graph history/reconciliation. No live writer, preview compositor, apply/recovery certificate, whole-process memory claim or full audit-contract completion is introduced by these records.

@@ -70,6 +70,8 @@ pub struct WriteSource {
     pub receiver_write: Option<u32>,
     /// Nil removes a table slot; a nil local remains a cell assignment.
     pub deletes_slot: bool,
+    #[serde(default)]
+    pub path_prefix: usize,
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -136,6 +138,7 @@ impl Engine<'_> {
         }
         let source = WriteSource {
             at_order: self.order,
+            path_prefix: self.path_decisions.len(),
             kind: context.kind,
             site: context.site,
             deletes_slot: matches!(place, StoragePlace::Table { .. }) && value.is_nil(),

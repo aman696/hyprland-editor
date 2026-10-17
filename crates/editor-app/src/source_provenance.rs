@@ -1,7 +1,7 @@
 //! Bounded detail text for expression evidence; no mutation or ownership inference.
 use super::source_graph::Analysis;
 use hyprland_editor_core::{
-    lua::replay::{Event, KeySource, Observed, ValueSource, WriteKind},
+    lua::replay::{DecisionOutcome, Event, KeySource, Observed, ValueSource, WriteKind},
     source::display_path_bytes,
 };
 use std::{collections::BTreeSet, fmt::Write};
@@ -15,6 +15,66 @@ struct Text<'a> {
     seen: BTreeSet<(u8, u32)>,
 }
 impl Text<'_> {
+    fn path(&mut self, prefix: usize) {
+        if prefix == 0 {
+            return;
+        }
+        self.out.push_str("\nExecuted branch and loop history\nEarlier decisions may be unrelated to this value. This is a conservative history, not a minimal dependency proof.\n");
+        let Some(history) = self.analysis.report.path_decisions.get(..prefix) else {
+            self.out.push_str("Path evidence is unavailable.\n");
+            return;
+        };
+        let start = prefix.saturating_sub(12);
+        if start > 0 {
+            writeln!(self.out, "… {} earlier decisions omitted.", start).unwrap();
+            self.truncated = true;
+        }
+        for decision in &history[start..] {
+            if self.nodes >= 96 || self.out.len() > 12 * 1024 {
+                self.truncated = true;
+                break;
+            }
+            self.nodes += 1;
+            let outcome = match decision.outcome {
+                DecisionOutcome::Truthiness { truthy } => {
+                    if truthy {
+                        "truthy".into()
+                    } else {
+                        "false or nil".into()
+                    }
+                }
+                DecisionOutcome::NumericRange {
+                    current,
+                    end,
+                    step,
+                    entered,
+                } => format!(
+                    "{current} toward {end}, step {step} · {}",
+                    if entered { "entered" } else { "finished" }
+                ),
+                DecisionOutcome::IntegerRangeOverflow { .. } => {
+                    "finished at the integer limit".into()
+                }
+            };
+            let site = &decision.site;
+            let Some(document) = self.analysis.program.documents.get(site.document) else {
+                continue;
+            };
+            let name = display_path_bytes(&document.load_name)
+                .chars()
+                .take(180)
+                .collect::<String>();
+            writeln!(
+                self.out,
+                "  {:?} · {outcome} · {name} · line {}",
+                decision.kind, site.line
+            )
+            .unwrap();
+            for &input in &decision.inputs {
+                self.node(input, 1);
+            }
+        }
+    }
     fn node(&mut self, id: u32, depth: usize) {
         if depth > 8 || self.nodes >= 96 || self.out.len() > 12 * 1024 {
             self.truncated = true;
@@ -106,6 +166,14 @@ impl Text<'_> {
             }
         )
         .unwrap();
+        if write.path_prefix > 0 {
+            writeln!(
+                self.out,
+                "  {} earlier branch/loop decisions recorded at this write.",
+                write.path_prefix
+            )
+            .unwrap();
+        }
         if let Some(site) = &write.site {
             if let Some(document) = self.analysis.program.documents.get(site.document) {
                 let name = display_path_bytes(&document.load_name)
@@ -241,7 +309,7 @@ impl Text<'_> {
 }
 
 pub(super) fn describe(analysis: &Analysis, event: &Event) -> String {
-    let mut text=Text{analysis,out:"Value, key and assignment evidence only. Complete control dependencies, future effects, literal ownership and editing rights are not verified.\n".into(),leaves:0,nodes:0,truncated:false,seen:BTreeSet::new()};
+    let mut text=Text{analysis,out:"Value, key, assignment and executed-path evidence only. Complete control dependencies, future effects, literal ownership and editing rights are not verified.\n".into(),leaves:0,nodes:0,truncated:false,seen:BTreeSet::new()};
     for (i, (value, source)) in event
         .arguments
         .iter()
@@ -256,6 +324,7 @@ pub(super) fn describe(analysis: &Analysis, event: &Event) -> String {
     if event.arguments.len() != event.argument_sources.len() {
         text.truncated = true;
     }
+    text.path(event.path_prefix);
     if text.truncated {
         text.out
             .push_str("\n… Showing a bounded excerpt of expression evidence.\n");
@@ -318,6 +387,24 @@ mod tests {
             blocked: None,
             retained_bytes: 0,
         }
+    }
+    #[test]
+    fn path_details_show_only_the_observation_prefix_and_bound_earlier_history() {
+        let a = analysis(
+            "if false then emit('never')elseif 0 then emit(2)end;while false do end;emit(3)",
+        );
+        let first = describe(&a, &a.report.events[0]);
+        assert!(first.contains("Executed branch and loop history"));
+        assert!(first.contains("If · false or nil"));
+        assert!(first.contains("ElseIf · truthy"));
+        assert!(!first.contains("While ·"));
+        let later = describe(&a, &a.report.events[1]);
+        assert!(later.contains("While · false or nil"));
+        assert!(later.contains("not a minimal dependency proof"));
+        let a = analysis("for i=1,100 do end;emit(1)");
+        let text = describe(&a, &a.report.events[0]);
+        assert!(text.contains("89 earlier decisions omitted"));
+        assert!(text.len() <= 16 * 1024 + 100);
     }
     #[test]
     fn assignment_details_preserve_current_value_key_and_prior_write_roles() {

@@ -35,6 +35,7 @@ fn registry_dispatch_matches_exact_pinned_handler_observations_without_certifyin
             AUDITED_MAIN
         };
         let event = Event {
+            path_prefix: 0,
             order: 7,
             document: "fixture".into(),
             span: 0..1,
@@ -105,6 +106,7 @@ fn registry_dispatch_matches_exact_pinned_handler_observations_without_certifyin
 fn traversal_cycles_and_path_budgets_remain_unresolved_and_value_origins_remain_only_evidence() {
     let catalogue = catalogue();
     let mut event = Event {
+        path_prefix: 0,
         order: 1,
         document: "fixture".into(),
         span: 0..1,

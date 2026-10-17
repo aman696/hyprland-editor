@@ -34,6 +34,10 @@ pub struct ExpressionSource {
     pub storage_write: Option<u32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub table_identity: Option<usize>,
+    /// All earlier modeled decisions, including unrelated decisions. Never a
+    /// minimal control slice, nor evidence about an unexecuted/future path.
+    #[serde(default)]
+    pub path_prefix: usize,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -118,6 +122,7 @@ impl Engine<'_> {
                 selected: value.origin,
                 evaluated: evaluated.clone(),
                 storage_write: value.storage_write,
+                path_prefix: self.path_decisions.len(),
                 table_identity: if let Kind::Table(id) = value.kind {
                     Some(id)
                 } else {

@@ -366,6 +366,18 @@ impl<'a> Engine<'a> {
                     return self.unknown(doc, node, reason);
                 }
                 let op = text(self.required(node, "operator")?, source);
+                if op == "and" || op == "or" {
+                    self.truth_decision(
+                        doc,
+                        self.required(node, "left")?,
+                        if op == "and" {
+                            DecisionKind::And
+                        } else {
+                            DecisionKind::Or
+                        },
+                        &left,
+                    )?;
+                }
                 if op == "and" && !left.is_truthy() || op == "or" && left.is_truthy() {
                     left
                 } else {
@@ -857,6 +869,12 @@ impl<'a> Engine<'a> {
                 {
                     return self.unknown(doc, node, reason);
                 }
+                self.truth_decision(
+                    doc,
+                    self.required(node, "condition")?,
+                    DecisionKind::If,
+                    &condition,
+                )?;
                 let mut body = if condition.is_truthy() {
                     node.child_by_field_name("consequence")
                 } else {
@@ -878,6 +896,12 @@ impl<'a> Engine<'a> {
                         {
                             return self.unknown(doc, branch, reason);
                         }
+                        self.truth_decision(
+                            doc,
+                            self.required(branch, "condition")?,
+                            DecisionKind::ElseIf,
+                            &condition,
+                        )?;
                         if condition.is_truthy() {
                             body = branch.child_by_field_name("consequence");
                             break;
@@ -901,6 +925,12 @@ impl<'a> Engine<'a> {
                     {
                         return self.unknown(doc, node, reason);
                     }
+                    self.truth_decision(
+                        doc,
+                        self.required(node, "condition")?,
+                        DecisionKind::While,
+                        &value,
+                    )?;
                     if !value.is_truthy() {
                         break;
                     }
@@ -921,6 +951,12 @@ impl<'a> Engine<'a> {
                     {
                         return self.unknown(doc, node, reason);
                     }
+                    self.truth_decision(
+                        doc,
+                        self.required(node, "condition")?,
+                        DecisionKind::Repeat,
+                        &value,
+                    )?;
                     if value.is_truthy() {
                         break;
                     }
@@ -938,6 +974,10 @@ impl<'a> Engine<'a> {
                 } else {
                     Value::from(Kind::Int(1))
                 };
+                let inputs = [start.origin, end.origin, step.origin]
+                    .into_iter()
+                    .flatten()
+                    .collect::<Vec<_>>();
                 let (
                     Value {
                         kind: Kind::Int(mut current),
@@ -964,11 +1004,27 @@ impl<'a> Engine<'a> {
                         "The exact Lua numeric-for error text is not modeled",
                     ))));
                 }
-                while if step > 0 {
-                    current <= end
-                } else {
-                    current >= end
-                } {
+                loop {
+                    let entered = if step > 0 {
+                        current <= end
+                    } else {
+                        current >= end
+                    };
+                    self.path_decision(
+                        doc,
+                        clause,
+                        DecisionKind::NumericFor,
+                        inputs.clone(),
+                        DecisionOutcome::NumericRange {
+                            current,
+                            end,
+                            step,
+                            entered,
+                        },
+                    )?;
+                    if !entered {
+                        break;
+                    }
                     self.tick()?;
                     let mut inner = self.copied(env)?;
                     let id = self.cell_at(
@@ -990,6 +1046,13 @@ impl<'a> Engine<'a> {
                         }
                     }
                     let Some(next) = current.checked_add(step) else {
+                        self.path_decision(
+                            doc,
+                            clause,
+                            DecisionKind::NumericFor,
+                            inputs.clone(),
+                            DecisionOutcome::IntegerRangeOverflow { current, step },
+                        )?;
                         break;
                     };
                     current = next;
@@ -1096,6 +1159,7 @@ impl<'a> Engine<'a> {
                     api: api.into(),
                     arguments,
                     argument_sources,
+                    path_prefix: self.path_decisions.len(),
                 });
                 self.order += 1;
                 Ok(vec![])
@@ -1421,6 +1485,7 @@ impl<'a> Engine<'a> {
             order: self.order,
             request,
             outcome,
+            path_prefix: self.path_decisions.len(),
         });
         self.order += 1;
         Ok(())
