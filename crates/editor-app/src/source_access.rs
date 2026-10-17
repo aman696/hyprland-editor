@@ -1044,6 +1044,10 @@ pub(super) fn test_review(parent: &adw::Window, state: &Shared) {
         assert!(a.report.halt.is_none());
         assert!(!a.report.runtime_verified);
         assert_eq!(a.config_batches.len(), 1);
+        let profile = a.config_profile.as_ref().unwrap();
+        assert_eq!(profile.version, a.program.version);
+        assert_eq!(profile.numeric_locale.as_deref(), Some("C"));
+        assert!(!profile.runtime_verified);
         let batch = &a.config_batches[0];
         assert_eq!(batch.candidates.len(), 1);
         assert!(batch.findings.is_empty());
@@ -1051,6 +1055,13 @@ pub(super) fn test_review(parent: &adw::Window, state: &Shared) {
         assert_eq!(field.lua_key, "general.border_size");
         assert!(!field.ambiguous);
         assert!(field.expression.is_some());
+        assert!(matches!(
+            field.model_value,
+            Some(hyprland_editor_core::lua::scalar_codec::Outcome::Accepted {
+                native: hyprland_editor_core::lua::scalar_codec::NativeValue::Int(4),
+                ..
+            })
+        ));
         let event = a
             .report
             .events
@@ -1069,16 +1080,17 @@ pub(super) fn test_review(parent: &adw::Window, state: &Shared) {
         Some("analysis")
     );
     let text = ui.analysis_view.test_call(1);
-    assert!(text.contains("border_size: 4"), "{text}");
+    assert!(ui.analysis_view.test_raw().contains("border_size: 4"));
     assert!(
-        text.contains("Registered fields: 1 · findings: 0"),
+        text.contains("Recognized settings: 1 · findings: 0"),
         "{text}"
     );
     assert!(text.contains("general.border_size"), "{text}");
-    assert!(
-        text.contains("native value acceptance are unverified"),
-        "{text}"
-    );
+    assert!(text.contains("Parsed value: 4"), "{text}");
+    assert!(ui
+        .analysis_view
+        .test_status()
+        .contains("Live desktop values are unverified"));
     let sources = ui.analysis_view.test_sources();
     assert!(
         sources.contains("Argument 1.general.border_size"),
@@ -1088,6 +1100,7 @@ pub(super) fn test_review(parent: &adw::Window, state: &Shared) {
         sources.contains("part.lua") && sources.contains("Literal"),
         "{sources}"
     );
+    ui.analysis_view.test_collapse_sources();
     assert_eq!(state.borrow().generation, generation);
     let (minimum, _, _, _) = win.measure(gtk::Orientation::Horizontal, -1);
     assert!(minimum <= 350, "Analysis requires {minimum}px");
@@ -1196,7 +1209,7 @@ pub(super) fn test_review(parent: &adw::Window, state: &Shared) {
             options.working_directory
         );
     }
-    assert!(ui.analysis_view.test_call(3).contains("border_size: 6"));
+    assert!(ui.analysis_view.test_call(3).contains("Parsed value: 6"));
     assert_eq!(state.borrow().generation, generation);
     // Canceling edits changes no retained options or completed analysis.
     let old = Arc::downgrade(session.borrow().analysis.borrow().as_ref().unwrap());

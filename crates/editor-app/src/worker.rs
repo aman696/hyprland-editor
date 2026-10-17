@@ -29,6 +29,10 @@ pub enum Request {
     },
     ReplayModules(lua::replay::Program),
     DecodePrimitives(Vec<lua::scalar_codec::Case>),
+    InspectConfiguration {
+        events: Vec<lua::replay::Event>,
+        version: String,
+    },
     PlanModules {
         context: hyprland_editor_core::module_path::Context,
         #[serde(default)]
@@ -53,6 +57,7 @@ pub enum Response {
         numeric_locale: String,
         outcomes: Vec<lua::scalar_codec::Outcome>,
     },
+    Configuration(lua::config_inspection::Inspection),
     ModulePlans(Vec<hyprland_editor_core::module_path::Plan>),
     Registry(hyprland_editor_core::xkb::Registry),
     Copy(String),
@@ -104,6 +109,9 @@ pub fn entry() {
         // Conversion/replay-only requests do not need another parsed catalogue.
         let c = std::sync::LazyLock::new(catalogue);
         match request {
+            Request::InspectConfiguration { events, version } => {
+                lua::config_inspection::inspect(&events, &version).map(Response::Configuration)
+            }
             Request::DecodePrimitives(cases) => {
                 lua::scalar_codec::decode_batch(&cases).map(|outcomes| Response::Primitives {
                     profile: lua::replay::compiler_profile(),

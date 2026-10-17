@@ -1,6 +1,6 @@
 # Ordered immutable-module evaluation
 
-[Primitive scalar family conformance](scalar-value-conformance.md) is available through a separate restricted-worker batch interface; graph integration and actual registration semantics remain unfinished.
+[Primitive scalar family conformance](scalar-value-conformance.md) is available through a separate restricted-worker batch interface; registration-aware graph inspection is now connected, while complete API/effect semantics and editable graph import remain unfinished.
 
 Captured calls also have [source-derived registry-dispatch inspection](config-table-inspection.md), separate from native acceptance and edit ownership.
 

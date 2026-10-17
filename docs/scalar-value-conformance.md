@@ -1,10 +1,10 @@
 # Primitive scalar value conformance
 
-The typed import backend now has Bool, Int, Float and String family models plus a private parser-worker batch interface. It compares native parse outcomes with representable editor values. The graphical source analysis does not yet use these outcomes: registration metadata, the remaining complex codecs and graph ownership must be completed before editable multi-file import. All existing `native_values_verified` flags remain false.
+The typed import backend now has Bool, Int, Float and String family models plus a private parser-worker batch interface. It compares native parse outcomes with representable editor values. The [registration-aware source analysis](registration-aware-inspection.md) now uses these outcomes with frozen per-setting metadata. Complex codecs, ordinary-form constraint integration and graph ownership remain required before editable multi-file import. All existing `native_values_verified` flags remain false.
 
 ## Independent reference
 
-`scripts/scalar_value_probe.py` extracts unmodified `parse(lua_State*)` methods from both hash-pinned source snapshots. Real Lua C-API fixture values enter those methods with explicit inert storage and fixture bounds/name maps. There is no string validator in this reference adapter. Source files, official Lua archives and build products exist only in temporary directories and are removed on exit.
+`scripts/scalar_value_probe.py` extracts unmodified `parse(lua_State*)` methods from both hash-pinned source snapshots. Real Lua C-API fixture values enter those methods with explicit inert storage and fixture bounds/name maps. There is no string validator in this primitive reference adapter; literal choice validators are separately checked by the registration probe. Source files, official Lua archives and build products exist only in temporary directories and are removed on exit.
 
 The 592 observations preserve the actual input type, signed integer, binary64 float bits or raw bytes before parsing. They record error code, whether an error message exists, native storage, prior storage, set-by-user state and the post-parse stack type. Tests consume those independent input snapshots rather than asking the editor to evaluate the reference expressions. Rejection checks require the independent native storage to remain unchanged. Full error strings and unordered map diagnostics are not certified.
 
@@ -17,7 +17,7 @@ Native storage aliases are separately pinned to `src/config/shared/Types.hpp` at
 | Float | Boolean/integer comparison with FLOAT bounds occurs in binary32; Lua numbers/numeric strings compare in binary64 before binary32 storage. Decimal and integer inputs can therefore differ at a precision boundary. |
 | String | Lua strings and numbers use native C-API string conversion and NUL truncation. An unimplemented validator prevents acceptance being inferred. |
 
-These are family models under supplied codec descriptors. They do not prove that every actual setting's constructor, bounds, map or validator was captured correctly. The current scalar catalogue omits some registration semantics, including named choices and validators; generating and verifying those records remains required. Color, Gradient, Vec2, CssGap and FontWeight native codecs remain open.
+These are family models under supplied codec descriptors. They do not prove that every actual setting's constructor, bounds, map or validator was captured correctly. A separate generated registration schema now retains named choices, validators and version-specific Lua constraint flow. Ordinary scalar/device forms and static projection still need integration with that schema; the original catalogue alone omits some semantics. Color, Gradient, Vec2, CssGap and FontWeight native codecs remain open.
 
 ## Conversion boundary and assumptions
 

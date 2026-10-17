@@ -1,5 +1,7 @@
 # Device draft editor — 0.6
 
+The [registration cross-check](registration-aware-inspection.md#scope-corrections-remain-mandatory) found four additional tablet-tool value fields beyond this original 43-field register. Their controls/source/persistence support and version-correct inherited constraints remain mandatory unfinished work; this document does not establish exhaustive native device coverage.
+
 Open **Menu → Edit Devices**. The editor covers every one of the 43 registered writable device fields plus the required name selector in both pinned Hyprland snapshots. The reproducible catalogue generator checks all 86 version records against the original source audit. Registered fields and runtime-observable properties remain separate; the additional read-only device properties in the blueprint are not presented as editable settings.
 
 Add a rule, expand Device Name and Category, enter a Hyprland device name and choose an optional category hint. Hyprland replaces spaces in device names with hyphens; the source spelling is preserved and its normalized name is reported. Categories explain usual field relevance while keeping all fields visible. They do not establish actual connected-device capabilities. Repeated declarations for the same normalized name stay ordered, reflecting upstream field replacement; this editor does not infer effective state from them.

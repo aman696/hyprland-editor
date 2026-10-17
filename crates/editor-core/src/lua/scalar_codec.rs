@@ -13,6 +13,29 @@ pub struct NamedInteger {
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct StringChoices {
+    pub choices: Vec<Vec<u8>>,
+}
+/// Existing opaque validator names keep their wire spelling. Known closed
+/// choice sets are explicit data, never user-provided code or callbacks.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum StringValidator {
+    Unsupported(String),
+    Choices(StringChoices),
+}
+impl From<&str> for StringValidator {
+    fn from(name: &str) -> Self {
+        Self::Unsupported(name.into())
+    }
+}
+impl From<String> for StringValidator {
+    fn from(name: String) -> Self {
+        Self::Unsupported(name)
+    }
+}
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Case {
     pub codec: Codec,
     pub input: Observed,
@@ -64,7 +87,7 @@ pub enum Codec {
     },
     String {
         /// An unimplemented native validator prevents acceptance being inferred.
-        validator: Option<String>,
+        validator: Option<StringValidator>,
     },
 }
 mod finite_bound {
@@ -210,8 +233,23 @@ impl Codec {
                 }
             }
             Self::String {
-                validator: Some(name),
+                validator: Some(StringValidator::Unsupported(name)),
             } if name.len() > 4096 => return Err("Validator identity exceeds 4 KiB".into()),
+            Self::String {
+                validator: Some(StringValidator::Choices(set)),
+            } => {
+                let mut keys = BTreeSet::new();
+                let mut bytes = 0usize;
+                if set.choices.is_empty() || set.choices.len() > 256 {
+                    return Err("String choice count exceeds its bounds".into());
+                }
+                for choice in &set.choices {
+                    bytes = bytes.saturating_add(choice.len());
+                    if choice.len() > 4096 || bytes > 65536 || !keys.insert(choice) {
+                        return Err("Duplicated or oversized string choice set".into());
+                    }
+                }
+            }
             _ => {}
         }
         Ok(())
@@ -376,9 +414,21 @@ impl Parser {
                     return rejected(Rejection::BadType);
                 }
                 if let Some(name) = validator {
-                    return Ok(Outcome::Unresolved {
-                        reason: format!("Native string validator is not implemented: {name}"),
-                    });
+                    match name {
+                        StringValidator::Unsupported(name) => {
+                            return Ok(Outcome::Unresolved {
+                                reason: format!(
+                                    "Native string validator is not implemented: {name}"
+                                ),
+                            })
+                        }
+                        StringValidator::Choices(set)
+                            if !set.choices.iter().any(|c| c == &self.text[..v.length]) =>
+                        {
+                            return rejected(Rejection::BadValue)
+                        }
+                        StringValidator::Choices(_) => {}
+                    }
                 }
                 NativeValue::Bytes(self.text[..v.length].into())
             }

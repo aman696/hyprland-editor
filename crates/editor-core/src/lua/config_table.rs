@@ -18,6 +18,8 @@ pub struct Candidate {
     pub raw_keys: Vec<Vec<u8>>,
     pub expression: Option<u32>,
     pub ambiguous: bool,
+    #[serde(default)]
+    pub model_value: Option<super::scalar_codec::Outcome>,
 }
 impl Candidate {
     /// Resolve row coordinates only within the caller's immutable analysis.
@@ -168,6 +170,7 @@ impl Walker<'_> {
                     raw_keys: path.keys.clone(),
                     expression: source.and_then(|s| s.expression),
                     ambiguous: false,
+                    model_value: None,
                 };
                 self.retain(&candidate)?;
                 self.batch.candidates.push(candidate);

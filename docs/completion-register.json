@@ -9,7 +9,8 @@
   "inputs": {
     "docs/hyprland-implementation-contracts.json": "73f4cfb0e08112a0849864f7eb692e8b30e2daf441283a84cec33d4b92930d32",
     "docs/engineering-blueprint.md": "afef2a41f1cee3fe4b2d9a1853115dcffa9acd894a64d073dc363730c21770fb",
-    "docs/complete-editor-plan.md": "72fcb25c83e4f95b5be94a7186044f0424c237cca538d819e13aaec6eae55871"
+    "docs/complete-editor-plan.md": "72fcb25c83e4f95b5be94a7186044f0424c237cca538d819e13aaec6eae55871",
+    "docs/registration-scope-findings.json": "41ff90231a123f871e05515b88fadca5d949777b61cfc54c250dad6b26c4b5e8"
   },
   "foundations": [
     {
@@ -23,6 +24,9 @@
         "crates/editor-core/src/lua/replay/provenance.rs",
         "crates/editor-core/src/lua/config_table.rs",
         "crates/editor-core/src/lua/scalar_codec.rs",
+        "crates/editor-core/src/lua/registration.rs",
+        "crates/editor-core/src/lua/config_inspection.rs",
+        "data/scalar-semantics.json",
         "crates/editor-core/src/lua/replay/observed_float.rs",
         "data/scalar-value-fixtures.json",
         "data/config-table-fixtures.json",
@@ -46,6 +50,13 @@
         "scripts/ordered_module_probe.py",
         "scripts/config_table_probe.py",
         "scripts/scalar_value_probe.py",
+        "scripts/scalar_registration_probe.py",
+        "scripts/generate_scalar_semantics.py",
+        "source_registered_models_keep_declared_metadata_separate_from_versioned_lua_acceptance",
+        "literal_string_choices_match_native_callback_observations_without_changing_nul_order",
+        "registered_inspection_pins_context_acceptance_and_unknown_api_boundaries",
+        "model_output_limits_preserve_prior_batches_and_do_not_turn_refusal_into_acceptance",
+        "captured_value_models_follow_native_registration_versions_and_stop_at_unknown_value_effects",
         "primitive_models_match_all_independent_native_inputs_and_preserve_rejection_state",
         "native_storage_representation_validator_unknowns_and_conversion_limits_stay_distinct",
         "primitive_coercion_stays_in_the_restricted_worker_and_refuses_batch_budgets",
@@ -77,7 +88,7 @@
         "context_preserves_unknown_empty_and_byte_paths_and_builder_preserves_templates",
         "test_review"
       ],
-      "limits": "source-pinned plans/cache transitions, syntactic dependency sites, isolated selected-file and held-folder capture, typed metadata-only point observations separating absence from blocking uncertainty, bounded temporary GUI snapshots/analysis and cleanup, captured-resolution coordination with per-edge sequential evidence and separate load views, focused graphical files/calls inspection, supplied-context folder/template editor without added read authority, bounded per-value expression evidence and selected-value chains separate from Lua equality/cache identity, source-derived registry dispatch with raw-key retention and unresolved collision/cycle findings separate from native value acceptance, explicit compiler/library profiles with four-release reference checks, restricted-worker primitive family models separating native parsing from representable editor values under explicit fixture descriptors and C locale, ordered immutable-byte evaluation under supplied/captured resolution contexts with explicit unknowns and compilation-only validation; no editable graph import, complete language/native/API codecs, ownership/alias/mount/concurrency certification, wildcard enumeration, graph save/reopen/history/reconciliation, source insertion/deletion, effective discovery, isolated preview, apply/recovery or resource/release acceptance"
+      "limits": "source-pinned plans/cache transitions, syntactic dependency sites, isolated selected-file and held-folder capture, typed metadata-only point observations separating absence from blocking uncertainty, bounded temporary GUI snapshots/analysis and cleanup, captured-resolution coordination with per-edge sequential evidence and separate load views, focused graphical files/calls inspection, supplied-context folder/template editor without added read authority, bounded per-value expression evidence and selected-value chains separate from Lua equality/cache identity, source-derived registry dispatch with raw-key retention and unresolved collision/cycle findings separate from native value acceptance, explicit compiler/library profiles with four-release reference checks, restricted-worker primitive family models separating native parsing from representable editor values under explicit fixture descriptors and C locale, exact registration/default/constraint flow for 755 standard rows plus device/bootstrap observations, version-specific typed call inspection with explicit unsupported-effect barriers, ordered immutable-byte evaluation under supplied/captured resolution contexts with explicit unknowns and compilation-only validation; no editable graph import, complete language/native/API codecs, ownership/alias/mount/concurrency certification, wildcard enumeration, graph save/reopen/history/reconciliation, source insertion/deletion, effective discovery, isolated preview, apply/recovery or resource/release acceptance"
     },
     {
       "area": "gesture draft editor",
@@ -195,7 +206,7 @@
         "actual_worker_projects_devices_and_rejects_external_keyboard_entities",
         "device_drafts_survive_application_reopen_and_schema_drift_is_rejected"
       ],
-      "limits": "43 fields and name selector, author category hints, linked XKB choices from installed metadata, numeric acceleration/scroll builders, ordered drafts and private persistence; no hardware capability discovery, effective global/default merge, tag-to-bind analysis, keyboard compilation, source editing, live input recovery or activation/preview certificates"
+      "limits": "43 audited fields and name selector (four native tablet-tool fields remain missing), author category hints, linked XKB choices from installed metadata, numeric acceleration/scroll builders, ordered drafts and private persistence; no hardware capability discovery, effective global/default merge, tag-to-bind analysis, keyboard compilation, source editing, live input recovery or activation/preview certificates"
     },
     {
       "area": "monitor draft editor",
@@ -222,7 +233,7 @@
         "tests::native_forms_and_draft_workflow",
         "lua::tests::exported_drafts_round_trip_all_types"
       ],
-      "limits": "initial values for 755 forms; not full per-field conformance, runtime activation or accessibility certification"
+      "limits": "initial values for 755 forms; ordinary forms still require native registration constraint/choice integration, including baseline Lua dropping declared constraints; not full per-field conformance, runtime activation or accessibility certification"
     },
     {
       "area": "static Lua and parser isolation",
@@ -43898,6 +43909,74 @@
       "complete": false
     }
   ],
+  "additional_source_obligations": [
+    {
+      "id": "native-addition:DEVICE:eraser_button_mode",
+      "engine": "DEVICE",
+      "field": "eraser_button_mode",
+      "requirement": "Complete editor, source/persistence/history, version-correct semantics, observation/preview/apply/recovery and original release/security gates for this source-discovered registration",
+      "versions": [
+        "0.56.2",
+        "audited-main"
+      ],
+      "source": "docs/registration-scope-findings.json",
+      "complete": false,
+      "state": "required_unfinished"
+    },
+    {
+      "id": "native-addition:DEVICE:eraser_button_override",
+      "engine": "DEVICE",
+      "field": "eraser_button_override",
+      "requirement": "Complete editor, source/persistence/history, version-correct semantics, observation/preview/apply/recovery and original release/security gates for this source-discovered registration",
+      "versions": [
+        "0.56.2",
+        "audited-main"
+      ],
+      "source": "docs/registration-scope-findings.json",
+      "complete": false,
+      "state": "required_unfinished"
+    },
+    {
+      "id": "native-addition:DEVICE:pressure_range_max",
+      "engine": "DEVICE",
+      "field": "pressure_range_max",
+      "requirement": "Complete editor, source/persistence/history, version-correct semantics, observation/preview/apply/recovery and original release/security gates for this source-discovered registration",
+      "versions": [
+        "0.56.2",
+        "audited-main"
+      ],
+      "source": "docs/registration-scope-findings.json",
+      "complete": false,
+      "state": "required_unfinished"
+    },
+    {
+      "id": "native-addition:DEVICE:pressure_range_min",
+      "engine": "DEVICE",
+      "field": "pressure_range_min",
+      "requirement": "Complete editor, source/persistence/history, version-correct semantics, observation/preview/apply/recovery and original release/security gates for this source-discovered registration",
+      "versions": [
+        "0.56.2",
+        "audited-main"
+      ],
+      "source": "docs/registration-scope-findings.json",
+      "complete": false,
+      "state": "required_unfinished"
+    },
+    {
+      "id": "native-addition:SOURCE:autogenerated",
+      "engine": "SOURCE",
+      "field": "autogenerated",
+      "requirement": "Complete editor, source/persistence/history, version-correct semantics, observation/preview/apply/recovery and original release/security gates for this source-discovered registration",
+      "versions": [
+        "0.56.2",
+        "audited-main"
+      ],
+      "source": "docs/registration-scope-findings.json",
+      "complete": false,
+      "state": "required_unfinished"
+    }
+  ],
+  "required_contract_and_addition_count": 1458,
   "remaining_verification": [
     "Every per-version field, variant, alias, parser, observation, activation and preview contract",
     "All threat-table fixtures, grammar/event fuzzing, failure/race/crash injection and helper/lab teardown",

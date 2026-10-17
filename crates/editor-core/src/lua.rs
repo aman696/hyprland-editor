@@ -1,6 +1,8 @@
 //! Static Lua source projection and byte-preserving copy preparation. Never runs Lua.
+pub mod config_inspection;
 pub mod config_table;
 mod dependencies;
+pub mod registration;
 pub mod replay;
 pub mod scalar_codec;
 use crate::{parse_color, Draft, Setting, Value, AUDITED_MAIN, BASELINE, MAX_DOCUMENT_BYTES};

@@ -1,5 +1,7 @@
 # Execution plan and acceptance gates
 
+Current work: [registration-aware source inspection](registration-aware-inspection.md) uses version-specific constructor constraints and records five newly confirmed mandatory scope additions. Local verification passes 240 tests including the native workflow. Ordinary form constraint/choice integration, four omitted tablet-tool device controls and generated-config handling remain required; the full goal is active and unproven.
+
 The existing engineering blueprint remains the design authority. This register maps it to the code and tracks the next concrete steps. A checked design requirement is not an implemented feature or runtime certificate. The [full completion register](completion-register.md) tracks every original contract and gate without shrinking the goal to the available foundations.
 
 ## Current primitive codec increment

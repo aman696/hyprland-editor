@@ -1,5 +1,7 @@
 # Configuration table inspection
 
+The [registration-aware worker](registration-aware-inspection.md) now adds per-value models and the bootstrap key to captured calls; actual runtime acceptance and ownership remain unverified.
+
 Captured `hl.config` calls now have registry-dispatch evidence in graphical call details and diagnostic `configuration_tables` output. This connects immutable evaluated arguments to version-scoped setting IDs. Editable graph drafts and native value acceptance remain unfinished.
 
 ## Independent source observations

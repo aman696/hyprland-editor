@@ -3,7 +3,7 @@
 use super::{directory_worker, worker};
 use hyprland_editor_core::{
     lua::{
-        config_table,
+        config_inspection, config_table,
         replay::{self, Binding, Document, Halt, Loader, Program, Resolution},
     },
     module_path::{self, Context, Primary, RequireMode},
@@ -47,6 +47,7 @@ pub(super) struct Analysis {
     pub(super) program: Program,
     pub(super) report: replay::Report,
     pub(super) config_batches: Vec<config_table::Batch>,
+    pub(super) config_profile: Option<config_inspection::ModelContext>,
     pub(super) captures: Vec<CapturedDocument>,
     pub(super) edges: Vec<EdgeEvidence>,
     pub(super) blocked: Option<String>,
@@ -461,24 +462,83 @@ pub(super) fn analyze_with_budget(
         }
     };
     resolver.budget.retain(&report)?;
-    let catalogue = hyprland_editor_core::catalogue();
     let mut config_batches = Vec::new();
-    for event in report.events.iter().filter(|e| e.api == "hl.config") {
-        let result = resolver.budget.check().and_then(|()| {
-            let batch = config_table::inspect(event, &program.version, &catalogue)?;
-            resolver.budget.retain(&batch)?;
-            Ok(batch)
-        });
+    let mut config_profile = None;
+    let events = report
+        .events
+        .iter()
+        .filter(|e| e.api == "hl.config")
+        .cloned()
+        .collect::<Vec<_>>();
+    if !events.is_empty() {
+        let result = (|| {
+            resolver.budget.check()?;
+            let expected_orders = events.iter().map(|e| e.order).collect::<Vec<_>>();
+            let worker::Response::Configuration(inspection) =
+                worker::run(worker::Request::InspectConfiguration {
+                    events,
+                    version: program.version.clone(),
+                })?
+            else {
+                return Err("Unexpected configuration model response".to_string());
+            };
+            if inspection.context.version != program.version
+                || inspection.context.schema_sha256
+                    != hyprland_editor_core::lua::registration::schema_sha256()
+                || inspection.context.profile.as_ref() != Some(&report.compiler_profile)
+                || inspection.context.numeric_locale.as_deref() != Some("C")
+                || inspection.context.runtime_verified
+            {
+                return Err("Configuration model context does not match captured analysis".into());
+            }
+            if inspection.batches.len() > expected_orders.len()
+                || inspection.stopped.is_none() && inspection.batches.len() != expected_orders.len()
+                || inspection
+                    .batches
+                    .iter()
+                    .zip(&expected_orders)
+                    .any(|(batch, order)| {
+                        batch.event_order != *order
+                            || batch.native_values_verified
+                            || batch.order_within_call_known
+                            || batch.candidates.iter().any(|c| c.event_order != *order)
+                    })
+            {
+                return Err(
+                    "Configuration model observations do not match captured call order".into(),
+                );
+            }
+            resolver.budget.check()?;
+            Ok(inspection)
+        })();
         match result {
-            Ok(batch) => {
-                if !batch.traversal_resolved {
-                    blocked.get_or_insert("Configuration table traversal is unresolved".into());
+            Ok(inspection) => {
+                let retain_context = resolver
+                    .budget
+                    .retain(&inspection.context)
+                    .and_then(|()| resolver.budget.retain(&inspection.stopped));
+                if let Err(reason) = retain_context {
+                    blocked.get_or_insert(reason);
+                } else {
+                    config_profile = Some(inspection.context);
+                    if let Some(reason) = inspection.stopped {
+                        blocked.get_or_insert(reason);
+                    }
+                    for batch in inspection.batches {
+                        if let Err(reason) = resolver
+                            .budget
+                            .check()
+                            .and_then(|()| resolver.budget.retain(&batch))
+                        {
+                            blocked.get_or_insert(reason);
+                            break;
+                        }
+                        config_batches.push(batch);
+                    }
                 }
-                config_batches.push(batch);
             }
             Err(error) => {
                 blocked.get_or_insert(error);
-                break;
             }
         }
     }
@@ -488,6 +548,7 @@ pub(super) fn analyze_with_budget(
         program,
         report,
         config_batches,
+        config_profile,
         captures,
         edges,
         blocked,
@@ -529,7 +590,7 @@ pub(super) fn check(
         "model_completed":analysis.report.halt.is_none()&&analysis.blocked.is_none(),
         "documents":analysis.captures.iter().map(|c|serde_json::json!({"id":c.id,"identity":c.source.identity,"load_name":analysis.program.documents.iter().find(|d|d.id==c.id).map(|d|&d.load_name)})).collect::<Vec<_>>(),
         "resolution_evidence":analysis.edges,"report":analysis.report,"blocked":analysis.blocked,
-        "configuration_tables":analysis.config_batches,
+        "configuration_tables":analysis.config_batches,"configuration_model_context":analysis.config_profile,
         "bindings":analysis.program.bindings.len(),"files_written":false,"lua_executed":false,
         "runtime_verified":false,"atomic_filesystem_snapshot":false
     }))
