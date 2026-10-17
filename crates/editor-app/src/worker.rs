@@ -28,6 +28,10 @@ pub enum Request {
         version: String,
     },
     ReplayModules(lua::replay::Program),
+    ReviewSourceEdits {
+        program: lua::replay::Program,
+        plan: lua::replay::edits::EditPlan,
+    },
     DecodePrimitives(Vec<lua::scalar_codec::Case>),
     InspectConfiguration {
         events: Vec<lua::replay::Event>,
@@ -52,6 +56,7 @@ pub enum Response {
     Parsed(Box<LuaReport>),
     Dependencies(lua::DependencyInventory),
     Replayed(Box<lua::replay::Report>),
+    SourceEditReview(Box<lua::replay::edits::EditReview>),
     Primitives {
         profile: lua::replay::CompilerProfile,
         numeric_locale: String,
@@ -121,6 +126,10 @@ pub fn entry() {
             }
             Request::ReplayModules(program) => {
                 lua::replay::replay(&program).map(|report| Response::Replayed(Box::new(report)))
+            }
+            Request::ReviewSourceEdits { program, plan } => {
+                lua::replay::edits::review(&program, &plan)
+                    .map(|report| Response::SourceEditReview(Box::new(report)))
             }
             Request::InspectDependencies { source, version } => {
                 lua::inspect_dependencies(&source, &version).map(Response::Dependencies)

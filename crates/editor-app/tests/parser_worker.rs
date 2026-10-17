@@ -43,6 +43,54 @@ fn request(request: Value) -> Value {
     serde_json::from_slice(&data).unwrap()
 }
 #[test]
+fn source_edit_review_uses_immutable_revisions_inside_the_restricted_worker() {
+    use hyprland_editor_core::lua::{
+        replay::{edits::*, *},
+        source_hash,
+    };
+    let p = replay_program("hl.config({general={border_size=2}})");
+    let d = &p.documents[0];
+    let start = d.source.find('2').unwrap();
+    let edit = SourceEdit {
+        document: d.id.clone(),
+        base_sha256: d.sha256.clone(),
+        span: start..start + 1,
+        old_bytes_sha256: source_hash("2"),
+        replacement: "4".into(),
+        semantic_targets: vec!["general:border_size".into()],
+    };
+    let event = &replay(&p).unwrap().events[0];
+    let after = Observed::Table(vec![(
+        Observed::Bytes(b"general".to_vec()),
+        Observed::Table(vec![(
+            Observed::Bytes(b"border_size".to_vec()),
+            Observed::Int(4),
+        )]),
+    )]);
+    let plan = prepare(
+        &p,
+        vec![edit],
+        vec![ExpectedCall {
+            order: 0,
+            before_arguments: event.arguments.clone(),
+            after_arguments: vec![after],
+        }],
+    )
+    .unwrap();
+    let expected = serde_json::to_value(review(&p, &plan).unwrap()).unwrap();
+    let result = request(json!({"ReviewSourceEdits":{"program":p,"plan":plan}}));
+    assert_eq!(result["SourceEditReview"], expected);
+    assert_eq!(
+        result["SourceEditReview"]["modeled_observations_match"],
+        true
+    );
+    assert_eq!(result["SourceEditReview"]["ownership_verified"], false);
+    assert_eq!(result["SourceEditReview"]["runtime_verified"], false);
+    let mut bad = plan.clone();
+    bad.edits[0].old_bytes_sha256 = source_hash("stale");
+    assert!(request(json!({"ReviewSourceEdits":{"program":p,"plan":bad}}))["Error"].is_string());
+}
+#[test]
 fn filesystem_and_network_are_denied() {
     let result = request(json!("Probe"));
     assert_eq!(result["Probe"]["file_denied"], true);
