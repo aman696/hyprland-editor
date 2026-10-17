@@ -1215,7 +1215,7 @@ pub(super) fn test_review(parent: &adw::Window, state: &Shared) {
         comparison,
         "Repeated opening must reuse the active comparison"
     );
-    super::source_changes::test_editor(&comparison, &model);
+    let held_comparison = super::source_changes::test_editor(&comparison, &model);
     let reopened = ui.analysis_view.test_compare();
     assert_ne!(
         reopened, comparison,
@@ -1275,6 +1275,7 @@ pub(super) fn test_review(parent: &adw::Window, state: &Shared) {
     ui.remove.upgrade().unwrap().emit_clicked();
     assert!(model.borrow().is_none());
     assert!(weak_analysis.upgrade().is_none());
+    drop(held_comparison);
     assert!(weak_dependency.upgrade().is_none());
     // Missing context remains partial until supplied through the actual editor.
     let cwd = root.join("working");

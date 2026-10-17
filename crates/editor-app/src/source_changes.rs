@@ -16,6 +16,16 @@ use std::{
 };
 type Getter = Rc<dyn Fn() -> Result<Value, String>>;
 static COMPARING: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+#[cfg(test)]
+static HOLD_COMPARISON: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+#[cfg(test)]
+pub(super) struct HeldComparison;
+#[cfg(test)]
+impl Drop for HeldComparison {
+    fn drop(&mut self) {
+        HOLD_COMPARISON.store(false, std::sync::atomic::Ordering::Release);
+    }
+}
 struct Permit;
 impl Drop for Permit {
     fn drop(&mut self) {
@@ -432,13 +442,17 @@ impl Controls {
         self.message("Comparing private source copies…");
         self.sensitive();
         let ui = self.clone();
+        // A closed inspector must release its reports/captures immediately.
+        // Only the immutable evaluator input is needed by this bounded task.
+        let program = analysis.program.clone();
         workflow::background(
             move || {
                 let _permit = permit;
-                match worker::run(worker::Request::CompareScalarSource {
-                    program: analysis.program.clone(),
-                    change,
-                })? {
+                #[cfg(test)]
+                while HOLD_COMPARISON.load(std::sync::atomic::Ordering::Acquire) {
+                    std::thread::sleep(std::time::Duration::from_millis(2));
+                }
+                match worker::run(worker::Request::CompareScalarSource { program, change })? {
                     worker::Response::ScalarSourceComparison(result) => Ok(result),
                     _ => Err("Unexpected source comparison response".into()),
                 }
@@ -758,7 +772,7 @@ pub(super) fn open(parent: &gtk::Window, model: &Model, event: usize) -> adw::Wi
 }
 
 #[cfg(test)]
-pub(super) fn test_editor(window: &adw::Window, model: &Model) {
+pub(super) fn test_editor(window: &adw::Window, model: &Model) -> HeldComparison {
     fn named(root: &gtk::Widget, name: &str) -> Option<gtk::Widget> {
         if root.widget_name() == name {
             return Some(root.clone());
@@ -871,9 +885,11 @@ pub(super) fn test_editor(window: &adw::Window, model: &Model) {
             .unwrap();
     }
     // Replacing the model while a comparison is in flight must block its result,
-    // even if the old immutable analysis is retained by the background task.
+    // even while the worker still owns its private evaluator input.
     scope.set_selected(0);
     input.set_text("5");
+    HOLD_COMPARISON.store(true, std::sync::atomic::Ordering::Release);
+    let held = HeldComparison;
     compare.emit_clicked();
     let previous = model.borrow_mut().take();
     wait(|| status.text().contains("source analysis changed"));
@@ -909,4 +925,5 @@ pub(super) fn test_editor(window: &adw::Window, model: &Model) {
         .unwrap();
     pick.set_selected(1);
     assert_eq!(getter().unwrap(), Value::String("two".into()));
+    held
 }
