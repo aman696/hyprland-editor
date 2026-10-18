@@ -8,6 +8,8 @@ A further increment adds [syntax-local compound source preservation](compound-so
 
 The next source-editing increment adds explicit original-table selection through recorded value history, including captured module returns, identical-table identity, alias reassignment and shared-use/later-write findings. It reuses layout preservation and private revisions without granting new file access or claiming alias ownership. Primitive source controls expose only their two applicable expression/literal choices.
 
+A [repeatable resource probe](resource-observations.md) now supplies current binary-identified empty-workspace evidence and process/cleanup checks. Its three 60-second observations fall below the empty-idle thresholds. Representative source/review/history/worker loads, long sessions, Wayland/GPU/accessibility, latency targets and full resource acceptance remain unproven.
+
 The existing engineering blueprint remains the design authority. This register maps it to the code and tracks the next concrete steps. A checked design requirement is not an implemented feature or runtime certificate. The [full completion register](completion-register.md) tracks every original contract and gate without shrinking the goal to the available foundations.
 
 ## Earlier primitive codec increment

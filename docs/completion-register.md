@@ -45,6 +45,7 @@ The original 1,453 contracts remain intact. Native registration checks add five 
 - **scalar draft forms**: initial values for 755 forms; ordinary forms still require native registration constraint/choice integration, including baseline Lua dropping declared constraints; not full per-field conformance, runtime activation or accessibility certification.
 - **static Lua and parser isolation**: restricted source projection and existing literals; no include/scope completeness or preview isolation proof.
 - **private source-backed draft snapshots**: single Lua root, symlink-chain evidence and reviewed static revision reconciliation; no generated ownership/include graph, multi-file merge, persistent history/checkpoint journal or watched-path certification.
+- **repeatable empty-workspace resource observation**: three binary-identified private Xvfb/bus empty-workspace trials below 100 MiB sampled process-tree PSS and under 0.1 percent observed CPU over 60 seconds; short CPU windows cannot pass; no representative source/review/history/worker, physical Wayland/GPU/accessibility, latency, large-import, event/asset/preview or long-session resource certificate.
 - **read-only selected-session inspection**: version/descriptions fixtures; no actual host compositor certificate, other inspectors or event subscription.
 
 ## Maintaining the register

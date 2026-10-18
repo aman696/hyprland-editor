@@ -120,3 +120,5 @@ The source-graph development branch now includes **Review Dependency Files → A
 For private fixtures: `hyprland-editor --check-source-graph FOLDER ROOT VERSION [CWD]` uses the same protected capture/model path. Supply an audited version and only a working directory you intend to model; no active compositor context is inferred.
 
 The dependency review’s **Analysis Context** dialog supplies home/working-directory folder hypotheses and inherited Lua search templates. Unknown context stays unknown, and these selections do not grant file access or identify the active compositor’s context.
+
+Current [resource observations](docs/resource-observations.md) record three 60-second empty-workspace trials at 92.3–93.3 MiB PSS, with zero recorded CPU ticks. Imported configurations, reviews, history, workers and other rendering profiles still require resource verification.

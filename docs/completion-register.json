@@ -352,6 +352,20 @@
       "limits": "single Lua root, symlink-chain evidence and reviewed static revision reconciliation; no generated ownership/include graph, multi-file merge, persistent history/checkpoint journal or watched-path certification"
     },
     {
+      "area": "repeatable empty-workspace resource observation",
+      "code": [
+        "scripts/resource_probe.py",
+        "scripts/test_resource_probe.py",
+        "data/resource-idle-observation.json"
+      ],
+      "test_references": [
+        "test_observation_includes_helpers_spawned_by_other_threads",
+        "test_stop_cleans_the_owned_group_when_its_original_leader_already_exited",
+        "test_failed_gui_start_cleans_the_private_fixture"
+      ],
+      "limits": "three binary-identified private Xvfb/bus empty-workspace trials below 100 MiB sampled process-tree PSS and under 0.1 percent observed CPU over 60 seconds; short CPU windows cannot pass; no representative source/review/history/worker, physical Wayland/GPU/accessibility, latency, large-import, event/asset/preview or long-session resource certificate"
+    },
+    {
       "area": "read-only selected-session inspection",
       "code": [
         "crates/editor-discovery/src/lib.rs"
@@ -44065,6 +44079,6 @@
     "Independent hardware results for monitor/input recovery, hotplug, DPI, transformations, VRR/HDR and GPUs",
     "Accessibility, localization, source ownership, corrupted-state recovery, packaging, dependencies and signed releases",
     "Complete classification of documentation and adopted ecosystem adapter inventories; upstream registration diffs",
-    "Repeatable memory/CPU/long-session measurements rather than a single idle startup sample"
+    "Representative source/review/history/worker memory/CPU and latency, physical Wayland/GPU/accessibility, import/event/asset/preview and long-session measurements beyond the repeated empty-workspace observations"
   ]
 }

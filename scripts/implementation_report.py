@@ -126,6 +126,9 @@ def build():
         {"area": "private source-backed draft snapshots", "code": ["crates/editor-core/src/source.rs", "crates/editor-core/src/source_path.rs", "crates/editor-core/src/workspace.rs", "crates/editor-core/src/reconcile.rs", "crates/editor-app/src/workflow.rs", "crates/editor-app/src/reconciliation.rs", "crates/editor-app/src/history.rs"],
          "test_references": ["application_reparses_snapshot_and_preserves_edits_without_opening_recorded_paths", "application_rejects_bad_hash_forged_reports_and_syntax_in_saved_source", "test_source_persistence", "relative_absolute_and_parent_links_preserve_targets_and_chain", "identical_bytes_through_a_replaced_link_change_recorded_identity", "conflicting_edit_and_delete_require_explicit_choices", "application_compares_changed_and_opaque_sources_with_restricted_parser_and_no_writes", "test_review"],
          "limits": "single Lua root, symlink-chain evidence and reviewed static revision reconciliation; no generated ownership/include graph, multi-file merge, persistent history/checkpoint journal or watched-path certification"},
+        {"area": "repeatable empty-workspace resource observation", "code": ["scripts/resource_probe.py", "scripts/test_resource_probe.py", "data/resource-idle-observation.json"],
+         "test_references": ["test_observation_includes_helpers_spawned_by_other_threads", "test_stop_cleans_the_owned_group_when_its_original_leader_already_exited", "test_failed_gui_start_cleans_the_private_fixture"],
+         "limits": "three binary-identified private Xvfb/bus empty-workspace trials below 100 MiB sampled process-tree PSS and under 0.1 percent observed CPU over 60 seconds; short CPU windows cannot pass; no representative source/review/history/worker, physical Wayland/GPU/accessibility, latency, large-import, event/asset/preview or long-session resource certificate"},
         {"area": "read-only selected-session inspection", "code": ["crates/editor-discovery/src/lib.rs"],
          "test_references": ["selected_session_only_uses_fixed_read_queries", "rejects_path_injection_symlinks_and_replaced_session"],
          "limits": "version/descriptions fixtures; no actual host compositor certificate, other inspectors or event subscription"},
@@ -165,7 +168,7 @@ def build():
             "Independent hardware results for monitor/input recovery, hotplug, DPI, transformations, VRR/HDR and GPUs",
             "Accessibility, localization, source ownership, corrupted-state recovery, packaging, dependencies and signed releases",
             "Complete classification of documentation and adopted ecosystem adapter inventories; upstream registration diffs",
-            "Repeatable memory/CPU/long-session measurements rather than a single idle startup sample",
+            "Representative source/review/history/worker memory/CPU and latency, physical Wayland/GPU/accessibility, import/event/asset/preview and long-session measurements beyond the repeated empty-workspace observations",
         ],
     }
 
