@@ -85,6 +85,7 @@ fn primitive_models_match_all_independent_native_inputs_and_preserve_rejection_s
                     NativeValue::Bytes(v) => {
                         serde_json::json!(v.iter().map(|b| format!("{b:02x}")).collect::<String>())
                     }
+                    _ => panic!("A primitive fixture produced a complex value"),
                 };
                 assert_eq!(actual, row["stored"], "{context}");
                 if let NativeValue::FloatBits(bits) = native {

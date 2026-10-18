@@ -58,6 +58,10 @@ namespace Config {using BOOL=bool;using INTEGER=int64_t;using FLOAT=float;using 
 // No real config lookup, refresh, graphics or complex default constructor runs.
 template<class T>class CConfigValue{public:CConfigValue()=default;CConfigValue(const char*){}bool good()const{return false;}const T&operator*()const{static T value{};return value;}};
 struct CHyprColor{uint64_t value;CHyprColor(uint64_t v=0):value(v){}};
+struct GapData{int64_t m_top;GapData(int64_t n=0):m_top(n){}};
+struct WeightData{int64_t m_value;WeightData(int64_t n=400):m_value(n){}};
+struct GradientData{GradientData(CHyprColor){}};
+
 namespace Supplementary{using PropRefreshBits=uint64_t;
 '''
 CAPTURE = r'''
@@ -89,6 +93,11 @@ template<class T>void bound(std::optional<T> v){if(!v){std::cout<<"null";return;
 template<class T>void limits(T*x){std::cout<<",\"minimum\":";bound(x->m_min);std::cout<<",\"maximum\":";bound(x->m_max);}
 void names(const std::optional<std::unordered_map<std::string,int64_t>>& values){if(!values){std::cout<<"null";return;}std::map<std::string,int64_t> sorted(values->begin(),values->end());bool first=true;std::cout<<'[';for(const auto&[name,value]:sorted){if(!first)std::cout<<',';first=false;std::cout<<'[';quoted(name);std::cout<<','<<value<<']';}std::cout<<']';}
 void validator_cases(const StringValidator& fn){std::cout<<"[";bool first=true;for(const auto&input:STRING_CASES){if(!first)std::cout<<',';first=false;std::cout<<'[';quoted(input);std::cout<<',';boolean(fn(input).has_value());std::cout<<']';}std::cout<<']';}
+void vector_cases(const std::function<std::expected<void,std::string>(const Config::VEC2&)>&fn){
+ const float nan=std::numeric_limits<float>::quiet_NaN(),inf=std::numeric_limits<float>::infinity();
+ const std::vector<Config::VEC2> cases={{-inf,0},{nan,0},{0,nan},{0,0},{-250,-250},{250,250},{251,0},{-20000,-20000},{20000,20000},{20001,0},{-100,-100},{4000,4000},{4001,0},{500,500},{501,0},{1000,1000},{1001,0}};
+ std::cout<<'[';bool first=true;for(const auto&v:cases){if(!first)std::cout<<',';first=false;std::cout<<'['<<std::bit_cast<uint32_t>(v.x)<<','<<std::bit_cast<uint32_t>(v.y)<<',';boolean(fn(v).has_value());std::cout<<']';}std::cout<<']';
+}
 void lua_options(const Config::Lua::ILuaConfigValue* value){
  using namespace Config::Lua;
  std::cout<<",\"lua\":{";
@@ -96,7 +105,12 @@ void lua_options(const Config::Lua::ILuaConfigValue* value){
  else if(auto*x=dynamic_cast<const CLuaConfigFloat*>(value)){std::cout<<"\"kind\":\"Float\",\"native_default\":\""<<std::format("{:08x}",std::bit_cast<uint32_t>(x->m_default))<<'"';limits(x);}
  else if(auto*x=dynamic_cast<const CLuaConfigBool*>(value)){std::cout<<"\"kind\":\"Bool\",\"native_default\":";boolean(x->m_default);}
  else if(auto*x=dynamic_cast<const CLuaConfigString*>(value)){std::cout<<"\"kind\":\"String\",\"native_default\":";quoted(x->m_default);std::cout<<",\"has_validator\":";boolean(bool(x->m_validator));if(x->m_validator){std::cout<<",\"validator_cases\":";validator_cases(x->m_validator);}}
- else std::cout<<"\"kind\":\"unmodeled_complex\"";
+ else if(auto*x=dynamic_cast<const CLuaConfigCssGap*>(value)){std::cout<<"\"kind\":\"CssGap\",\"native_default\":null";limits(x);}
+ else if(auto*x=dynamic_cast<const CLuaConfigVec2*>(value)){std::cout<<"\"kind\":\"Vec2\",\"native_default\":null,\"has_validator\":";boolean(bool(x->m_validator));if(x->m_validator){std::cout<<",\"validator_cases\":";vector_cases(x->m_validator);}}
+ else if(dynamic_cast<const CLuaConfigColor*>(value))std::cout<<"\"kind\":\"Color\",\"native_default\":null";
+ else if(dynamic_cast<const CLuaConfigGradient*>(value))std::cout<<"\"kind\":\"Gradient\",\"native_default\":null";
+ else if(dynamic_cast<const CLuaConfigFontWeight*>(value))std::cout<<"\"kind\":\"FontWeight\",\"native_default\":null";
+ else std::abort();
  std::cout<<'}';
 }
 int main(){
@@ -284,15 +298,19 @@ def main():
                 'Int':'Config::INTEGER m_default=0,m_data=0;std::optional<Config::INTEGER>m_min,m_max;std::optional<std::unordered_map<std::string,Config::INTEGER>>m_map;',
                 'Float':'Config::FLOAT m_default=0,m_data=0;std::optional<Config::FLOAT>m_min,m_max;',
                 'String':'Config::STRING m_default,m_data;StringValidator m_validator;',
+                'Color':'Config::INTEGER m_default=0,m_data=0;',
+                'CssGap':'Config::INTEGER m_default=0;GapData m_data;std::optional<int64_t>m_min,m_max;',
+                'Vec2':'Config::VEC2 m_default,m_data;std::function<std::expected<void,std::string>(const Config::VEC2&)>m_validator;',
+                'FontWeight':'Config::INTEGER m_default=400;WeightData m_data;',
+                'Gradient':'CHyprColor m_default;GradientData m_data{CHyprColor{}};',
             }
-            for kind in PRIMITIVES:
+            for kind in KINDS:
                 header=get(f'src/config/lua/types/LuaConfig{kind}.hpp')
                 name=f'CLuaConfig{kind}'
                 declaration=header[header.index(name+'('):].split(';',1)[0]+';'
                 cpp+=f'struct {name}:ILuaConfigValue{{'+fields[kind]+declaration+'};\n'
-            for kind in KINDS[4:]:cpp+=f'struct CLuaConfig{kind}:ILuaConfigValue{{template<class...A>CLuaConfig{kind}(A&&...){{}}}};\n'
             cpp+='UP<ILuaConfigValue>fromGenericValue(SP<Config::Values::IValue>); }\nusing namespace Config;using namespace Config::Lua;\n'
-            for kind in PRIMITIVES:cpp+=block(get(f'src/config/lua/types/LuaConfig{kind}.cpp'),f'CLuaConfig{kind}::CLuaConfig{kind}(')
+            for kind in KINDS:cpp+=block(get(f'src/config/lua/types/LuaConfig{kind}.cpp'),f'CLuaConfig{kind}::CLuaConfig{kind}(')
             cpp+=block(get('src/config/lua/types/LuaConfigUtils.cpp'),'UP<ILuaConfigValue> Lua::fromGenericValue')
             manager=get('src/config/lua/ConfigManager.cpp')
             constructor=block(manager,'CConfigManager::CConfigManager()')
@@ -315,7 +333,7 @@ def main():
             output.append({'version':version,**captured})
             print(f'{version}: {len(actual)} original settings; {len(captured["device_values"])} device values; {len(captured["runtime_registry_additions"])} bootstrap additions',flush=True)
     result={'format':'hye-scalar-registration-fixtures-1','sources_sha256':hashlib.sha256(manifest).hexdigest(),'audit_inventory_sha256':hashlib.sha256((ROOT/'docs/hyprland-feature-inventory.json').read_bytes()).hexdigest(),'registration_metadata_matches_audit':True,
-            'evidence_scope':'Original option structs, factory, registration function, four primitive value classes, generic-to-Lua conversion, key normalization, device constructor and string validators. Inert config lookup/refresh/memory adapters and complex value constructors; complex defaults, Lua codecs, runtime device availability and effects are not certified. Captured device values do not include separately handled tag/selector fields. Bootstrap additions execute only the isolated original registration statement, not the manager constructor or watcher.',
+            'evidence_scope':'Original option structs, factory, registration function, four primitive value classes, all nine original Lua constructors, generic-to-Lua conversion, key normalization, device constructor and string validators. Inert config lookup/refresh/memory adapters and generic complex storage/derived caches; complex defaults and parsed Lua effects, runtime device availability and effects are not certified. Captured device values do not include separately handled tag/selector fields. Bootstrap additions execute only the isolated original registration statement, not the manager constructor or watcher.',
             'snapshots':output}
     encoded=json.dumps(result,indent=2)+'\n'
     if args.check:

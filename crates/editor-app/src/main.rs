@@ -19,6 +19,7 @@ mod selector_forms;
 mod source_access;
 mod source_analysis;
 mod source_changes;
+mod source_compound_forms;
 mod source_context;
 mod source_graph;
 mod source_modules;
@@ -1594,6 +1595,7 @@ mod tests {
         gestures::test_editor(&window);
         source_modules::test_view(&window);
         source_access::test_retained_graph(&window);
+        source_compound_forms::test_workflow(&window);
         rule_forms::test_forms();
         window.close();
         assert!(

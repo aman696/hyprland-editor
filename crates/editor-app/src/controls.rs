@@ -115,12 +115,24 @@ pub(super) fn form(
             } else {
                 400
             };
-            let w = spin(v.into(), 0., 65535., 0);
+            let w = gtk::Entry::builder()
+                .text(v.to_string())
+                .input_purpose(gtk::InputPurpose::Number)
+                .max_length(21)
+                .hexpand(true)
+                .build();
             accessible_name(&w, &name);
             box_.append(&w);
             Box::new(move || {
-                w.update();
-                Ok(Value::FontWeight(w.value() as u16))
+                let value = w
+                    .text()
+                    .trim()
+                    .parse::<i64>()
+                    .map_err(|_| "Enter an exact nonnegative 64-bit font weight")?;
+                if value < 0 {
+                    return Err("Font weight must not be negative".into());
+                }
+                Ok(Value::FontWeight(value))
             })
         }
         "Vec2" => {
@@ -175,7 +187,12 @@ pub(super) fn form(
             {
                 let caption = label(name);
                 grid.attach(&caption, 0, i as i32, 1, 1);
-                let w = spin(n as f64, 0., 100_000., 0);
+                let w = gtk::Entry::builder()
+                    .text(n.to_string())
+                    .input_purpose(gtk::InputPurpose::Number)
+                    .max_length(21)
+                    .hexpand(true)
+                    .build();
                 caption.set_mnemonic_widget(Some(&w));
                 accessible_name(&w, &format!("{name}: {}", caption.text()));
                 w.set_hexpand(true);
@@ -183,12 +200,15 @@ pub(super) fn form(
                 fields.push(w);
             }
             Box::new(move || {
-                for f in &fields {
-                    f.update();
+                let mut values = [0; 4];
+                for (index, field) in fields.iter().enumerate() {
+                    values[index] = field
+                        .text()
+                        .trim()
+                        .parse::<i64>()
+                        .map_err(|_| "Enter an exact 64-bit whole number for each gap")?;
                 }
-                Ok(Value::CssGap(std::array::from_fn(|i| {
-                    fields[i].value() as i64
-                })))
+                Ok(Value::CssGap(values))
             })
         }
         "Gradient" => {

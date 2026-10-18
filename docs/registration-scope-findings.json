@@ -1,6 +1,6 @@
 {
   "format": "hye-registration-findings-1",
-  "registration_sha256": "c8e97c8b9847799e5000d97e5647a787b7b80435e3c0d34e001b02601427628b",
+  "registration_sha256": "e491f05b084e5bc2a64178a51a1917cde0efb7472b51902f73669477b95e2852",
   "original_contracts_preserved": 1453,
   "findings": [
     {

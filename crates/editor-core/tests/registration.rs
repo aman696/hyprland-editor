@@ -152,6 +152,9 @@ fn literal_string_choices_match_native_callback_observations_without_changing_nu
             AUDITED_MAIN
         };
         for native in snapshot["values"].as_array().unwrap() {
+            if native["lua"]["kind"] != "String" {
+                continue;
+            }
             let Some(cases) = native["lua"]["validator_cases"].as_array() else {
                 continue;
             };
@@ -192,4 +195,63 @@ fn literal_string_choices_match_native_callback_observations_without_changing_nu
         r#"{"kind":"string","validator":{"choices":[],"code":"execute"}}"#
     )
     .is_err());
+}
+#[test]
+fn forwarded_vector_validators_match_original_factory_callbacks_for_every_registered_vector() {
+    let fixture: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../data/scalar-registration-fixtures.json"
+    ))
+    .unwrap();
+    let mut parser = Parser::new().unwrap();
+    let mut checked = 0;
+    for snapshot in fixture["snapshots"].as_array().unwrap() {
+        let version = if snapshot["version"] == "baseline" {
+            BASELINE
+        } else {
+            AUDITED_MAIN
+        };
+        for native in snapshot["values"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|v| v["lua"]["kind"] == "Vec2")
+        {
+            let hex = native["id_hex"].as_str().unwrap();
+            let id = String::from_utf8(
+                (0..hex.len())
+                    .step_by(2)
+                    .map(|i| u8::from_str_radix(&hex[i..i + 2], 16).unwrap())
+                    .collect(),
+            )
+            .unwrap();
+            let meta = registration::find(version, Role::Global, &id).unwrap();
+            assert!(matches!(meta.codec, Some(Codec::Vec2 { .. })));
+            if version == BASELINE {
+                assert!(matches!(meta.codec, Some(Codec::Vec2 { validator: None })));
+                continue;
+            }
+            for case in native["lua"]["validator_cases"].as_array().unwrap() {
+                let input = Observed::Table(
+                    (0..2)
+                        .map(|i| {
+                            (
+                                Observed::Int(i + 1),
+                                Observed::Float(f64::from(f32::from_bits(
+                                    case[i as usize].as_u64().unwrap() as u32,
+                                ))),
+                            )
+                        })
+                        .collect(),
+                );
+                let result = parser.decode(meta.codec.as_ref().unwrap(), &input).unwrap();
+                assert_eq!(
+                    matches!(result, Outcome::Accepted { .. }),
+                    case[2].as_bool().unwrap(),
+                    "{id}: {case}"
+                );
+                checked += 1;
+            }
+        }
+    }
+    assert_eq!(checked, 6 * 17);
 }

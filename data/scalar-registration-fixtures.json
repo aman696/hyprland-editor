@@ -1,9 +1,9 @@
 {
   "format": "hye-scalar-registration-fixtures-1",
-  "sources_sha256": "6d5d795032127a93dd2120b72d27fc3f94589010cd710925928b35afd282e357",
+  "sources_sha256": "a0b5e06cb02a0a9b4f8ec396e96be1f285cc0d23940b96853851fb8ab57309bb",
   "audit_inventory_sha256": "7edff8d2405b86dbb9eb0e59087fd789f2a41efd21dd0af45a4fdea0a5f23323",
   "registration_metadata_matches_audit": true,
-  "evidence_scope": "Original option structs, factory, registration function, four primitive value classes, generic-to-Lua conversion, key normalization, device constructor and string validators. Inert config lookup/refresh/memory adapters and complex value constructors; complex defaults, Lua codecs, runtime device availability and effects are not certified. Captured device values do not include separately handled tag/selector fields. Bootstrap additions execute only the isolated original registration statement, not the manager constructor or watcher.",
+  "evidence_scope": "Original option structs, factory, registration function, four primitive value classes, all nine original Lua constructors, generic-to-Lua conversion, key normalization, device constructor and string validators. Inert config lookup/refresh/memory adapters and generic complex storage/derived caches; complex defaults and parsed Lua effects, runtime device availability and effects are not certified. Captured device values do not include separately handled tag/selector fields. Bootstrap additions execute only the isolated original registration statement, not the manager constructor or watcher.",
   "snapshots": [
     {
       "version": "baseline",
@@ -1290,7 +1290,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -1301,7 +1302,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -1454,7 +1456,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -1465,7 +1468,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -1489,7 +1493,9 @@
           "native_default": null,
           "has_validator": true,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Vec2",
+            "native_default": null,
+            "has_validator": false
           }
         },
         {
@@ -1820,7 +1826,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -1831,7 +1838,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -1842,7 +1850,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -1853,7 +1862,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -1884,7 +1894,10 @@
           "minimum": null,
           "maximum": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "CssGap",
+            "native_default": null,
+            "minimum": null,
+            "maximum": null
           }
         },
         {
@@ -1897,7 +1910,10 @@
           "minimum": null,
           "maximum": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "CssGap",
+            "native_default": null,
+            "minimum": null,
+            "maximum": null
           }
         },
         {
@@ -1910,7 +1926,10 @@
           "minimum": null,
           "maximum": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "CssGap",
+            "native_default": null,
+            "minimum": null,
+            "maximum": null
           }
         },
         {
@@ -2334,7 +2353,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -2345,7 +2365,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -2356,7 +2377,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -2367,7 +2389,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -2445,7 +2468,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -2456,7 +2480,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -2467,7 +2492,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -2478,7 +2504,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -2545,7 +2572,8 @@
           "kind": "FontWeight",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "FontWeight",
+            "native_default": null
           }
         },
         {
@@ -2556,7 +2584,8 @@
           "kind": "FontWeight",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "FontWeight",
+            "native_default": null
           }
         },
         {
@@ -2839,7 +2868,8 @@
           "kind": "Color",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Color",
+            "native_default": null
           }
         },
         {
@@ -2850,7 +2880,8 @@
           "kind": "Color",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Color",
+            "native_default": null
           }
         },
         {
@@ -2861,7 +2892,8 @@
           "kind": "Color",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Color",
+            "native_default": null
           }
         },
         {
@@ -2872,7 +2904,8 @@
           "kind": "Color",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Color",
+            "native_default": null
           }
         },
         {
@@ -3662,7 +3695,9 @@
           "native_default": null,
           "has_validator": true,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Vec2",
+            "native_default": null,
+            "has_validator": false
           }
         },
         {
@@ -3674,7 +3709,9 @@
           "native_default": null,
           "has_validator": true,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Vec2",
+            "native_default": null,
+            "has_validator": false
           }
         },
         {
@@ -3712,7 +3749,9 @@
           "native_default": null,
           "has_validator": true,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Vec2",
+            "native_default": null,
+            "has_validator": false
           }
         },
         {
@@ -3724,7 +3763,9 @@
           "native_default": null,
           "has_validator": true,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Vec2",
+            "native_default": null,
+            "has_validator": false
           }
         },
         {
@@ -4170,7 +4211,9 @@
           "native_default": null,
           "has_validator": true,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Vec2",
+            "native_default": null,
+            "has_validator": false
           }
         },
         {
@@ -4453,7 +4496,8 @@
           "kind": "Color",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Color",
+            "native_default": null
           }
         },
         {
@@ -4476,7 +4520,8 @@
           "kind": "Color",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Color",
+            "native_default": null
           }
         },
         {
@@ -5611,13 +5656,17 @@
         {
           "field_hex": "6163746976655f617265615f706f736974696f6e",
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Vec2",
+            "native_default": null,
+            "has_validator": false
           }
         },
         {
           "field_hex": "6163746976655f617265615f73697a65",
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Vec2",
+            "native_default": null,
+            "has_validator": false
           }
         },
         {
@@ -5807,13 +5856,17 @@
         {
           "field_hex": "726567696f6e5f706f736974696f6e",
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Vec2",
+            "native_default": null,
+            "has_validator": false
           }
         },
         {
           "field_hex": "726567696f6e5f73697a65",
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Vec2",
+            "native_default": null,
+            "has_validator": false
           }
         },
         {
@@ -7211,7 +7264,8 @@
           "kind": "Color",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Color",
+            "native_default": null
           }
         },
         {
@@ -7222,7 +7276,8 @@
           "kind": "Color",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Color",
+            "native_default": null
           }
         },
         {
@@ -7233,7 +7288,8 @@
           "kind": "Color",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Color",
+            "native_default": null
           }
         },
         {
@@ -7336,7 +7392,8 @@
           "kind": "Color",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Color",
+            "native_default": null
           }
         },
         {
@@ -8079,7 +8136,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -8090,7 +8148,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -8243,7 +8302,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -8254,7 +8314,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -8278,7 +8339,96 @@
           "native_default": null,
           "has_validator": true,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Vec2",
+            "native_default": null,
+            "has_validator": true,
+            "validator_cases": [
+              [
+                4286578688,
+                0,
+                false
+              ],
+              [
+                2143289344,
+                0,
+                true
+              ],
+              [
+                0,
+                2143289344,
+                true
+              ],
+              [
+                0,
+                0,
+                true
+              ],
+              [
+                3279552512,
+                3279552512,
+                true
+              ],
+              [
+                1132068864,
+                1132068864,
+                true
+              ],
+              [
+                1132134400,
+                0,
+                false
+              ],
+              [
+                3332128768,
+                3332128768,
+                false
+              ],
+              [
+                1184645120,
+                1184645120,
+                false
+              ],
+              [
+                1184645632,
+                0,
+                false
+              ],
+              [
+                3267887104,
+                3267887104,
+                true
+              ],
+              [
+                1165623296,
+                1165623296,
+                false
+              ],
+              [
+                1165627392,
+                0,
+                false
+              ],
+              [
+                1140457472,
+                1140457472,
+                false
+              ],
+              [
+                1140490240,
+                0,
+                false
+              ],
+              [
+                1148846080,
+                1148846080,
+                false
+              ],
+              [
+                1148862464,
+                0,
+                false
+              ]
+            ]
           }
         },
         {
@@ -8757,7 +8907,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -8768,7 +8919,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -8779,7 +8931,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -8790,7 +8943,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -8821,7 +8975,10 @@
           "minimum": null,
           "maximum": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "CssGap",
+            "native_default": null,
+            "minimum": null,
+            "maximum": null
           }
         },
         {
@@ -8834,7 +8991,10 @@
           "minimum": null,
           "maximum": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "CssGap",
+            "native_default": null,
+            "minimum": null,
+            "maximum": null
           }
         },
         {
@@ -8847,7 +9007,10 @@
           "minimum": null,
           "maximum": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "CssGap",
+            "native_default": null,
+            "minimum": null,
+            "maximum": null
           }
         },
         {
@@ -9292,7 +9455,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -9303,7 +9467,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -9314,7 +9479,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -9325,7 +9491,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -9416,7 +9583,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -9427,7 +9595,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -9438,7 +9607,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -9449,7 +9619,8 @@
           "kind": "Gradient",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Gradient",
+            "native_default": null
           }
         },
         {
@@ -9516,7 +9687,8 @@
           "kind": "FontWeight",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "FontWeight",
+            "native_default": null
           }
         },
         {
@@ -9527,7 +9699,8 @@
           "kind": "FontWeight",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "FontWeight",
+            "native_default": null
           }
         },
         {
@@ -9810,7 +9983,8 @@
           "kind": "Color",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Color",
+            "native_default": null
           }
         },
         {
@@ -9821,7 +9995,8 @@
           "kind": "Color",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Color",
+            "native_default": null
           }
         },
         {
@@ -9832,7 +10007,8 @@
           "kind": "Color",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Color",
+            "native_default": null
           }
         },
         {
@@ -9843,7 +10019,8 @@
           "kind": "Color",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Color",
+            "native_default": null
           }
         },
         {
@@ -10841,7 +11018,96 @@
           "native_default": null,
           "has_validator": true,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Vec2",
+            "native_default": null,
+            "has_validator": true,
+            "validator_cases": [
+              [
+                4286578688,
+                0,
+                false
+              ],
+              [
+                2143289344,
+                0,
+                true
+              ],
+              [
+                0,
+                2143289344,
+                true
+              ],
+              [
+                0,
+                0,
+                true
+              ],
+              [
+                3279552512,
+                3279552512,
+                false
+              ],
+              [
+                1132068864,
+                1132068864,
+                true
+              ],
+              [
+                1132134400,
+                0,
+                true
+              ],
+              [
+                3332128768,
+                3332128768,
+                false
+              ],
+              [
+                1184645120,
+                1184645120,
+                false
+              ],
+              [
+                1184645632,
+                0,
+                false
+              ],
+              [
+                3267887104,
+                3267887104,
+                false
+              ],
+              [
+                1165623296,
+                1165623296,
+                false
+              ],
+              [
+                1165627392,
+                0,
+                false
+              ],
+              [
+                1140457472,
+                1140457472,
+                true
+              ],
+              [
+                1140490240,
+                0,
+                false
+              ],
+              [
+                1148846080,
+                1148846080,
+                false
+              ],
+              [
+                1148862464,
+                0,
+                false
+              ]
+            ]
           }
         },
         {
@@ -10853,7 +11119,96 @@
           "native_default": null,
           "has_validator": true,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Vec2",
+            "native_default": null,
+            "has_validator": true,
+            "validator_cases": [
+              [
+                4286578688,
+                0,
+                false
+              ],
+              [
+                2143289344,
+                0,
+                true
+              ],
+              [
+                0,
+                2143289344,
+                true
+              ],
+              [
+                0,
+                0,
+                true
+              ],
+              [
+                3279552512,
+                3279552512,
+                false
+              ],
+              [
+                1132068864,
+                1132068864,
+                true
+              ],
+              [
+                1132134400,
+                0,
+                true
+              ],
+              [
+                3332128768,
+                3332128768,
+                false
+              ],
+              [
+                1184645120,
+                1184645120,
+                false
+              ],
+              [
+                1184645632,
+                0,
+                false
+              ],
+              [
+                3267887104,
+                3267887104,
+                false
+              ],
+              [
+                1165623296,
+                1165623296,
+                false
+              ],
+              [
+                1165627392,
+                0,
+                false
+              ],
+              [
+                1140457472,
+                1140457472,
+                true
+              ],
+              [
+                1140490240,
+                0,
+                false
+              ],
+              [
+                1148846080,
+                1148846080,
+                false
+              ],
+              [
+                1148862464,
+                0,
+                false
+              ]
+            ]
           }
         },
         {
@@ -10903,7 +11258,96 @@
           "native_default": null,
           "has_validator": true,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Vec2",
+            "native_default": null,
+            "has_validator": true,
+            "validator_cases": [
+              [
+                4286578688,
+                0,
+                false
+              ],
+              [
+                2143289344,
+                0,
+                true
+              ],
+              [
+                0,
+                2143289344,
+                true
+              ],
+              [
+                0,
+                0,
+                true
+              ],
+              [
+                3279552512,
+                3279552512,
+                true
+              ],
+              [
+                1132068864,
+                1132068864,
+                true
+              ],
+              [
+                1132134400,
+                0,
+                true
+              ],
+              [
+                3332128768,
+                3332128768,
+                true
+              ],
+              [
+                1184645120,
+                1184645120,
+                true
+              ],
+              [
+                1184645632,
+                0,
+                false
+              ],
+              [
+                3267887104,
+                3267887104,
+                true
+              ],
+              [
+                1165623296,
+                1165623296,
+                true
+              ],
+              [
+                1165627392,
+                0,
+                true
+              ],
+              [
+                1140457472,
+                1140457472,
+                true
+              ],
+              [
+                1140490240,
+                0,
+                true
+              ],
+              [
+                1148846080,
+                1148846080,
+                true
+              ],
+              [
+                1148862464,
+                0,
+                true
+              ]
+            ]
           }
         },
         {
@@ -10915,7 +11359,96 @@
           "native_default": null,
           "has_validator": true,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Vec2",
+            "native_default": null,
+            "has_validator": true,
+            "validator_cases": [
+              [
+                4286578688,
+                0,
+                false
+              ],
+              [
+                2143289344,
+                0,
+                true
+              ],
+              [
+                0,
+                2143289344,
+                true
+              ],
+              [
+                0,
+                0,
+                true
+              ],
+              [
+                3279552512,
+                3279552512,
+                false
+              ],
+              [
+                1132068864,
+                1132068864,
+                true
+              ],
+              [
+                1132134400,
+                0,
+                true
+              ],
+              [
+                3332128768,
+                3332128768,
+                false
+              ],
+              [
+                1184645120,
+                1184645120,
+                false
+              ],
+              [
+                1184645632,
+                0,
+                false
+              ],
+              [
+                3267887104,
+                3267887104,
+                true
+              ],
+              [
+                1165623296,
+                1165623296,
+                true
+              ],
+              [
+                1165627392,
+                0,
+                false
+              ],
+              [
+                1140457472,
+                1140457472,
+                true
+              ],
+              [
+                1140490240,
+                0,
+                true
+              ],
+              [
+                1148846080,
+                1148846080,
+                true
+              ],
+              [
+                1148862464,
+                0,
+                true
+              ]
+            ]
           }
         },
         {
@@ -11461,7 +11994,96 @@
           "native_default": null,
           "has_validator": true,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Vec2",
+            "native_default": null,
+            "has_validator": true,
+            "validator_cases": [
+              [
+                4286578688,
+                0,
+                false
+              ],
+              [
+                2143289344,
+                0,
+                true
+              ],
+              [
+                0,
+                2143289344,
+                true
+              ],
+              [
+                0,
+                0,
+                true
+              ],
+              [
+                3279552512,
+                3279552512,
+                false
+              ],
+              [
+                1132068864,
+                1132068864,
+                true
+              ],
+              [
+                1132134400,
+                0,
+                true
+              ],
+              [
+                3332128768,
+                3332128768,
+                false
+              ],
+              [
+                1184645120,
+                1184645120,
+                false
+              ],
+              [
+                1184645632,
+                0,
+                false
+              ],
+              [
+                3267887104,
+                3267887104,
+                false
+              ],
+              [
+                1165623296,
+                1165623296,
+                false
+              ],
+              [
+                1165627392,
+                0,
+                false
+              ],
+              [
+                1140457472,
+                1140457472,
+                true
+              ],
+              [
+                1140490240,
+                0,
+                true
+              ],
+              [
+                1148846080,
+                1148846080,
+                true
+              ],
+              [
+                1148862464,
+                0,
+                false
+              ]
+            ]
           }
         },
         {
@@ -11744,7 +12366,8 @@
           "kind": "Color",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Color",
+            "native_default": null
           }
         },
         {
@@ -11781,7 +12404,8 @@
           "kind": "Color",
           "native_default": null,
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Color",
+            "native_default": null
           }
         },
         {
@@ -13279,13 +13903,191 @@
         {
           "field_hex": "6163746976655f617265615f706f736974696f6e",
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Vec2",
+            "native_default": null,
+            "has_validator": true,
+            "validator_cases": [
+              [
+                4286578688,
+                0,
+                false
+              ],
+              [
+                2143289344,
+                0,
+                true
+              ],
+              [
+                0,
+                2143289344,
+                true
+              ],
+              [
+                0,
+                0,
+                true
+              ],
+              [
+                3279552512,
+                3279552512,
+                false
+              ],
+              [
+                1132068864,
+                1132068864,
+                true
+              ],
+              [
+                1132134400,
+                0,
+                true
+              ],
+              [
+                3332128768,
+                3332128768,
+                false
+              ],
+              [
+                1184645120,
+                1184645120,
+                false
+              ],
+              [
+                1184645632,
+                0,
+                false
+              ],
+              [
+                3267887104,
+                3267887104,
+                false
+              ],
+              [
+                1165623296,
+                1165623296,
+                false
+              ],
+              [
+                1165627392,
+                0,
+                false
+              ],
+              [
+                1140457472,
+                1140457472,
+                true
+              ],
+              [
+                1140490240,
+                0,
+                false
+              ],
+              [
+                1148846080,
+                1148846080,
+                false
+              ],
+              [
+                1148862464,
+                0,
+                false
+              ]
+            ]
           }
         },
         {
           "field_hex": "6163746976655f617265615f73697a65",
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Vec2",
+            "native_default": null,
+            "has_validator": true,
+            "validator_cases": [
+              [
+                4286578688,
+                0,
+                false
+              ],
+              [
+                2143289344,
+                0,
+                true
+              ],
+              [
+                0,
+                2143289344,
+                true
+              ],
+              [
+                0,
+                0,
+                true
+              ],
+              [
+                3279552512,
+                3279552512,
+                false
+              ],
+              [
+                1132068864,
+                1132068864,
+                true
+              ],
+              [
+                1132134400,
+                0,
+                true
+              ],
+              [
+                3332128768,
+                3332128768,
+                false
+              ],
+              [
+                1184645120,
+                1184645120,
+                false
+              ],
+              [
+                1184645632,
+                0,
+                false
+              ],
+              [
+                3267887104,
+                3267887104,
+                false
+              ],
+              [
+                1165623296,
+                1165623296,
+                false
+              ],
+              [
+                1165627392,
+                0,
+                false
+              ],
+              [
+                1140457472,
+                1140457472,
+                true
+              ],
+              [
+                1140490240,
+                0,
+                false
+              ],
+              [
+                1148846080,
+                1148846080,
+                false
+              ],
+              [
+                1148862464,
+                0,
+                false
+              ]
+            ]
           }
         },
         {
@@ -13488,13 +14290,191 @@
         {
           "field_hex": "726567696f6e5f706f736974696f6e",
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Vec2",
+            "native_default": null,
+            "has_validator": true,
+            "validator_cases": [
+              [
+                4286578688,
+                0,
+                false
+              ],
+              [
+                2143289344,
+                0,
+                true
+              ],
+              [
+                0,
+                2143289344,
+                true
+              ],
+              [
+                0,
+                0,
+                true
+              ],
+              [
+                3279552512,
+                3279552512,
+                true
+              ],
+              [
+                1132068864,
+                1132068864,
+                true
+              ],
+              [
+                1132134400,
+                0,
+                true
+              ],
+              [
+                3332128768,
+                3332128768,
+                true
+              ],
+              [
+                1184645120,
+                1184645120,
+                true
+              ],
+              [
+                1184645632,
+                0,
+                false
+              ],
+              [
+                3267887104,
+                3267887104,
+                true
+              ],
+              [
+                1165623296,
+                1165623296,
+                true
+              ],
+              [
+                1165627392,
+                0,
+                true
+              ],
+              [
+                1140457472,
+                1140457472,
+                true
+              ],
+              [
+                1140490240,
+                0,
+                true
+              ],
+              [
+                1148846080,
+                1148846080,
+                true
+              ],
+              [
+                1148862464,
+                0,
+                true
+              ]
+            ]
           }
         },
         {
           "field_hex": "726567696f6e5f73697a65",
           "lua": {
-            "kind": "unmodeled_complex"
+            "kind": "Vec2",
+            "native_default": null,
+            "has_validator": true,
+            "validator_cases": [
+              [
+                4286578688,
+                0,
+                false
+              ],
+              [
+                2143289344,
+                0,
+                true
+              ],
+              [
+                0,
+                2143289344,
+                true
+              ],
+              [
+                0,
+                0,
+                true
+              ],
+              [
+                3279552512,
+                3279552512,
+                false
+              ],
+              [
+                1132068864,
+                1132068864,
+                true
+              ],
+              [
+                1132134400,
+                0,
+                true
+              ],
+              [
+                3332128768,
+                3332128768,
+                false
+              ],
+              [
+                1184645120,
+                1184645120,
+                false
+              ],
+              [
+                1184645632,
+                0,
+                false
+              ],
+              [
+                3267887104,
+                3267887104,
+                true
+              ],
+              [
+                1165623296,
+                1165623296,
+                true
+              ],
+              [
+                1165627392,
+                0,
+                false
+              ],
+              [
+                1140457472,
+                1140457472,
+                true
+              ],
+              [
+                1140490240,
+                0,
+                true
+              ],
+              [
+                1148846080,
+                1148846080,
+                true
+              ],
+              [
+                1148862464,
+                0,
+                true
+              ]
+            ]
           }
         },
         {

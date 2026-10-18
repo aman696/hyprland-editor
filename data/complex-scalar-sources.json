@@ -1,0 +1,271 @@
+{
+  "format": "hye-complex-scalar-sources-1",
+  "files": [
+    {
+      "version": "baseline",
+      "path": "flake.lock",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/flake.lock",
+      "sha256": "ba52e6238661708fdf94d693d7290698206ada41f1d6ca93053f553fe2beef0f",
+      "bytes": 10019
+    },
+    {
+      "version": "baseline",
+      "path": "hyprutils/include/hyprutils/string/Numeric.hpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/hyprutils/5a7b8cf221914ce4714407950e4ffbdddcd8b66f/include/hyprutils/string/Numeric.hpp",
+      "sha256": "10ea1058b6c121236bade00d630918cfb3f1f3362e6d02de6241b3af8d4d1ad7",
+      "bytes": 3658
+    },
+    {
+      "version": "baseline",
+      "path": "hyprutils/src/string/String.cpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/hyprutils/5a7b8cf221914ce4714407950e4ffbdddcd8b66f/src/string/String.cpp",
+      "sha256": "a92c131a45f41918388eece78f225dbeab7791bb3cd2d3761d840aefa1527bac",
+      "bytes": 2700
+    },
+    {
+      "version": "baseline",
+      "path": "src/config/lua/types/LuaConfigColor.cpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/types/LuaConfigColor.cpp",
+      "bytes": 1625,
+      "sha256": "be89e657c2aae79427ac646af89fac51c557d870fc9f2613921eac02668b6af1"
+    },
+    {
+      "version": "baseline",
+      "path": "src/config/lua/types/LuaConfigColor.hpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/types/LuaConfigColor.hpp",
+      "bytes": 742,
+      "sha256": "78cb1f55f41890c7ba1854ad5d6ff555712965882b60876f72abb16f230cf645"
+    },
+    {
+      "version": "baseline",
+      "path": "src/config/lua/types/LuaConfigCssGap.cpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/types/LuaConfigCssGap.cpp",
+      "bytes": 3406,
+      "sha256": "ac91c9593a04ff96274cb6fcb46c62e996845cc03086dd0e831b5aa1d0515423"
+    },
+    {
+      "version": "baseline",
+      "path": "src/config/lua/types/LuaConfigCssGap.hpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/types/LuaConfigCssGap.hpp",
+      "bytes": 909,
+      "sha256": "b5385cccef55bac4c93b20483095e432f3577694f7d14d676635e652262edacc"
+    },
+    {
+      "version": "baseline",
+      "path": "src/config/lua/types/LuaConfigFontWeight.cpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/types/LuaConfigFontWeight.cpp",
+      "bytes": 2199,
+      "sha256": "da094c9f2e041586b9138280339dfdb24b78712b324462722e86186c8b274c05"
+    },
+    {
+      "version": "baseline",
+      "path": "src/config/lua/types/LuaConfigFontWeight.hpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/types/LuaConfigFontWeight.hpp",
+      "bytes": 813,
+      "sha256": "0300ae5454ba74544afe3cae52d439034fdee15d81846821616c9126f85b1970"
+    },
+    {
+      "version": "baseline",
+      "path": "src/config/lua/types/LuaConfigGradient.cpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/types/LuaConfigGradient.cpp",
+      "bytes": 4118,
+      "sha256": "74b29d474a2f43aba8c2e01bec2f61a9772efd795362e1e7bdaa875eddc3826b"
+    },
+    {
+      "version": "baseline",
+      "path": "src/config/lua/types/LuaConfigGradient.hpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/types/LuaConfigGradient.hpp",
+      "bytes": 746,
+      "sha256": "7092667e6fea62e1d17324d7fa60d863497a1df4f456d56910ff822b2da4127a"
+    },
+    {
+      "version": "baseline",
+      "path": "src/config/lua/types/LuaConfigUtils.cpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/types/LuaConfigUtils.cpp",
+      "sha256": "6d594805ebe96cf59b98f06565aabbfd9a7de6005fcbde3cd1d6b3d14e504a41",
+      "bytes": 2378
+    },
+    {
+      "version": "baseline",
+      "path": "src/config/lua/types/LuaConfigVec2.cpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/types/LuaConfigVec2.cpp",
+      "bytes": 2752,
+      "sha256": "53084c51846a78f115bd73b87d64ac148ba5b9dd22b99b6d089d8cdf62768bd5"
+    },
+    {
+      "version": "baseline",
+      "path": "src/config/lua/types/LuaConfigVec2.hpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/types/LuaConfigVec2.hpp",
+      "bytes": 1064,
+      "sha256": "c27ed894208ed05f5bd2fdb01183a62e40c809bd0824b0f89374219674669f7a"
+    },
+    {
+      "version": "baseline",
+      "path": "src/config/shared/Types.hpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/shared/Types.hpp",
+      "sha256": "337556a3fbedda3e34f31f600f4a44d4e85f53a04220f3c90d8394f98d1eb638",
+      "bytes": 486
+    },
+    {
+      "version": "baseline",
+      "path": "src/config/shared/complex/ComplexDataTypes.hpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/shared/complex/ComplexDataTypes.hpp",
+      "sha256": "95733223b115510dda23e753aae64e373205cc7081b0eeb204df866ea7e68807",
+      "bytes": 6116
+    },
+    {
+      "version": "baseline",
+      "path": "src/config/shared/parserUtils/ParserUtils.cpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/shared/parserUtils/ParserUtils.cpp",
+      "sha256": "86f21b761695571fc17f5a2ad68ddd30bf06d06d4d6a47ab443dc89ca511c2c0",
+      "bytes": 5902
+    },
+    {
+      "version": "baseline",
+      "path": "src/helpers/Color.cpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/src/helpers/Color.cpp",
+      "sha256": "0e7d472cb56d9fd9f006e3d7cff930ee4341ed587cde7c47a3242b01447aa57f",
+      "bytes": 1497
+    },
+    {
+      "version": "baseline",
+      "path": "src/helpers/Color.hpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/src/helpers/Color.hpp",
+      "sha256": "2276a8cc068799abc09e2688910633e370bfa271f5da3b4217d0ff51258aa9a8",
+      "bytes": 2139
+    },
+    {
+      "version": "current",
+      "path": "flake.lock",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/flake.lock",
+      "sha256": "d2214df2b2b9d8abe9756c0dee2a2079d14557b16e1b07e3f5e0ec4fb1e70dee",
+      "bytes": 10685
+    },
+    {
+      "version": "current",
+      "path": "hyprutils/include/hyprutils/string/Numeric.hpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/hyprutils/95983ee836ff205e615bba67d1f67098e1231941/include/hyprutils/string/Numeric.hpp",
+      "sha256": "10ea1058b6c121236bade00d630918cfb3f1f3362e6d02de6241b3af8d4d1ad7",
+      "bytes": 3658
+    },
+    {
+      "version": "current",
+      "path": "hyprutils/src/string/String.cpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/hyprutils/95983ee836ff205e615bba67d1f67098e1231941/src/string/String.cpp",
+      "sha256": "a92c131a45f41918388eece78f225dbeab7791bb3cd2d3761d840aefa1527bac",
+      "bytes": 2700
+    },
+    {
+      "version": "current",
+      "path": "src/config/lua/types/LuaConfigColor.cpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/types/LuaConfigColor.cpp",
+      "bytes": 1625,
+      "sha256": "be89e657c2aae79427ac646af89fac51c557d870fc9f2613921eac02668b6af1"
+    },
+    {
+      "version": "current",
+      "path": "src/config/lua/types/LuaConfigColor.hpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/types/LuaConfigColor.hpp",
+      "bytes": 742,
+      "sha256": "78cb1f55f41890c7ba1854ad5d6ff555712965882b60876f72abb16f230cf645"
+    },
+    {
+      "version": "current",
+      "path": "src/config/lua/types/LuaConfigCssGap.cpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/types/LuaConfigCssGap.cpp",
+      "bytes": 3406,
+      "sha256": "ac91c9593a04ff96274cb6fcb46c62e996845cc03086dd0e831b5aa1d0515423"
+    },
+    {
+      "version": "current",
+      "path": "src/config/lua/types/LuaConfigCssGap.hpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/types/LuaConfigCssGap.hpp",
+      "bytes": 909,
+      "sha256": "b5385cccef55bac4c93b20483095e432f3577694f7d14d676635e652262edacc"
+    },
+    {
+      "version": "current",
+      "path": "src/config/lua/types/LuaConfigFontWeight.cpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/types/LuaConfigFontWeight.cpp",
+      "bytes": 2199,
+      "sha256": "da094c9f2e041586b9138280339dfdb24b78712b324462722e86186c8b274c05"
+    },
+    {
+      "version": "current",
+      "path": "src/config/lua/types/LuaConfigFontWeight.hpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/types/LuaConfigFontWeight.hpp",
+      "bytes": 813,
+      "sha256": "0300ae5454ba74544afe3cae52d439034fdee15d81846821616c9126f85b1970"
+    },
+    {
+      "version": "current",
+      "path": "src/config/lua/types/LuaConfigGradient.cpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/types/LuaConfigGradient.cpp",
+      "bytes": 4118,
+      "sha256": "74b29d474a2f43aba8c2e01bec2f61a9772efd795362e1e7bdaa875eddc3826b"
+    },
+    {
+      "version": "current",
+      "path": "src/config/lua/types/LuaConfigGradient.hpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/types/LuaConfigGradient.hpp",
+      "bytes": 746,
+      "sha256": "7092667e6fea62e1d17324d7fa60d863497a1df4f456d56910ff822b2da4127a"
+    },
+    {
+      "version": "current",
+      "path": "src/config/lua/types/LuaConfigUtils.cpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/types/LuaConfigUtils.cpp",
+      "sha256": "8fc458dffba726cdad75d3fb13a5353e9e564d1e0e808aeaa3c50763823396b3",
+      "bytes": 2587
+    },
+    {
+      "version": "current",
+      "path": "src/config/lua/types/LuaConfigVec2.cpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/types/LuaConfigVec2.cpp",
+      "bytes": 2752,
+      "sha256": "53084c51846a78f115bd73b87d64ac148ba5b9dd22b99b6d089d8cdf62768bd5"
+    },
+    {
+      "version": "current",
+      "path": "src/config/lua/types/LuaConfigVec2.hpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/types/LuaConfigVec2.hpp",
+      "bytes": 1064,
+      "sha256": "c27ed894208ed05f5bd2fdb01183a62e40c809bd0824b0f89374219674669f7a"
+    },
+    {
+      "version": "current",
+      "path": "src/config/shared/Types.hpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/shared/Types.hpp",
+      "sha256": "337556a3fbedda3e34f31f600f4a44d4e85f53a04220f3c90d8394f98d1eb638",
+      "bytes": 486
+    },
+    {
+      "version": "current",
+      "path": "src/config/shared/complex/ComplexDataTypes.hpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/shared/complex/ComplexDataTypes.hpp",
+      "sha256": "6766c0d0b4d1a5ce1a272341527b96bea62438686f86298609b107f4c997dde4",
+      "bytes": 6103
+    },
+    {
+      "version": "current",
+      "path": "src/config/shared/parserUtils/ParserUtils.cpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/shared/parserUtils/ParserUtils.cpp",
+      "sha256": "86f21b761695571fc17f5a2ad68ddd30bf06d06d4d6a47ab443dc89ca511c2c0",
+      "bytes": 5902
+    },
+    {
+      "version": "current",
+      "path": "src/helpers/Color.cpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/helpers/Color.cpp",
+      "sha256": "0e7d472cb56d9fd9f006e3d7cff930ee4341ed587cde7c47a3242b01447aa57f",
+      "bytes": 1497
+    },
+    {
+      "version": "current",
+      "path": "src/helpers/Color.hpp",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/helpers/Color.hpp",
+      "sha256": "2276a8cc068799abc09e2688910633e370bfa271f5da3b4217d0ff51258aa9a8",
+      "bytes": 2139
+    }
+  ]
+}

@@ -4,6 +4,7 @@ use super::replay::{compiler_profile, Observed};
 use crate::Value;
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeSet, ptr::NonNull};
+pub mod complex;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -74,6 +75,16 @@ pub fn decode_batch(cases: &[Case]) -> Result<Vec<Outcome>, String> {
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Codec {
     Bool,
+    Color,
+    Gradient,
+    Vec2 {
+        validator: Option<complex::Vec2Bounds>,
+    },
+    CssGap {
+        minimum: Option<i64>,
+        maximum: Option<i64>,
+    },
+    FontWeight,
     Int {
         minimum: Option<i64>,
         maximum: Option<i64>,
@@ -141,6 +152,14 @@ pub enum NativeValue {
     FloatBits(u32),
     /// C-string bytes after the native parser's NUL truncation.
     Bytes(Vec<u8>),
+    Color(u32),
+    Gradient {
+        colors: Vec<u32>,
+        angle_bits: u32,
+    },
+    Vec2Bits([u32; 2]),
+    CssGap([i64; 4]),
+    FontWeight(i64),
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
@@ -192,6 +211,29 @@ impl NativeValue {
                 };
                 Value::String(text.into())
             }
+            Self::Color(v) => Value::Color(*v),
+            Self::FontWeight(v) if *v >= 0 => Value::FontWeight(*v),
+            Self::CssGap(v) => Value::CssGap(*v),
+            Self::Vec2Bits(bits) if bits.iter().all(|b| f32::from_bits(*b).is_finite()) => {
+                Value::Vec2(bits.map(|b| f64::from(f32::from_bits(b))))
+            }
+            Self::Gradient { colors, angle_bits }
+                if !colors.is_empty()
+                    && colors.len() <= 32
+                    && f32::from_bits(*angle_bits).is_finite() =>
+            {
+                Value::Gradient {
+                    colors: colors.clone(),
+                    angle: f64::from(f32::from_bits(*angle_bits)) * 180.0 / std::f64::consts::PI,
+                }
+            }
+            _ => {
+                return Representation::Unavailable {
+                    reason:
+                        "The native complex value exceeds the editable finite-value representation"
+                            .into(),
+                }
+            }
         };
         Representation::Value { value }
     }
@@ -199,6 +241,14 @@ impl NativeValue {
 impl Codec {
     fn validate(&self) -> Result<(), String> {
         match self {
+            Self::CssGap { minimum, maximum }
+                if minimum.zip(*maximum).is_some_and(|(a, b)| a > b) =>
+            {
+                return Err("Reversed gap codec bounds".into())
+            }
+            Self::Vec2 {
+                validator: Some(bounds),
+            } => bounds.validate()?,
             Self::Int {
                 minimum,
                 maximum,
@@ -262,6 +312,7 @@ struct Converted {
     integer: i64,
     number: f64,
     length: usize,
+    coerced_integer: i64,
 }
 unsafe extern "C" {
     fn hye_lua54_numeric_locale_c() -> libc::c_int;
@@ -348,6 +399,9 @@ impl Parser {
     }
     pub fn decode(&mut self, codec: &Codec, input: &Observed) -> Result<Outcome, String> {
         codec.validate()?;
+        if let Some(outcome) = complex::decode(self, codec, input)? {
+            return Ok(outcome);
+        }
         let v = self.convert(input)?;
         let rejected = |error| Ok(Outcome::Rejected { error });
         let native = match codec {
@@ -432,6 +486,7 @@ impl Parser {
                 }
                 NativeValue::Bytes(self.text[..v.length].into())
             }
+            _ => return Err("Complex codec dispatch is missing".into()),
         };
         let representation = native.representation();
         Ok(Outcome::Accepted {

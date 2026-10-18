@@ -564,6 +564,15 @@ fn describe(
                 "write override into source; remove override"
             }
         );
+        if *choice == Choice::WriteOverride
+            && !result
+                .plans
+                .iter()
+                .flat_map(|p| &p.edits)
+                .any(|e| e.semantic_targets.iter().any(|target| target == id))
+        {
+            let _=writeln!(text,"  The source already has the same modeled native stored value; its bytes stay unchanged.");
+        }
     }
     let mut pieces = vec![];
     let mut current = program.clone();

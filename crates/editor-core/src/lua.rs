@@ -367,7 +367,7 @@ fn typed(setting: &Setting, expr: Expr) -> Option<Value> {
         ("Float", v) => Value::Float(v.number()?),
         ("String", Expr::Text(v)) => Value::String(v),
         ("Color", v) => Value::Color(as_color(&v)?),
-        ("FontWeight", v) => Value::FontWeight(integer(&v)?.try_into().ok()?),
+        ("FontWeight", v) => Value::FontWeight(integer(&v)?),
         ("Vec2", Expr::Table(v)) => {
             let a = array(&v, 2)?;
             Value::Vec2([a[0].number()?, a[1].number()?])

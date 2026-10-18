@@ -37,7 +37,11 @@ fn registered_inspection_pins_context_acceptance_and_unknown_api_boundaries() {
                 .unwrap()
                 .primitive_conversions_profiled
         );
-        assert_eq!(result.batches.len(),3,"Later inert argument observations must not get native models after an unknown API boundary");
+        assert_eq!(
+            result.batches.len(),
+            4,
+            "All registered primitive and compound values must be inspected"
+        );
         let first = &result.batches[0].candidates[0];
         if version == BASELINE {
             assert!(matches!(
@@ -65,7 +69,28 @@ fn registered_inspection_pins_context_acceptance_and_unknown_api_boundaries() {
                 ..
             })
         ));
-        assert!(result.stopped.unwrap().contains("CssGap"));
+        assert!(result.stopped.is_none());
+        assert!(matches!(
+            result.batches[2].candidates[0].model_value,
+            Some(Outcome::Accepted {
+                native: NativeValue::CssGap([5, 5, 5, 5]),
+                ..
+            })
+        ));
+        let unknown = [
+            event(
+                1,
+                b"decoration.shadow.offset",
+                Observed::Table(vec![
+                    (Observed::Int(1), Observed::Int(1)),
+                    (Observed::Int(3), Observed::Int(3)),
+                ]),
+            ),
+            event(2, b"general.border_size", Observed::Int(4)),
+        ];
+        let stopped = config_inspection::inspect(&unknown, version).unwrap();
+        assert_eq!(stopped.batches.len(), 1);
+        assert!(stopped.stopped.unwrap().contains("Sparse"));
         assert!(result
             .batches
             .iter()

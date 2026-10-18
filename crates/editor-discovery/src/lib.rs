@@ -574,14 +574,27 @@ mod tests {
         thread,
     };
     fn fixture() -> (PathBuf, UnixListener) {
-        let root = std::env::temp_dir().join(format!(
-            "he-ipc-{}-{}",
-            std::process::id(),
-            SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_nanos()
-        ));
+        use std::{
+            os::unix::fs::DirBuilderExt,
+            sync::atomic::{AtomicU64, Ordering},
+        };
+        static NEXT: AtomicU64 = AtomicU64::new(0);
+        let root = loop {
+            let candidate = std::env::temp_dir().join(format!(
+                "he-ipc-{}-{}-{}",
+                std::process::id(),
+                SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_nanos(),
+                NEXT.fetch_add(1, Ordering::Relaxed)
+            ));
+            match fs::DirBuilder::new().mode(0o700).create(&candidate) {
+                Ok(()) => break candidate,
+                Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => continue,
+                Err(e) => panic!("Cannot create private IPC fixture: {e}"),
+            }
+        };
         fs::create_dir_all(root.join("hypr/test")).unwrap();
         fs::write(
             root.join("hypr/test/hyprland.lock"),

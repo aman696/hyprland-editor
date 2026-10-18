@@ -14,7 +14,7 @@ use std::{
     rc::{Rc, Weak},
     sync::Arc,
 };
-type Getter = Rc<dyn Fn() -> Result<Value, String>>;
+pub(super) type Getter = Rc<dyn Fn() -> Result<Value, String>>;
 static COMPARING: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 #[cfg(test)]
 static HOLD_COMPARISON: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
@@ -52,6 +52,19 @@ impl Drop for Permit {
 fn same_input(a: &Value, b: &Value) -> bool {
     match (a, b) {
         (Value::Float(a), Value::Float(b)) => a.to_bits() == b.to_bits(),
+        (Value::Vec2(a), Value::Vec2(b)) => {
+            a.iter().zip(b).all(|(a, b)| a.to_bits() == b.to_bits())
+        }
+        (
+            Value::Gradient {
+                colors: a,
+                angle: x,
+            },
+            Value::Gradient {
+                colors: b,
+                angle: y,
+            },
+        ) => a == b && x.to_bits() == y.to_bits(),
         _ => a == b,
     }
 }
@@ -76,12 +89,13 @@ struct Controls {
     targets: gtk::glib::WeakRef<gtk::DropDown>,
     scope: gtk::glib::WeakRef<gtk::DropDown>,
     field: gtk::glib::WeakRef<gtk::Box>,
+    input_expander: gtk::glib::WeakRef<gtk::Expander>,
     status: gtk::glib::WeakRef<gtk::Label>,
     output: gtk::glib::WeakRef<gtk::TextView>,
     compare: gtk::glib::WeakRef<gtk::Button>,
     keep: gtk::glib::WeakRef<gtk::Button>,
 }
-fn input_form(
+pub(super) fn input_form(
     initial: &Value,
     codec: Option<&Codec>,
     body: &gtk::Box,
@@ -99,10 +113,11 @@ fn input_form(
             input.connect_active_notify(move |_| changed());
             Rc::new(move || Ok(Value::Bool(input.is_active())))
         }
-        Value::Int(_) | Value::Float(_) => {
-            let integer = matches!(initial, Value::Int(_));
+        Value::Int(_) | Value::Float(_) | Value::FontWeight(_) => {
+            let weight = matches!(initial, Value::FontWeight(_));
+            let integer = !matches!(initial, Value::Float(_));
             let initial = match initial {
-                Value::Int(v) => v.to_string(),
+                Value::Int(v) | Value::FontWeight(v) => v.to_string(),
                 Value::Float(v) => format!("{v:?}"),
                 _ => unreachable!(),
             };
@@ -160,6 +175,35 @@ fn input_form(
                     }
                 });
             }
+            if weight {
+                let options = hyprland_editor_core::lua::scalar_codec::complex::FONT_WEIGHTS;
+                let names = std::iter::once("Weight presets".into())
+                    .chain(
+                        options
+                            .iter()
+                            .map(|(name, n)| format!("{} · {n}", display_path_bytes(name))),
+                    )
+                    .collect::<Vec<String>>();
+                let pick = gtk::DropDown::from_strings(
+                    &names.iter().map(String::as_str).collect::<Vec<_>>(),
+                );
+                super::monitors::compact(&pick);
+                pick.update_property(&[gtk::accessible::Property::Label("Font weight presets")]);
+                body.append(&pick);
+                let entry = input.downgrade();
+                pick.connect_selected_notify(move |pick| {
+                    if let Some((_, v)) = pick
+                        .selected()
+                        .checked_sub(1)
+                        .and_then(|i| options.get(i as usize))
+                    {
+                        if let Some(entry) = entry.upgrade() {
+                            entry.set_text(&v.to_string());
+                        }
+                        pick.set_selected(0);
+                    }
+                });
+            }
             for (button, delta) in [(minus, -1), (plus, 1)] {
                 let input = input.downgrade();
                 button.connect_clicked(move |_| {
@@ -172,6 +216,7 @@ fn input_form(
                             .parse::<i64>()
                             .ok()
                             .and_then(|v| v.checked_add(delta))
+                            .filter(|v| !weight || *v >= 0)
                             .map(|v| v.to_string())
                     } else {
                         input
@@ -190,11 +235,18 @@ fn input_form(
             input.connect_changed(move |_| changed());
             Rc::new(move || {
                 if integer {
-                    input
+                    let value = input
                         .text()
                         .parse::<i64>()
-                        .map(Value::Int)
-                        .map_err(|_| "Enter a whole number within the signed 64-bit range".into())
+                        .map_err(|_| "Enter a whole number within the signed 64-bit range")?;
+                    if weight && value < 0 {
+                        return Err("Font weight must not be negative".into());
+                    }
+                    Ok(if weight {
+                        Value::FontWeight(value)
+                    } else {
+                        Value::Int(value)
+                    })
                 } else {
                     input
                         .text()
@@ -251,7 +303,7 @@ fn input_form(
             input.connect_changed(move |_| changed());
             Rc::new(move || Ok(Value::String(input.text().into())))
         }
-        _ => Rc::new(|| Err("This source value needs its unfinished complex codec".into())),
+        _ => super::source_compound_forms::form(initial, body, changed),
     }
 }
 impl Controls {
@@ -329,6 +381,9 @@ impl Controls {
         self.sensitive();
     }
     fn select(&self) {
+        if let Some(expander) = self.input_expander.upgrade() {
+            expander.set_expanded(true);
+        }
         self.invalidate();
         let (Some(session), Some(analysis), Some(pick), Some(field)) = (
             self.session.upgrade(),
@@ -357,18 +412,11 @@ impl Controls {
             Some(Outcome::Accepted {
                 representation: Representation::Value { value },
                 ..
-            }) if !c.ambiguous
-                && matches!(
-                    value,
-                    Value::Bool(_) | Value::Int(_) | Value::Float(_) | Value::String(_)
-                ) =>
-            {
-                match value {
-                    Value::String(v) if v.len() > 16384 || v.contains('\0') => None,
-                    Value::Float(v) if !v.is_finite() => None,
-                    _ => Some(value.clone()),
-                }
-            }
+            }) if !c.ambiguous => match value {
+                Value::String(v) if v.len() > 16384 || v.contains('\0') => None,
+                Value::Float(v) if !v.is_finite() => None,
+                _ => Some(value.clone()),
+            },
             _ => None,
         });
         if let Some(value) = value {
@@ -386,7 +434,7 @@ impl Controls {
             s.initial = Some(value);
             s.getter = Some(getter);
         } else {
-            field.append(&label("This value cannot yet be compared with a primitive control. Its codec, native representation or key identity is unresolved."));
+            field.append(&label("This value cannot yet be compared with a typed control. Its codec, native representation or key identity is unresolved."));
         }
         self.sensitive();
     }
@@ -507,6 +555,9 @@ impl Controls {
                             Ok(text) => {
                                 if let Some(output) = ui.output.upgrade() {
                                     output.buffer().set_text(&text);
+                                }
+                                if let Some(expander) = ui.input_expander.upgrade() {
+                                    expander.set_expanded(false);
                                 }
                                 ui.message(if result.review.modeled_observations_match {"Only the requested modeled value changed. Ownership and live behavior are still unverified."}else{"Additional modeled changes or incomplete analysis need review. No source change has been saved."});
                                 s.result = Some(result);
@@ -714,6 +765,20 @@ fn describe(analysis: &Analysis, result: &Comparison) -> Result<String, String> 
         super::source_access::excerpt(&document.source[edit.span.clone()]),
         super::source_access::excerpt(&edit.replacement)
     );
+    if let Outcome::Accepted {
+        representation: Representation::Value { value },
+        ..
+    } = &result.proposed_native_value
+    {
+        let _ = writeln!(
+            text,
+            "\nModeled parsed value: {}",
+            super::source_access::excerpt(&value.lua())
+        );
+    }
+    if edit.replacement.starts_with('{') {
+        text.push_str("\nThis replaces the selected value expression. Comments and extra fields inside that expression are included in the replacement.\n");
+    }
     if result.review.differences.is_empty() {
         text.push_str(
             "\nThe other modeled calls, loader inputs and executed branch/loop outcomes match.\n",
@@ -863,9 +928,14 @@ pub(super) fn open(
     )]);
     body.append(&scope);
     body.append(&label("Shared source expressions can affect several declarations. The comparison reports additional modeled changes."));
-    body.append(&label("Proposed value"));
     let field = gtk::Box::new(gtk::Orientation::Vertical, 8);
-    body.append(&field);
+    let input_expander = gtk::Expander::builder()
+        .label("Proposed value")
+        .expanded(true)
+        .child(&field)
+        .build();
+    input_expander.set_widget_name("source-change-inputs");
+    body.append(&input_expander);
     let output = gtk::TextView::builder()
         .editable(false)
         .monospace(true)
@@ -926,6 +996,7 @@ pub(super) fn open(
         targets: targets.downgrade(),
         scope: scope.downgrade(),
         field: field.downgrade(),
+        input_expander: input_expander.downgrade(),
         status: status.downgrade(),
         output: output.downgrade(),
         compare: compare.downgrade(),

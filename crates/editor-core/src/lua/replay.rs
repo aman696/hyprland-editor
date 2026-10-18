@@ -44,6 +44,7 @@ pub struct CompilerProfile {
     pub library_identity: String,
     pub error_call_line: Option<ErrorCallLine>,
     pub primitive_conversions_profiled: bool,
+    pub complex_text_profile: Option<String>,
     pub schema_sha256: String,
 }
 /// The model's linked compiler is an explicit assumption, not a detected target
@@ -77,6 +78,7 @@ pub fn compiler_profile() -> CompilerProfile {
             library_identity,
             error_call_line,
             primitive_conversions_profiled,
+            complex_text_profile: super::scalar_codec::complex::text_profile(),
             schema_sha256: source_hash(source),
         }
     });

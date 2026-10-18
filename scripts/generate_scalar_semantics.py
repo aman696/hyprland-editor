@@ -40,7 +40,7 @@ def native_value(kind,value):
     return None
 
 
-def codec(lua,choices):
+def codec(lua,choices,metadata):
     kind=lua['kind']
     if kind=='Bool':return {'kind':'bool'}
     if kind=='Int':return {'kind':'int','minimum':lua['minimum'],'maximum':lua['maximum'],'names':names(lua['names'])}
@@ -54,13 +54,28 @@ def codec(lua,choices):
             validator={'choices':[list(value) for value in choices]}
         return {'kind':'string','validator':validator}
     if kind=='unmodeled_complex':return None
+    if kind in ['Color','Gradient','FontWeight']:return {'kind':{'Color':'color','Gradient':'gradient','FontWeight':'font_weight'}[kind]}
+    if kind=='CssGap':return {'kind':'css_gap','minimum':lua['minimum'],'maximum':lua['maximum']}
+    if kind=='Vec2':
+        bounds=None
+        if lua['has_validator']:
+            match=re.search(r'vec2Range\(([^)]*)\)',metadata)
+            if match is None:raise ValueError('Review active native vector validator')
+            args=[float(v.strip()) for v in match[1].split(',')]
+            if len(args)!=4:raise ValueError('Review vector bounds arity')
+            bounds={'minimum':args[:2],'maximum':args[2:]}
+            for x,y,accepted in lua['validator_cases']:
+                values=[number(f'{x:08x}'),number(f'{y:08x}')]
+                modeled=not any(values[i]<args[i] or values[i]>args[i+2] for i in range(2))
+                if modeled!=accepted:raise ValueError('Original native vector validator differs from metadata')
+        return {'kind':'vec2','validator':bounds}
     raise ValueError('Unclassified Lua constructor kind')
 
 
 def entry(role,version,key,kind,lua,source=None):
     choices=source_choices(source.get('metadata_cpp','')) if source else None
     return {'role':role,'version':version,'id':key,'lua_key':key,'kind':kind,
-            'native_default':native_value(kind,lua.get('native_default')),'codec':codec(lua,choices)}
+            'native_default':native_value(kind,lua.get('native_default')),'codec':codec(lua,choices,source.get('metadata_cpp','') if source else '')}
 
 
 def main():
@@ -137,7 +152,7 @@ def main():
     keys={(r['role'],r['version'],r['id']) for r in entries}
     if len(keys)!=len(entries) or len(entries)!=849:raise ValueError('Unexpected registration semantics scope')
     result={'format':'hye-scalar-semantics-1','registration_sha256':digest(fixture_path),
-            'meaning':'Frozen registration models, not target runtime state or edit authority. Declared generic metadata differs from Lua-consumed constraints by version. Complex codecs/defaults remain unmodeled. Device rows exclude separately handled tags/name. Bootstrap entries supplement the original catalogue.',
+            'meaning':'Frozen registration models, not target runtime state or edit authority. Declared generic metadata differs from Lua-consumed constraints by version. All nine Lua constructor families have parser descriptors; complex defaults/derived caches remain unmodeled. Device rows exclude separately handled tags/name. Bootstrap entries supplement the original catalogue.',
             'entries':entries}
     outputs=[(OUTPUT,result),(FINDINGS,{'format':'hye-registration-findings-1','registration_sha256':digest(fixture_path),'original_contracts_preserved':1453,'findings':findings,'complete':False}),
              (DEVICE_ADDITIONS,device_additions),(SCOPE_ADDITIONS,{'format':'hye-source-additions-1','requirements':list(scope_additions.values())})]

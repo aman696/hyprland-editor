@@ -80,6 +80,7 @@ struct Converted {
     int64_t integer;
     double number;
     size_t length;
+    int64_t coerced_integer;
 };
 static_assert(sizeof(unsigned int) == 4);
 struct Conversion {
@@ -113,6 +114,7 @@ static int convert_primitive(lua_State* state) {
     if (lua_isnumber(state, -1)) {
         out->flags |= 2;
         out->number = lua_tonumber(state, -1);
+        out->coerced_integer = lua_tointeger(state, -1);
     }
     if (lua_isboolean(state, -1)) {
         out->flags |= 8;

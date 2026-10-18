@@ -140,7 +140,18 @@ pub fn prepare(program: &Program, draft: &Draft) -> Result<Review, String> {
                 .and_then(|c| registration::by_lua_key(&program.version, &c.lua_key))
                 .is_some_and(|m| {
                     m.codec.is_some()
-                        && matches!(m.kind.as_str(), "Bool" | "Int" | "Float" | "String")
+                        && matches!(
+                            m.kind.as_str(),
+                            "Bool"
+                                | "Int"
+                                | "Float"
+                                | "String"
+                                | "Color"
+                                | "Gradient"
+                                | "Vec2"
+                                | "CssGap"
+                                | "FontWeight"
+                        )
                 });
         rows.push(Row {
             setting_id: id.clone(),

@@ -30,7 +30,7 @@ BRIDGE_PROBE = r'''
 extern "C" unsigned int hye_lua54_release();
 extern "C" size_t hye_lua54_identity(unsigned char*, size_t);
 extern "C" int hye_lua54_compile(const unsigned char*, size_t, const char*, unsigned char*, size_t, size_t*);
-struct Converted {unsigned int flags;int64_t integer;double number;size_t length;};
+struct Converted {unsigned int flags;int64_t integer;double number;size_t length;int64_t coerced_integer;};
 extern "C" void* hye_lua54_coercions_new();
 extern "C" int hye_lua54_numeric_locale_c();
 extern "C" void hye_lua54_coercions_close(void*);
@@ -56,9 +56,13 @@ int main() {
     Converted out{};unsigned char text[128];
     const unsigned char numeric[]=" 0x1p0 ";
     assert(hye_lua54_convert(state,4,0,0,numeric,sizeof(numeric)-1,&out,text,sizeof(text))==0);
-    assert((out.flags&2)&&!(out.flags&1)&&out.number==1);
+    assert((out.flags&2)&&!(out.flags&1)&&out.number==1&&out.coerced_integer==1);
     assert(hye_lua54_convert(state,3,0,3.0,nullptr,0,&out,text,sizeof(text))==0);
     assert(!(out.flags&1)&&(out.flags&4)&&out.length==3&&std::memcmp(text,"3.0",3)==0);
+    assert(hye_lua54_convert(state,3,0,3.5,nullptr,0,&out,text,sizeof(text))==0);
+    assert(out.coerced_integer==0); // lua_tointeger rejects the fractional value.
+    assert(hye_lua54_convert(state,2,std::numeric_limits<int64_t>::max(),0,nullptr,0,&out,text,sizeof(text))==0);
+    assert(out.coerced_integer==std::numeric_limits<int64_t>::max());
     const unsigned char nul[]={'a',0,'b'};
     assert(hye_lua54_convert(state,4,0,0,nul,sizeof(nul),&out,text,sizeof(text))==0);
     assert(out.length==1&&text[0]=='a');
@@ -127,6 +131,7 @@ def main():
                 raise RuntimeError(f'Lua {release} ordered observations differ from its recorded profile')
             subprocess.run([sys.executable,str(ROOT/'scripts/runtime_path_probe.py'),'--check'],env=dict(os.environ,PKG_CONFIG_LIBDIR=str(temp)),check=True,timeout=60,cwd=ROOT)
             subprocess.run([sys.executable,str(ROOT/'scripts/scalar_value_probe.py'),'--check'],env=dict(os.environ,PKG_CONFIG_LIBDIR=str(temp)),check=True,timeout=90,cwd=ROOT)
+            subprocess.run([sys.executable,str(ROOT/'scripts/complex_scalar_probe.py'),'--check'],env=dict(os.environ,PKG_CONFIG_LIBDIR=str(temp),TMPDIR=str(temp)),check=True,timeout=120,cwd=ROOT)
             print(f'Lua {release}: compiler bridge and {len(base["cases"])} ordered observations verified; error line uses {profile["error_call_line"]}',flush=True)
 
 

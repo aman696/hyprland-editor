@@ -707,6 +707,19 @@ fn configuration_fields(batch: &Batch) -> String {
                         NativeValue::Bytes(bytes) => {
                             format!("\"{}\"", short(bytes).replace('"', "\\\""))
                         }
+                        NativeValue::Color(v) => format!("0x{v:08X}"),
+                        NativeValue::FontWeight(v) => v.to_string(),
+                        NativeValue::CssGap(v) => {
+                            v.iter().map(i64::to_string).collect::<Vec<_>>().join(" ")
+                        }
+                        NativeValue::Vec2Bits(v) => {
+                            format!("{} · {}", f32::from_bits(v[0]), f32::from_bits(v[1]))
+                        }
+                        NativeValue::Gradient { colors, angle_bits } => format!(
+                            "{} colors · {}°",
+                            colors.len(),
+                            f64::from(f32::from_bits(*angle_bits)) * 180.0 / std::f64::consts::PI
+                        ),
                     };
                     if matches!(representation, Representation::Unavailable { .. }) {
                         text.push_str(" · cannot fit the current draft format");

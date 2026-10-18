@@ -619,8 +619,16 @@ fn captured_value_models_follow_native_registration_versions_and_stop_at_unknown
         )
         .unwrap();
         let value = graph(&f, version, false);
-        assert_eq!(value["model_completed"], false, "{value}");
+        assert_eq!(value["model_completed"], true);
         assert_eq!(value["report"]["events"].as_array().unwrap().len(), 2);
+        assert_eq!(value["configuration_tables"].as_array().unwrap().len(), 2);
+        assert_eq!(
+            value["configuration_tables"][0]["candidates"][0]["model_value"]["native"]["value"],
+            serde_json::json!([5, 5, 5, 5])
+        );
+        fs::write(&path,"hl.config{decoration={shadow={offset={[1]=1,[3]=3}}}};hl.config{general={border_size=4}}").unwrap();
+        let value = graph(&f, version, false);
+        assert_eq!(value["model_completed"], false);
         assert_eq!(value["configuration_tables"].as_array().unwrap().len(), 1);
         assert_eq!(
             value["configuration_tables"][0]["candidates"][0]["model_value"]["kind"],

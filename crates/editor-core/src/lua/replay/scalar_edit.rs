@@ -27,13 +27,65 @@ pub struct Comparison {
     pub review: edits::EditReview,
     pub proposed_native_value: scalar_codec::Outcome,
 }
+// Match the evaluator's canonical byte-key ordering for expected observations.
+fn fields(entries: impl IntoIterator<Item = (&'static str, Observed)>) -> Observed {
+    Observed::Table(
+        entries
+            .into_iter()
+            .collect::<std::collections::BTreeMap<_, _>>()
+            .into_iter()
+            .map(|(name, value)| (Observed::Bytes(name.as_bytes().to_vec()), value))
+            .collect(),
+    )
+}
 fn input(value: &Value, kind: &str) -> Result<Observed, String> {
-    Ok(match (kind,value) {
-        ("Bool",Value::Bool(v))=>Observed::Bool(*v),
-        ("Int",Value::Int(v))=>Observed::Int(*v),
-        ("Float",Value::Float(v)) if v.is_finite()=>Observed::Float(*v),
-        ("String",Value::String(v)) if v.len()<=16384 && !v.contains('\0')=>Observed::Bytes(v.as_bytes().to_vec()),
-        _=>return Err("The requested value is not a supported finite, representable primitive of this setting".into()),
+    Ok(match (kind, value) {
+        ("Bool", Value::Bool(v)) => Observed::Bool(*v),
+        ("Int", Value::Int(v)) => Observed::Int(*v),
+        ("Float", Value::Float(v)) if v.is_finite() => Observed::Float(*v),
+        ("String", Value::String(v)) if v.len() <= 16384 && !v.contains('\0') => {
+            Observed::Bytes(v.as_bytes().to_vec())
+        }
+        ("Color", Value::Color(v)) => Observed::Bytes(format!("0x{v:08X}").into_bytes()),
+        ("FontWeight", Value::FontWeight(v)) if *v >= 0 => Observed::Int(*v),
+        ("Vec2", Value::Vec2(v)) if v.iter().all(|v| v.is_finite()) => Observed::Table(
+            v.iter()
+                .enumerate()
+                .map(|(i, v)| (Observed::Int(i as i64 + 1), Observed::Float(*v)))
+                .collect(),
+        ),
+        ("CssGap", Value::CssGap(v)) => fields(
+            ["top", "right", "bottom", "left"]
+                .into_iter()
+                .zip(v)
+                .map(|(name, v)| (name, Observed::Int(*v))),
+        ),
+        ("Gradient", Value::Gradient { colors, angle })
+            if !colors.is_empty() && colors.len() <= 32 && angle.is_finite() =>
+        {
+            fields([
+                (
+                    "colors",
+                    Observed::Table(
+                        colors
+                            .iter()
+                            .enumerate()
+                            .map(|(i, v)| {
+                                (
+                                    Observed::Int(i as i64 + 1),
+                                    Observed::Bytes(format!("0x{v:08X}").into_bytes()),
+                                )
+                            })
+                            .collect(),
+                    ),
+                ),
+                ("angle", Observed::Float(*angle)),
+            ])
+        }
+        _ => return Err(
+            "The requested value is not a supported finite, representable value of this setting"
+                .into(),
+        ),
     })
 }
 fn print(value: &Observed) -> Result<String, String> {
@@ -53,7 +105,18 @@ fn print(value: &Observed) -> Result<String, String> {
             text.push('"');
             text
         }
-        _ => return Err("Unsupported primitive source printer".into()),
+        Observed::Table(rows) if rows.len() <= 4096 => {
+            let fields = rows
+                .iter()
+                .map(|(key, value)| Ok(format!("[{}] = {}", print(key)?, print(value)?)))
+                .collect::<Result<Vec<_>, String>>()?;
+            let text = format!("{{{}}}", fields.join(", "));
+            if text.len() > crate::MAX_DOCUMENT_BYTES {
+                return Err("Compound literal exceeds the source size limit".into());
+            }
+            text
+        }
+        _ => return Err("Unsupported typed source printer".into()),
     })
 }
 pub(super) fn proposed(

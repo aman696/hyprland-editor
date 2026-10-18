@@ -8,9 +8,9 @@
   },
   "inputs": {
     "docs/hyprland-implementation-contracts.json": "73f4cfb0e08112a0849864f7eb692e8b30e2daf441283a84cec33d4b92930d32",
-    "docs/engineering-blueprint.md": "afef2a41f1cee3fe4b2d9a1853115dcffa9acd894a64d073dc363730c21770fb",
+    "docs/engineering-blueprint.md": "72f16c1978f5f2f7ec5af18f9c37f8b7b92879026e14bb3199a05438920a2851",
     "docs/complete-editor-plan.md": "72fcb25c83e4f95b5be94a7186044f0424c237cca538d819e13aaec6eae55871",
-    "docs/registration-scope-findings.json": "41ff90231a123f871e05515b88fadca5d949777b61cfc54c250dad6b26c4b5e8"
+    "docs/registration-scope-findings.json": "ed7d0e16e4b7e488c29b060a589479bb88a9ed28890f40e2ee163796ff2469f1"
   },
   "foundations": [
     {
@@ -31,6 +31,10 @@
         "crates/editor-core/src/lua/replay/override_review.rs",
         "crates/editor-core/src/lua/config_table.rs",
         "crates/editor-core/src/lua/scalar_codec.rs",
+        "crates/editor-core/src/lua/scalar_codec/complex.rs",
+        "crates/editor-core/native/complex_text.cpp",
+        "crates/editor-app/src/source_compound_forms.rs",
+        "data/complex-scalar-fixtures.json",
         "crates/editor-core/src/lua/registration.rs",
         "crates/editor-core/src/lua/config_inspection.rs",
         "data/scalar-semantics.json",
@@ -57,6 +61,11 @@
         "data/graph-model.json"
       ],
       "test_references": [
+        "complex_primary_values_match_original_parser_observations_for_both_snapshots",
+        "every_compound_family_compares_and_keeps_native_validated_literals_without_changing_originals",
+        "forwarded_vector_validators_match_original_factory_callbacks_for_every_registered_vector",
+        "finite_observations_preserve_every_binary64_bit_through_worker_json",
+        "undefined_casts_ambiguous_snapshots_and_representation_limits_remain_explicit",
         "each_layer_stays_private_until_an_explicit_choice_and_originals_stay_exact",
         "successive_cross_document_choices_rebase_captured_loader_requests",
         "client_checks_reject_unselected_layer_changes_and_forged_resolution_claims",
@@ -145,7 +154,7 @@
         "context_preserves_unknown_empty_and_byte_paths_and_builder_preserves_templates",
         "test_review"
       ],
-      "limits": "source-pinned plans/cache transitions, syntactic dependency sites, isolated selected-file and held-folder capture, typed metadata-only point observations separating absence from blocking uncertainty, bounded temporary GUI snapshots/analysis and cleanup, captured-resolution coordination with per-edge sequential evidence and separate load views, focused graphical files/calls inspection, supplied-context folder/template editor without added read authority, bounded per-value expression evidence and selected-value chains separate from Lua equality/cache identity, modeled storage writes with key insertion/overwrite/delete histories and alias/cell identity, bounded executed branch/loop history with immutable observation prefixes (including unrelated earlier decisions) separate from complete control/future-effect/edit ownership, source-derived registry dispatch with raw-key retention and unresolved collision/cycle findings separate from native value acceptance, explicit compiler/library profiles with four-release reference checks, restricted-worker primitive family models separating native parsing from representable editor values under explicit fixture descriptors and C locale, exact registration/default/constraint flow for 755 standard rows plus device/bootstrap observations, version-specific typed call inspection with explicit unsupported-effect barriers, ordered immutable-byte evaluation under supplied/captured resolution contexts with explicit unknowns and compilation-only validation; frozen graph inputs with model/compiler pins, private save/reopen and shared retention undo; immutable multi-document patch plans with exact byte/context/schema/compiler pins, private reparse/compilation and expected/unaffected modeled-call/load/path/return comparisons, primitive graphical source comparisons with selected-expression/original-literal choices, native-validated typed controls and epoch/model/lifetime guards; private piece-based source revisions with immutable original captures, trusted-client byte generation, guarded keep/save/reopen and shared within-session undo; explicit scalar source/override reconciliation with sequential private plans, native-value equality, reviewed layer removal and atomic within-session undo; full family/external reconciliation and source export remain open; revised sources block override-only export; no complete graphical graph editor, persistent operation history, ownership or write authority; no complete editable graph import, language/native/API codecs, ownership/alias/mount/concurrency certification, wildcard enumeration, editable graph history/reconciliation, source insertion/deletion, effective discovery, isolated preview, apply/recovery or resource/release acceptance"
+      "limits": "source-pinned plans/cache transitions, syntactic dependency sites, isolated selected-file and held-folder capture, typed metadata-only point observations separating absence from blocking uncertainty, bounded temporary GUI snapshots/analysis and cleanup, captured-resolution coordination with per-edge sequential evidence and separate load views, focused graphical files/calls inspection, supplied-context folder/template editor without added read authority, bounded per-value expression evidence and selected-value chains separate from Lua equality/cache identity, modeled storage writes with key insertion/overwrite/delete histories and alias/cell identity, bounded executed branch/loop history with immutable observation prefixes (including unrelated earlier decisions) separate from complete control/future-effect/edit ownership, source-derived registry dispatch with raw-key retention and unresolved collision/cycle findings separate from native value acceptance, explicit compiler/library profiles with four-release reference checks, restricted-worker all-nine-family primary parser models, actual vector constructor/validator flow, sparse-table/undefined-cast unknowns and exact binary64 transport separating native parsing from representable editor values under explicit fixture descriptors and C locale, exact registration/default/constraint flow for 755 standard rows plus device/bootstrap observations, version-specific typed call inspection with explicit unsupported-effect barriers, ordered immutable-byte evaluation under supplied/captured resolution contexts with explicit unknowns and compilation-only validation; frozen graph inputs with model/compiler pins, private save/reopen and shared retention undo; immutable multi-document patch plans with exact byte/context/schema/compiler pins, private reparse/compilation and expected/unaffected modeled-call/load/path/return comparisons, all-nine-family graphical source comparisons with selected-expression/original-literal choices, native-validated typed controls and epoch/model/lifetime guards; private piece-based source revisions with immutable original captures, trusted-client byte generation, guarded keep/save/reopen and shared within-session undo; explicit scalar source/override reconciliation with sequential private plans, native-value equality, reviewed layer removal and atomic within-session undo; full family/external reconciliation and source export remain open; revised sources block override-only export; no complete graphical graph editor, persistent operation history, ownership or write authority; no complete editable graph import, language/native/API codecs, ownership/alias/mount/concurrency certification, wildcard enumeration, editable graph history/reconciliation, source insertion/deletion, effective discovery, isolated preview, apply/recovery or resource/release acceptance"
     },
     {
       "area": "gesture draft editor",
@@ -439,7 +448,7 @@
       "requirement": "Concrete scalar codecs checked against source",
       "source": "docs/engineering-blueprint.md",
       "source_line": 322,
-      "scope_sha256": "6181786fe998ca87dfe2903f2a6b1cf39e150eea54ef18c80fda4e4b3b2f5c8a",
+      "scope_sha256": "011a375fb50c4d13cd50f2a20be15e8cb77a34d5d10b212950fa05d0ad2a2be2",
       "complete": false,
       "state": "not_proven"
     },
