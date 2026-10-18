@@ -6,6 +6,8 @@ The next increment adds [all five complex scalar parser families](complex-value-
 
 A further increment adds [syntax-local compound source preservation](compound-source-layout.md): direct vector/gap/gradient forms default to retaining comments, whitespace, unrelated fields and unchanged native spellings while comparing component updates and owned-field insertions/removals. Override reconciliation uses the same mode and refuses without automatic replacement fallback. General declaration/alias/generated ownership and every original full-product obligation remain open.
 
+The next source-editing increment adds explicit original-table selection through recorded value history, including captured module returns, identical-table identity, alias reassignment and shared-use/later-write findings. It reuses layout preservation and private revisions without granting new file access or claiming alias ownership. Primitive source controls expose only their two applicable expression/literal choices.
+
 The existing engineering blueprint remains the design authority. This register maps it to the code and tracks the next concrete steps. A checked design requirement is not an implemented feature or runtime certificate. The [full completion register](completion-register.md) tracks every original contract and gate without shrinking the goal to the available foundations.
 
 ## Earlier primitive codec increment

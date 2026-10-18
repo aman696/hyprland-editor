@@ -330,7 +330,7 @@ pub(super) fn test_workflow(parent: &adw::ApplicationWindow) {
     }
     let fixture = super::test_support::TempDir::new("he-compound-source-gui");
     let path = fixture.path().join("main.lua");
-    let original="-- preserve outer comments\nhl.config{['misc.background_color']='#123456'}\nhl.config{['general.col.active_border']={colors={'#123', -- stop memo\n '#456'},angle=45, note='gradient-extra'}}\nhl.config{['decoration.shadow.offset']={0, -- vector memo\n 0, note='vector-extra'}}\nhl.config{['general.gaps_out']={top=1 --[[gap memo]],right=2,bottom=3,left=4,note='gap-extra'}}\nhl.config{['group.groupbar.font_weight_active']=400}\n";
+    let original="-- preserve outer comments\nlocal shift={0, -- vector memo\n 0, note='vector-extra'}\nhl.config{['misc.background_color']='#123456'}\nhl.config{['general.col.active_border']={colors={'#123', -- stop memo\n '#456'},angle=45, note='gradient-extra'}}\nhl.config{['decoration.shadow.offset']=shift}\nhl.config{['general.gaps_out']={top=1 --[[gap memo]],right=2,bottom=3,left=4,note='gap-extra'}}\nhl.config{['group.groupbar.font_weight_active']=400}\n";
     std::fs::write(&path, original).unwrap();
     let captured = Arc::new(super::capture_worker::read_selected(&path).unwrap());
     let state = super::initial_state();
@@ -389,8 +389,15 @@ pub(super) fn test_workflow(parent: &adw::ApplicationWindow) {
             .unwrap();
         assert_eq!(
             scope.selected(),
-            if (1..=3).contains(&index) { 2 } else { 0 }
+            if index == 1 || index == 3 { 2 } else { 0 }
         );
+        assert_eq!(
+            scope.model().unwrap().n_items(),
+            if (1..=3).contains(&index) { 4 } else { 2 }
+        );
+        if index == 2 {
+            scope.set_selected(3);
+        }
         match index {
             0 => named(window.upcast_ref(), "source-change-color")
                 .downcast::<gtk::ColorDialogButton>()

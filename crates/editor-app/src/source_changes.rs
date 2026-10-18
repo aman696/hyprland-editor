@@ -427,18 +427,22 @@ impl Controls {
                     .is_some_and(|e| {
                         e.kind == hyprland_editor_core::lua::replay::ExpressionKind::Table
                     });
-                scope.set_selected(
-                    if table
-                        && matches!(
-                            &value,
-                            Value::Vec2(_) | Value::CssGap(_) | Value::Gradient { .. }
-                        )
-                    {
-                        2
-                    } else {
-                        0
-                    },
+                let compound = matches!(
+                    &value,
+                    Value::Vec2(_) | Value::CssGap(_) | Value::Gradient { .. }
                 );
+                let mut labels = vec![
+                    "Selected value expression",
+                    "Original literal, if traceable",
+                ];
+                if compound {
+                    labels.extend([
+                        "Preserve table layout and comments",
+                        "Original table layout, if traceable",
+                    ]);
+                }
+                scope.set_model(Some(&gtk::StringList::new(&labels)));
+                scope.set_selected(if table && compound { 2 } else { 0 });
             }
             let ui = self.clone();
             let codec = candidate
@@ -509,6 +513,7 @@ impl Controls {
             selection: match scope.selected() {
                 1 => Selection::OriginalLiteral,
                 2 => Selection::PreserveTableLayout,
+                3 => Selection::OriginalTableLayout,
                 _ => Selection::SelectedExpression,
             },
             value,
@@ -942,7 +947,6 @@ pub(super) fn open(
     let scope = gtk::DropDown::from_strings(&[
         "Selected value expression",
         "Original literal, if traceable",
-        "Preserve table layout and comments",
     ]);
     super::monitors::compact(&scope);
     scope.set_widget_name("source-change-scope");

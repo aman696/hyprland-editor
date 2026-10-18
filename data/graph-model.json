@@ -29,7 +29,7 @@
     "crates/editor-core/src/lua/replay/path_sources.rs": "edfd0eb36cd977ef31ab1989d2cd4950bf436e600ccd98b89551c94208fffe2e",
     "crates/editor-core/src/lua/replay/provenance.rs": "b73547b397fe0238cf59a6080f7a3954d0724389e7202b24d51d3bc7cd4f9629",
     "crates/editor-core/src/lua/replay/scalar_edit/layout.rs": "9f33ddadc887d9124aa80cb4f80e296606e327e343f7614435a380d5522a0cb8",
-    "crates/editor-core/src/lua/replay/scalar_edit.rs": "d59f455e55cd234b5c19f691a7d167b10daacf9e3e58df4383674c3d22d94acd",
+    "crates/editor-core/src/lua/replay/scalar_edit.rs": "303d4cedd341c66144f06c2c197fa864494546da06355aef19d1444a42fd9a9a",
     "crates/editor-core/src/lua/replay/storage_sources.rs": "eb59a6fbb112e894b00c05f0dbeb8c5984c9af31ecd8aeefcc32cf68e8fc33cf",
     "crates/editor-core/src/lua/replay.rs": "25f406155d5bcec7f877299718d2d7a5f75eda5407ecc9af20dc83b12b762463",
     "crates/editor-core/src/lua/scalar_codec/complex.rs": "8b140d079a15c1449704feccee41b51aec8c6f0f5eaf3ef5a8ca62cbc98b82be",

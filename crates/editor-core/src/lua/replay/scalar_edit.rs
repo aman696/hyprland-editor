@@ -12,6 +12,7 @@ pub enum Selection {
     SelectedExpression,
     OriginalLiteral,
     PreserveTableLayout,
+    OriginalTableLayout,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -219,19 +220,27 @@ pub fn compare(program: &Program, change: &Change) -> Result<Comparison, String>
     let mut id = candidate
         .expression
         .ok_or("No exact source expression is recorded for this value")?;
-    if matches!(change.selection, Selection::OriginalLiteral) {
+    if matches!(
+        change.selection,
+        Selection::OriginalLiteral | Selection::OriginalTableLayout
+    ) {
+        let target_kind = if matches!(change.selection, Selection::OriginalTableLayout) {
+            ExpressionKind::Table
+        } else {
+            ExpressionKind::Literal
+        };
         for _ in 0..8192 {
             let expression = before
                 .expression_sources
                 .get(id as usize)
                 .ok_or("Missing source-expression evidence")?;
-            if expression.kind == ExpressionKind::Literal {
+            if expression.kind == target_kind {
                 break;
             }
-            id=expression.selected.ok_or("This computed value has no single original literal; compare its selected expression instead")?;
+            id=expression.selected.ok_or(if matches!(change.selection,Selection::OriginalTableLayout) {"This computed value has no single original table; compare its selected expression instead"} else {"This computed value has no single original literal; compare its selected expression instead"})?;
         }
-        if before.expression_sources[id as usize].kind != ExpressionKind::Literal {
-            return Err("Original literal traversal exceeded its limit".into());
+        if before.expression_sources[id as usize].kind != target_kind {
+            return Err("Original expression traversal exceeded its limit".into());
         }
     }
     let expression = before
@@ -246,7 +255,10 @@ pub fn compare(program: &Program, change: &Change) -> Result<Comparison, String>
         .source
         .get(expression.span.clone())
         .ok_or("Invalid source-expression span")?;
-    let replacement = if matches!(change.selection, Selection::PreserveTableLayout) {
+    let replacement = if matches!(
+        change.selection,
+        Selection::PreserveTableLayout | Selection::OriginalTableLayout
+    ) {
         let current = candidate
             .value(&before.events[event_index])
             .ok_or("Missing selected value")?;
@@ -308,7 +320,10 @@ pub fn compare(program: &Program, change: &Change) -> Result<Comparison, String>
         plan,
         review,
         proposed_native_value: outcome,
-        table_layout_preserved: matches!(change.selection, Selection::PreserveTableLayout),
+        table_layout_preserved: matches!(
+            change.selection,
+            Selection::PreserveTableLayout | Selection::OriginalTableLayout
+        ),
     };
     edits::fingerprint(&comparison)?;
     Ok(comparison)
