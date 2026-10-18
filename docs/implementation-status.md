@@ -4,13 +4,15 @@ Current work adds [explicit scalar source/override reconciliation](source-overri
 
 The next increment adds [all five complex scalar parser families](complex-value-codecs.md), actual generic-to-Lua constructor/validator observations, exact signed gap/font-weight controls, a bounded gradient editor and source comparison/reconciliation for all nine scalar kinds. A demonstrated binary64 JSON transport error is fixed with round-trip parsing. Native primary values remain separate from compositor effects and ownership; sparse array layout, undefined casts, unavailable representations, full compound trivia preservation and all original completion obligations remain explicit. Verification is recorded in the session checkpoint.
 
+A further increment adds [syntax-local compound source preservation](compound-source-layout.md): direct vector/gap/gradient forms default to retaining comments, whitespace, unrelated fields and unchanged native spellings while comparing component updates and owned-field insertions/removals. Override reconciliation uses the same mode and refuses without automatic replacement fallback. General declaration/alias/generated ownership and every original full-product obligation remain open.
+
 The existing engineering blueprint remains the design authority. This register maps it to the code and tracks the next concrete steps. A checked design requirement is not an implemented feature or runtime certificate. The [full completion register](completion-register.md) tracks every original contract and gate without shrinking the goal to the available foundations.
 
-## Current primitive codec increment
+## Earlier primitive codec increment
 
 [Primitive scalar conformance](scalar-value-conformance.md) adds Bool/Int/Float/String family models and a bounded restricted-worker request, distinct native versus editor representation, C numeric-locale/library-profile checks and 592 independent source observations. Actual setting registration maps/validators, five complex families, graph integration and ownership remain open. Nonfinite observed inputs now preserve binary64 bits across worker JSON without relaxing draft bounds. This enables no extra GUI edit or live operation. Local validation passes 234 ordinary tests plus one private-display native workflow (235 total), strict lint, formatting, release/metadata checks and four-release native parser/bridge comparisons. The original full completion scope is unchanged.
 
-## Current source-graph increment
+## Earlier source-graph increment
 
 [Configuration-table inspection](config-table-inspection.md) connects captured call values to pinned registry IDs, preserves raw keys and marks same-call collisions, unknown fields and cyclic traversal. The single-root importer now recognizes native NUL key aliases without losing source spelling. Fifty-two independent exact-handler observations support dispatch behavior only; native value acceptance, ownership and editable graph import remain open. Local verification passes 231 ordinary tests plus one private-display native workflow (232 total), strict lint, formatting, release and metadata checks. The GUI displays imported field/expression evidence at the measured 350-pixel minimum. No full contract is certified; PR #8 remains draft.
 

@@ -271,7 +271,7 @@ fn rebase_request(
     next.sha256 = document(program, &request.document)?.sha256.clone();
     Ok(next)
 }
-fn same_value(a: &Observed, b: &Observed) -> bool {
+pub(super) fn same_value(a: &Observed, b: &Observed) -> bool {
     match (a, b) {
         (Observed::Float(a), Observed::Float(b)) => a.to_bits() == b.to_bits(),
         (Observed::Table(a), Observed::Table(b)) => {

@@ -330,7 +330,7 @@ pub(super) fn test_workflow(parent: &adw::ApplicationWindow) {
     }
     let fixture = super::test_support::TempDir::new("he-compound-source-gui");
     let path = fixture.path().join("main.lua");
-    let original="-- preserve outer comments\nhl.config{['misc.background_color']='#123456'}\nhl.config{['general.col.active_border']={colors={'#123','#456'},angle=45}}\nhl.config{['decoration.shadow.offset']={0,0}}\nhl.config{['general.gaps_out']={top=1,right=2,bottom=3,left=4}}\nhl.config{['group.groupbar.font_weight_active']=400}\n";
+    let original="-- preserve outer comments\nhl.config{['misc.background_color']='#123456'}\nhl.config{['general.col.active_border']={colors={'#123', -- stop memo\n '#456'},angle=45, note='gradient-extra'}}\nhl.config{['decoration.shadow.offset']={0, -- vector memo\n 0, note='vector-extra'}}\nhl.config{['general.gaps_out']={top=1 --[[gap memo]],right=2,bottom=3,left=4,note='gap-extra'}}\nhl.config{['group.groupbar.font_weight_active']=400}\n";
     std::fs::write(&path, original).unwrap();
     let captured = Arc::new(super::capture_worker::read_selected(&path).unwrap());
     let state = super::initial_state();
@@ -384,6 +384,13 @@ pub(super) fn test_workflow(parent: &adw::ApplicationWindow) {
             }),
         );
         *close.borrow_mut() = Some(window.downgrade());
+        let scope = named(window.upcast_ref(), "source-change-scope")
+            .downcast::<gtk::DropDown>()
+            .unwrap();
+        assert_eq!(
+            scope.selected(),
+            if (1..=3).contains(&index) { 2 } else { 0 }
+        );
         match index {
             0 => named(window.upcast_ref(), "source-change-color")
                 .downcast::<gtk::ColorDialogButton>()
@@ -427,6 +434,11 @@ pub(super) fn test_workflow(parent: &adw::ApplicationWindow) {
         let text = b.text(&b.start_iter(), &b.end_iter(), true);
         assert!(keep.is_sensitive(), "{index}: {text}");
         assert!(text.contains("Modeled parsed value:"));
+        if (1..=3).contains(&index) {
+            assert!(
+                text.contains("Existing table comments, spacing and unrelated fields are retained")
+            );
+        }
         assert!(
             !text.contains("Additional modeled findings"),
             "{index}: {text}"
@@ -482,6 +494,23 @@ pub(super) fn test_workflow(parent: &adw::ApplicationWindow) {
     assert_eq!(bundle.fingerprint().unwrap(), after.fingerprint);
     let restored = super::source_graph::restore(&bundle, BASELINE).unwrap();
     assert!(restored.blocked.is_none());
+    for retained in [
+        "-- stop memo",
+        "-- vector memo",
+        "--[[gap memo]]",
+        "note='gradient-extra'",
+        "note='vector-extra'",
+        "note='gap-extra'",
+    ] {
+        assert_eq!(
+            restored.program.documents[0]
+                .source
+                .matches(retained)
+                .count(),
+            1,
+            "{retained}"
+        );
+    }
     assert_eq!(restored.config_batches.len(), 5);
     assert!(restored
         .config_batches

@@ -5,11 +5,13 @@ use crate::{
     Value,
 };
 use serde::{Deserialize, Serialize};
+mod layout;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Selection {
     SelectedExpression,
     OriginalLiteral,
+    PreserveTableLayout,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -26,6 +28,7 @@ pub struct Comparison {
     pub plan: edits::EditPlan,
     pub review: edits::EditReview,
     pub proposed_native_value: scalar_codec::Outcome,
+    pub table_layout_preserved: bool,
 }
 // Match the evaluator's canonical byte-key ordering for expected observations.
 fn fields(entries: impl IntoIterator<Item = (&'static str, Observed)>) -> Observed {
@@ -212,7 +215,7 @@ pub fn compare(program: &Program, change: &Change) -> Result<Comparison, String>
     }
     let meta = registration::by_lua_key(&program.version, &candidate.lua_key)
         .ok_or("Missing registered setting metadata")?;
-    let (proposed, outcome) = proposed(meta, &change.value)?;
+    let (mut proposed, outcome) = proposed(meta, &change.value)?;
     let mut id = candidate
         .expression
         .ok_or("No exact source expression is recorded for this value")?;
@@ -243,12 +246,39 @@ pub fn compare(program: &Program, change: &Change) -> Result<Comparison, String>
         .source
         .get(expression.span.clone())
         .ok_or("Invalid source-expression span")?;
+    let replacement = if matches!(change.selection, Selection::PreserveTableLayout) {
+        let current = candidate
+            .value(&before.events[event_index])
+            .ok_or("Missing selected value")?;
+        let (replacement, expected) = layout::prepare(
+            &document.source,
+            expression.span.clone(),
+            &meta.kind,
+            current,
+            &proposed,
+        )?;
+        let decoded = scalar_codec::decode_batch(&[scalar_codec::Case {
+            codec: meta.codec.clone().ok_or("Missing codec")?,
+            input: expected.clone(),
+        }])?
+        .remove(0);
+        if !matches!((&decoded, &outcome), (scalar_codec::Outcome::Accepted {native:a, ..}, scalar_codec::Outcome::Accepted {native:b, ..}) if a==b)
+        {
+            return Err(
+                "Preserving unrelated fields does not establish the requested native value".into(),
+            );
+        }
+        proposed = expected;
+        replacement
+    } else {
+        print(&proposed)?
+    };
     let source_edit = edits::SourceEdit {
         document: document.id.clone(),
         base_sha256: document.sha256.clone(),
         span: expression.span.clone(),
         old_bytes_sha256: crate::lua::source_hash(old),
-        replacement: print(&proposed)?,
+        replacement,
         semantic_targets: vec![meta.id.clone()],
     };
     let event = &before.events[event_index];
@@ -278,6 +308,7 @@ pub fn compare(program: &Program, change: &Change) -> Result<Comparison, String>
         plan,
         review,
         proposed_native_value: outcome,
+        table_layout_preserved: matches!(change.selection, Selection::PreserveTableLayout),
     };
     edits::fingerprint(&comparison)?;
     Ok(comparison)

@@ -420,6 +420,26 @@ impl Controls {
             _ => None,
         });
         if let Some(value) = value {
+            if let Some(scope) = self.scope.upgrade() {
+                let table = candidate
+                    .and_then(|c| c.expression)
+                    .and_then(|id| analysis.report.expression_sources.get(id as usize))
+                    .is_some_and(|e| {
+                        e.kind == hyprland_editor_core::lua::replay::ExpressionKind::Table
+                    });
+                scope.set_selected(
+                    if table
+                        && matches!(
+                            &value,
+                            Value::Vec2(_) | Value::CssGap(_) | Value::Gradient { .. }
+                        )
+                    {
+                        2
+                    } else {
+                        0
+                    },
+                );
+            }
             let ui = self.clone();
             let codec = candidate
                 .and_then(|c| {
@@ -486,10 +506,10 @@ impl Controls {
             event_order: event,
             location: candidate.location.clone(),
             setting_id: candidate.setting_id.clone(),
-            selection: if scope.selected() == 1 {
-                Selection::OriginalLiteral
-            } else {
-                Selection::SelectedExpression
+            selection: match scope.selected() {
+                1 => Selection::OriginalLiteral,
+                2 => Selection::PreserveTableLayout,
+                _ => Selection::SelectedExpression,
             },
             value,
         };
@@ -776,7 +796,9 @@ fn describe(analysis: &Analysis, result: &Comparison) -> Result<String, String> 
             super::source_access::excerpt(&value.lua())
         );
     }
-    if edit.replacement.starts_with('{') {
+    if result.table_layout_preserved {
+        text.push_str("\nExisting table comments, spacing and unrelated fields are retained. Changed components and added/removed fields are shown above.\n");
+    } else if edit.replacement.starts_with('{') {
         text.push_str("\nThis replaces the selected value expression. Comments and extra fields inside that expression are included in the replacement.\n");
     }
     if result.review.differences.is_empty() {
@@ -920,6 +942,7 @@ pub(super) fn open(
     let scope = gtk::DropDown::from_strings(&[
         "Selected value expression",
         "Original literal, if traceable",
+        "Preserve table layout and comments",
     ]);
     super::monitors::compact(&scope);
     scope.set_widget_name("source-change-scope");

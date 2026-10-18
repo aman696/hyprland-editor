@@ -28,6 +28,7 @@ pub enum SourceValue {
 pub struct Target {
     pub event_order: usize,
     pub location: Vec<usize>,
+    pub preserve_table_layout: bool,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -134,6 +135,12 @@ pub fn prepare(program: &Program, draft: &Draft) -> Result<Review, String> {
             .map(|c| Target {
                 event_order: c.event_order,
                 location: c.location.clone(),
+                preserve_table_layout: c
+                    .expression
+                    .and_then(|id| report.expression_sources.get(id as usize))
+                    .is_some_and(|e| e.kind == super::ExpressionKind::Table)
+                    && registration::by_lua_key(&program.version, &c.lua_key)
+                        .is_some_and(|m| matches!(m.kind.as_str(), "Vec2" | "CssGap" | "Gradient")),
             });
         let can_write = target.is_some()
             && last
@@ -243,7 +250,11 @@ pub fn resolve(
                             event_order: target.event_order,
                             location: target.location.clone(),
                             setting_id: row.setting_id.clone(),
-                            selection: scalar_edit::Selection::SelectedExpression,
+                            selection: if target.preserve_table_layout {
+                                scalar_edit::Selection::PreserveTableLayout
+                            } else {
+                                scalar_edit::Selection::SelectedExpression
+                            },
                             value: row.override_value.clone(),
                         },
                     )?;
