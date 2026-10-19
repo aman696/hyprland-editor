@@ -39,6 +39,8 @@ The DRM reopen and allocation adapters never open a device or create a real allo
 
 The next increment implements a [sealed raw frame boundary](preview-frames.md), with bounded synthetic pixel buffers and strict descriptor/header validation. A [private process-correlated frame channel](preview-channel.md) transfers synthetic frames; compositor capture and the certified broker/runtime/resource profile remain unfinished.
 
+An [opt-in kernel fixture](preview-kernel-tests.md) is prepared for a dedicated ephemeral CI VM. Local compilation is separate from positive enforcement evidence; no desktop delegation was changed to run it.
+
 ## Required next implementation and proof
 
 The original blueprint remains mandatory. Before a candidate config can run, implement a dedicated resource provider, stopped-child membership and readback, descriptor and environment filtering, a verified immutable runtime image, private root/proc and namespaces, device/IPC/network restrictions, the syscall policy and a supervisor whose teardown survives crashes and cancellation. Record exact compositor/library/renderer identity and enforce profile limits through kernel observations.

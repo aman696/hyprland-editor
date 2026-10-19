@@ -400,6 +400,18 @@
       "limits": "sealed raw RGBA memfd construction and bounded offset-based copy, live session/generation/sequence checks, exact headers/lengths, 720p pixel budget, two retained buffers and 15 FPS acceptance; no image decoding or untrusted mapping; no complete capture-broker/profile or hard kernel descriptor-queue containment, capture/format conversion, compositor frames, display/input lifecycle, whole-process memory or full preview/security certificate"
     },
     {
+      "area": "opt-in private cgroup kernel fixture",
+      "code": [
+        "crates/editor-preview/src/cgroup/kernel_tests.rs",
+        "scripts/cgroup_kernel_probe.py",
+        ".github/workflows/ci.yml"
+      ],
+      "test_references": [
+        "delegated_kernel_limits_enforce_and_teardown_whole_subtrees"
+      ],
+      "limits": "compiled opt-in fixture and ephemeral CI provider for default CPU/memory/task enforcement and whole-subtree cleanup, private-only controller setup and privilege-dropped trusted workers with live resource tokens; positive execution pending exact hosted results; no developer-host controller modification, production stopped-child/compositor launch, concurrent-race/runtime/profile/crash/flooding or full preview/security certificate"
+    },
+    {
       "area": "preview resource preparation and backend feasibility",
       "code": [
         "crates/editor-preview/src/cgroup.rs",

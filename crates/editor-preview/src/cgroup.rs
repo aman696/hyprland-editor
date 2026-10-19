@@ -605,3 +605,6 @@ mod tests {
             .contains("bound"));
     }
 }
+
+#[cfg(test)]
+mod kernel_tests;
