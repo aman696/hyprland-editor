@@ -12,6 +12,8 @@ A [repeatable resource probe](resource-observations.md) now supplies current bin
 
 A [preview resource supervision foundation](preview-supervision.md) adds explicit live-FD resource preparation, bounded private cleanup with retained failure evidence, a read-only delegation diagnostic and pinned original backend-start observations. The local candidate lacks CPU delegation; no compositor or hardware was launched. Actual limit/membership enforcement, provider exclusivity, concurrent teardown, the runtime sandbox and real frame/input delivery remain required. This does not close E09 or a full security gate.
 
+A [sealed raw frame boundary](preview-frames.md) now adds immutable memfd input, exact session/generation/sequence/header checks, a 720p pixel budget, 15 FPS acceptance and two retained pixel buffers. Kernel sealing and malformed-input tests use synthetic pixels; no actual compositor capture, private broker channel, input or full preview gate is proved.
+
 The existing engineering blueprint remains the design authority. This register maps it to the code and tracks the next concrete steps. A checked design requirement is not an implemented feature or runtime certificate. The [full completion register](completion-register.md) tracks every original contract and gate without shrinking the goal to the available foundations.
 
 ## Earlier primitive codec increment

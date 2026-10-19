@@ -366,6 +366,21 @@
       "limits": "three binary-identified private Xvfb/bus empty-workspace trials below 100 MiB sampled process-tree PSS and under 0.1 percent observed CPU over 60 seconds; short CPU windows cannot pass; no representative source/review/history/worker, physical Wayland/GPU/accessibility, latency, large-import, event/asset/preview or long-session resource certificate"
     },
     {
+      "area": "sealed raw preview frame boundary",
+      "code": [
+        "crates/editor-preview/src/frame.rs",
+        "crates/editor-preview/tests/sealed_frames.rs"
+      ],
+      "test_references": [
+        "sealed_pixels_are_exact_immutable_and_independent_of_the_descriptor_offset",
+        "wrong_session_generation_sequence_format_stride_and_length_never_replace_valid_pixels",
+        "mutable_descriptors_and_non_regular_objects_are_refused_before_pixel_reads",
+        "retention_bound_keeps_only_two_buffers_and_clear_does_not_allow_replay",
+        "rate_deadline_and_backwards_clock_refusals_do_not_consume_sequence_or_pixels"
+      ],
+      "limits": "sealed raw RGBA memfd construction and bounded offset-based copy, live session/generation/sequence checks, exact headers/lengths, 720p pixel budget, two retained buffers and 15 FPS acceptance; no image decoding or untrusted mapping; no authenticated private broker/descriptor queue bound, capture/format conversion, compositor frames, display/input lifecycle, whole-process memory or full preview/security certificate"
+    },
+    {
       "area": "preview resource preparation and backend feasibility",
       "code": [
         "crates/editor-preview/src/cgroup.rs",

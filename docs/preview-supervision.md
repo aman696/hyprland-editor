@@ -37,6 +37,8 @@ The DRM reopen and allocation adapters never open a device or create a real allo
 
 `data/preview-development-observation.json` records one environment's read-only version and namespace capability observations. The installed binary matches the baseline commit, while its compiled and runtime Aquamarine versions differ. Separate namespace identities were observed for a trusted probe; a private root image, private proc mount, compositor isolation, GPU access, frames and input were not tested. These observations are not portable acceptance evidence.
 
+The next increment implements a [sealed raw frame boundary](preview-frames.md), with bounded synthetic pixel buffers and strict descriptor/header validation. Actual compositor capture and authenticated broker transport remain unfinished.
+
 ## Required next implementation and proof
 
 The original blueprint remains mandatory. Before a candidate config can run, implement a dedicated resource provider, stopped-child membership and readback, descriptor and environment filtering, a verified immutable runtime image, private root/proc and namespaces, device/IPC/network restrictions, the syscall policy and a supervisor whose teardown survives crashes and cancellation. Record exact compositor/library/renderer identity and enforce profile limits through kernel observations.
