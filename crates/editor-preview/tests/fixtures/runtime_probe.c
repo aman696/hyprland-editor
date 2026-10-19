@@ -12,6 +12,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/statfs.h>
+#include <sys/statvfs.h>
 #include <sys/syscall.h>
 #include <sys/utsname.h>
 #include <sys/un.h>
@@ -76,8 +77,13 @@ int main(int argc, char **argv) {
         CHECK(absent(paths[i]));
     }
     CHECK(read_text("/usr/share/hye/canary", text, sizeof(text)) == 0 && strcmp(text, "reviewed-runtime") == 0);
-    errno = 0; CHECK(open("/usr/share/hye/canary", O_WRONLY) == -1 && errno == EROFS);
-    errno = 0; CHECK(open("/outside", O_WRONLY | O_CREAT, 0600) == -1 && errno == EROFS);
+    struct statfs readonly;
+    CHECK(statfs("/usr/share/hye/canary", &readonly) == 0 && (readonly.f_flags & ST_RDONLY));
+    CHECK(statfs("/", &readonly) == 0 && (readonly.f_flags & ST_RDONLY));
+    /* DAC may refuse before the mount check. Require the independent mount
+       flag as well as actual refused writes, rather than one errno ordering. */
+    errno = 0; CHECK(open("/usr/share/hye/canary", O_WRONLY) == -1 && (errno == EACCES || errno == EROFS));
+    errno = 0; CHECK(open("/outside", O_WRONLY | O_CREAT, 0600) == -1 && (errno == EACCES || errno == EROFS));
     const char *writable[] = {"/tmp", "/run/lab", "/home/lab", "/state/config", "/state/data", "/state/cache", "/dev/shm"};
     for (size_t i = 0; i < 7; ++i) {
         char path[128]; snprintf(path, sizeof(path), "%s/probe", writable[i]);
