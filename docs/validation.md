@@ -1,5 +1,7 @@
 # Initial-build validation
 
+Preview resource preparation is checked by ten preview-library tests plus one real-application diagnostic test, bringing the ordinary workspace suite to 318 passing tests. The private native workflow passes separately (319 application tests total); three Python resource/process checks also pass. The pinned original backend probe reproduces 32 start-flow cases, headless descriptors and two compositor request policies. These are inert source-flow observations and refusal/failure tests, not positive cgroup enforcement, isolation, rendering, input or teardown certification. See [preview scope and outstanding gates](preview-supervision.md). Formatting, strict lint, graph/register checks and release build are tracked in the checkpoint; hosted success is established only by exact terminal runs.
+
 Current repeatable resource observations are in [resource-observations.md](resource-observations.md): three 60-second empty-workspace runs measured 92.3–93.3 MiB PSS and zero recorded CPU ticks. This supersedes the older single startup sample as current evidence, without certifying representative workloads or the full resource gate. Earlier milestone results below remain historical.
 
 Validation date: 13 October 2026. Rust 1.90.0, Linux x86-64, GTK 4.22.5, libadwaita 1.9.4. The local system compiler could not start, so checks used a verified official Rust toolchain isolated inside the ignored development directory; system packages were not modified.

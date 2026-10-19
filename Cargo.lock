@@ -477,6 +477,7 @@ dependencies = [
  "gtk4",
  "hyprland-editor-core",
  "hyprland-editor-discovery",
+ "hyprland-editor-preview",
  "libadwaita",
  "libc",
  "serde",
@@ -503,6 +504,16 @@ name = "hyprland-editor-discovery"
 version = "0.12.0"
 dependencies = [
  "hyprland-editor-core",
+ "libc",
+ "serde",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
+name = "hyprland-editor-preview"
+version = "0.12.0"
+dependencies = [
  "libc",
  "serde",
  "serde_json",

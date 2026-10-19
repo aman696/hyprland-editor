@@ -1344,6 +1344,35 @@ fn main() {
         }
         return;
     }
+    if std::env::args_os().nth(1).as_deref()
+        == Some(std::ffi::OsStr::new("--check-preview-delegation"))
+    {
+        let result = (|| {
+            use std::os::{fd::AsFd, unix::fs::OpenOptionsExt};
+            let args = std::env::args_os().skip(2).collect::<Vec<_>>();
+            if args.len() != 1 {
+                return Err("Specify one explicitly selected delegation directory".to_string());
+            }
+            let file = std::fs::OpenOptions::new()
+                .read(true)
+                .custom_flags(libc::O_DIRECTORY | libc::O_NOFOLLOW | libc::O_NONBLOCK)
+                .open(&args[0])
+                .map_err(|e| e.to_string())?;
+            let delegation =
+                hyprland_editor_preview::cgroup::Delegation::from_directory(file.as_fd())
+                    .map_err(|e| e.to_string())?;
+            let observation = delegation.observe().map_err(|e| e.to_string())?;
+            serde_json::to_string(&observation).map_err(|e| e.to_string())
+        })();
+        match result {
+            Ok(value) => println!("{value}"),
+            Err(error) => {
+                eprintln!("{}", error.chars().take(1024).collect::<String>());
+                std::process::exit(1);
+            }
+        }
+        return;
+    }
     let app = adw::Application::builder()
         .application_id("io.github.aman696.HyprlandEditor")
         .build();

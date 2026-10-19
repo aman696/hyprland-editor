@@ -11,5 +11,6 @@ gtk = { package = "gtk4", version = "0.10", features = ["v4_12"] }
 adw = { package = "libadwaita", version = "0.8", features = ["v1_5"] }
 serde_json.workspace = true
 hyprland-editor-discovery = { path = "../editor-discovery" }
+hyprland-editor-preview = { path = "../editor-preview" }
 libc = "0.2"
 serde.workspace = true

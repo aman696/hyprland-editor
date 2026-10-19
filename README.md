@@ -122,3 +122,5 @@ For private fixtures: `hyprland-editor --check-source-graph FOLDER ROOT VERSION 
 The dependency review’s **Analysis Context** dialog supplies home/working-directory folder hypotheses and inherited Lua search templates. Unknown context stays unknown, and these selections do not grant file access or identify the active compositor’s context.
 
 Current [resource observations](docs/resource-observations.md) record three 60-second empty-workspace trials at 92.3–93.3 MiB PSS, with zero recorded CPU ticks. Imported configurations, reviews, history, workers and other rendering profiles still require resource verification.
+
+Preview engineering status: [resource preparation and backend feasibility](docs/preview-supervision.md). This is an internal foundation; rendered preview remains unfinished.
