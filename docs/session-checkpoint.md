@@ -1,5 +1,7 @@
 # Session checkpoint — 19 October 2026
 
+The initial kernel-provider head `f90b8f5` failed its new CI job before private creation/workload execution: global cgroup roots intentionally omit `cgroup.type`. The provider now handles that documented global-root shape, still requires a normal domain on the new private hierarchy, and has four read-only metadata regressions covering missing type, present types, missing controllers and non-absence read errors. Positive kernel execution remains pending the corrected exact hosted run.
+
 Next verification work prepares an [opt-in kernel fixture and ephemeral CI provider](preview-kernel-tests.md) for actual default CPU/memory/task enforcement and descendant teardown. Root setup touches only a fresh bounded hierarchy beneath already-enabled controllers, then runs the compiled fixture without privileges. Trusted workers check live resource FDs, sole-process membership and actual default limits before loading. The ordinary local suite keeps the kernel test explicitly ignored; compilation is not positive execution. Do not run the root setup on the developer's host or claim kernel success before exact CI results.
 
 Channel head `208c96cbc7d49155e40aae3dd10f1940ec46aa40` passed both exact hosted runs: [push](https://github.com/aman696/hyprland-editor/actions/runs/39249312242), [PR](https://github.com/aman696/hyprland-editor/actions/runs/39249318432). Those checks cover its 338 ordinary tests, native workflow and unchanged reference matrices/build checks; no actual compositor or full preview gate is certified.

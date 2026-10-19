@@ -83,6 +83,20 @@ def cleanup(path, descriptor):
     print('Private CI hierarchy empty and removed', flush=True)
 
 
+def metadata_prerequisites(path):
+    """Read-only shape checks, not filesystem/capability validation."""
+    try:
+        kind = read(path / 'cgroup.type')
+    except FileNotFoundError:
+        # Linux omits cgroup.type on the global root (CFTYPE_NOT_ON_ROOT).
+        kind = None
+    if kind not in [None, 'domain']:
+        raise RuntimeError('A threaded or invalid cgroup parent is unsupported')
+    for control in ['cgroup.controllers', 'cgroup.subtree_control']:
+        if not REQUIRED.issubset(set(read(path / control).split())):
+            raise RuntimeError('Required root controllers are not already enabled; no ancestor changes made')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--uid', type=int, required=True)
@@ -96,17 +110,17 @@ def main():
         raise SystemExit('An already compiled trusted test executable is required')
     fs = subprocess.run(['/usr/bin/stat', '-f', '-c', '%T', str(ROOT)],
                         capture_output=True, text=True, timeout=3, check=True).stdout.strip()
-    if fs != 'cgroup2fs' or read(ROOT / 'cgroup.type') != 'domain':
-        raise SystemExit('The ephemeral VM requires a normal cgroup v2 root')
-    for control in ['cgroup.controllers', 'cgroup.subtree_control']:
-        if not REQUIRED.issubset(set(read(ROOT / control).split())):
-            raise SystemExit('Required root controllers are not already enabled; no ancestor changes made')
+    if fs != 'cgroup2fs':
+        raise SystemExit('The ephemeral VM requires a cgroup v2 root')
+    metadata_prerequisites(ROOT)
     path = ROOT / ('hye-ci-' + secrets.token_hex(16))
     path.mkdir(mode=0o700)
     descriptor = None
     child = None
     try:
         descriptor = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+        if read(path / 'cgroup.type') != 'domain':
+            raise RuntimeError('The fresh private hierarchy is not a normal domain')
         # Only the freshly owned private root is configured. Ancestor limits and
         # subtree settings remain untouched. Bound the complete fixture as well.
         limit(path, 'memory.max', str(1024 * 1024 * 1024))

@@ -17,6 +17,7 @@ jobs:
         run: rustup toolchain install 1.90.0 --profile minimal --component rustfmt --component clippy
       - run: cargo fmt --all --check
       - run: python3 -B -m unittest discover -s scripts -p test_resource_probe.py
+      - run: python3 -B -m unittest discover -s scripts -p test_cgroup_kernel_probe.py
       - run: python3 scripts/check_catalogue.py
       - run: python3 scripts/generate_catalogue.py --check
       - run: python3 scripts/generate_actions.py --check
@@ -54,6 +55,8 @@ jobs:
           persist-credentials: false
       - name: Pinned test toolchain
         run: rustup toolchain install 1.90.0 --profile minimal
+      - name: Check read-only provider prerequisites
+        run: python3 -I -S -B -m unittest discover -s scripts -p test_cgroup_kernel_probe.py
       - name: Compile trusted resource fixture without executing it
         run: |
           cargo test --locked -p hyprland-editor-preview --lib --no-run --message-format=json > "$RUNNER_TEMP/hye-kernel-build.jsonl"

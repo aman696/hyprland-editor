@@ -404,6 +404,7 @@
       "code": [
         "crates/editor-preview/src/cgroup/kernel_tests.rs",
         "scripts/cgroup_kernel_probe.py",
+        "scripts/test_cgroup_kernel_probe.py",
         ".github/workflows/ci.yml"
       ],
       "test_references": [
