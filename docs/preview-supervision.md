@@ -45,10 +45,12 @@ The next [pidfs channel profile](preview-pidfs-channel.md) addresses PID transla
 
 ## Required next implementation and proof
 
-The original blueprint remains mandatory. Before a candidate config can run, implement a dedicated resource provider, stopped-child membership and readback, descriptor and environment filtering, a verified immutable runtime image, private root/proc and namespaces, device/IPC/network restrictions, the syscall policy and a supervisor whose teardown survives crashes and cancellation. Record exact compositor/library/renderer identity and enforce profile limits through kernel observations.
+The original blueprint remains mandatory. Before a candidate config can run, implement a dedicated resource provider, stopped-child membership and readback, descriptor and environment filtering, a production verified immutable runtime image, private root/proc and namespaces, device/IPC/network restrictions, the syscall policy and a supervisor whose teardown survives crashes and cancellation. Record exact compositor/library/renderer identity and enforce profile limits through kernel observations.
 
 Then prove actual frame delivery and bounded input routing against synthetic clients, with no host session credentials or sockets available. Establish the supported rendering profile with real compositor evidence. Keep software, render-node and VM dependencies explicit; do not silently fall back to the host compositor or GPU. Test every required malicious-config, resource-exhaustion, descendant, race and crash case. Add user-facing preview only after those boundaries and the relevant blueprint gates are demonstrated.
 
 Source ownership/reconciliation, persistent history, effective discovery, independent recovery, guarded live apply, accessibility, packaging and all original resource/security/release obligations remain open independently of this resource layer.
 
 The cgroup implementation follows the kernel's [cgroup v2 interfaces](https://docs.kernel.org/admin-guide/cgroup-v2.html). Sandbox construction will also need configuration-specific validation; the [Bubblewrap project](https://github.com/containers/bubblewrap) describes a building block rather than an application policy certificate. Exact compositor/backend source URLs are retained in the pinned source manifest.
+
+A [sealed runtime-image API and opt-in private boundary prototype](preview-runtime-image.md) now implement byte staging and an actual CI experiment for a trusted static probe. They do not launch Hyprland or certify the production supervisor/runtime profile.

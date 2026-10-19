@@ -15,6 +15,7 @@ from pathlib import Path
 import secrets
 import stat
 import subprocess
+import tempfile
 import time
 
 ROOT = Path('/sys/fs/cgroup')
@@ -102,6 +103,7 @@ def metadata_prerequisites(path):
 
 
 NS_TEST = 'channel::namespace_tests::pidfs_frame_and_receipt_cross_a_private_pid_namespace'
+RUNTIME_TEST = 'image::probe::sealed_runtime_executes_only_inside_private_root_and_namespaces'
 
 
 def dropped_command(args, binary, environment, test):
@@ -202,13 +204,25 @@ def main():
     parser.add_argument('--uid', type=int, required=True)
     parser.add_argument('--gid', type=int, required=True)
     parser.add_argument('--test-executable', type=Path, required=True)
-    parser.add_argument('--namespace-channel', action='store_true')
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument('--namespace-channel', action='store_true')
+    modes.add_argument('--runtime-image-probe', action='store_true')
+    parser.add_argument('--probe-binary', type=Path)
     args = parser.parse_args()
     if os.geteuid() != 0 or args.uid <= 0 or args.gid <= 0:
         raise SystemExit('Use root only for CI setup, with a non-root fixture UID/GID')
     binary = args.test_executable.resolve(strict=True)
     if not binary.is_file():
         raise SystemExit('An already compiled trusted test executable is required')
+    probe = None
+    if args.runtime_image_probe:
+        if args.probe_binary is None:
+            raise SystemExit('The runtime test requires the already compiled trusted static probe')
+        probe = args.probe_binary.resolve(strict=True)
+        if not probe.is_file():
+            raise SystemExit('Missing trusted static probe')
+    elif args.probe_binary is not None:
+        raise SystemExit('A static probe is accepted only for the runtime-image test')
     fs = subprocess.run(['/usr/bin/stat', '-f', '-c', '%T', str(ROOT)],
                         capture_output=True, text=True, timeout=3, check=True).stdout.strip()
     if fs != 'cgroup2fs':
@@ -246,22 +260,31 @@ def main():
             print('Kernel observation:', os.uname().release, flush=True)
             namespace_channel(args, binary, driver)
             return
-        command = dropped_command(args, binary, {'HYE_CGROUP_TEST_ROOT': path}, TEST)
-        # This single-threaded CI setup process uses preexec only to place its
-        # own child in the bounded driver leaf. setpriv drops privilege before
-        # executing any repository test code. No caller-selected PID is moved.
-        def place_driver():
-            write(driver / 'cgroup.procs', '0')
-        print('Kernel observation:', os.uname().release, flush=True)
-        child = subprocess.Popen(command, preexec_fn=place_driver,
-                                 env={'PATH': '/usr/bin:/bin', 'LC_ALL': 'C'},
-                                 stdin=subprocess.DEVNULL)
-        try:
-            result = child.wait(timeout=50)
-        except subprocess.TimeoutExpired:
-            raise RuntimeError('Private CI fixture exceeded its whole-run deadline') from None
-        if result:
-            raise RuntimeError(f'Private kernel fixture failed with status {result}')
+        # Canary is readable by the trusted driver before sandbox construction,
+        # but its random host pathname must be absent inside the private root.
+        with tempfile.TemporaryDirectory(prefix='hye-ci-runtime-') as temporary:
+            canary = Path(temporary) / 'host-secret'
+            canary.write_text('synthetic host secret; no real credentials\n')
+            canary.chmod(0o600)
+            os.chown(canary, args.uid, args.gid)
+            os.chown(temporary, args.uid, args.gid)
+            environment = ({'HYE_RUNTIME_PROBE_BIN': probe, 'HYE_RUNTIME_PROBE_HOST_CANARY': canary}
+                           if args.runtime_image_probe else {'HYE_CGROUP_TEST_ROOT': path})
+            command = dropped_command(args, binary, environment, RUNTIME_TEST if args.runtime_image_probe else TEST)
+            # This single-threaded CI setup process places only its own child
+            # in the bounded driver leaf, before setpriv and repository code.
+            def place_driver():
+                write(driver / 'cgroup.procs', '0')
+            print('Kernel observation:', os.uname().release, flush=True)
+            child = subprocess.Popen(command, preexec_fn=place_driver,
+                                     env={'PATH': '/usr/bin:/bin', 'LC_ALL': 'C'},
+                                     stdin=subprocess.DEVNULL)
+            try:
+                result = child.wait(timeout=50)
+            except subprocess.TimeoutExpired:
+                raise RuntimeError('Private CI fixture exceeded its whole-run deadline') from None
+            if result:
+                raise RuntimeError(f'Private kernel fixture failed with status {result}')
     finally:
         # This setup process is outside its private hierarchy. Even after a
         # cleanup error, terminate/reap the known direct driver before returning.

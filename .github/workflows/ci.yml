@@ -55,6 +55,13 @@ jobs:
           persist-credentials: false
       - name: Pinned test toolchain
         run: rustup toolchain install 1.90.0 --profile minimal
+      - name: Install namespace constructor and compile trusted static boundary probe
+        run: |
+          sudo apt-get update && sudo apt-get install -y bubblewrap
+          cc -std=c11 -O2 -Wall -Wextra -Werror -static -o "$RUNNER_TEMP/hye-runtime-probe" crates/editor-preview/tests/fixtures/runtime_probe.c
+          test -z "$(readelf -l "$RUNNER_TEMP/hye-runtime-probe" | sed -n '/INTERP/p')"
+          sha256sum /usr/bin/bwrap "$RUNNER_TEMP/hye-runtime-probe"
+          bwrap --version
       - name: Check read-only provider prerequisites
         run: python3 -I -S -B -m unittest discover -s scripts -p test_cgroup_kernel_probe.py
       - name: Compile trusted resource fixture without executing it
@@ -76,3 +83,7 @@ jobs:
         timeout-minutes: 2
         run: |
           sudo -- /usr/bin/python3 -I -S scripts/cgroup_kernel_probe.py --namespace-channel --uid "$(id -u)" --gid "$(id -g)" --test-executable "$(cat "$RUNNER_TEMP/hye-kernel-executable")"
+      - name: Verify sealed runtime image and private filesystem namespace boundaries
+        timeout-minutes: 2
+        run: |
+          sudo -- /usr/bin/python3 -I -S scripts/cgroup_kernel_probe.py --runtime-image-probe --probe-binary "$RUNNER_TEMP/hye-runtime-probe" --uid "$(id -u)" --gid "$(id -g)" --test-executable "$(cat "$RUNNER_TEMP/hye-kernel-executable")"

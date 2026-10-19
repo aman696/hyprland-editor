@@ -14,16 +14,27 @@ use std::{
 };
 
 fn folder() -> PathBuf {
-    let root = std::env::temp_dir().join(format!(
-        "he-reopen-{}-{}",
-        std::process::id(),
-        SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos()
-    ));
-    fs::create_dir(&root).unwrap();
-    root
+    use std::{
+        os::unix::fs::DirBuilderExt,
+        sync::atomic::{AtomicU64, Ordering},
+    };
+    static NEXT: AtomicU64 = AtomicU64::new(0);
+    loop {
+        let root = std::env::temp_dir().join(format!(
+            "he-reopen-{}-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos(),
+            NEXT.fetch_add(1, Ordering::Relaxed)
+        ));
+        match fs::DirBuilder::new().mode(0o700).create(&root) {
+            Ok(()) => return root,
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
+            Err(error) => panic!("Cannot create private workspace test fixture: {error}"),
+        }
+    }
 }
 fn run(path: &Path) -> (bool, String, String) {
     run_args(&["--check-workspace".into(), path.as_os_str().to_os_string()])

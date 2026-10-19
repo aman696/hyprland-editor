@@ -4,3 +4,4 @@
 pub mod cgroup;
 pub mod channel;
 pub mod frame;
+pub mod image;

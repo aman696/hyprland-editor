@@ -366,6 +366,26 @@
       "limits": "three binary-identified private Xvfb/bus empty-workspace trials below 100 MiB sampled process-tree PSS and under 0.1 percent observed CPU over 60 seconds; short CPU windows cannot pass; no representative source/review/history/worker, physical Wayland/GPU/accessibility, latency, large-import, event/asset/preview or long-session resource certificate"
     },
     {
+      "area": "sealed runtime image and explicit private boundary prototype",
+      "code": [
+        "crates/editor-preview/src/image.rs",
+        "crates/editor-preview/src/image/tests.rs",
+        "crates/editor-preview/src/image/probe.rs",
+        "crates/editor-preview/tests/fixtures/runtime_probe.c",
+        "scripts/cgroup_kernel_probe.py"
+      ],
+      "test_references": [
+        "frozen_image_survives_origin_mutation_without_retaining_source_offset",
+        "manifest_cannot_supply_authority_paths_links_modes_or_unknown_fields",
+        "digest_size_type_entry_and_parent_collisions_refuse_before_execution",
+        "canonical_identity_binds_all_paths_bytes_permissions_and_entry",
+        "image_budget_and_file_count_are_aggregate_requirements",
+        "failed_multi_file_capture_releases_partial_snapshot_descriptors",
+        "sealed_runtime_executes_only_inside_private_root_and_namespaces"
+      ],
+      "limits": "bounded canonical runtime manifest and explicit live-file capture with exact hashes, offset reads, immutable sealed copies and no host pathname discovery; six ordinary tests plus an opt-in ephemeral CI static-probe experiment requesting private root/proc/namespaces/environment/descriptors and a default-deny probe syscall profile; actual experiment results require exact execution evidence; no production launch/cgroup placement, authenticity/dependency/ABI approval, compositor/renderer policy, user-namespace channel mapping, frame/input, lifecycle/flooding or full preview/security certificate"
+    },
+    {
       "area": "explicit pidfs process-object channel profile",
       "code": [
         "crates/editor-preview/src/channel/identity.rs",
