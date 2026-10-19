@@ -14,6 +14,8 @@ A [preview resource supervision foundation](preview-supervision.md) adds explici
 
 A [sealed raw frame boundary](preview-frames.md) now adds immutable memfd input, exact session/generation/sequence/header checks, a 720p pixel budget, 15 FPS acceptance and two retained pixel buffers. Kernel sealing and malformed-input tests use synthetic pixels; no actual compositor capture, private broker channel, input or full preview gate is proved.
 
+A [private frame channel](preview-channel.md) now transfers sealed synthetic frames through a real child process, with per-message credentials/live process pins, one cooperative in-flight frame, matching receipts, bounded parsing and receiver-owned pixel cleanup. Thirteen checks include wrong/dead peers, 192 header-bit mutations, ancillary descriptor closure and receipt backpressure. Hard kernel queue/resource containment, executable/projection attestation, cross-namespace behavior, event-loop/lab lifecycle and actual compositor capture/input remain required.
+
 The existing engineering blueprint remains the design authority. This register maps it to the code and tracks the next concrete steps. A checked design requirement is not an implemented feature or runtime certificate. The [full completion register](completion-register.md) tracks every original contract and gate without shrinking the goal to the available foundations.
 
 ## Earlier primitive codec increment

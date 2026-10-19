@@ -366,6 +366,25 @@
       "limits": "three binary-identified private Xvfb/bus empty-workspace trials below 100 MiB sampled process-tree PSS and under 0.1 percent observed CPU over 60 seconds; short CPU windows cannot pass; no representative source/review/history/worker, physical Wayland/GPU/accessibility, latency, large-import, event/asset/preview or long-session resource certificate"
     },
     {
+      "area": "private frame channel and process correlation",
+      "code": [
+        "crates/editor-preview/src/channel.rs",
+        "crates/editor-preview/src/channel/tests.rs",
+        "crates/editor-preview/tests/frame_channel.rs"
+      ],
+      "test_references": [
+        "credentials_and_sealed_frames_cross_a_real_child_with_one_inflight_receipt",
+        "inherited_socket_creator_credentials_do_not_authorize_a_different_live_sender",
+        "dead_child_process_pin_refuses_the_channel_and_cannot_be_restored_from_a_pid",
+        "sender_observes_a_dead_pinned_child_and_closes_instead_of_waiting_for_a_receipt",
+        "valid_pixels_are_released_on_explicit_stop_disconnect_or_invalid_next_frame",
+        "every_packet_header_bit_change_is_rejected_without_leaking_a_received_descriptor",
+        "blocked_receipts_prevent_more_frame_reads_and_stop_closes_queued_rights",
+        "unexpected_pidfd_records_are_closed_and_inheritance_disables_them"
+      ],
+      "limits": "unnamed nonblocking sequenced-packet FD transfer with per-message kernel credentials/live process pins, one cooperative in-flight frame/matching receipt, bounded per-call parsing, owned pixel buffers and fatal/explicit stop release, actual child IPC and pipe-EOF descriptor closure checks; no executable/projection attestation, cross-namespace credential/profile proof, hard kernel FD queue quota or malicious-peer resource containment, compositor capture/input, event-loop/crash supervision, whole-lab teardown or full preview/security certificate"
+    },
+    {
       "area": "sealed raw preview frame boundary",
       "code": [
         "crates/editor-preview/src/frame.rs",
@@ -378,7 +397,7 @@
         "retention_bound_keeps_only_two_buffers_and_clear_does_not_allow_replay",
         "rate_deadline_and_backwards_clock_refusals_do_not_consume_sequence_or_pixels"
       ],
-      "limits": "sealed raw RGBA memfd construction and bounded offset-based copy, live session/generation/sequence checks, exact headers/lengths, 720p pixel budget, two retained buffers and 15 FPS acceptance; no image decoding or untrusted mapping; no authenticated private broker/descriptor queue bound, capture/format conversion, compositor frames, display/input lifecycle, whole-process memory or full preview/security certificate"
+      "limits": "sealed raw RGBA memfd construction and bounded offset-based copy, live session/generation/sequence checks, exact headers/lengths, 720p pixel budget, two retained buffers and 15 FPS acceptance; no image decoding or untrusted mapping; no complete capture-broker/profile or hard kernel descriptor-queue containment, capture/format conversion, compositor frames, display/input lifecycle, whole-process memory or full preview/security certificate"
     },
     {
       "area": "preview resource preparation and backend feasibility",
