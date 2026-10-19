@@ -376,7 +376,9 @@ fn unexpected_pidfd_records_are_closed_and_inheritance_disables_them() {
         let text = String::from_utf8_lossy(&output.stdout);
         assert!(text.contains("PIDFD record path:") || text.contains("PIDFD not supported:"));
         for line in text.lines().filter(|line| {
-            line.contains("PIDFD record path:") || line.contains("PIDFD not supported:")
+            line.contains("PIDFD record path:")
+                || line.contains("PIDFD exhaustion path:")
+                || line.contains("PIDFD not supported:")
         }) {
             println!("{line}");
         }
@@ -420,6 +422,35 @@ fn unexpected_pidfd_records_are_closed_and_inheritance_disables_them() {
                     io::ErrorKind::InvalidData
                 );
             }
+            assert_eq!(std::fs::read_dir("/proc/self/fd").unwrap().count(), before);
+            let (read, write) = pipe();
+            send(
+                left.as_fd(),
+                Packet {
+                    kind: FRAME,
+                    serial: 1,
+                },
+                Some(write.as_fd()),
+            )
+            .unwrap();
+            drop(write);
+            let mut held = Vec::new();
+            loop {
+                match std::fs::File::open("/dev/null") {
+                    Ok(file) => held.push(file),
+                    Err(e) => {
+                        assert_eq!(e.raw_os_error(), Some(libc::EMFILE));
+                        break;
+                    }
+                }
+            }
+            assert!(held.pop().is_some()); // one slot for rights, none for PIDFD
+            let error = receive_with(right.as_fd(), Auth::Pidfs).err().unwrap();
+            assert_eq!(error.kind(), io::ErrorKind::InvalidData);
+            println!("PIDFD exhaustion path: {error}");
+            drop(held);
+            eof(read.as_fd());
+            drop(read);
             assert_eq!(std::fs::read_dir("/proc/self/fd").unwrap().count(), before);
             println!("PIDFD record path: 256 refusals, descriptor count unchanged");
         }

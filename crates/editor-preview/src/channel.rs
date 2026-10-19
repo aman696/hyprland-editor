@@ -1,6 +1,13 @@
 //! Private nonblocking frame/receipt channel. Only one cooperative frame is in
 //! flight. Kernel queue/resource containment remains a separate lab obligation.
 use crate::frame;
+mod identity;
+use identity::Identity;
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Auth {
+    VisiblePid,
+    Pidfs,
+}
 use std::{
     io, mem,
     os::fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, OwnedFd},
@@ -27,6 +34,7 @@ pub struct Peer {
     pid: libc::pid_t,
     uid: libc::uid_t,
     gid: libc::gid_t,
+    identity: Option<Identity>,
 }
 impl Peer {
     fn pin(pid: libc::pid_t) -> io::Result<Self> {
@@ -51,6 +59,7 @@ impl Peer {
             // SAFETY: these credential getters have no preconditions.
             uid: unsafe { libc::geteuid() },
             gid: unsafe { libc::getegid() },
+            identity: None,
         };
         peer.live()?;
         Ok(peer)
@@ -112,6 +121,7 @@ impl Peer {
 /// Inherited descriptors must retain an unnamed AF_UNIX SOCK_SEQPACKET peer.
 pub struct Endpoint {
     fd: OwnedFd,
+    auth: Auth,
 }
 fn option(fd: BorrowedFd<'_>, name: i32) -> io::Result<i32> {
     let mut value = 0i32;
@@ -160,6 +170,14 @@ fn disable_optional(fd: BorrowedFd<'_>, name: i32) -> io::Result<()> {
 }
 impl Endpoint {
     pub fn pair() -> io::Result<(Self, Self)> {
+        Self::pair_with(Auth::VisiblePid)
+    }
+    /// Explicit namespace-stable profile. Unsupported kernels never fall back.
+    pub fn pidfs_pair() -> io::Result<(Self, Self)> {
+        Peer::current_pidfs()?;
+        Self::pair_with(Auth::Pidfs)
+    }
+    fn pair_with(auth: Auth) -> io::Result<(Self, Self)> {
         let mut fds = [-1; 2];
         // SAFETY: two-descriptor output, fixed local unnamed socket type/flags.
         if unsafe {
@@ -175,9 +193,19 @@ impl Endpoint {
         }
         // SAFETY: successful socketpair returned two fresh owned descriptors.
         let (left, right) = unsafe { (OwnedFd::from_raw_fd(fds[0]), OwnedFd::from_raw_fd(fds[1])) };
-        Ok((Self::inherited(left)?, Self::inherited(right)?))
+        Ok((
+            Self::inherited_with(left, auth)?,
+            Self::inherited_with(right, auth)?,
+        ))
     }
     pub fn inherited(fd: OwnedFd) -> io::Result<Self> {
+        Self::inherited_with(fd, Auth::VisiblePid)
+    }
+    pub fn pidfs_inherited(fd: OwnedFd) -> io::Result<Self> {
+        Peer::current_pidfs()?;
+        Self::inherited_with(fd, Auth::Pidfs)
+    }
+    fn inherited_with(fd: OwnedFd, auth: Auth) -> io::Result<Self> {
         if option(fd.as_fd(), libc::SO_TYPE)? != libc::SOCK_SEQPACKET
             || option(fd.as_fd(), libc::SO_DOMAIN)? != libc::AF_UNIX
         {
@@ -219,7 +247,14 @@ impl Endpoint {
         set_option(fd.as_fd(), libc::SO_SNDBUF, 4096)?;
         // Inherited sockets may have enabled unsolicited ancillary records.
         // Disable them; the parser also closes unexpected known PIDFD records.
-        disable_optional(fd.as_fd(), libc::SO_PASSPIDFD)?;
+        if auth == Auth::Pidfs {
+            set_option(fd.as_fd(), libc::SO_PASSPIDFD, 1)?;
+            if option(fd.as_fd(), libc::SO_PASSPIDFD)? != 1 {
+                return Err(invalid("Process-descriptor delivery is unavailable"));
+            }
+        } else {
+            disable_optional(fd.as_fd(), libc::SO_PASSPIDFD)?;
+        }
         disable_optional(fd.as_fd(), libc::SO_PASSSEC)?;
         set_option(fd.as_fd(), libc::SO_PASSCRED, 1)?;
         if option(fd.as_fd(), libc::SO_SNDBUF)? > 8192
@@ -237,28 +272,36 @@ impl Endpoint {
         {
             return Err(io::Error::last_os_error());
         }
-        Ok(Self { fd })
+        Ok(Self { fd, auth })
     }
     pub fn into_descriptor(self) -> OwnedFd {
         self.fd
     }
     pub fn sender(self, peer: Peer) -> io::Result<Sender> {
+        if (self.auth == Auth::Pidfs) != peer.identity.is_some() {
+            return Err(invalid("Endpoint and peer identity profiles differ"));
+        }
         peer.live()?;
         Ok(Sender {
             channel: Bound {
                 fd: Some(self.fd),
                 peer,
+                auth: self.auth,
             },
             serial: 0,
             pending: None,
         })
     }
     pub fn receiver(self, peer: Peer, frames: frame::Receiver) -> io::Result<Receiver> {
+        if (self.auth == Auth::Pidfs) != peer.identity.is_some() {
+            return Err(invalid("Endpoint and peer identity profiles differ"));
+        }
         peer.live()?;
         Ok(Receiver {
             channel: Bound {
                 fd: Some(self.fd),
                 peer,
+                auth: self.auth,
             },
             frames,
             serial: 0,
@@ -274,6 +317,7 @@ impl AsFd for Endpoint {
 struct Bound {
     fd: Option<OwnedFd>,
     peer: Peer,
+    auth: Auth,
 }
 impl Bound {
     fn descriptor(&self) -> io::Result<BorrowedFd<'_>> {
@@ -307,8 +351,18 @@ impl Bound {
     }
     fn receive(&mut self) -> io::Result<(Packet, Option<OwnedFd>)> {
         let result = (|| {
-            let message = receive(self.descriptor()?)?;
-            if !self.peer.matches(message.credential) {
+            let message = receive_with(self.descriptor()?, self.auth)?;
+            let matches = if self.auth == Auth::Pidfs {
+                message.credential.uid == self.peer.uid
+                    && message.credential.gid == self.peer.gid
+                    && message
+                        .pidfd
+                        .as_ref()
+                        .is_some_and(|fd| Identity::read(fd.as_fd()).ok() == self.peer.identity)
+            } else {
+                self.peer.matches(message.credential)
+            };
+            if !matches {
                 return Err(invalid(
                     "Preview message came from an unexpected process or credentials",
                 ));
@@ -405,8 +459,13 @@ struct Message {
     packet: Packet,
     credential: libc::ucred,
     descriptor: Option<OwnedFd>,
+    pidfd: Option<OwnedFd>,
 }
+#[cfg(test)]
 fn receive(fd: BorrowedFd<'_>) -> io::Result<Message> {
+    receive_with(fd, Auth::VisiblePid)
+}
+fn receive_with(fd: BorrowedFd<'_>, auth: Auth) -> io::Result<Message> {
     let mut bytes = [0u8; BYTES];
     let mut iov = libc::iovec {
         iov_base: bytes.as_mut_ptr().cast(),
@@ -422,6 +481,11 @@ fn receive(fd: BorrowedFd<'_>) -> io::Result<Message> {
     message.msg_controllen = unsafe {
         libc::CMSG_SPACE((2 * mem::size_of::<i32>()) as u32)
             + libc::CMSG_SPACE(mem::size_of::<libc::ucred>() as u32)
+            + if auth == Auth::Pidfs {
+                libc::CMSG_SPACE(mem::size_of::<i32>() as u32)
+            } else {
+                0
+            }
     } as usize;
     // SAFETY: initialized bounded message; received FDs are CLOEXEC atomically.
     let count = unsafe {
@@ -435,8 +499,10 @@ fn receive(fd: BorrowedFd<'_>) -> io::Result<Message> {
         return Err(io::Error::last_os_error());
     }
     let mut descriptors = Vec::new();
+    let mut pins = Vec::new();
     let mut credential = None;
     let mut bad = false;
+    let mut allocation_failed = false;
     // Kernel-generated ancillary records are within the supplied fixed buffer.
     // Collect *all* returned rights before any refusal so RAII closes them.
     // SAFETY: CMSG traversal uses kernel-populated lengths in this live message.
@@ -448,15 +514,27 @@ fn receive(fd: BorrowedFd<'_>) -> io::Result<Message> {
             if (*header).cmsg_level == libc::SOL_SOCKET
                 && [libc::SCM_RIGHTS, SCM_PIDFD].contains(&(*header).cmsg_type)
             {
-                bad |= (*header).cmsg_type != libc::SCM_RIGHTS
-                    || !length.is_multiple_of(mem::size_of::<i32>());
+                let process = (*header).cmsg_type == SCM_PIDFD;
+                bad |= !length.is_multiple_of(mem::size_of::<i32>())
+                    || (process && (auth != Auth::Pidfs || length != mem::size_of::<i32>()));
                 for index in 0..length / mem::size_of::<i32>() {
-                    descriptors.push(OwnedFd::from_raw_fd(
-                        libc::CMSG_DATA(header)
-                            .cast::<i32>()
-                            .add(index)
-                            .read_unaligned(),
-                    ));
+                    let raw = libc::CMSG_DATA(header)
+                        .cast::<i32>()
+                        .add(index)
+                        .read_unaligned();
+                    // SCM_PIDFD can carry a negative errno when allocation fails.
+                    // It is not an installed FD; never construct OwnedFd from it.
+                    if raw < 0 {
+                        bad = true;
+                        allocation_failed |= process;
+                        continue;
+                    }
+                    let owned = OwnedFd::from_raw_fd(raw);
+                    if process {
+                        pins.push(owned);
+                    } else {
+                        descriptors.push(owned);
+                    }
                 }
             } else if (*header).cmsg_level == libc::SOL_SOCKET
                 && (*header).cmsg_type == libc::SCM_CREDENTIALS
@@ -477,10 +555,17 @@ fn receive(fd: BorrowedFd<'_>) -> io::Result<Message> {
     if count == 0 {
         return Err(unavailable("Preview peer disconnected"));
     }
+    if allocation_failed {
+        return Err(invalid(
+            "Kernel process identity descriptor allocation failed",
+        ));
+    }
     if count as usize != BYTES
         || bad
         || message.msg_flags & (libc::MSG_TRUNC | libc::MSG_CTRUNC) != 0
         || descriptors.len() > 1
+        || (auth == Auth::Pidfs && pins.len() != 1)
+        || (auth == Auth::VisiblePid && !pins.is_empty())
     {
         return Err(invalid("Invalid or truncated preview packet envelope"));
     }
@@ -489,6 +574,7 @@ fn receive(fd: BorrowedFd<'_>) -> io::Result<Message> {
         credential: credential
             .ok_or_else(|| invalid("Preview message lacks kernel sender credentials"))?,
         descriptor: descriptors.pop(),
+        pidfd: pins.pop(),
     })
 }
 /// Raw pixel acceptance or rate dropping only; never compositor readiness.
@@ -669,3 +755,6 @@ impl Receiver {
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod namespace_tests;

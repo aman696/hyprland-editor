@@ -72,3 +72,7 @@ jobs:
         timeout-minutes: 2
         run: |
           sudo -- /usr/bin/python3 -I -S scripts/cgroup_kernel_probe.py --uid "$(id -u)" --gid "$(id -g)" --test-executable "$(cat "$RUNNER_TEMP/hye-kernel-executable")"
+      - name: Verify live process identity across a private PID namespace
+        timeout-minutes: 2
+        run: |
+          sudo -- /usr/bin/python3 -I -S scripts/cgroup_kernel_probe.py --namespace-channel --uid "$(id -u)" --gid "$(id -g)" --test-executable "$(cat "$RUNNER_TEMP/hye-kernel-executable")"

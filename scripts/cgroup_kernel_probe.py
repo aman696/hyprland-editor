@@ -6,6 +6,10 @@ all privilege before the trusted Rust fixture, and removes its own hierarchy.
 No ancestor controller/limit changes, service units or compositor execution.
 """
 import argparse
+import array
+import ctypes
+import socket
+import struct
 import os
 from pathlib import Path
 import secrets
@@ -97,11 +101,108 @@ def metadata_prerequisites(path):
             raise RuntimeError('Required root controllers are not already enabled; no ancestor changes made')
 
 
+NS_TEST = 'channel::namespace_tests::pidfs_frame_and_receipt_cross_a_private_pid_namespace'
+
+
+def dropped_command(args, binary, environment, test):
+    return ['/usr/bin/setpriv', '--reuid', str(args.uid), '--regid', str(args.gid),
+            '--clear-groups', '--bounding-set=-all', '--inh-caps=-all',
+            '--ambient-caps=-all', '--no-new-privs', '--', '/usr/bin/env', '-i',
+            'LC_ALL=C', *[f'{key}={value}' for key, value in environment.items()],
+            str(binary), '--ignored', '--exact', test, '--nocapture', '--test-threads=1']
+
+
+def packet(kind, serial):
+    return b'HYEIPC01' + bytes([kind]) + bytes(7) + struct.pack('<Q', serial)
+
+
+def bootstrap_frame(channel, expected_pid, uid, gid):
+    data, ancillary, flags, _ = channel.recvmsg(24, socket.CMSG_SPACE(16) + socket.CMSG_SPACE(12), socket.MSG_CMSG_CLOEXEC)
+    rights, credentials, bad = [], [], False
+    try:
+        for level, kind, value in ancillary:
+            if level == socket.SOL_SOCKET and kind in [socket.SCM_RIGHTS, 4]:
+                values = array.array('i')
+                values.frombytes(value[:len(value) - len(value) % values.itemsize])
+                rights.extend(fd for fd in values if fd >= 0)
+                bad |= kind != socket.SCM_RIGHTS or len(value) % values.itemsize != 0 or any(fd < 0 for fd in values)
+            elif level == socket.SOL_SOCKET and kind == socket.SCM_CREDENTIALS and len(value) == 12:
+                credentials.append(struct.unpack('iII', value))
+            else:
+                bad = True
+        if (flags & (socket.MSG_TRUNC | socket.MSG_CTRUNC) or bad or data != packet(1, 1)
+                or len(rights) != 1 or credentials != [(expected_pid, uid, gid)]):
+            raise RuntimeError('Invalid private GUI bootstrap envelope')
+        return rights.pop()
+    finally:
+        for fd in rights:
+            os.close(fd)
+
+
+def namespace_channel(args, binary, driver):
+    # Root creates only its own child's PID namespace. The current namespace
+    # stays unchanged, and all repository test roles execute after setpriv.
+    libc = ctypes.CDLL(None, use_errno=True)
+    libc.unshare.argtypes = [ctypes.c_int]
+    libc.setns.argtypes = [ctypes.c_int, ctypes.c_int]
+    clone_newpid = 0x20000000
+    original = os.open('/proc/self/ns/pid_for_children', os.O_RDONLY | os.O_CLOEXEC)
+    before = os.stat('/proc/self/ns/pid').st_ino
+    left, right = socket.socketpair(socket.AF_UNIX, socket.SOCK_SEQPACKET | socket.SOCK_CLOEXEC | socket.SOCK_NONBLOCK)
+    parent, gui_bootstrap = socket.socketpair(socket.AF_UNIX, socket.SOCK_SEQPACKET | socket.SOCK_CLOEXEC | socket.SOCK_NONBLOCK)
+    for endpoint in [left, right, parent, gui_bootstrap]:
+        endpoint.setsockopt(socket.SOL_SOCKET, socket.SO_PASSCRED, 1)
+    parent.settimeout(10)
+    gui = broker = None
+    frame = gui_pin = broker_pin = None
+    def place():
+        write(driver / 'cgroup.procs', '0')
+    try:
+        command = dropped_command(args, binary, {'HYE_PIDNS_CHANNEL_ROLE': 'gui', 'HYE_PIDNS_DATA_FD': left.fileno(), 'HYE_PIDNS_BOOTSTRAP_FD': gui_bootstrap.fileno()}, NS_TEST)
+        gui = subprocess.Popen(command, pass_fds=(left.fileno(), gui_bootstrap.fileno()), preexec_fn=place,
+                               env={'PATH': '/usr/bin:/bin', 'LC_ALL': 'C'}, stdin=subprocess.DEVNULL)
+        left.close(); gui_bootstrap.close()
+        frame = bootstrap_frame(parent, gui.pid, args.uid, args.gid)
+        gui_pin = os.pidfd_open(gui.pid)
+        if libc.unshare(clone_newpid):
+            raise OSError(ctypes.get_errno(), 'Cannot create the private CI PID namespace')
+        try:
+            command = dropped_command(args, binary, {'HYE_PIDNS_CHANNEL_ROLE': 'broker', 'HYE_PIDNS_DATA_FD': right.fileno(), 'HYE_PIDNS_ANCHOR_FD': gui_pin, 'HYE_PIDNS_FRAME_FD': frame}, NS_TEST)
+            broker = subprocess.Popen(command, pass_fds=(right.fileno(), gui_pin, frame), preexec_fn=place,
+                                      env={'PATH': '/usr/bin:/bin', 'LC_ALL': 'C'}, stdin=subprocess.DEVNULL)
+        finally:
+            if libc.setns(original, clone_newpid):
+                raise OSError(ctypes.get_errno(), 'Cannot restore CI future-child namespace')
+        right.close()
+        broker_pin = os.pidfd_open(broker.pid)
+        if parent.sendmsg([packet(1, 1)], [(socket.SOL_SOCKET, socket.SCM_RIGHTS, array.array('i', [broker_pin]))], socket.MSG_NOSIGNAL) != 24:
+            raise RuntimeError('Partial private process-anchor transfer')
+        if broker.wait(timeout=12):
+            raise RuntimeError('Namespace broker did not verify the receipt')
+        if parent.send(packet(2, 2), socket.MSG_NOSIGNAL) != 24:
+            raise RuntimeError('Partial namespace completion receipt')
+        if gui.wait(timeout=12):
+            raise RuntimeError('GUI role did not verify exact pixels and teardown')
+        if os.stat('/proc/self/ns/pid').st_ino != before:
+            raise RuntimeError('CI setup current PID namespace changed')
+        print('Private PID namespace channel passed; current setup namespace unchanged', flush=True)
+    finally:
+        for child in [broker, gui]:
+            if child is not None and child.poll() is None:
+                child.kill(); child.wait(timeout=3)
+        for endpoint in [left, right, parent, gui_bootstrap]:
+            endpoint.close()
+        for fd in [frame, gui_pin, broker_pin, original]:
+            if fd is not None:
+                os.close(fd)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--uid', type=int, required=True)
     parser.add_argument('--gid', type=int, required=True)
     parser.add_argument('--test-executable', type=Path, required=True)
+    parser.add_argument('--namespace-channel', action='store_true')
     args = parser.parse_args()
     if os.geteuid() != 0 or args.uid <= 0 or args.gid <= 0:
         raise SystemExit('Use root only for CI setup, with a non-root fixture UID/GID')
@@ -141,11 +242,11 @@ def main():
         os.chown(path, args.uid, args.gid)
         for name in ['cgroup.procs', 'cgroup.threads', 'cgroup.subtree_control']:
             os.chown(path / name, args.uid, args.gid)
-        command = ['/usr/bin/setpriv', '--reuid', str(args.uid), '--regid', str(args.gid),
-                   '--clear-groups', '--bounding-set=-all', '--inh-caps=-all',
-                   '--ambient-caps=-all', '--no-new-privs', '--', '/usr/bin/env', '-i',
-                   'LC_ALL=C', f'HYE_CGROUP_TEST_ROOT={path}', str(binary), '--ignored',
-                   '--exact', TEST, '--nocapture', '--test-threads=1']
+        if args.namespace_channel:
+            print('Kernel observation:', os.uname().release, flush=True)
+            namespace_channel(args, binary, driver)
+            return
+        command = dropped_command(args, binary, {'HYE_CGROUP_TEST_ROOT': path}, TEST)
         # This single-threaded CI setup process uses preexec only to place its
         # own child in the bounded driver leaf. setpriv drops privilege before
         # executing any repository test code. No caller-selected PID is moved.

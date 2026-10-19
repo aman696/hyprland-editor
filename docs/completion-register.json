@@ -366,6 +366,24 @@
       "limits": "three binary-identified private Xvfb/bus empty-workspace trials below 100 MiB sampled process-tree PSS and under 0.1 percent observed CPU over 60 seconds; short CPU windows cannot pass; no representative source/review/history/worker, physical Wayland/GPU/accessibility, latency, large-import, event/asset/preview or long-session resource certificate"
     },
     {
+      "area": "explicit pidfs process-object channel profile",
+      "code": [
+        "crates/editor-preview/src/channel/identity.rs",
+        "crates/editor-preview/src/channel/namespace_tests.rs",
+        "crates/editor-preview/src/channel.rs",
+        "scripts/cgroup_kernel_probe.py"
+      ],
+      "test_references": [
+        "pidfs_profile_and_explicit_anchor_transfer_real_child_frames_and_receipts",
+        "pidfs_auth_refuses_another_live_process_even_with_matching_user_credentials",
+        "identity_profiles_and_plain_or_dead_descriptors_cannot_replace_process_capabilities",
+        "pidfs_process_identity_rejects_thread_scoped_handles",
+        "unexpected_pidfd_records_are_closed_and_inheritance_disables_them",
+        "pidfs_frame_and_receipt_cross_a_private_pid_namespace"
+      ],
+      "limits": "explicit 64-bit pidfs identity and per-message kernel process descriptors, native live-anchor/profile checks and negative descriptor-allocation failure handling with actual exhaustion/rights closure; ordinary-process tests pass and opt-in PID namespace fixture is prepared but exact positive execution is pending; no user-namespace credential mapping, runtime/image/private proc/syscall/device/network/IPC, compositor/input, lifecycle or full preview/security certificate"
+    },
+    {
       "area": "private frame channel and process correlation",
       "code": [
         "crates/editor-preview/src/channel.rs",

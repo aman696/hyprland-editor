@@ -18,6 +18,8 @@ A [private frame channel](preview-channel.md) now transfers sealed synthetic fra
 
 An [opt-in kernel fixture](preview-kernel-tests.md) passed two ephemeral CI jobs: default CPU throttling, leaf OOM handling, task refusal and static descendant/provider cleanup were observed on the recorded kernel profile. This does not certify the production launcher or full runtime isolation. The developer host's missing CPU delegation remains unchanged; all production preview and original full-product gates remain required.
 
+The [explicit pidfs transport profile](preview-pidfs-channel.md) now passes ordinary live-anchor and descriptor-exhaustion tests. The dedicated cross-PID-namespace fixture is prepared but unverified until exact CI execution. Runtime and compositor integration, other namespace/policy boundaries and all original completion gates remain open.
+
 The existing engineering blueprint remains the design authority. This register maps it to the code and tracks the next concrete steps. A checked design requirement is not an implemented feature or runtime certificate. The [full completion register](completion-register.md) tracks every original contract and gate without shrinking the goal to the available foundations.
 
 ## Earlier primitive codec increment

@@ -2,6 +2,8 @@
 
 `crates/editor-preview/src/channel.rs` connects the sealed raw-frame producer and receiver through an unnamed Unix sequenced-packet socket pair. It transfers synthetic frames between real processes. It does not yet connect to a compositor, negotiate Wayland protocols, route input or establish a certified sandbox profile.
 
+An [explicit pidfs profile](preview-pidfs-channel.md) now adds native process-object identity for namespace integration, with separately selected endpoint/peer types and strict unsupported-kernel refusal. Its ordinary tests pass; cross-PID-namespace execution remains pending the dedicated fixture. The numeric profile described below remains scoped to visible PIDs.
+
 ## Endpoint and process ownership
 
 The factory creates close-on-exec, nonblocking endpoints. An explicitly inherited endpoint must be an unnamed, connected local sequenced-packet socket; ordinary files, stream sockets and named endpoints are refused. The API never connects to a pathname or a host display. It configures sender credentials and a small send buffer, checks the resulting settings, and exposes borrowed socket/process descriptors for future event-loop integration.

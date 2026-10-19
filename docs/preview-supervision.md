@@ -41,6 +41,8 @@ The next increment implements a [sealed raw frame boundary](preview-frames.md), 
 
 The [opt-in kernel fixture](preview-kernel-tests.md) passed two dedicated ephemeral CI jobs with recorded counters and strict cleanup. No desktop delegation was changed to run it.
 
+The next [pidfs channel profile](preview-pidfs-channel.md) addresses PID translation without falling back to numeric identity. The dedicated namespace fixture is prepared; local ordinary-process checks are distinct from positive namespace evidence.
+
 ## Required next implementation and proof
 
 The original blueprint remains mandatory. Before a candidate config can run, implement a dedicated resource provider, stopped-child membership and readback, descriptor and environment filtering, a verified immutable runtime image, private root/proc and namespaces, device/IPC/network restrictions, the syscall policy and a supervisor whose teardown survives crashes and cancellation. Record exact compositor/library/renderer identity and enforce profile limits through kernel observations.

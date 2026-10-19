@@ -105,6 +105,12 @@ fn high(fd: std::os::fd::BorrowedFd<'_>) -> OwnedFd {
 fn spawn(mode: &str, socket: Endpoint, frame: OwnedFd) -> Process {
     let socket = high(socket.as_fd());
     let frame = high(frame.as_fd());
+    let anchor = if mode.starts_with("pidfs") {
+        Some(high(Peer::current_pidfs().unwrap().process_descriptor()))
+    } else {
+        None
+    };
+    let anchor_fd = anchor.as_ref().map(AsRawFd::as_raw_fd);
     let socket_fd = socket.as_raw_fd();
     let frame_fd = frame.as_raw_fd();
     let mut command = Command::new(std::env::current_exe().unwrap());
@@ -127,6 +133,11 @@ fn spawn(mode: &str, socket: Endpoint, frame: OwnedFd) -> Process {
             if libc::dup2(socket_fd, 3) < 0 || libc::dup2(frame_fd, 4) < 0 {
                 return Err(io::Error::last_os_error());
             }
+            if let Some(anchor) = anchor_fd {
+                if libc::dup2(anchor, 5) < 0 {
+                    return Err(io::Error::last_os_error());
+                }
+            }
             Ok(())
         });
     }
@@ -135,21 +146,30 @@ fn spawn(mode: &str, socket: Endpoint, frame: OwnedFd) -> Process {
 fn worker(mode: &str) {
     // SAFETY: this private test launcher transfers unique owned FDs 3/4 at exec.
     let (endpoint, payload) = unsafe { (OwnedFd::from_raw_fd(3), OwnedFd::from_raw_fd(4)) };
-    let parent = std::env::var("HYE_FRAME_CHANNEL_PARENT")
-        .unwrap()
-        .parse()
-        .unwrap();
-    let mut sender = Endpoint::inherited(endpoint)
-        .unwrap()
-        .sender(Peer::parent(parent).unwrap())
-        .unwrap();
+    let mut sender = if mode.starts_with("pidfs") {
+        // SAFETY: this role's private launcher transferred one owned anchor at5.
+        let anchor = unsafe { OwnedFd::from_raw_fd(5) };
+        Endpoint::pidfs_inherited(endpoint)
+            .unwrap()
+            .sender(Peer::from_pidfd(anchor.as_fd()).unwrap())
+            .unwrap()
+    } else {
+        let parent = std::env::var("HYE_FRAME_CHANNEL_PARENT")
+            .unwrap()
+            .parse()
+            .unwrap();
+        Endpoint::inherited(endpoint)
+            .unwrap()
+            .sender(Peer::parent(parent).unwrap())
+            .unwrap()
+    };
     if mode == "wait" {
         std::thread::sleep(Duration::from_secs(5));
         panic!("Parent did not finish its private fixture");
     }
     sender.try_send(payload).unwrap();
     let result = retry(|| sender.try_receipt());
-    if mode == "wrong-peer" {
+    if mode == "wrong-peer" || mode == "pidfs-wrong" {
         assert!(result.is_err());
     } else {
         assert_eq!(result.unwrap(), Receipt::Accepted);
@@ -310,4 +330,90 @@ fn sender_observes_a_dead_pinned_child_and_closes_instead_of_waiting_for_a_recei
         io::ErrorKind::BrokenPipe
     );
     assert!(sender.poll_descriptor().is_err());
+}
+
+#[test]
+fn pidfs_profile_and_explicit_anchor_transfer_real_child_frames_and_receipts() {
+    let session = Session::new().unwrap();
+    let (left, right) = Endpoint::pidfs_pair().unwrap();
+    let mut child = spawn("pidfs", right, pixels(session, 1));
+    let mut receiver = left
+        .receiver(
+            Peer::child_pidfs(&mut child.0).unwrap(),
+            frame::Receiver::new(session, 5).unwrap(),
+        )
+        .unwrap();
+    assert_eq!(retry(|| receiver.try_receive()).unwrap(), Receipt::Accepted);
+    assert_eq!(
+        receiver.latest().unwrap().pixels(),
+        &[1, 2, 3, 4, 5, 6, 7, 8]
+    );
+    assert!(retry(|| child
+        .0
+        .try_wait()?
+        .ok_or_else(|| io::Error::from(io::ErrorKind::WouldBlock)))
+    .unwrap()
+    .success());
+}
+#[test]
+fn pidfs_auth_refuses_another_live_process_even_with_matching_user_credentials() {
+    let session = Session::new().unwrap();
+    let (left, right) = Endpoint::pidfs_pair().unwrap();
+    let mut child = spawn("pidfs-wrong", right, pixels(session, 1));
+    let mut receiver = left
+        .receiver(
+            Peer::current_pidfs().unwrap(),
+            frame::Receiver::new(session, 5).unwrap(),
+        )
+        .unwrap();
+    assert_eq!(
+        retry(|| receiver.try_receive()).unwrap_err().kind(),
+        io::ErrorKind::InvalidData
+    );
+    assert!(receiver.latest().is_none());
+    assert!(receiver.poll_descriptor().is_err());
+    assert!(retry(|| child
+        .0
+        .try_wait()?
+        .ok_or_else(|| io::Error::from(io::ErrorKind::WouldBlock)))
+    .unwrap()
+    .success());
+}
+#[test]
+fn identity_profiles_and_plain_or_dead_descriptors_cannot_replace_process_capabilities() {
+    let (left, _) = Endpoint::pidfs_pair().unwrap();
+    assert!(left.sender(Peer::current().unwrap()).is_err());
+    let (left, _) = Endpoint::pair().unwrap();
+    assert!(left.sender(Peer::current_pidfs().unwrap()).is_err());
+    for path in ["/dev/null", "/proc/self", "/tmp"] {
+        assert!(Peer::from_pidfd(std::fs::File::open(path).unwrap().as_fd()).is_err());
+    }
+    let session = Session::new().unwrap();
+    let (left, right) = Endpoint::pidfs_pair().unwrap();
+    let mut child = spawn("wait", right, pixels(session, 1));
+    let peer = Peer::child_pidfs(&mut child.0).unwrap();
+    child.0.kill().unwrap();
+    child.0.wait().unwrap();
+    assert!(Peer::from_pidfd(peer.process_descriptor()).is_err());
+    drop(left);
+}
+#[test]
+fn pidfs_process_identity_rejects_thread_scoped_handles() {
+    // SAFETY: fixed thread ID/flag queries; successful pidfd_open creates ownership.
+    let raw = unsafe {
+        libc::syscall(
+            libc::SYS_pidfd_open,
+            libc::syscall(libc::SYS_gettid),
+            libc::O_EXCL,
+        )
+    };
+    assert!(
+        raw >= 0,
+        "This tested pidfs profile requires thread-scoped pidfd support"
+    );
+    let thread = unsafe { OwnedFd::from_raw_fd(raw as i32) };
+    assert_eq!(
+        Peer::from_pidfd(thread.as_fd()).err().unwrap().kind(),
+        io::ErrorKind::InvalidData
+    );
 }
