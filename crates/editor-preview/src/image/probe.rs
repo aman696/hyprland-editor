@@ -175,7 +175,9 @@ fn sealed_runtime_executes_only_inside_private_root_and_namespaces() {
     let host_path =
         std::env::var("HYE_RUNTIME_PROBE_HOST_CANARY").expect("Explicit CI canary required");
     let _host_file = File::open(&host_path).unwrap();
-    let mut command = Command::new("/usr/bin/bwrap");
+    let mut command = Command::new(
+        std::env::var_os("HYE_RUNTIME_BWRAP_BIN").expect("Explicit trusted constructor required"),
+    );
     command
         .env_clear()
         .env("LC_ALL", "C")
@@ -336,6 +338,17 @@ fn sealed_runtime_executes_only_inside_private_root_and_namespaces() {
         .unwrap();
     assert!(out.len() <= 16384 && err.len() <= 16384);
     eprintln!("HYE_RUNTIME_IMAGE {}\n{out}{err}", image.identity());
+    if std::env::var("HYE_RUNTIME_EXPECT_UNAVAILABLE").as_deref() == Ok("1") {
+        // Separate compatibility refusal, never counted as positive execution.
+        assert_eq!(status.code(), Some(1));
+        assert!(out.is_empty());
+        assert_eq!(
+            err.trim(),
+            "bwrap: loopback: Failed RTM_NEWADDR: Operation not permitted"
+        );
+        eprintln!("HYE_RUNTIME_UNAVAILABLE constructor refused before trusted probe execution");
+        return;
+    }
     assert!(status.success(), "Private runtime probe failed: {status}");
     assert!(out.contains("HYE_RUNTIME_RESULT all boundary assertions passed"));
 }

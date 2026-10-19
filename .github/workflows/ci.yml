@@ -83,7 +83,41 @@ jobs:
         timeout-minutes: 2
         run: |
           sudo -- /usr/bin/python3 -I -S scripts/cgroup_kernel_probe.py --namespace-channel --uid "$(id -u)" --gid "$(id -g)" --test-executable "$(cat "$RUNNER_TEMP/hye-kernel-executable")"
-      - name: Verify sealed runtime image and private filesystem namespace boundaries
+      - name: Verify constructor refusal before private execution on this restricted profile
         timeout-minutes: 2
         run: |
-          sudo -- /usr/bin/python3 -I -S scripts/cgroup_kernel_probe.py --runtime-image-probe --probe-binary "$RUNNER_TEMP/hye-runtime-probe" --uid "$(id -u)" --gid "$(id -g)" --test-executable "$(cat "$RUNNER_TEMP/hye-kernel-executable")"
+          sudo -- /usr/bin/python3 -I -S scripts/cgroup_kernel_probe.py --runtime-image-probe --expect-runtime-unavailable --probe-binary "$RUNNER_TEMP/hye-runtime-probe" --uid "$(id -u)" --gid "$(id -g)" --test-executable "$(cat "$RUNNER_TEMP/hye-kernel-executable")"
+
+  runtime-image:
+    # Distinct compatibility profile. Never weaken Ubuntu 24.04 policy to pass.
+    runs-on: ubuntu-22.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Build reviewed constructor and trusted static fixture
+        run: |
+          sudo apt-get update && sudo apt-get install -y meson ninja-build libcap-dev
+          python3 -I -S scripts/build_bwrap_probe.py --output "$RUNNER_TEMP/hye-bwrap"
+          cc -std=c11 -O2 -Wall -Wextra -Werror -static -o "$RUNNER_TEMP/hye-runtime-probe" crates/editor-preview/tests/fixtures/runtime_probe.c
+          test -z "$(readelf -l "$RUNNER_TEMP/hye-runtime-probe" | sed -n '/INTERP/p')"
+          sha256sum "$RUNNER_TEMP/hye-bwrap" "$RUNNER_TEMP/hye-runtime-probe"
+          "$RUNNER_TEMP/hye-bwrap" --version
+      - name: Pinned test toolchain
+        run: rustup toolchain install 1.90.0 --profile minimal
+      - name: Compile trusted image driver without executing it
+        run: |
+          cargo test --locked -p hyprland-editor-preview --lib --no-run --message-format=json > "$RUNNER_TEMP/hye-image-build.jsonl"
+          python3 -I -S - <<'PYCODE'
+          import json, os
+          from pathlib import Path
+          rows=[json.loads(line) for line in (Path(os.environ['RUNNER_TEMP'])/'hye-image-build.jsonl').read_text().splitlines()]
+          binaries={row['executable'] for row in rows if row.get('reason')=='compiler-artifact' and row.get('target',{}).get('name')=='hyprland_editor_preview' and row.get('executable')}
+          assert len(binaries)==1, 'Expected one exact preview library test executable'
+          (Path(os.environ['RUNNER_TEMP'])/'hye-image-executable').write_text(next(iter(binaries)))
+          PYCODE
+      - name: Test private runtime image and namespaces without a host security override
+        timeout-minutes: 2
+        run: |
+          sudo -- /usr/bin/python3 -I -S scripts/cgroup_kernel_probe.py --runtime-image-probe --constructor-binary "$RUNNER_TEMP/hye-bwrap" --probe-binary "$RUNNER_TEMP/hye-runtime-probe" --uid "$(id -u)" --gid "$(id -g)" --test-executable "$(cat "$RUNNER_TEMP/hye-image-executable")"

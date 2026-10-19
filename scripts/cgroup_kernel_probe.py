@@ -208,21 +208,26 @@ def main():
     modes.add_argument('--namespace-channel', action='store_true')
     modes.add_argument('--runtime-image-probe', action='store_true')
     parser.add_argument('--probe-binary', type=Path)
+    parser.add_argument('--constructor-binary', type=Path)
+    parser.add_argument('--expect-runtime-unavailable', action='store_true')
     args = parser.parse_args()
     if os.geteuid() != 0 or args.uid <= 0 or args.gid <= 0:
         raise SystemExit('Use root only for CI setup, with a non-root fixture UID/GID')
     binary = args.test_executable.resolve(strict=True)
     if not binary.is_file():
         raise SystemExit('An already compiled trusted test executable is required')
-    probe = None
+    probe = constructor = None
     if args.runtime_image_probe:
         if args.probe_binary is None:
             raise SystemExit('The runtime test requires the already compiled trusted static probe')
         probe = args.probe_binary.resolve(strict=True)
         if not probe.is_file():
             raise SystemExit('Missing trusted static probe')
-    elif args.probe_binary is not None:
-        raise SystemExit('A static probe is accepted only for the runtime-image test')
+        constructor = (args.constructor_binary or Path('/usr/bin/bwrap')).resolve(strict=True)
+        if not constructor.is_file():
+            raise SystemExit('Missing trusted namespace constructor')
+    elif args.probe_binary is not None or args.constructor_binary is not None or args.expect_runtime_unavailable:
+        raise SystemExit('Runtime arguments are accepted only for the runtime-image test')
     fs = subprocess.run(['/usr/bin/stat', '-f', '-c', '%T', str(ROOT)],
                         capture_output=True, text=True, timeout=3, check=True).stdout.strip()
     if fs != 'cgroup2fs':
@@ -268,7 +273,9 @@ def main():
             canary.chmod(0o600)
             os.chown(canary, args.uid, args.gid)
             os.chown(temporary, args.uid, args.gid)
-            environment = ({'HYE_RUNTIME_PROBE_BIN': probe, 'HYE_RUNTIME_PROBE_HOST_CANARY': canary}
+            environment = ({'HYE_RUNTIME_PROBE_BIN': probe, 'HYE_RUNTIME_BWRAP_BIN': constructor,
+                            'HYE_RUNTIME_EXPECT_UNAVAILABLE': int(args.expect_runtime_unavailable),
+                            'HYE_RUNTIME_PROBE_HOST_CANARY': canary}
                            if args.runtime_image_probe else {'HYE_CGROUP_TEST_ROOT': path})
             command = dropped_command(args, binary, environment, RUNTIME_TEST if args.runtime_image_probe else TEST)
             # This single-threaded CI setup process places only its own child
