@@ -270,6 +270,7 @@ fn sealed_runtime_executes_only_inside_private_root_and_namespaces() {
         ("XDG_CACHE_HOME", "/state/cache"),
         ("LC_ALL", "C"),
         ("TMPDIR", "/tmp"),
+        ("PWD", "/tmp"),
     ] {
         command.args(["--setenv", key, value]);
     }

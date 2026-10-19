@@ -98,10 +98,10 @@ int main(int argc, char **argv) {
         CHECK(statfs(mounts[i], &fs) == 0 && fs.f_type == 0x01021994);
         CHECK((unsigned long long)fs.f_bsize * fs.f_blocks <= sizes[i]);
     }
-    size_t count = 0; while (environ[count]) ++count; CHECK(count == 7);
-    const char *keys[] = {"HOME", "XDG_RUNTIME_DIR", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME", "LC_ALL", "TMPDIR"};
-    const char *values[] = {"/home/lab", "/run/lab", "/state/config", "/state/data", "/state/cache", "C", "/tmp"};
-    for (size_t i = 0; i < 7; ++i) CHECK(getenv(keys[i]) && strcmp(getenv(keys[i]), values[i]) == 0);
+    size_t count = 0; while (environ[count]) ++count; CHECK(count == 8);
+    const char *keys[] = {"HOME", "XDG_RUNTIME_DIR", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME", "LC_ALL", "TMPDIR", "PWD"};
+    const char *values[] = {"/home/lab", "/run/lab", "/state/config", "/state/data", "/state/cache", "C", "/tmp", "/tmp"};
+    for (size_t i = 0; i < 8; ++i) CHECK(getenv(keys[i]) && strcmp(getenv(keys[i]), values[i]) == 0);
     int unix_socket = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0); CHECK(unix_socket >= 0);
     struct sockaddr_un address = {.sun_family = AF_UNIX};
     CHECK(strlen(argv[2]) < sizeof(address.sun_path) - 1);
