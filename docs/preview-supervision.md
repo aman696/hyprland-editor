@@ -10,7 +10,7 @@ Creation requires a normal, empty delegation domain with CPU, memory and process
 
 Explicit cleanup kills through the held private control descriptor, checks kernel population with a bounded wait, compares the held directory identity with the current parent entry and requests nonrecursive removal. A timeout, malformed population reply or failed removal is an error. Destruction is only a best-effort fallback. Preparation errors preserve cleanup errors and the generated identity when cleanup cannot be proved. If creation succeeds but the directory cannot be opened, the result identifies unresolved creation rather than removing an unverified pathname.
 
-This is not complete teardown certification. Identity comparison and pathname removal are separate operations. A provider must ensure exclusive ownership of the delegated parent; concurrent same-user substitution between those operations remains an open certification case. Real kernel limit enforcement, successful migration, descendants, OOM and failure/race behavior require a properly dedicated test delegation. Ordinary-directory fixtures exercise refusal and POSIX failure handling; they cannot establish positive cgroup behavior.
+This is not complete teardown certification. Identity comparison and pathname removal are separate operations. A provider must ensure exclusive ownership of the delegated parent; concurrent same-user substitution between those operations remains an open certification case. A dedicated [CI kernel fixture](preview-kernel-tests.md) now demonstrates default limit enforcement, trusted self-placement, OOM and static descendant teardown on the recorded kernel profile. Production stopped-child migration, hostile concurrent/failure/crash behavior and full lab teardown remain unproven. Ordinary-directory fixtures exercise refusal and POSIX failure handling; they cannot establish positive cgroup behavior.
 
 ## Read-only diagnostic
 
@@ -39,7 +39,7 @@ The DRM reopen and allocation adapters never open a device or create a real allo
 
 The next increment implements a [sealed raw frame boundary](preview-frames.md), with bounded synthetic pixel buffers and strict descriptor/header validation. A [private process-correlated frame channel](preview-channel.md) transfers synthetic frames; compositor capture and the certified broker/runtime/resource profile remain unfinished.
 
-An [opt-in kernel fixture](preview-kernel-tests.md) is prepared for a dedicated ephemeral CI VM. Local compilation is separate from positive enforcement evidence; no desktop delegation was changed to run it.
+The [opt-in kernel fixture](preview-kernel-tests.md) passed two dedicated ephemeral CI jobs with recorded counters and strict cleanup. No desktop delegation was changed to run it.
 
 ## Required next implementation and proof
 

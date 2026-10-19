@@ -405,12 +405,13 @@
         "crates/editor-preview/src/cgroup/kernel_tests.rs",
         "scripts/cgroup_kernel_probe.py",
         "scripts/test_cgroup_kernel_probe.py",
-        ".github/workflows/ci.yml"
+        ".github/workflows/ci.yml",
+        "data/preview-ci-resource-observation.json"
       ],
       "test_references": [
         "delegated_kernel_limits_enforce_and_teardown_whole_subtrees"
       ],
-      "limits": "compiled opt-in fixture and ephemeral CI provider for default CPU/memory/task enforcement and whole-subtree cleanup, private-only controller setup and privilege-dropped trusted workers with live resource tokens; positive execution pending exact hosted results; no developer-host controller modification, production stopped-child/compositor launch, concurrent-race/runtime/profile/crash/flooding or full preview/security certificate"
+      "limits": "two exact ephemeral CI kernel jobs observed default CPU throttling, leaf memory OOM handling, task refusal and private subtree/provider removal on one Linux kernel profile, with private-only controller setup and privilege-dropped trusted workers using live resource tokens; no developer-host controller modification, production stopped-child/compositor launch, concurrent-race/runtime/profile/crash/flooding or full preview/security certificate"
     },
     {
       "area": "preview resource preparation and backend feasibility",
@@ -432,7 +433,7 @@
         "original_backend_observations_distinguish_headless_start_from_null_and_rendering",
         "scripts/preview_backend_probe.py --check"
       ],
-      "limits": "live-FD cgroup v2 validation and bounded private leaf preparation/cleanup, no parent controller changes, explicit preparation/cleanup errors, read-only selected delegation diagnostic and 32 original backend-start observations with inert device/allocator adapters; no positive kernel resource/membership proof, exclusive-provider or concurrent teardown-race certificate, runtime image/private root/proc/syscall/device/IPC boundary, compositor execution, actual software-rendering/frame/input profile, crash supervision or full preview/security acceptance"
+      "limits": "live-FD cgroup v2 validation and bounded private leaf preparation/cleanup, no parent controller changes, explicit preparation/cleanup errors, read-only selected delegation diagnostic and 32 original backend-start observations with inert device/allocator adapters; positive default-kernel mechanisms and trusted test self-placement observed separately in ephemeral CI; no production membership/exclusive-provider or concurrent teardown-race certificate, runtime image/private root/proc/syscall/device/IPC boundary, compositor execution, actual software-rendering/frame/input profile, crash supervision or full preview/security acceptance"
     },
     {
       "area": "read-only selected-session inspection",
