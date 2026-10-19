@@ -41,7 +41,7 @@ The next increment implements a [sealed raw frame boundary](preview-frames.md), 
 
 The [opt-in kernel fixture](preview-kernel-tests.md) passed two dedicated ephemeral CI jobs with recorded counters and strict cleanup. No desktop delegation was changed to run it.
 
-The next [pidfs channel profile](preview-pidfs-channel.md) addresses PID translation without falling back to numeric identity. The dedicated namespace fixture is prepared; local ordinary-process checks are distinct from positive namespace evidence.
+The next [pidfs channel profile](preview-pidfs-channel.md) addresses PID translation without falling back to numeric identity. Two dedicated PID-namespace exchanges have passed with recorded source/log hashes. User-namespace mapping, other isolation boundaries and production lifecycle remain unproved.
 
 ## Required next implementation and proof
 

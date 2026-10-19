@@ -371,7 +371,8 @@
         "crates/editor-preview/src/channel/identity.rs",
         "crates/editor-preview/src/channel/namespace_tests.rs",
         "crates/editor-preview/src/channel.rs",
-        "scripts/cgroup_kernel_probe.py"
+        "scripts/cgroup_kernel_probe.py",
+        "data/preview-ci-pidfs-observation.json"
       ],
       "test_references": [
         "pidfs_profile_and_explicit_anchor_transfer_real_child_frames_and_receipts",
@@ -381,7 +382,7 @@
         "unexpected_pidfd_records_are_closed_and_inheritance_disables_them",
         "pidfs_frame_and_receipt_cross_a_private_pid_namespace"
       ],
-      "limits": "explicit 64-bit pidfs identity and per-message kernel process descriptors, native live-anchor/profile checks and negative descriptor-allocation failure handling with actual exhaustion/rights closure; ordinary-process tests pass and opt-in PID namespace fixture is prepared but exact positive execution is pending; no user-namespace credential mapping, runtime/image/private proc/syscall/device/network/IPC, compositor/input, lifecycle or full preview/security certificate"
+      "limits": "explicit 64-bit pidfs identity and per-message kernel process descriptors, native live-anchor/profile checks and negative descriptor-allocation failure handling with actual exhaustion/rights closure; ordinary-process and two exact ephemeral CI PID-only namespace exchanges pass with recorded source/log hashes; no user-namespace credential mapping, runtime/image/private proc/syscall/device/network/IPC, compositor/input, lifecycle or full preview/security certificate"
     },
     {
       "area": "private frame channel and process correlation",
@@ -400,7 +401,7 @@
         "blocked_receipts_prevent_more_frame_reads_and_stop_closes_queued_rights",
         "unexpected_pidfd_records_are_closed_and_inheritance_disables_them"
       ],
-      "limits": "unnamed nonblocking sequenced-packet FD transfer with per-message kernel credentials/live process pins, one cooperative in-flight frame/matching receipt, bounded per-call parsing, owned pixel buffers and fatal/explicit stop release, actual child IPC and pipe-EOF descriptor closure checks; no executable/projection attestation, cross-namespace credential/profile proof, hard kernel FD queue quota or malicious-peer resource containment, compositor capture/input, event-loop/crash supervision, whole-lab teardown or full preview/security certificate"
+      "limits": "unnamed nonblocking sequenced-packet FD transfer with per-message kernel credentials/live process pins, one cooperative in-flight frame/matching receipt, bounded per-call parsing, owned pixel buffers and fatal/explicit stop release, actual child IPC and pipe-EOF descriptor closure checks; no executable/projection attestation, user-namespace credential mapping/full profile proof, hard kernel FD queue quota or malicious-peer resource containment, compositor capture/input, event-loop/crash supervision, whole-lab teardown or full preview/security certificate"
     },
     {
       "area": "sealed raw preview frame boundary",
