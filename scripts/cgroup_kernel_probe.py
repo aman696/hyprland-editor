@@ -103,6 +103,7 @@ def metadata_prerequisites(path):
 
 
 NS_TEST = 'channel::namespace_tests::pidfs_frame_and_receipt_cross_a_private_pid_namespace'
+USERNS_TEST = 'channel::namespace_tests::pidfs_frame_and_receipt_cross_mapped_user_and_pid_namespaces'
 RUNTIME_TEST = 'image::probe::sealed_runtime_executes_only_inside_private_root_and_namespaces'
 
 
@@ -141,7 +142,7 @@ def bootstrap_frame(channel, expected_pid, uid, gid):
             os.close(fd)
 
 
-def namespace_channel(args, binary, driver):
+def namespace_channel(args, binary, driver, mapped=False):
     # Root creates only its own child's PID namespace. The current namespace
     # stays unchanged, and all repository test roles execute after setpriv.
     libc = ctypes.CDLL(None, use_errno=True)
@@ -150,6 +151,9 @@ def namespace_channel(args, binary, driver):
     clone_newpid = 0x20000000
     original = os.open('/proc/self/ns/pid_for_children', os.O_RDONLY | os.O_CLOEXEC)
     before = os.stat('/proc/self/ns/pid').st_ino
+    user_before = os.stat('/proc/self/ns/user').st_ino
+    mount_before = os.stat('/proc/self/ns/mnt').st_ino
+    test = USERNS_TEST if mapped else NS_TEST
     left, right = socket.socketpair(socket.AF_UNIX, socket.SOCK_SEQPACKET | socket.SOCK_CLOEXEC | socket.SOCK_NONBLOCK)
     parent, gui_bootstrap = socket.socketpair(socket.AF_UNIX, socket.SOCK_SEQPACKET | socket.SOCK_CLOEXEC | socket.SOCK_NONBLOCK)
     for endpoint in [left, right, parent, gui_bootstrap]:
@@ -160,7 +164,7 @@ def namespace_channel(args, binary, driver):
     def place():
         write(driver / 'cgroup.procs', '0')
     try:
-        command = dropped_command(args, binary, {'HYE_PIDNS_CHANNEL_ROLE': 'gui', 'HYE_PIDNS_DATA_FD': left.fileno(), 'HYE_PIDNS_BOOTSTRAP_FD': gui_bootstrap.fileno()}, NS_TEST)
+        command = dropped_command(args, binary, {'HYE_PIDNS_CHANNEL_ROLE': 'gui', 'HYE_PIDNS_DATA_FD': left.fileno(), 'HYE_PIDNS_BOOTSTRAP_FD': gui_bootstrap.fileno()}, test)
         gui = subprocess.Popen(command, pass_fds=(left.fileno(), gui_bootstrap.fileno()), preexec_fn=place,
                                env={'PATH': '/usr/bin:/bin', 'LC_ALL': 'C'}, stdin=subprocess.DEVNULL)
         left.close(); gui_bootstrap.close()
@@ -169,7 +173,30 @@ def namespace_channel(args, binary, driver):
         if libc.unshare(clone_newpid):
             raise OSError(ctypes.get_errno(), 'Cannot create the private CI PID namespace')
         try:
-            command = dropped_command(args, binary, {'HYE_PIDNS_CHANNEL_ROLE': 'broker', 'HYE_PIDNS_DATA_FD': right.fileno(), 'HYE_PIDNS_ANCHOR_FD': gui_pin, 'HYE_PIDNS_FRAME_FD': frame}, NS_TEST)
+            environment = {'HYE_PIDNS_CHANNEL_ROLE': 'broker', 'HYE_PIDNS_DATA_FD': right.fileno(), 'HYE_PIDNS_ANCHOR_FD': gui_pin, 'HYE_PIDNS_FRAME_FD': frame}
+            if mapped:
+                environment.update(HYE_PIDNS_OUTER_UID=args.uid, HYE_PIDNS_OUTER_GID=args.gid,
+                                   HYE_PIDNS_OUTER_USER_NS=user_before)
+                # Only fixed system setup tools retain privilege. First make a
+                # private mount/proc for this already-private PID1: id-map tools
+                # use proc paths and must never resolve its PID1 to host init.
+                # The fixed mount constructor alone receives SYS_ADMIN in the
+                # initial namespace. It runs as the future outer fixture user;
+                # self-only UID/GID maps need no subordinate-ID edits/helpers.
+                # No repository executable runs until the inner setpriv has
+                # dropped every capability, bounding bit and supplementary group.
+                command = ['/usr/bin/setpriv', '--reuid', str(args.uid), '--regid', str(args.gid),
+                           '--clear-groups', '--bounding-set=-all,+sys_admin',
+                           '--inh-caps=-all,+sys_admin', '--ambient-caps=-all,+sys_admin', '--no-new-privs', '--',
+                           '/usr/bin/unshare', '--mount', '--propagation', 'private', '--mount-proc', '--',
+                           '/usr/bin/unshare', '--user', '--map-user=1000', '--map-group=1000', '--keep-caps', '--',
+                           '/usr/bin/setpriv', '--reuid=1000', '--regid=1000', '--keep-groups',
+                           '--bounding-set=-all', '--inh-caps=-all', '--ambient-caps=-all', '--no-new-privs',
+                           '--', '/usr/bin/env', '-i', 'LC_ALL=C',
+                           *[f'{key}={value}' for key, value in environment.items()],
+                           str(binary), '--ignored', '--exact', test, '--nocapture', '--test-threads=1']
+            else:
+                command = dropped_command(args, binary, environment, test)
             broker = subprocess.Popen(command, pass_fds=(right.fileno(), gui_pin, frame), preexec_fn=place,
                                       env={'PATH': '/usr/bin:/bin', 'LC_ALL': 'C'}, stdin=subprocess.DEVNULL)
         finally:
@@ -187,7 +214,11 @@ def namespace_channel(args, binary, driver):
             raise RuntimeError('GUI role did not verify exact pixels and teardown')
         if os.stat('/proc/self/ns/pid').st_ino != before:
             raise RuntimeError('CI setup current PID namespace changed')
+        if os.stat('/proc/self/ns/user').st_ino != user_before or os.stat('/proc/self/ns/mnt').st_ino != mount_before:
+            raise RuntimeError('CI setup user/mount namespace changed')
         print('Private PID namespace channel passed; current setup namespace unchanged', flush=True)
+        if mapped:
+            print('HYE_USERNS_PROVIDER mapped channel passed; setup user/mount/PID namespaces unchanged', flush=True)
     finally:
         for child in [broker, gui]:
             if child is not None and child.poll() is None:
@@ -206,6 +237,7 @@ def main():
     parser.add_argument('--test-executable', type=Path, required=True)
     modes = parser.add_mutually_exclusive_group()
     modes.add_argument('--namespace-channel', action='store_true')
+    modes.add_argument('--user-namespace-channel', action='store_true')
     modes.add_argument('--runtime-image-probe', action='store_true')
     parser.add_argument('--probe-binary', type=Path)
     parser.add_argument('--constructor-binary', type=Path)
@@ -261,9 +293,9 @@ def main():
         os.chown(path, args.uid, args.gid)
         for name in ['cgroup.procs', 'cgroup.threads', 'cgroup.subtree_control']:
             os.chown(path / name, args.uid, args.gid)
-        if args.namespace_channel:
+        if args.namespace_channel or args.user_namespace_channel:
             print('Kernel observation:', os.uname().release, flush=True)
-            namespace_channel(args, binary, driver)
+            namespace_channel(args, binary, driver, mapped=args.user_namespace_channel)
             return
         # Canary is readable by the trusted driver before sandbox construction,
         # but its random host pathname must be absent inside the private root.

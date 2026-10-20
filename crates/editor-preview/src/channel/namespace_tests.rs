@@ -1,5 +1,6 @@
 //! Opt-in CI roles. The provider creates a fresh PID namespace before dropping
-//! privilege; no compositor, user namespace or private mount/proc is certified.
+//! privilege. The mapped-user mode also requires an explicit private proc mount.
+//! Trusted fixture evidence never certifies a compositor or full runtime image.
 use super::*;
 use std::{
     io::Read,
@@ -59,6 +60,14 @@ fn unprivileged() {
 #[test]
 #[ignore = "requires the dedicated ephemeral CI namespace provider; never auto-select a host session"]
 fn pidfs_frame_and_receipt_cross_a_private_pid_namespace() {
+    exchange(false);
+}
+#[test]
+#[ignore = "requires explicit ephemeral CI user/PID namespace provider and mapped credentials"]
+fn pidfs_frame_and_receipt_cross_mapped_user_and_pid_namespaces() {
+    exchange(true);
+}
+fn exchange(mapped: bool) {
     unprivileged();
     let role = std::env::var(ROLE).expect("Explicit trusted CI role required");
     let endpoint = Endpoint::pidfs_inherited(inherited("HYE_PIDNS_DATA_FD")).unwrap();
@@ -115,6 +124,45 @@ fn pidfs_frame_and_receipt_cross_a_private_pid_namespace() {
         assert_eq!(role, "broker");
         assert_eq!(unsafe { libc::getpid() }, 1);
         assert_eq!(unsafe { libc::getppid() }, 0);
+        if mapped {
+            use std::os::unix::fs::MetadataExt;
+            let expected = std::env::var("HYE_PIDNS_OUTER_USER_NS")
+                .unwrap()
+                .parse::<u64>()
+                .unwrap();
+            assert_ne!(
+                std::fs::metadata("/proc/self/ns/user").unwrap().ino(),
+                expected
+            );
+            assert_eq!(unsafe { libc::getuid() }, 1000);
+            assert_eq!(unsafe { libc::getgid() }, 1000);
+            for (name, key) in [
+                ("uid_map", "HYE_PIDNS_OUTER_UID"),
+                ("gid_map", "HYE_PIDNS_OUTER_GID"),
+            ] {
+                let mut text = String::new();
+                std::fs::File::open(format!("/proc/self/{name}"))
+                    .unwrap()
+                    .take(4097)
+                    .read_to_string(&mut text)
+                    .unwrap();
+                assert!(text.len() <= 4096);
+                let entries: Vec<_> = text
+                    .split_whitespace()
+                    .map(|x| x.parse::<u32>().unwrap())
+                    .collect();
+                assert_eq!(
+                    entries,
+                    vec![1000, std::env::var(key).unwrap().parse::<u32>().unwrap(), 1]
+                );
+            }
+            // The mapping helpers must be reaped before this repository role.
+            let pids: Vec<_> = std::fs::read_dir("/proc")
+                .unwrap()
+                .filter_map(|e| e.ok()?.file_name().to_str()?.parse::<u32>().ok())
+                .collect();
+            assert_eq!(pids, vec![1]);
+        }
         let anchor = inherited("HYE_PIDNS_ANCHOR_FD");
         let payload = inherited("HYE_PIDNS_FRAME_FD");
         let mut sender = endpoint
@@ -126,5 +174,8 @@ fn pidfs_frame_and_receipt_cross_a_private_pid_namespace() {
         assert!(sender.can_send());
         sender.stop();
         println!("HYE_PIDNS_RESULT Broker PID1/parent0 accepted outer-namespace receipt");
+        if mapped {
+            println!("HYE_USERNS_RESULT translated UID/GID1000 verified; exact sealed frame and outer GUI receipt accepted");
+        }
     }
 }

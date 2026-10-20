@@ -87,6 +87,12 @@ jobs:
         timeout-minutes: 2
         run: |
           sudo -- /usr/bin/python3 -I -S scripts/cgroup_kernel_probe.py --runtime-image-probe --expect-runtime-unavailable --probe-binary "$RUNNER_TEMP/hye-runtime-probe" --uid "$(id -u)" --gid "$(id -g)" --test-executable "$(cat "$RUNNER_TEMP/hye-kernel-executable")"
+      - name: Verify translated credentials across private user and PID namespaces
+        timeout-minutes: 2
+        run: |
+          unshare --version
+          sha256sum /usr/bin/unshare /usr/bin/setpriv
+          sudo -- /usr/bin/python3 -I -S scripts/cgroup_kernel_probe.py --user-namespace-channel --uid "$(id -u)" --gid "$(id -g)" --test-executable "$(cat "$RUNNER_TEMP/hye-kernel-executable")"
 
   runtime-image:
     # Distinct compatibility profile. Never weaken Ubuntu 24.04 policy to pass.
