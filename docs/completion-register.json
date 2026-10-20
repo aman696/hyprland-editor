@@ -372,7 +372,9 @@
         "crates/editor-preview/src/image/tests.rs",
         "crates/editor-preview/src/image/probe.rs",
         "crates/editor-preview/tests/fixtures/runtime_probe.c",
-        "scripts/cgroup_kernel_probe.py"
+        "scripts/cgroup_kernel_probe.py",
+        "scripts/build_bwrap_probe.py",
+        "data/preview-ci-runtime-observation.json"
       ],
       "test_references": [
         "frozen_image_survives_origin_mutation_without_retaining_source_offset",
@@ -383,7 +385,7 @@
         "failed_multi_file_capture_releases_partial_snapshot_descriptors",
         "sealed_runtime_executes_only_inside_private_root_and_namespaces"
       ],
-      "limits": "bounded canonical runtime manifest and explicit live-file capture with exact hashes, offset reads, immutable sealed copies and no host pathname discovery; six ordinary tests plus an opt-in ephemeral CI static-probe experiment requesting private root/proc/namespaces/environment/descriptors and a default-deny probe syscall profile; actual experiment results require exact execution evidence; no production launch/cgroup placement, authenticity/dependency/ABI approval, compositor/renderer policy, user-namespace channel mapping, frame/input, lifecycle/flooding or full preview/security certificate"
+      "limits": "bounded canonical runtime manifest and explicit live-file capture with exact hashes, offset reads, immutable sealed copies and no host pathname discovery; six ordinary tests plus an opt-in ephemeral CI static-probe experiment requesting private root/proc/namespaces/environment/descriptors and a default-deny probe syscall profile; two exact Ubuntu 22.04 static boundary jobs and two separate Ubuntu 24.04 constructor-refusal/cleanup jobs observed with source/tool/binary/image/log identities; different-kernel pidfs/image observations are not a combined profile; no production launch/cgroup placement, authenticity/dependency/ABI approval, compositor/renderer policy, user-namespace channel mapping, frame/input, lifecycle/flooding or full preview/security certificate"
     },
     {
       "area": "explicit pidfs process-object channel profile",
