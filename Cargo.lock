@@ -521,6 +521,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "hyprland-editor-projection"
+version = "0.12.0"
+dependencies = [
+ "hyprland-editor-core",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "indexmap"
 version = "2.14.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
