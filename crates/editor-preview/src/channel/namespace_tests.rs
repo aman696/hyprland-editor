@@ -151,10 +151,13 @@ fn exchange(mapped: bool) {
                     .split_whitespace()
                     .map(|x| x.parse::<u32>().unwrap())
                     .collect();
-                assert_eq!(
-                    entries,
-                    vec![1000, std::env::var(key).unwrap().parse::<u32>().unwrap(), 1]
+                let outer = std::env::var(key).unwrap().parse::<u32>().unwrap();
+                assert_ne!(
+                    outer, 1000,
+                    "Fixture must exercise a numeric credential translation"
                 );
+                assert_eq!(entries, vec![1000, outer, 1]);
+                println!("HYE_USERNS_MAP {name} 1000 {outer} 1");
             }
             // The mapping helpers must be reaped before this repository role.
             let pids: Vec<_> = std::fs::read_dir("/proc")
