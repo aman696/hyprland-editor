@@ -11,6 +11,7 @@ use std::{
 const CGROUP2_MAGIC: libc::c_long = 0x6367_7270;
 const MAX_FILE_BYTES: u64 = 4096;
 const REQUIRED: [&str; 3] = ["cpu", "memory", "pids"];
+pub mod launch;
 
 #[derive(Debug)]
 pub enum Error {
@@ -260,6 +261,7 @@ impl Delegation {
             kill: None,
             join: None,
             removed: false,
+            limits,
         };
         domain.prepare(limits)
     }
@@ -307,6 +309,7 @@ pub struct Domain {
     kill: Option<OwnedFd>,
     join: Option<OwnedFd>,
     removed: bool,
+    limits: Limits,
 }
 fn write_value(fd: BorrowedFd<'_>, value: &[u8]) -> Result<()> {
     // cgroup control writes are single kernel transactions. Never retry a suffix
@@ -328,6 +331,28 @@ fn write_value(fd: BorrowedFd<'_>, value: &[u8]) -> Result<()> {
     Ok(())
 }
 impl Domain {
+    fn verify_launch_member(&self, pid: libc::pid_t) -> Result<()> {
+        validate_root(self.fd.as_fd())?;
+        let members = read(self.fd.as_fd(), c"cgroup.procs")?;
+        if members.trim() != pid.to_string() {
+            return Err(Error::Unavailable("Launch resource membership changed"));
+        }
+        for (name, expected) in [
+            (c"memory.max", self.limits.memory_bytes.to_string()),
+            (c"memory.swap.max", "0".into()),
+            (c"memory.oom.group", "1".into()),
+            (c"pids.max", self.limits.pids.to_string()),
+            (
+                c"cpu.max",
+                format!("{} {}", self.limits.cpu_quota_us, self.limits.cpu_period_us),
+            ),
+        ] {
+            if read(self.fd.as_fd(), name)?.trim() != expected {
+                return Err(Error::Unavailable("Launch resource limits changed"));
+            }
+        }
+        Ok(())
+    }
     fn prepare(mut self, limits: Limits) -> Result<Self> {
         if let Err(preparation) = self.configure(limits) {
             let name = self.name.to_string_lossy().into_owned();
@@ -381,8 +406,8 @@ impl Domain {
             }
         }
         // Opening the future join FD is not proof that migration will succeed.
-        // The supervisor must join its own stopped child and verify membership
-        // before any compositor exec. No launch API is exposed by this layer.
+        // The launch module uses clone3 creation into this held leaf, then
+        // verifies stopped membership/limits before private gate release.
         Ok(())
     }
     fn populated(&self) -> Result<bool> {
@@ -513,6 +538,7 @@ mod tests {
                 kill: None,
                 join: None,
                 removed: false,
+                limits: Limits::default(),
             }
         }
     }

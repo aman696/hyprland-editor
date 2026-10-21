@@ -105,6 +105,7 @@ def metadata_prerequisites(path):
 NS_TEST = 'channel::namespace_tests::pidfs_frame_and_receipt_cross_a_private_pid_namespace'
 USERNS_TEST = 'channel::namespace_tests::pidfs_frame_and_receipt_cross_mapped_user_and_pid_namespaces'
 RUNTIME_TEST = 'image::probe::sealed_runtime_executes_only_inside_private_root_and_namespaces'
+LAUNCH_TEST = 'cgroup::launch::tests::gated_constructor_stays_private_until_verified_release_and_cleans_up'
 
 
 def dropped_command(args, binary, environment, test):
@@ -239,6 +240,7 @@ def main():
     modes.add_argument('--namespace-channel', action='store_true')
     modes.add_argument('--user-namespace-channel', action='store_true')
     modes.add_argument('--runtime-image-probe', action='store_true')
+    modes.add_argument('--gated-launch', action='store_true')
     parser.add_argument('--probe-binary', type=Path)
     parser.add_argument('--constructor-binary', type=Path)
     parser.add_argument('--expect-runtime-unavailable', action='store_true')
@@ -249,7 +251,13 @@ def main():
     if not binary.is_file():
         raise SystemExit('An already compiled trusted test executable is required')
     probe = constructor = None
-    if args.runtime_image_probe:
+    if args.gated_launch:
+        if args.probe_binary is None or args.constructor_binary is not None or args.expect_runtime_unavailable:
+            raise SystemExit('The launch gate test requires only its trusted static probe binary')
+        probe = args.probe_binary.resolve(strict=True)
+        if not probe.is_file():
+            raise SystemExit('Missing trusted static launch probe')
+    elif args.runtime_image_probe:
         if args.probe_binary is None:
             raise SystemExit('The runtime test requires the already compiled trusted static probe')
         probe = args.probe_binary.resolve(strict=True)
@@ -309,7 +317,10 @@ def main():
                             'HYE_RUNTIME_EXPECT_UNAVAILABLE': int(args.expect_runtime_unavailable),
                             'HYE_RUNTIME_PROBE_HOST_CANARY': canary}
                            if args.runtime_image_probe else {'HYE_CGROUP_TEST_ROOT': path})
-            command = dropped_command(args, binary, environment, RUNTIME_TEST if args.runtime_image_probe else TEST)
+            if args.gated_launch:
+                environment['HYE_LAUNCH_TEST_EXECUTABLE'] = probe
+            test = LAUNCH_TEST if args.gated_launch else RUNTIME_TEST if args.runtime_image_probe else TEST
+            command = dropped_command(args, binary, environment, test)
             # This single-threaded CI setup process places only its own child
             # in the bounded driver leaf, before setpriv and repository code.
             def place_driver():

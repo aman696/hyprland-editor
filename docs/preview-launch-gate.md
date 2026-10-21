@@ -1,0 +1,31 @@
+# Resource placement and private constructor release
+
+The preview library now has `cgroup::launch::{Plan, Session}` for a trusted constructor. This is an internal process mechanism, with no graphical compositor-launch action. The caller must independently approve the exact constructor, its arguments, its explicit inherited descriptors and the complete isolation profile. Seals and hashes identify bytes; they never authorize execution. Runtime-image approval, production namespace/device/syscall policies and actual rendering remain mandatory.
+
+## Creation before execution
+
+The caller supplies a freshly configured `Domain`, a fully sealed executable regular file, explicit standard streams, bounded arguments and an ordered descriptor list. The plan selects no executable, file, socket or environment value by pathname. Arguments are limited to 256 and 64 KiB in aggregate; the executable is nonempty and at most 64 MiB; at most 1,024 extra descriptors are accepted. Extra descriptors become 3, 4, and so on in caller order. Temporary copies are allocated above the entire destination table, so installing an earlier destination cannot overwrite a later source.
+
+Creation requests `CLONE_INTO_CGROUP | CLONE_PIDFD` with the held private leaf. This puts the child in the resource domain at creation, rather than racing a running process into it. Missing kernel/delegation support fails; there is no fork, arbitrary-PID migration or unrestricted fallback. The launcher refuses root, saved UID/GID differences and retained effective/permitted/inheritable capabilities. Linux documents the creation and permission rules in [clone(2)](https://man7.org/linux/man-pages/man2/clone.2.html).
+
+Before the child exists, the calling thread blocks signals and prepares every descriptor, argument and pointer. The child performs a fixed syscall sequence, without allocation, formatting, locks or Rust unwinding. It sets parent-thread-death kill behavior and verifies the parent, sets no-new-privileges and pre-exec nondumpability, creates a private process group, disables core dumps, sets umask 077 and changes directory to `/`. It installs only explicit descriptors, closes everything above the fixed table and resets signal dispositions/mask. Executable/error/gate descriptors are close-on-exec; extra inherited descriptors are intentional capabilities, not inferred from a report.
+
+The child then stops itself and waits for one exact release message on an unnamed private sequenced-packet pair. The parent observes the kernel stop through the atomically allocated pidfd, then rereads the held leaf's exact membership and CPU/memory/swap/OOM/task controls. Start checks them again. An unsolicited `SIGCONT` still leaves the child behind the private release gate. Release uses `MSG_NOSIGNAL` so a dead peer cannot deliver SIGPIPE to the parent.
+
+After release the child calls [execveat(2)](https://man7.org/linux/man-pages/man2/execveat.2.html) on the held executable. The environment is empty. A bounded fixed error record and close-on-exec handshake distinguish reported setup/exec failures. Handshake completion does not establish application readiness: the constructor may immediately exit or be killed. Process outcome and every private-runtime/frame/input readiness gate still need independent checks.
+
+The session stays on its creating supervisor thread: its Rust type cannot move to another thread, because Linux parent-death signaling follows the creating thread. It is not a permanent background service. The eventual supervisor must keep that thread alive for the lab lifetime and receive bounded control messages from the GUI.
+
+## Ownership and cleanup
+
+Signals and waits use the owned pidfd, never a caller-supplied or reusable numeric PID. The implementation uses [pidfd_send_signal(2)](https://man7.org/linux/man-pages/man2/pidfd_send_signal.2.html) and [waitid(2)](https://man7.org/linux/man-pages/man2/waitid.2.html). The observed PID is used only to compare the private membership file.
+
+Explicit stop closes the release gate, kills the private resource subtree, kills/reaps the owned direct child, checks kernel emptiness and requests removal of the held leaf. Operation deadlines are positive and at most five seconds. A timeout, changed identity or cleanup error is not Cleaned. Failure reports retain the generated resource identity and cleanup error. Drop makes only a bounded emergency attempt. Provider exclusivity, hostile concurrent mutations, uninterruptible kernel stalls, supervisor/GUI crashes, orphan reaping and whole-production lifecycle certification remain open. The mechanism does not promise hard deadlines for stalled kernel filesystem operations.
+
+No filesystem, namespace, network, device or seccomp sandbox is established by this module alone. Supplementary groups and dynamic-loader/default-library access are not independently confined here. Exec can reset nondumpability. These require the approved constructor/profile and further evidence; resource placement cannot substitute for them. Runtime image snapshot descriptors are intentionally data-only (mode 0400) and do not automatically become executable constructor capabilities.
+
+## Verification scope
+
+Ordinary tests cover plan bounds/seal/mode refusal, explicit descriptor lifetime and a closed release channel in an isolated process with SIGPIPE restored to its default disposition. A separately compiled static C fixture is used only by the opt-in ephemeral CI role. The role drops setup privileges, then creates its own limited leaves. It checks pre-release silence, actual stopped membership, early-resume protection, an empty environment, inherited-FD closure, signal/core/no-new-privileges state, actual controls and exit/kill/reap/removal. Cases include normal exit, a waiting child, cancellation, changed limits and failed execution. Exact positive results are recorded only after the hosted jobs terminate; compilation or ordinary tests do not prove those kernel cases.
+
+The fixture does not execute Hyprland, open GPU/input devices or change a desktop. All original source/discovery/preview/recovery/apply/resource/security/release obligations remain in scope.

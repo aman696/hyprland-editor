@@ -525,6 +525,23 @@
       "limits": "two exact ephemeral CI kernel jobs observed default CPU throttling, leaf memory OOM handling, task refusal and private subtree/provider removal on one Linux kernel profile, with private-only controller setup and privilege-dropped trusted workers using live resource tokens; no developer-host controller modification, production stopped-child/compositor launch, concurrent-race/runtime/profile/crash/flooding or full preview/security certificate"
     },
     {
+      "area": "gated constructor creation inside a resource leaf",
+      "code": [
+        "crates/editor-preview/src/cgroup/launch.rs",
+        "crates/editor-preview/src/cgroup.rs",
+        "crates/editor-preview/tests/fixtures/launch_probe.c",
+        "scripts/cgroup_kernel_probe.py",
+        ".github/workflows/ci.yml"
+      ],
+      "test_references": [
+        "constructor_plan_requires_bounded_arguments_and_a_sealed_executable",
+        "closed_private_gate_reports_an_error_without_sigpipe",
+        "explicit_descriptor_lifetimes_close_with_the_plan_without_ambient_ownership",
+        "gated_constructor_stays_private_until_verified_release_and_cleans_up"
+      ],
+      "limits": "internal clone3 placement at creation with atomically owned pidfd, bounded sealed executable/explicit arguments and inherited descriptors, non-root/no-retained-capability checks, empty environment and fixed pre-exec syscall sequence, stopped membership/limit readback and private release channel, pidfd signals/waits and explicit leaf kill/reap/removal; ordinary bounds/FD/SIGPIPE evidence and opt-in fresh ephemeral CI role for actual creation/release/refusal/cleanup; exact positive results require terminal hosted observation; no complete executable/dependency approval, namespace/filesystem/device/network/syscall profile, hostile/crash/orphan/stall lifecycle, actual compositor/render/frame/input or full security/resource/preview certificate"
+    },
+    {
       "area": "preview resource preparation and backend feasibility",
       "code": [
         "crates/editor-preview/src/cgroup.rs",
