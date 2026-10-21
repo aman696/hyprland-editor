@@ -112,6 +112,7 @@ pub struct Report {
     #[serde(deserialize_with = "wire::pins")]
     pub schema_pins: BTreeMap<String, String>,
     pub scenario: Scenario,
+    pub layers: Option<layers::Summary>,
     #[serde(deserialize_with = "wire::entries")]
     pub entries: Vec<Entry>,
     #[serde(deserialize_with = "wire::limitations")]
@@ -120,6 +121,7 @@ pub struct Report {
 #[derive(Debug)]
 pub struct Projection {
     lua: String,
+    scalar_span: std::ops::Range<usize>,
     report: Report,
     identity: String,
 }
@@ -259,6 +261,7 @@ pub fn compile(workspace: &Workspace, scenario: &Scenario) -> Result<Projection,
             scalars.values.insert(id.clone(), value.clone());
         }
     }
+    let scalar_start = builder.lua.len();
     builder.append("hl.config({\n")?;
     for (id, value) in &scalars.values {
         let setting = catalogue
@@ -268,10 +271,11 @@ pub fn compile(workspace: &Workspace, scenario: &Scenario) -> Result<Projection,
         builder.append(&format!(
             "    [{}] = {},\n",
             Value::String(setting.lua_key.clone()).lua(),
-            value.lua()
+            scalar_literal(value)
         ))?;
     }
     builder.append("})\n")?;
+    let scalar_span = scalar_start..builder.lua.len();
     for original in &workspace.monitors {
         let Some(target) = scenario.monitor_targets.get(&original.id) else {
             builder.record(
@@ -431,7 +435,7 @@ pub fn compile(workspace: &Workspace, scenario: &Scenario) -> Result<Projection,
         model_sha256: model_sha256(),
         compiler: editor_core::lua::replay::compiler_profile(),
         schema_pins: schema_pins(workspace),
-        scenario: scenario.clone(), entries: builder.entries,
+        scenario: scenario.clone(), layers: None, entries: builder.entries,
         limitations: vec!["No execution authority or ready-to-run certification", "Source layers/defaults are unresolved; this projects explicit typed drafts only", "Private outputs/devices must be created and verified by a future launcher", "All binding and gesture actions are inert mocks without telemetry", "Assets are not copied; opaque shaders, keymaps, ICC and hooks remain omitted", "Renderer, actual capture/input, resource/isolation/lifecycle and all full audit gates remain unverified"].into_iter().map(String::from).collect() };
     let manifest = serde_json::to_vec(&report).map_err(|e| e.to_string())?;
     if manifest.len() > 4 * MAX_DOCUMENT_BYTES {
@@ -444,6 +448,7 @@ pub fn compile(workspace: &Workspace, scenario: &Scenario) -> Result<Projection,
     ));
     Ok(Projection {
         lua: builder.lua,
+        scalar_span,
         report,
         identity,
     })
@@ -454,6 +459,7 @@ pub fn model_sha256() -> String {
     editor_core::lua::source_hash(concat!(
         include_str!("lib.rs"),
         include_str!("wire.rs"),
+        include_str!("layers.rs"),
         include_str!("../../editor-core/src/lib.rs"),
         include_str!("../../editor-core/src/action.rs"),
         include_str!("../../editor-core/src/animation.rs"),
@@ -476,13 +482,85 @@ fn schema_pins(workspace: &Workspace) -> BTreeMap<String, String> {
         ("rule", editor_core::rule::schema_hash()),
         ("animation", editor_core::animation::schema_hash()),
         ("gesture", gesture::schema_hash()),
+        ("source", editor_core::workspace_graph::schema_sha256()),
+        (
+            "registration",
+            editor_core::lua::registration::schema_sha256(),
+        ),
     ])
     .into_iter()
     .map(|(key, value)| (key.into(), value))
     .collect()
 }
 
+pub mod layers;
+
+fn scalar_literal(value: &Value) -> String {
+    fn number(value: f64) -> String {
+        let text = value.to_string();
+        if text.contains(['.', 'e', 'E']) {
+            text
+        } else {
+            format!("{text}.0")
+        }
+    }
+    match value {
+        Value::Float(value) => number(*value),
+        Value::Vec2([x, y]) => format!("{{ {}, {} }}", number(*x), number(*y)),
+        Value::Gradient { colors, angle } => format!(
+            "{{ colors = {{ {} }}, angle = {} }}",
+            colors
+                .iter()
+                .map(|color| format!("\"0x{color:08X}\""))
+                .collect::<Vec<_>>()
+                .join(", "),
+            number(*angle)
+        ),
+        _ => value.lua(),
+    }
+}
 pub mod wire;
+
+/// A fresh sample from explicit scalar input choices. It preserves the input
+/// workspace and never treats an observed argument as effective live state.
+pub fn compile_with_layers(
+    workspace: &Workspace,
+    scenario: &Scenario,
+    selection: &layers::Selection,
+) -> Result<Projection, String> {
+    let (resolved, mut summary, captured) = layers::resolve(workspace, selection)?;
+    let mut projection = compile(&resolved, scenario)?;
+    let projected: BTreeSet<_> = projection
+        .report
+        .entries
+        .iter()
+        .filter(|e| e.fidelity == Fidelity::SampleApproximation)
+        .filter_map(|e| e.subject.strip_prefix("scalar/").map(str::to_owned))
+        .collect();
+    summary.source_value_roundtrips = layers::check_projection(
+        &projection.lua[projection.scalar_span.clone()],
+        &captured,
+        &projected,
+        &workspace.draft.version,
+    )?;
+    projection.report.workspace_sha256 = layers::workspace_hash(workspace)?;
+    projection.report.layers = Some(summary);
+    projection.report.entries.push(Entry {subject:"scalar-input-choices".into(),fidelity:Fidelity::SampleApproximation,reason:"Explicitly reviewed scalar input choices were used for this sample. Other source families and actual effective defaults remain unresolved.".into(),mocked_intent:None});
+    if projection.report.entries.len() > MAX_ENTRIES {
+        return Err("Layered projection exceeds its entry budget".into());
+    }
+    projection.report.limitations[1] = "Only explicitly reviewed scalar choices were resolved; other source families and effective defaults remain unresolved".into();
+    let report = serde_json::to_vec(&projection.report).map_err(|e| e.to_string())?;
+    if report.len() > 4 * MAX_DOCUMENT_BYTES {
+        return Err("Layered projection report exceeds 4 MiB".into());
+    }
+    projection.identity = editor_core::lua::source_hash(&format!(
+        "HYE-PROJECTION-1\0{}\0{}",
+        projection.lua,
+        std::str::from_utf8(&report).map_err(|e| e.to_string())?
+    ));
+    Ok(projection)
+}
 
 #[cfg(test)]
 mod tests;

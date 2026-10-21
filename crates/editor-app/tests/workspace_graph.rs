@@ -315,6 +315,118 @@ fn check_migration(path: &Path) -> (bool, String) {
     )
 }
 #[test]
+fn preview_layer_worker_rebuilds_private_module_pieces_and_preserves_deleted_originals() {
+    use hyprland_editor_projection::{
+        layers::{Choice, Selection},
+        Scenario,
+    };
+    for version in [BASELINE, AUDITED_MAIN] {
+        let root = root();
+        let mut snapshot = fixture(&root, version);
+        let graph = snapshot.source_graph.as_ref().unwrap();
+        let base = graph
+            .program(&snapshot.sources, snapshot.root_source.as_deref(), version)
+            .unwrap();
+        let part = &base.documents[1];
+        let at = part.source.find('3').unwrap();
+        let plan = replay::edits::prepare(
+            &base,
+            vec![replay::edits::SourceEdit {
+                document: part.id.clone(),
+                base_sha256: part.sha256.clone(),
+                span: at..at + 1,
+                old_bytes_sha256: lua::source_hash("3"),
+                replacement: "7".into(),
+                semantic_targets: vec!["general:border_size".into()],
+            }],
+            vec![],
+        )
+        .unwrap();
+        snapshot.source_graph.as_mut().unwrap().revisions =
+            hyprland_editor_core::workspace_graph::revisions::apply(&base, &[], &plan).unwrap();
+        let path = workspace::save(&root, &snapshot, &catalogue()).unwrap();
+        let bytes = fs::read(&path).unwrap();
+        let output = Command::new(env!("CARGO_BIN_EXE_hyprland-editor"))
+            .arg("--check-preview-layers")
+            .arg(&path)
+            .env_clear()
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let value: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+        let row = value["review"]["rows"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|row| row["setting_id"] == "general:border_size")
+            .unwrap();
+        assert_eq!(
+            row["captured"]["value"],
+            serde_json::to_value(Value::Int(7)).unwrap()
+        );
+        assert_eq!(row["pending"], serde_json::to_value(Value::Int(5)).unwrap());
+        assert_eq!(value["review"]["model_complete"], true);
+        let selection = Selection {
+            review_sha256: value["review_sha256"].as_str().unwrap().into(),
+            acknowledge_partial: false,
+            choices: std::collections::BTreeMap::from([(
+                "general:border_size".into(),
+                Choice::Captured,
+            )]),
+        };
+        let selected = root.join("selection.json");
+        let scenario = root.join("scenario.json");
+        fs::write(&selected, serde_json::to_vec(&selection).unwrap()).unwrap();
+        fs::write(&scenario, serde_json::to_vec(&Scenario::default()).unwrap()).unwrap();
+        let output = Command::new(env!("CARGO_BIN_EXE_hyprland-editor"))
+            .arg("--check-preview-projection-selected")
+            .arg(&path)
+            .arg(&scenario)
+            .arg(&selected)
+            .env_clear()
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let projected: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+        assert_eq!(
+            projected["artifact"]["report"]["layers"]["source_value_roundtrips"],
+            1
+        );
+        assert_eq!(projected["runtime_verified"], false);
+        let parsed = lua::parse(
+            projected["artifact"]["lua"].as_str().unwrap(),
+            version,
+            &catalogue(),
+        )
+        .unwrap();
+        assert_eq!(parsed.draft.values["general:border_size"], Value::Int(7));
+        assert_eq!(fs::read(&path).unwrap(), bytes);
+        assert!(!root.join("originals").exists());
+        assert_eq!(snapshot.sources[1].content, "return 3");
+        let mut corrupt: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        corrupt["source_graph"]["compiler"]["release"] = "foreign".into();
+        let bad = root.join("foreign.hye");
+        fs::write(&bad, serde_json::to_vec(&corrupt).unwrap()).unwrap();
+        assert!(!Command::new(env!("CARGO_BIN_EXE_hyprland-editor"))
+            .arg("--check-preview-layers")
+            .arg(&bad)
+            .env_clear()
+            .output()
+            .unwrap()
+            .status
+            .success());
+        fs::remove_dir_all(root).unwrap();
+    }
+}
+#[test]
 fn reviewed_graph_migrations_rebuild_deleted_sources_and_private_pieces_without_writing() {
     for version in [BASELINE, AUDITED_MAIN] {
         for old in [

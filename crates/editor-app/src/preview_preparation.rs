@@ -72,7 +72,22 @@ pub(super) fn connect(button: &gtk::Button, parent: &adw::ApplicationWindow, sta
         let stop = cancellation.clone(); window.connect_destroy(move |_| stop.cancel());
         let stop = cancellation.clone(); let cached = current.clone(); window.connect_close_request(move |window| { clear_cached(&cached, window); stop.cancel(); gtk::glib::Propagation::Proceed });
         let weak = window.downgrade(); close.connect_clicked(move |_| { if let Some(window) = weak.upgrade() { window.close(); } });
-        let snapshot = RefCell::new(Some(snapshot));
+        let snapshot = Rc::new(RefCell::new(Some(std::sync::Arc::new(snapshot))));
+        let selected_layers:Rc<RefCell<Option<hyprland_editor_projection::layers::Selection>>>=Rc::new(RefCell::new(None));
+        let inputs=text("Using pending draft values only");
+        let review_inputs=gtk::Button::with_label("Review setting values");
+        content.insert_child_after(&inputs,Some(&layout));content.insert_child_after(&review_inputs,Some(&inputs));
+        let (source_snapshot,source_layers,source_parent,source_state,source_label,source_prepare,source_button)=(snapshot.clone(),selected_layers.clone(),window.downgrade(),Rc::downgrade(&state),inputs.downgrade(),prepare.downgrade(),review_inputs.downgrade());
+        review_inputs.connect_clicked(move |_| {
+            let (Some(parent),Some(state))=(source_parent.upgrade(),source_state.upgrade())else{return;};
+            if state.borrow().generation!=generation{if let Some(label)=source_label.upgrade(){label.set_text("Draft changed. Close preparation and open it again.");}return;}
+            let Some(workspace)=source_snapshot.borrow().as_ref().cloned()else{return;};
+            if let Some(prepare)=source_prepare.upgrade(){prepare.set_sensitive(false);}
+            if let Some(button)=source_button.upgrade(){button.set_sensitive(false);}
+            let (selected,label)=(source_layers.clone(),source_label.clone());let (prepare,button)=(source_prepare.clone(),source_button.clone());
+            super::preview_layers::open(&parent,&state,generation,workspace,move|selection|{*selected.borrow_mut()=Some(selection);if let Some(label)=label.upgrade(){label.set_text("Using reviewed setting choices");}},move||{if let Some(prepare)=prepare.upgrade(){prepare.set_sensitive(true);}
+                if let Some(button)=button.upgrade(){button.set_sensitive(true);}});
+        });
         let (weak_window, weak_content, weak_close, weak_state) = (window.downgrade(), content.downgrade(), close.downgrade(), Rc::downgrade(&state));
         prepare.connect_clicked(move |prepare| {
             let Some(state) = weak_state.upgrade() else { return; };
@@ -81,6 +96,7 @@ pub(super) fn connect(button: &gtk::Button, parent: &adw::ApplicationWindow, sta
                 prepare.set_sensitive(false); return;
             }
             let Some(workspace) = snapshot.borrow_mut().take() else { return; };
+            let workspace=std::sync::Arc::try_unwrap(workspace).unwrap_or_else(|workspace|workspace.as_ref().clone());
             let two = layout.selected() == 1;
             let mut scenario = Scenario::default();
             if two { scenario.outputs = (1..=2).map(|id| Output { name: format!("HEADLESS-{id}"), width: 640, height: 480 }).collect(); }
@@ -91,7 +107,8 @@ pub(super) fn connect(button: &gtk::Button, parent: &adw::ApplicationWindow, sta
             if let Some(close) = weak_close.upgrade() { close.set_label("Cancel preparation"); }
             let (weak_window, weak_content, weak_close, weak_state) = (weak_window.clone(), weak_content.clone(), weak_close.clone(), weak_state.clone());
             let stop = cancellation.clone();
-            super::workflow::background(move || projection_worker::stage(workspace, scenario, stop), move |result| {
+            let layers=selected_layers.borrow().clone();
+            super::workflow::background(move || if layers.is_some(){projection_worker::stage_selected(workspace, scenario, layers, stop)}else{projection_worker::stage(workspace,scenario,stop)}, move |result| {
                 let (Some(window), Some(content), Some(state)) = (weak_window.upgrade(), weak_content.upgrade(), weak_state.upgrade()) else { return; };
                 if !window.is_visible() { return; }
                 clear(&content);
@@ -100,7 +117,8 @@ pub(super) fn connect(button: &gtk::Button, parent: &adw::ApplicationWindow, sta
                 match result {
                     Err(error) => content.append(&text(&format!("Preparation stopped: {error}"))),
                     Ok(artifact) => {
-                        content.append(&text("Sample prepared. Review the approximations and omissions below. Imported sources and default values are not included."));
+                        content.append(&text(if artifact.report().layers.is_some(){"Sample prepared from your reviewed scalar inputs. Other source settings, effective defaults and runtime behavior remain unresolved."}else{"Sample prepared. Review the approximations and omissions below. Imported sources and default values are not included."}));
+                        if let Some(layers)=&artifact.report().layers{content.append(&text(&format!("{} captured · {} pending · {} unset · {} source arguments preserved",layers.captured_values,layers.pending_values,layers.unset_values,layers.source_value_roundtrips)));}
                         let entries: Vec<String> = artifact.report().entries.iter().map(|entry| format!("{} · {}\n{}", fidelity(entry.fidelity), entry.subject, entry.reason)).collect();
                         content.append(&text(&format!("{} review items · {} virtual displays", entries.len(), artifact.report().scenario.outputs.len())));
                         let search = gtk::SearchEntry::new(); search.set_placeholder_text(Some("Find review items")); content.append(&search);
@@ -203,6 +221,24 @@ pub(super) fn test_preparation(parent: &adw::ApplicationWindow) {
         }
     }
     let state = super::initial_state();
+    let temporary = super::test_support::TempDir::new("hye-preview-layer-ui");
+    let original = temporary.path().join("source.lua");
+    std::fs::write(&original, "hl.config{general={border_size=7}}\n").unwrap();
+    let captured = hyprland_editor_core::storage::read_source(&original).unwrap();
+    std::fs::remove_file(&original).unwrap();
+    let catalogue = hyprland_editor_core::catalogue();
+    let report = hyprland_editor_core::lua::parse(&captured.content, BASELINE, &catalogue).unwrap();
+    let document =
+        hyprland_editor_core::lua::LuaDocument::from_report(captured.content, report, &catalogue)
+            .unwrap();
+    state
+        .borrow_mut()
+        .sources
+        .insert(BASELINE.into(), std::sync::Arc::new(document));
+    state
+        .borrow_mut()
+        .source_origins
+        .insert(BASELINE.into(), captured.identity);
     state
         .borrow_mut()
         .draft
@@ -284,6 +320,151 @@ pub(super) fn test_preparation(parent: &adw::ApplicationWindow) {
     let bounds = close.compute_bounds(&review).unwrap();
     assert!(bounds.y() >= 0.0 && bounds.y() + bounds.height() <= review.height() as f32);
     assert!(review.width() <= 350);
+    review.close();
+    settle();
+    button.emit_clicked();
+    settle();
+    let review = window();
+    descendants(review.upcast_ref())
+        .into_iter()
+        .filter_map(|w| w.downcast::<gtk::Button>().ok())
+        .find(|b| b.label().as_deref() == Some("Review setting values"))
+        .unwrap()
+        .emit_clicked();
+    let layers = gtk::Window::list_toplevels()
+        .into_iter()
+        .filter_map(|w| w.downcast::<adw::Window>().ok())
+        .find(|w| w.title().as_deref() == Some("Review setting values"))
+        .unwrap();
+    layers.set_default_size(350, 660);
+    wait_for(&layers, "Captured values were reconstructed");
+    let search = descendants(layers.upcast_ref())
+        .into_iter()
+        .find_map(|w| w.downcast::<gtk::SearchEntry>().ok())
+        .unwrap();
+    search.set_text("general:border_size");
+    let list = descendants(layers.upcast_ref())
+        .into_iter()
+        .find_map(|w| w.downcast::<gtk::ListView>().ok())
+        .unwrap();
+    let start = Instant::now();
+    while list.model().unwrap().n_items() != 1 {
+        settle();
+        assert!(start.elapsed() < Duration::from_secs(2));
+    }
+    settle();
+    let choice = descendants(layers.upcast_ref())
+        .into_iter()
+        .find_map(|w| w.downcast::<gtk::DropDown>().ok())
+        .unwrap();
+    assert_eq!(choice.selected(), 1);
+    choice.set_selected(2);
+    settle();
+    let keep = descendants(layers.upcast_ref())
+        .into_iter()
+        .filter_map(|w| w.downcast::<gtk::Button>().ok())
+        .find(|b| b.label().as_deref() == Some("Use these inputs"))
+        .unwrap();
+    let bounds = keep.compute_bounds(&layers).unwrap();
+    assert!(bounds.y() >= 0.0 && bounds.y() + bounds.height() <= layers.height() as f32);
+    assert!(layers.width() <= 350);
+    if let Ok(path) = std::env::var("HYPRLAND_EDITOR_TEST_CAPTURE") {
+        let paintable = gtk::WidgetPaintable::new(Some(&layers));
+        let snapshot = gtk::Snapshot::new();
+        paintable.snapshot(&snapshot, layers.width() as f64, layers.height() as f64);
+        layers
+            .renderer()
+            .unwrap()
+            .render_texture(snapshot.to_node().unwrap(), None)
+            .save_to_png(format!("{path}.projection-layers.png"))
+            .unwrap();
+    }
+    keep.emit_clicked();
+    settle();
+    assert!(!layers.is_visible());
+    prepare(&review);
+    wait_for(&review, "1 captured");
+    assert_eq!(
+        super::workflow::captured_workspace(&state.borrow())
+            .unwrap()
+            .to_json(&catalogue)
+            .unwrap(),
+        before
+    );
+    assert!(!original.exists());
+    review.close();
+    settle();
+    // A partial source can be sampled only after acknowledging its limitations.
+    std::fs::write(&original, "hl.config{general={border_size=7}}; mystery()\n").unwrap();
+    let captured = hyprland_editor_core::storage::read_source(&original).unwrap();
+    std::fs::remove_file(&original).unwrap();
+    let report = hyprland_editor_core::lua::parse(&captured.content, BASELINE, &catalogue).unwrap();
+    state.borrow_mut().sources.insert(
+        BASELINE.into(),
+        std::sync::Arc::new(
+            hyprland_editor_core::lua::LuaDocument::from_report(
+                captured.content,
+                report,
+                &catalogue,
+            )
+            .unwrap(),
+        ),
+    );
+    state
+        .borrow_mut()
+        .source_origins
+        .insert(BASELINE.into(), captured.identity);
+    state.borrow_mut().generation += 1;
+    let partial_before = super::workflow::captured_workspace(&state.borrow())
+        .unwrap()
+        .to_json(&catalogue)
+        .unwrap();
+    button.emit_clicked();
+    settle();
+    let review = window();
+    descendants(review.upcast_ref())
+        .into_iter()
+        .filter_map(|w| w.downcast::<gtk::Button>().ok())
+        .find(|b| b.label().as_deref() == Some("Review setting values"))
+        .unwrap()
+        .emit_clicked();
+    let layers = gtk::Window::list_toplevels()
+        .into_iter()
+        .filter_map(|w| w.downcast::<adw::Window>().ok())
+        .find(|w| w.title().as_deref() == Some("Review setting values"))
+        .unwrap();
+    wait_for(&layers, "Some source behavior is unresolved");
+    descendants(layers.upcast_ref())
+        .into_iter()
+        .filter_map(|w| w.downcast::<gtk::Button>().ok())
+        .find(|b| b.label().as_deref() == Some("Use available captured values"))
+        .unwrap()
+        .emit_clicked();
+    let keep = descendants(layers.upcast_ref())
+        .into_iter()
+        .filter_map(|w| w.downcast::<gtk::Button>().ok())
+        .find(|b| b.label().as_deref() == Some("Use these inputs"))
+        .unwrap();
+    keep.emit_clicked();
+    wait_for(&layers, "Acknowledge incomplete analysis");
+    assert!(layers.is_visible());
+    descendants(layers.upcast_ref())
+        .into_iter()
+        .find_map(|w| w.downcast::<gtk::CheckButton>().ok())
+        .unwrap()
+        .set_active(true);
+    keep.emit_clicked();
+    settle();
+    prepare(&review);
+    wait_for(&review, "1 captured");
+    assert_eq!(
+        super::workflow::captured_workspace(&state.borrow())
+            .unwrap()
+            .to_json(&catalogue)
+            .unwrap(),
+        partial_before
+    );
+    assert!(!original.exists());
     review.close();
     settle();
     button.emit_clicked();

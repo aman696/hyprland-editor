@@ -384,6 +384,27 @@
       "limits": "three binary-identified private Xvfb/bus empty-workspace trials below 100 MiB sampled process-tree PSS and under 0.1 percent observed CPU over 60 seconds; short CPU windows cannot pass; no representative source/review/history/worker, physical Wayland/GPU/accessibility, latency, large-import, event/asset/preview or long-session resource certificate"
     },
     {
+      "area": "explicit scalar sample input review",
+      "code": [
+        "crates/editor-projection/src/layers.rs",
+        "crates/editor-projection/src/lib.rs",
+        "crates/editor-app/src/preview_layers.rs",
+        "crates/editor-app/src/projection_worker.rs",
+        "crates/editor-app/src/preview_preparation.rs",
+        "crates/editor-app/tests/workspace_graph.rs"
+      ],
+      "test_references": [
+        "explicit_pending_captured_and_unset_choices_preserve_the_entire_input",
+        "incomplete_observations_require_acknowledgement_and_stale_choices_never_fall_back",
+        "absent_unknown_and_rejected_values_are_distinct_and_duplicate_choices_are_refused",
+        "all_nine_selected_source_families_keep_their_modeled_native_representation",
+        "captured_negative_zero_keeps_its_float_and_vector_sign_bits_in_the_sample",
+        "preview_layer_worker_rebuilds_private_module_pieces_and_preserves_deleted_originals",
+        "preview_preparation::test_preparation"
+      ],
+      "limits": "restricted fresh base/private-piece scalar reconstruction with compiler/model/graph/registration pins, explicit pending/captured/unset sample choices, partial-analysis acknowledgement, native representation/sign-bit checks on emitted source values, lazy searchable review with separate pinned default metadata and unchanged draft/source bytes; no complete structured source layers, effective defaults, native manager effects, persistent scene/history/export, assets, actual renderer/capture/input or full audit/security/resource certificate"
+    },
+    {
       "area": "fresh typed-draft preview projection",
       "code": [
         "crates/editor-projection/src/lib.rs",
@@ -410,7 +431,7 @@
         "direct_staging_role_refuses_unknown_protocol_payload_and_request_overflow",
         "preview_preparation::test_preparation"
       ],
-      "limits": "fresh bounded Lua/report from validated typed draft families and explicit bounded synthetic identities, inert action replacement, source/hook/opaque asset exclusion, exact input/model/schema/compiler/scenario fingerprints, native compilation and independent syntax reparse; application-linked one-shot restricted staging with bounded nonblocking I/O/deadline/cancellation/reaping, bounded decoded collections, correlated artifacts and explicit native scenario/mapping/search review; no source-layer/default resolution, copied/decoded assets, telemetry/simulated effects, actual scenario clients/renderer/capture/input, combined sandbox or full preview/security certificate"
+      "limits": "fresh bounded Lua/report from validated typed draft families and explicit bounded synthetic identities, inert action replacement, source/hook/opaque asset exclusion, exact input/model/schema/compiler/scenario fingerprints, native compilation and independent syntax reparse; application-linked one-shot restricted staging with bounded nonblocking I/O/deadline/cancellation/reaping, bounded decoded collections, correlated artifacts and explicit native scenario/mapping/search review; no complete source-layer/default resolution, copied/decoded assets, telemetry/simulated effects, actual scenario clients/renderer/capture/input, combined sandbox or full preview/security certificate"
     },
     {
       "area": "sealed runtime image and explicit private boundary prototype",

@@ -1,6 +1,6 @@
 # Hyprland Editor
 
-[Preview preparation](docs/preview-preparation.md) now runs fresh typed-draft staging in a restricted cancellable worker, with explicit sample layouts/mappings and a searchable native fidelity review. It changes no configuration and does not start a compositor. Source/default resolution, assets and actual rendering/capture/input remain required.
+[Preview preparation](docs/preview-preparation.md) runs fresh sample staging in a restricted cancellable worker, with explicit layouts/mappings and a searchable fidelity review. [Review setting values](docs/preview-setting-layers.md) optionally compares pending values with reconstructed scalar source arguments and pinned default metadata; explicit choices affect only the sample. Preparation changes no configuration and starts no compositor. Full source/default resolution, assets and actual rendering/capture/input remain required.
 
 A native GTK4/libadwaita workspace for making Hyprland configuration graphical, with a versioned catalogue and a safety-first editing core. The long-term goal is complete configuration coverage, including rules, monitors, bindings, animations, devices and isolated preview.
 

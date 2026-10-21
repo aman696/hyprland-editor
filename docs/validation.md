@@ -1,5 +1,9 @@
 # Initial-build validation
 
+The [setting-value sample review](preview-setting-layers.md) adds six ordinary tests, bringing the local suite to **371 unique ordinary cases**. The extended private-display workflow passes complete and partial source selection, explicit acknowledgement, unchanged workspace bytes, search and visible actions at 350 pixels. Its final setting-review screenshot is visually inspected. Strict lint, formatting, final release build and catalogue/model/register checks pass. These results prove the stated sample-input behavior, not full source/default resolution or rendered preview.
+
+Restricted-preparation head `10a1cef47a48856384417d0c73360d116d07d408` passed both complete hosted workflows: [push](https://github.com/aman696/hyprland-editor/actions/runs/39613484096), [PR](https://github.com/aman696/hyprland-editor/actions/runs/39613492244). The subsequent setting-value changes require their own exact hosted results.
+
 Restricted staging adds eight ordinary tests: 365 unique ordinary cases pass. Real-child checks cover inert source/action payloads, selected-file preservation, mappings, malformed/oversized input and child cancellation/timeout reaping; bounded transport tests cover correlation, collection counts, duplicate keys and unknown fields. The extended native workflow passes narrow mapping/review/search, unchanged draft bytes, view reuse/reopen, stale results and cancellation. The final filtered screenshot is inspected, strict lint/release and generated checks pass. [Exact staging scope](preview-preparation.md) remains separate from actual rendering and full audit acceptance.
 
 [Preview preparation](preview-preparation.md) now runs fresh typed-draft staging in a restricted cancellable worker, with explicit sample layouts/mappings and a searchable native fidelity review. It changes no configuration and does not start a compositor. Source/default resolution, assets and actual rendering/capture/input remain required.

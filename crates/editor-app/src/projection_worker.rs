@@ -21,14 +21,21 @@ const MAX_REQUEST: usize = 10 * MAX_DOCUMENT_BYTES;
 const MAX_RESPONSE: usize = projection::wire::MAX_RESULT_BYTES;
 const DEADLINE: Duration = Duration::from_secs(3);
 #[derive(Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct Request {
-    workspace: Workspace,
-    scenario: Scenario,
+#[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
+enum Request {
+    Stage {
+        workspace: Workspace,
+        scenario: Scenario,
+        layers: Option<projection::layers::Selection>,
+    },
+    ReviewLayers {
+        workspace: Workspace,
+    },
 }
 #[derive(Serialize, Deserialize)]
 enum Response {
     Staged(Box<Artifact>),
+    Layers(Box<projection::layers::Review>),
     Error(String),
 }
 
@@ -135,8 +142,22 @@ pub(super) fn entry() {
         let request: Request =
             serde_json::from_slice(&bytes).map_err(|_| "Invalid projection request")?;
         drop(bytes);
-        projection::compile(&request.workspace, &request.scenario)
-            .map(|result| Response::Staged(Box::new(Artifact::from(result))))
+        match request {
+            Request::Stage {
+                workspace,
+                scenario,
+                layers,
+            } => {
+                let result = if let Some(selection) = layers {
+                    projection::compile_with_layers(&workspace, &scenario, &selection)
+                } else {
+                    projection::compile(&workspace, &scenario)
+                };
+                result.map(|result| Response::Staged(Box::new(Artifact::from(result))))
+            }
+            Request::ReviewLayers { workspace } => projection::layers::review(&workspace)
+                .map(|review| Response::Layers(Box::new(review))),
+        }
     })()
     .unwrap_or_else(|error| Response::Error(error.chars().take(1024).collect()));
     let bytes = serde_json::to_vec(&response)
@@ -304,20 +325,47 @@ pub(super) fn stage(
     scenario: Scenario,
     cancellation: Cancellation,
 ) -> Result<Artifact, String> {
+    stage_selected(workspace, scenario, None, cancellation)
+}
+pub(super) fn stage_selected(
+    workspace: Workspace,
+    scenario: Scenario,
+    layers: Option<projection::layers::Selection>,
+    cancellation: Cancellation,
+) -> Result<Artifact, String> {
     cancellation.check()?;
-    let expected = Expected::new(&workspace, &scenario)?;
+    let expected = if let Some(selection) = &layers {
+        Expected::with_layers(&workspace, &scenario, selection)?
+    } else {
+        Expected::new(&workspace, &scenario)?
+    };
     cancellation.check()?;
-    let bytes = serde_json::to_vec(&Request {
-        workspace,
-        scenario,
-    })
-    .map_err(|e| e.to_string())?;
+    let response = call(
+        &Request::Stage {
+            workspace,
+            scenario,
+            layers,
+        },
+        &cancellation,
+    )?;
+    match response {
+        Response::Staged(artifact) => {
+            artifact.verify(&expected)?;
+            cancellation.check()?;
+            Ok(*artifact)
+        }
+        _ => Err("Unexpected projection response".into()),
+    }
+}
+fn call(request: &impl Serialize, cancellation: &Cancellation) -> Result<Response, String> {
+    cancellation.check()?;
+    let bytes = serde_json::to_vec(request).map_err(|e| e.to_string())?;
     if bytes.len() > MAX_REQUEST {
         return Err("Projection request exceeds 10 MiB".into());
     }
     let response = exchange(
         &bytes,
-        &cancellation,
+        cancellation,
         DEADLINE,
         #[cfg(test)]
         None,
@@ -327,14 +375,53 @@ pub(super) fn stage(
         .map_err(|_| "Invalid projection response")?
     {
         Response::Error(error) => Err(error.chars().take(1024).collect()),
-        Response::Staged(artifact) => {
-            artifact.verify(&expected)?;
-            cancellation.check()?;
-            Ok(*artifact)
-        }
+        response => Ok(response),
     }
 }
+pub(super) fn review_layers(
+    workspace: Arc<Workspace>,
+    cancellation: Cancellation,
+) -> Result<projection::layers::Review, String> {
+    #[derive(Serialize)]
+    struct ReviewRequest<'a> {
+        operation: &'static str,
+        workspace: &'a Workspace,
+    }
+    // Serialize a borrowed workspace: the caller retains exactly one copy for
+    // local response correlation, rather than cloning all captured documents.
+    let response = call(
+        &ReviewRequest {
+            operation: "review_layers",
+            workspace: &workspace,
+        },
+        &cancellation,
+    )?;
+    match response {
+        Response::Layers(review) => {
+            review.verify(&workspace)?;
+            cancellation.check()?;
+            Ok(*review)
+        }
+        _ => Err("Unexpected layer review response".into()),
+    }
+}
+pub(super) fn check_layers(path: PathBuf) -> Result<serde_json::Value, String> {
+    let (text, _) =
+        storage::read_bounded(&path, hyprland_editor_core::workspace::MAX_WORKSPACE_BYTES)?;
+    let workspace = Workspace::from_json(&text, &hyprland_editor_core::catalogue())?;
+    let review = review_layers(Arc::new(workspace), Cancellation::default())?;
+    Ok(
+        serde_json::json!({"scope":"captured-scalar-argument-and-pending-input-review", "review_sha256":review.fingerprint()?,"review":review,"runtime_verified":false,"saved_file_written":false}),
+    )
+}
 pub(super) fn check(workspace: PathBuf, scenario: PathBuf) -> Result<serde_json::Value, String> {
+    check_selected(workspace, scenario, None)
+}
+pub(super) fn check_selected(
+    workspace: PathBuf,
+    scenario: PathBuf,
+    selection: Option<PathBuf>,
+) -> Result<serde_json::Value, String> {
     let (text, _) = storage::read_bounded(
         &workspace,
         hyprland_editor_core::workspace::MAX_WORKSPACE_BYTES,
@@ -342,9 +429,22 @@ pub(super) fn check(workspace: PathBuf, scenario: PathBuf) -> Result<serde_json:
     let workspace = Workspace::from_json(&text, &hyprland_editor_core::catalogue())?;
     let (text, _) = storage::read_bounded(&scenario, 64 * 1024)?;
     let scenario = serde_json::from_str(&text).map_err(|_| "Invalid private scenario")?;
-    let result = stage(workspace, scenario, Cancellation::default())?;
+    let selected = selection.is_some();
+    let result = if let Some(path) = selection {
+        let (text, _) = storage::read_bounded(&path, 64 * 1024)?;
+        let selection =
+            serde_json::from_str(&text).map_err(|_| "Invalid scalar input selection")?;
+        stage_selected(
+            workspace,
+            scenario,
+            Some(selection),
+            Cancellation::default(),
+        )?
+    } else {
+        stage(workspace, scenario, Cancellation::default())?
+    };
     Ok(
-        serde_json::json!({"scope":"restricted-typed-draft-projection-only", "artifact":result, "runtime_verified":false, "compositor_started":false,"saved_file_written":false}),
+        serde_json::json!({"scope":if selected {"reviewed-scalar-input-sample"}else{"restricted-typed-draft-projection-only"}, "artifact":result, "runtime_verified":false, "compositor_started":false,"saved_file_written":false}),
     )
 }
 

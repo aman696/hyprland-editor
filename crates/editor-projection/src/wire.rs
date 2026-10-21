@@ -50,6 +50,20 @@ impl Artifact {
             || self.report.compiler != editor_core::lua::replay::compiler_profile()
             || self.report.schema_pins != expected.schema_pins
             || self.report.scenario != expected.scenario
+            || self
+                .report
+                .layers
+                .as_ref()
+                .map(|s| (&s.selection_sha256, &s.review_sha256))
+                != expected.selection.as_ref().map(|s| (&s.0, &s.1))
+            || self.report.layers.as_ref().is_some_and(|s| {
+                s.captured_values
+                    .saturating_add(s.pending_values)
+                    .saturating_add(s.unset_values)
+                    > super::layers::MAX_ROWS
+                    || s.unresolved_source_rows > super::layers::MAX_ROWS
+                    || s.source_value_roundtrips > s.captured_values
+            })
         {
             return Err("Staged projection does not match its bounded input/model/profile".into());
         }
@@ -65,7 +79,9 @@ impl Artifact {
     }
 }
 
-fn bounded_vec<'de, D, T, const LIMIT: usize>(deserializer: D) -> Result<Vec<T>, D::Error>
+pub(super) fn bounded_vec<'de, D, T, const LIMIT: usize>(
+    deserializer: D,
+) -> Result<Vec<T>, D::Error>
 where
     D: serde::Deserializer<'de>,
     T: Deserialize<'de>,
@@ -94,15 +110,16 @@ where
     }
     deserializer.deserialize_seq(Visitor::<T, LIMIT>(std::marker::PhantomData))
 }
-fn bounded_map<'de, D, const LIMIT: usize>(
+pub(super) fn bounded_map<'de, D, T, const LIMIT: usize>(
     deserializer: D,
-) -> Result<BTreeMap<String, String>, D::Error>
+) -> Result<BTreeMap<String, T>, D::Error>
 where
     D: serde::Deserializer<'de>,
+    T: Deserialize<'de>,
 {
-    struct Visitor<const N: usize>;
-    impl<'de, const N: usize> serde::de::Visitor<'de> for Visitor<N> {
-        type Value = BTreeMap<String, String>;
+    struct Visitor<T, const N: usize>(std::marker::PhantomData<T>);
+    impl<'de, T: Deserialize<'de>, const N: usize> serde::de::Visitor<'de> for Visitor<T, N> {
+        type Value = BTreeMap<String, T>;
         fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
             write!(f, "at most {N} unique keys")
         }
@@ -111,7 +128,7 @@ where
             mut map: A,
         ) -> Result<Self::Value, A::Error> {
             let mut values = BTreeMap::new();
-            while let Some((key, value)) = map.next_entry::<String, String>()? {
+            while let Some((key, value)) = map.next_entry::<String, T>()? {
                 if values.len() == N || values.insert(key, value).is_some() {
                     return Err(serde::de::Error::custom(
                         "Duplicate or excessive staged mapping",
@@ -121,7 +138,7 @@ where
             Ok(values)
         }
     }
-    deserializer.deserialize_map(Visitor::<LIMIT>)
+    deserializer.deserialize_map(Visitor::<T, LIMIT>(std::marker::PhantomData))
 }
 pub(super) fn outputs<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Vec<Output>, D::Error> {
     bounded_vec::<D, Output, 4>(d)
@@ -129,12 +146,12 @@ pub(super) fn outputs<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Vec<Outp
 pub(super) fn targets<'de, D: serde::Deserializer<'de>>(
     d: D,
 ) -> Result<BTreeMap<String, String>, D::Error> {
-    bounded_map::<D, 256>(d)
+    bounded_map::<D, String, 256>(d)
 }
 pub(super) fn pins<'de, D: serde::Deserializer<'de>>(
     d: D,
 ) -> Result<BTreeMap<String, String>, D::Error> {
-    bounded_map::<D, 16>(d)
+    bounded_map::<D, String, 16>(d)
 }
 pub(super) fn entries<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Vec<Entry>, D::Error> {
     bounded_vec::<D, Entry, MAX_ENTRIES>(d)
@@ -150,6 +167,7 @@ pub struct Expected {
     workspace_sha256: String,
     schema_pins: BTreeMap<String, String>,
     scenario: Scenario,
+    selection: Option<(String, String)>,
 }
 impl Expected {
     pub fn new(workspace: &Workspace, scenario: &Scenario) -> Result<Self, String> {
@@ -163,7 +181,17 @@ impl Expected {
             ),
             schema_pins: schema_pins(workspace),
             scenario: scenario.clone(),
+            selection: None,
         })
+    }
+    pub fn with_layers(
+        workspace: &Workspace,
+        scenario: &Scenario,
+        selection: &layers::Selection,
+    ) -> Result<Self, String> {
+        let mut expected = Self::new(workspace, scenario)?;
+        expected.selection = Some((selection.fingerprint()?, selection.review_sha256.clone()));
+        Ok(expected)
     }
 }
 

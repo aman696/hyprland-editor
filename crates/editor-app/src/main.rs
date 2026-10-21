@@ -12,6 +12,7 @@ mod graph_migration;
 mod history;
 mod monitors;
 mod presentation;
+mod preview_layers;
 mod preview_preparation;
 mod process_policy;
 mod projection_worker;
@@ -1248,6 +1249,45 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     window
 }
 fn main() {
+    if std::env::args_os().nth(1).as_deref()
+        == Some(std::ffi::OsStr::new("--check-preview-projection-selected"))
+    {
+        let args: Vec<_> = std::env::args_os().skip(2).collect();
+        let result = if args.len() == 3 {
+            projection_worker::check_selected(
+                args[0].clone().into(),
+                args[1].clone().into(),
+                Some(args[2].clone().into()),
+            )
+        } else {
+            Err("Specify workspace, scenario and scalar selection files".into())
+        };
+        match result {
+            Ok(report) => println!("{report}"),
+            Err(error) => {
+                eprintln!("{}", error.chars().take(1024).collect::<String>());
+                std::process::exit(1);
+            }
+        }
+        return;
+    }
+    if std::env::args_os().nth(1).as_deref() == Some(std::ffi::OsStr::new("--check-preview-layers"))
+    {
+        let args: Vec<_> = std::env::args_os().skip(2).collect();
+        let result = if args.len() == 1 {
+            projection_worker::check_layers(args[0].clone().into())
+        } else {
+            Err("Specify one saved workspace for read-only layer review".into())
+        };
+        match result {
+            Ok(report) => println!("{report}"),
+            Err(error) => {
+                eprintln!("{}", error.chars().take(1024).collect::<String>());
+                std::process::exit(1);
+            }
+        }
+        return;
+    }
     if std::env::args_os().nth(1).as_deref()
         == Some(std::ffi::OsStr::new("--projection-policy-probe"))
     {

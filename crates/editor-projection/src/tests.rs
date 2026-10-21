@@ -236,7 +236,7 @@ fn every_family_projects_in_order_with_explicit_synthetic_identity_and_fidelity(
         let first = projection.lua().find("hl.curve(").unwrap();
         let second = projection.lua().find("hl.animation(").unwrap();
         assert!(first < second);
-        assert_eq!(projection.report().schema_pins.len(), 9);
+        assert_eq!(projection.report().schema_pins.len(), 11);
         assert_eq!(
             projection.identity(),
             compile(&workspace, &scenario).unwrap().identity()
