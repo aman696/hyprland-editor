@@ -531,7 +531,8 @@
         "crates/editor-preview/src/cgroup.rs",
         "crates/editor-preview/tests/fixtures/launch_probe.c",
         "scripts/cgroup_kernel_probe.py",
-        ".github/workflows/ci.yml"
+        ".github/workflows/ci.yml",
+        "data/preview-ci-launch-observation.json"
       ],
       "test_references": [
         "fixed_child_setup_reaches_the_stop_without_executing_the_entry",
@@ -540,7 +541,7 @@
         "explicit_descriptor_lifetimes_close_with_the_plan_without_ambient_ownership",
         "gated_constructor_stays_private_until_verified_release_and_cleans_up"
       ],
-      "limits": "internal clone3 placement at creation with atomically owned pidfd, bounded sealed executable/explicit arguments and inherited descriptors, non-root/no-retained-capability checks, empty environment and fixed pre-exec syscall sequence, stopped membership/limit readback and private release channel, pidfd signals/waits and explicit leaf kill/reap/removal; ordinary bounds/FD/SIGPIPE evidence and opt-in fresh ephemeral CI role for actual creation/release/refusal/cleanup; exact positive results require terminal hosted observation; no complete executable/dependency approval, namespace/filesystem/device/network/syscall profile, hostile/crash/orphan/stall lifecycle, actual compositor/render/frame/input or full security/resource/preview certificate"
+      "limits": "internal clone3 placement at creation with atomically owned pidfd, bounded sealed executable/explicit arguments and inherited descriptors, non-root/no-retained-capability checks, empty environment and fixed pre-exec syscall sequence, stopped membership/limit readback and private release channel, pidfd signals/waits and explicit leaf kill/reap/removal; ordinary setup/bounds/FD/SIGPIPE evidence and two successful fresh ephemeral CI jobs on Linux 7.0/6.17 for actual creation/release/refusal/reap/removal with source/static-probe/log and checkout-tree identities; Rust test binary digest unrecorded; fresh leaves avoid the observed kernel stale-kill-history defect without weakening cleanup; no complete executable/dependency approval, namespace/filesystem/device/network/syscall profile, hostile/crash/orphan/stall lifecycle, actual compositor/render/frame/input or full security/resource/preview certificate"
     },
     {
       "area": "preview resource preparation and backend feasibility",
