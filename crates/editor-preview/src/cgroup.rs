@@ -376,10 +376,12 @@ impl Domain {
         }
         self.kill = Some(open(self.fd.as_fd(), c"cgroup.kill", libc::O_WRONLY)?);
         self.join = Some(open(self.fd.as_fd(), c"cgroup.procs", libc::O_WRONLY)?);
-        write_value(
-            self.kill.as_ref().expect("Opened kill control").as_fd(),
-            b"1",
-        )?;
+        // This is a fresh, already-empty leaf. Do not write cgroup.kill as a
+        // capability probe: affected kernels snapshot the source kill_seq for
+        // CLONE_INTO_CGROUP and spuriously kill children of a previously killed
+        // target (upstream fix 8e359920216689b3b79e0fe8961a77fe312a511f).
+        // Real stop/error cleanup still writes the held kill control. Domains
+        // are never reused after cleanup; placement/readback must still pass.
         if self.populated()? {
             return Err(Error::Unavailable(
                 "Fresh resource subtree is unexpectedly populated",

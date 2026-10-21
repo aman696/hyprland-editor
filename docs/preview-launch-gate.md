@@ -16,6 +16,12 @@ After release the child calls [execveat(2)](https://man7.org/linux/man-pages/man
 
 The session stays on its creating supervisor thread: its Rust type cannot move to another thread, because Linux parent-death signaling follows the creating thread. It is not a permanent background service. The eventual supervisor must keep that thread alive for the lab lifetime and receive bounded control messages from the GUI.
 
+## Kernel compatibility observation
+
+The first two hosted source heads failed on Linux `7.0.0-1017-azure` with an immediate SIGKILL and no child setup record. This matches the [upstream kill-sequence bug and fix](https://kernel.googlesource.com/pub/scm/linux/kernel/git/tip/tip/+/8e359920216689b3b79e0fe8961a77fe312a511f): affected kernels compare the parent's kill history with the destination's during `CLONE_INTO_CGROUP`. An empty `cgroup.kill` preflight write changed the newly created leaf's history unnecessarily.
+
+Preparation now opens the kill control, verifies emptiness and installs/readbacks limits, without killing the already-empty leaf. Stop and failure cleanup still use the actual kill control, verify reap/emptiness and remove the leaf. A cleaned domain is never reused. This is a code correction to fresh-leaf preparation, not a kernel/security-policy change. A parent with different historical kill state may still encounter the affected kernel behavior; unavailable/failed creation remains a refusal, without an unrestricted launch. The corrected positive profile requires its own hosted evidence before any success claim.
+
 ## Ownership and cleanup
 
 Signals and waits use the owned pidfd, never a caller-supplied or reusable numeric PID. The implementation uses [pidfd_send_signal(2)](https://man7.org/linux/man-pages/man2/pidfd_send_signal.2.html) and [waitid(2)](https://man7.org/linux/man-pages/man2/waitid.2.html). The observed PID is used only to compare the private membership file.
