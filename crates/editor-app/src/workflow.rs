@@ -32,6 +32,7 @@ pub(super) fn background<T: Send + 'static>(
     });
 }
 struct Imported {
+    migration: Option<super::graph_migration::Summary>,
     graph: Option<std::sync::Arc<super::source_graph::Saved>>,
     draft: Draft,
     source: Option<LuaDocument>,
@@ -51,9 +52,31 @@ fn read_import(
     catalogue: Vec<Setting>,
     version: String,
 ) -> Result<Imported, String> {
+    read_import_for_review(path, catalogue, version, false)
+}
+fn read_import_for_review(
+    path: PathBuf,
+    catalogue: Vec<Setting>,
+    version: String,
+    allow_migration: bool,
+) -> Result<Imported, String> {
     if path.extension().is_some_and(|extension| extension == "hye") {
-        let workspace = workspace::read(&path, &catalogue)?;
-        let graph = if let Some(graph) = &workspace.source_graph {
+        let (text, _) = storage::read_bounded(&path, workspace::MAX_WORKSPACE_BYTES)?;
+        let (workspace, migration, prepared_graph) = match Workspace::from_json(&text, &catalogue) {
+            Ok(workspace) => (workspace, None, None),
+            Err(error) if !allow_migration => return Err(error),
+            Err(_) => {
+                let prepared = super::graph_migration::prepare(&text, &catalogue)?;
+                (
+                    prepared.workspace,
+                    Some(prepared.summary),
+                    Some(prepared.graph),
+                )
+            }
+        };
+        let graph = if let Some(graph) = prepared_graph {
+            Some(graph)
+        } else if let Some(graph) = &workspace.source_graph {
             let bundle = hyprland_editor_core::workspace_graph::Bundle {
                 graph: graph.clone(),
                 sources: std::sync::Arc::new(workspace.sources.clone()),
@@ -85,8 +108,9 @@ fn read_import(
         let diagnostics = source
             .as_ref()
             .map_or(0, |doc| doc.report.diagnostics.len());
-        return Ok(Imported { graph,draft:workspace.draft,source,origin,saved_json:true,monitors:workspace.monitors,devices:workspace.devices,bindings:workspace.bindings,workspace_rules:workspace.workspace_rules,rules:workspace.rules,animations:workspace.animations,gestures:workspace.gestures,
-            message:format!("Saved draft reopened with {diagnostics} source diagnostics. Source snapshots were reparsed; recorded original paths were not opened. Desktop state is separate.") });
+        let saved_json = migration.is_none();
+        return Ok(Imported { migration,graph,draft:workspace.draft,source,origin,saved_json,monitors:workspace.monitors,devices:workspace.devices,bindings:workspace.bindings,workspace_rules:workspace.workspace_rules,rules:workspace.rules,animations:workspace.animations,gestures:workspace.gestures,
+            message:format!("{} with {diagnostics} source diagnostics. Source snapshots were reparsed; recorded original paths were not opened. Desktop state is separate.", if saved_json { "Saved draft reopened" } else { "Rebuilt copy loaded; save it as a new private workspace" }) });
     }
     let captured = if path
         .extension()
@@ -97,13 +121,13 @@ fn read_import(
         storage::read_source(&path)?
     };
     match path.extension().and_then(|s|s.to_str()) {
-        Some("json")=>Draft::from_json(&captured.content,&catalogue).map(|draft|Imported{graph:None,draft,source:None,origin:None,monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),message:"Validated value-only draft loaded".into(),saved_json:true}),
-        Some("conf")=>import::legacy(&captured.content,&catalogue).map(|r|Imported{graph:None,message:format!("Imported {} literal overrides; {} lines skipped; {} repeated keys. Includes and variables remain unresolved. Active state is separate.",r.draft.values.len(),r.skipped.len(),r.duplicate_keys.len()),draft:r.draft,source:None,origin:None,monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),saved_json:false}),
+        Some("json")=>Draft::from_json(&captured.content,&catalogue).map(|draft|Imported{migration:None,graph:None,draft,source:None,origin:None,monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),message:"Validated value-only draft loaded".into(),saved_json:true}),
+        Some("conf")=>import::legacy(&captured.content,&catalogue).map(|r|Imported{migration:None,graph:None,message:format!("Imported {} literal overrides; {} lines skipped; {} repeated keys. Includes and variables remain unresolved. Active state is separate.",r.draft.values.len(),r.skipped.len(),r.duplicate_keys.len()),draft:r.draft,source:None,origin:None,monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),saved_json:false}),
         Some("lua")=>{
             let doc=parse_source(captured.content,version,&catalogue)?;
             let mut message=format!("Imported {} scalar declarations, {} monitor rules and {} device rules; {} diagnostics. Effective values are not inferred by executing Lua.",doc.report.draft.values.len(),doc.report.monitors.len(),doc.report.devices.len(),doc.report.diagnostics.len());
             if doc.report.opaque_effects{message.push_str(" Opaque code remains in the source; this is a partial projection.");}
-            Ok(Imported{graph:None,draft:doc.report.draft.clone(),monitors:doc.report.monitors.clone(),devices:doc.report.devices.clone(),bindings:doc.report.bindings.clone(),workspace_rules:doc.report.workspace_rules.clone(),rules:doc.report.rules.clone(),animations:doc.report.animations.clone(),gestures:doc.report.gestures.clone(),source:Some(doc),origin:Some(captured.identity),message,saved_json:false})
+            Ok(Imported{migration:None,graph:None,draft:doc.report.draft.clone(),monitors:doc.report.monitors.clone(),devices:doc.report.devices.clone(),bindings:doc.report.bindings.clone(),workspace_rules:doc.report.workspace_rules.clone(),rules:doc.report.rules.clone(),animations:doc.report.animations.clone(),gestures:doc.report.gestures.clone(),source:Some(doc),origin:Some(captured.identity),message,saved_json:false})
         },_=>Err("Select saved .hye workspace, draft JSON, legacy .conf or Lua .lua source".into()),
     }
 }
@@ -243,21 +267,121 @@ pub(super) fn connect_import(
             let Ok(file)=result else{return;};let Some(path)=file.path()else{notice(&win,"Local file required","Only local regular files can be imported.");return;};
             let Some(button)=button.upgrade()else{return;};button.set_sensitive(false);status.set_text("Reading source in a bounded background operation…");
             let(generation,catalogue,selected)={let s=state.borrow();(s.generation,s.catalogue.clone(),s.draft.version.clone())};let win=win.downgrade();let button=button.downgrade();let version=version.downgrade();
-            background(move||read_import(path,catalogue,selected),move|result|{
+            background(move||read_import_for_review(path,catalogue,selected,true),move|result|{
                 if let Some(button)=button.upgrade(){button.set_sensitive(true);}let Some(win)=win.upgrade()else{return;};
                 if state.borrow().generation!=generation{status.set_text("Draft changed while import was running; the result was discarded. Import again when ready.");return;}
                 match result { Ok(imported) => {
                     let Some(version)=version.upgrade() else{return;};
-                    if state.borrow().dirty_version(&imported.draft.version) {
-                        let dialog=adw::MessageDialog::new(Some(&win),Some("Replace unsaved draft?"),Some("The imported file would replace unsaved values for this snapshot. Save the existing draft first, or explicitly discard it."));
-                        dialog.add_response("cancel","Cancel");dialog.add_response("replace","Discard and import");dialog.set_default_response(Some("cancel"));dialog.set_close_response("cancel");dialog.set_response_appearance("replace",adw::ResponseAppearance::Destructive);
-                        let imported=std::cell::RefCell::new(Some(imported));
-                        dialog.connect_response(None,move|_,response|{if response=="replace"{if let Some(imported)=imported.borrow_mut().take(){if state.borrow().generation==generation{apply_import(imported,&state,&status,&version,&selection,&panel);}}}});dialog.present();
-                    }else{apply_import(imported,&state,&status,&version,&selection,&panel);}
+                    review_import(imported,&win,&state,&status,&version,&selection,&panel,generation);
                 },Err(e)=>notice(&win,"Import rejected",&e)}
             });
         });
     });
+}
+#[allow(clippy::too_many_arguments)]
+fn confirm_import(
+    imported: Imported,
+    window: &adw::ApplicationWindow,
+    state: &Shared,
+    status: &gtk::Label,
+    version: &gtk::DropDown,
+    selection: &gtk::SingleSelection,
+    panel: &gtk::Box,
+    generation: u64,
+) {
+    if state.borrow().generation != generation {
+        return;
+    }
+    if !state.borrow().dirty_version(&imported.draft.version) {
+        apply_import(imported, state, status, version, selection, panel);
+        return;
+    }
+    let dialog = adw::MessageDialog::new(Some(window), Some("Replace unsaved draft?"), Some("The imported file would replace unsaved values for this snapshot. Save the existing draft first, or explicitly discard it."));
+    dialog.add_response("cancel", "Cancel");
+    dialog.add_response("replace", "Discard and import");
+    dialog.set_default_response(Some("cancel"));
+    dialog.set_close_response("cancel");
+    dialog.set_response_appearance("replace", adw::ResponseAppearance::Destructive);
+    let imported = std::cell::RefCell::new(Some(imported));
+    let (state, status, version, selection, panel) = (
+        state.clone(),
+        status.clone(),
+        version.downgrade(),
+        selection.clone(),
+        panel.clone(),
+    );
+    dialog.connect_response(None, move |_, response| {
+        if response == "replace" && state.borrow().generation != generation {
+            status.set_text("Draft changed during review; import was discarded. Open the saved file again when ready.");
+            return;
+        }
+        if response == "replace" && state.borrow().generation == generation {
+            if let (Some(imported), Some(version)) =
+                (imported.borrow_mut().take(), version.upgrade())
+            {
+                apply_import(imported, &state, &status, &version, &selection, &panel);
+            }
+        }
+    });
+    dialog.present();
+}
+#[allow(clippy::too_many_arguments)]
+fn review_import(
+    imported: Imported,
+    window: &adw::ApplicationWindow,
+    state: &Shared,
+    status: &gtk::Label,
+    version: &gtk::DropDown,
+    selection: &gtk::SingleSelection,
+    panel: &gtk::Box,
+    generation: u64,
+) {
+    let Some(summary) = &imported.migration else {
+        confirm_import(
+            imported, window, state, status, version, selection, panel, generation,
+        );
+        return;
+    };
+    let mut body = format!("This workspace was saved by an earlier build. Its saved sources have been checked again.\n\nCaptured files: {}\nDependency inputs: {}\nPrivate source edits: {}\n\nYour source bytes, edits and settings are preserved. Original files were not opened. Folder access stays closed.\n\nKeep this copy, then save a new private workspace. The old saved file stays unchanged.",summary.captured_documents,summary.resolution_inputs,summary.private_revisions);
+    if summary.reanalysis_findings != 0 || summary.reanalysis_note.is_some() {
+        body.push_str(
+            "\n\nSome source behavior is unresolved. Review Source analysis after opening.",
+        );
+    }
+    let dialog =
+        adw::MessageDialog::new(Some(window), Some("Review rebuilt workspace"), Some(&body));
+    dialog.add_response("cancel", "Cancel");
+    dialog.add_response("keep", "Use rebuilt copy");
+    dialog.set_default_response(Some("cancel"));
+    dialog.set_close_response("cancel");
+    dialog.set_response_appearance("keep", adw::ResponseAppearance::Suggested);
+    let imported = std::cell::RefCell::new(Some(imported));
+    let (window, state, status, version, selection, panel) = (
+        window.downgrade(),
+        state.clone(),
+        status.clone(),
+        version.downgrade(),
+        selection.clone(),
+        panel.clone(),
+    );
+    dialog.connect_response(None, move |_, response| {
+        if response == "keep" && state.borrow().generation != generation {
+            status.set_text("Draft changed during review; rebuilt copy was discarded. Open the saved file again when ready.");
+            return;
+        }
+        if response == "keep" && state.borrow().generation == generation {
+            if let (Some(imported), Some(window), Some(version)) = (
+                imported.borrow_mut().take(),
+                window.upgrade(),
+                version.upgrade(),
+            ) {
+                confirm_import(
+                    imported, &window, &state, &status, &version, &selection, &panel, generation,
+                );
+            }
+        }
+    });
+    dialog.present();
 }
 pub(super) fn connect_live(
     button: &gtk::Button,
@@ -359,6 +483,10 @@ fn apply_import(
         1
     });
     let mut s = state.borrow_mut();
+    if imported.migration.is_some() {
+        s.saved_source_graphs
+            .insert(imported.draft.version.clone(), None);
+    }
     let graph_fingerprint = imported.graph.as_ref().map(|g| g.fingerprint.clone());
     if let Some(graph) = imported.graph {
         s.source_graphs
@@ -527,6 +655,211 @@ pub(super) fn connect_diagnostics(
 }
 
 #[cfg(test)]
+pub(super) fn test_graph_migration(window: &adw::ApplicationWindow) {
+    use hyprland_editor_core::{
+        module_path::Context,
+        workspace_graph::{self, Bundle, Graph, View},
+    };
+    use std::time::Instant;
+    let temporary = super::test_support::TempDir::new("he-ui-migration");
+    let original = temporary.path().join("main.lua");
+    std::fs::write(&original, "hl.config{general={border_size=3}}\n").unwrap();
+    let captured = storage::read_source(&original).unwrap();
+    std::fs::remove_file(&original).unwrap();
+    let bundle = Bundle {
+        graph: Graph {
+            revisions: vec![],
+            format: "hye-workspace-graph-1".into(),
+            schema_sha256: workspace_graph::schema_sha256(),
+            compiler: hyprland_editor_core::lua::replay::compiler_profile(),
+            root: "root".into(),
+            context: Context {
+                main_file: captured.identity.selected_path.clone(),
+                home: None,
+                inherited_package_path: None,
+            },
+            working_directory: None,
+            views: vec![View {
+                document: "root".into(),
+                load_name: captured.identity.selected_path.clone(),
+            }],
+            bindings: vec![],
+        },
+        sources: std::sync::Arc::new(vec![hyprland_editor_core::workspace::SourceSnapshot {
+            id: "root".into(),
+            language: SourceLanguage::Lua,
+            content: captured.content,
+            origin: captured.identity,
+        }]),
+    };
+    let workspace = Workspace::new(Draft::new(BASELINE)).with_graph(&bundle);
+    let mut value = serde_json::to_value(workspace).unwrap();
+    value["source_graph"]["schema_sha256"] = hyprland_editor_core::lua::source_hash(include_str!(
+        "../../../data/migrations/graph-model-before-projection.json"
+    ))
+    .into();
+    let bytes = serde_json::to_vec(&value).unwrap();
+    let path = temporary.path().join("old.hye");
+    std::fs::write(&path, &bytes).unwrap();
+    let state = super::initial_state();
+    let status = gtk::Label::new(None);
+    let version = gtk::DropDown::from_strings(&[BASELINE, "audited-main"]);
+    let selection = gtk::SingleSelection::new(Some(gtk::StringList::new(&[])));
+    let panel = gtk::Box::new(gtk::Orientation::Vertical, 0);
+    let catalogue = hyprland_editor_core::catalogue();
+    let open =
+        || read_import_for_review(path.clone(), catalogue.clone(), BASELINE.into(), true).unwrap();
+    let settle = || {
+        let context = gtk::glib::MainContext::default();
+        for _ in 0..30 {
+            while context.pending() {
+                context.iteration(false);
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
+    };
+    let dialog = |heading: &str| {
+        gtk::Window::list_toplevels()
+            .into_iter()
+            .filter_map(|w| w.downcast::<adw::MessageDialog>().ok())
+            .find(|w| w.heading().as_deref() == Some(heading))
+            .expect("Visible migration/unsaved dialog")
+    };
+    let generation = state.borrow().generation;
+    review_import(
+        open(),
+        window,
+        &state,
+        &status,
+        &version,
+        &selection,
+        &panel,
+        generation,
+    );
+    settle();
+    let review = dialog("Review rebuilt workspace");
+    assert_eq!(review.default_response().as_deref(), Some("cancel"));
+    if let Ok(path) = std::env::var("HYPRLAND_EDITOR_TEST_CAPTURE") {
+        let paintable = gtk::WidgetPaintable::new(Some(&review));
+        let snapshot = gtk::Snapshot::new();
+        paintable.snapshot(&snapshot, review.width() as f64, review.height() as f64);
+        let node = snapshot.to_node().unwrap();
+        review
+            .renderer()
+            .unwrap()
+            .render_texture(&node, None)
+            .save_to_png(format!("{path}.migration.png"))
+            .unwrap();
+    }
+    review.response("cancel");
+    review.destroy();
+    settle();
+    assert_eq!(state.borrow().generation, generation);
+    assert!(state.borrow().source_graphs.is_empty());
+    review_import(
+        open(),
+        window,
+        &state,
+        &status,
+        &version,
+        &selection,
+        &panel,
+        generation,
+    );
+    settle();
+    state.borrow_mut().generation += 1;
+    let review = dialog("Review rebuilt workspace");
+    review.response("keep");
+    review.destroy();
+    settle();
+    assert!(state.borrow().source_graphs.is_empty());
+    assert!(status.text().contains("discarded"));
+    state.borrow_mut().draft.values.insert(
+        "general:border_size".into(),
+        hyprland_editor_core::Value::Int(9),
+    );
+    let generation = state.borrow().generation;
+    review_import(
+        open(),
+        window,
+        &state,
+        &status,
+        &version,
+        &selection,
+        &panel,
+        generation,
+    );
+    settle();
+    let review = dialog("Review rebuilt workspace");
+    review.response("keep");
+    review.destroy();
+    settle();
+    let replace = dialog("Replace unsaved draft?");
+    replace.response("cancel");
+    replace.destroy();
+    settle();
+    assert_eq!(
+        state.borrow().draft.values["general:border_size"],
+        hyprland_editor_core::Value::Int(9)
+    );
+    assert!(state.borrow().source_graphs.is_empty());
+    review_import(
+        open(),
+        window,
+        &state,
+        &status,
+        &version,
+        &selection,
+        &panel,
+        generation,
+    );
+    settle();
+    let review = dialog("Review rebuilt workspace");
+    review.response("keep");
+    review.destroy();
+    settle();
+    let replace = dialog("Replace unsaved draft?");
+    replace.response("replace");
+    replace.destroy();
+    settle();
+    assert!(state.borrow().source_graphs.contains_key(BASELINE));
+    assert!(state.borrow().dirty());
+    assert!(status.text().contains("save it as a new private workspace"));
+    let save = gtk::Button::new();
+    connect_save_at(
+        &save,
+        window,
+        &state,
+        &status,
+        Some(temporary.path().into()),
+    );
+    save.emit_clicked();
+    let start = Instant::now();
+    while !save.is_sensitive() {
+        settle();
+        assert!(start.elapsed() < Duration::from_secs(5));
+    }
+    assert!(!state.borrow().dirty());
+    assert_eq!(std::fs::read(&path).unwrap(), bytes);
+    assert!(!original.exists());
+    let files: Vec<_> = std::fs::read_dir(temporary.path())
+        .unwrap()
+        .map(|e| e.unwrap().path())
+        .collect();
+    assert_eq!(files.len(), 2);
+    let saved_files: Vec<_> = std::fs::read_dir(temporary.path().join("hyprland-editor"))
+        .unwrap()
+        .map(|e| e.unwrap().path())
+        .collect();
+    assert_eq!(saved_files.len(), 1);
+    let saved = workspace::read(&saved_files[0], &catalogue).unwrap();
+    assert_eq!(
+        saved.source_graph.unwrap().schema_sha256,
+        workspace_graph::schema_sha256()
+    );
+}
+
+#[cfg(test)]
 pub(super) fn test_source_persistence(window: &adw::ApplicationWindow) {
     use std::time::{Instant, SystemTime, UNIX_EPOCH};
     let root = std::env::temp_dir().join(format!(
@@ -562,6 +895,7 @@ pub(super) fn test_source_persistence(window: &adw::ApplicationWindow) {
     let panel = gtk::Box::new(gtk::Orientation::Vertical, 0);
     apply_import(
         Imported {
+            migration: None,
             graph: None,
             draft,
             source: Some(doc),

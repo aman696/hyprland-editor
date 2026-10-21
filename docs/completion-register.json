@@ -14,6 +14,23 @@
   },
   "foundations": [
     {
+      "area": "reviewed saved-graph model migration",
+      "code": [
+        "crates/editor-app/src/graph_migration.rs",
+        "crates/editor-app/src/workflow.rs",
+        "crates/editor-app/tests/workspace_graph.rs",
+        "data/migrations/graph-model-before-projection.json",
+        "data/migrations/graph-model-projection.json"
+      ],
+      "test_references": [
+        "reviewed_transition_keeps_the_replay_engine_exact_and_refuses_unreviewed_builds",
+        "reviewed_graph_migrations_rebuild_deleted_sources_and_private_pieces_without_writing",
+        "migration_refuses_unknown_models_profiles_corruption_unreached_inputs_and_hidden_payloads",
+        "workflow::test_graph_migration"
+      ],
+      "limits": "two exact reviewed dependency/storage-visibility transitions with bounded held-inode input, unknown-payload refusal, fresh restricted-worker captured-view/dependency/private-piece reanalysis, byte/value preservation, cancel/epoch/unsaved guards and new private save; no original-path reads or restored folder access, general model/schema/profile conversion, persistent history, full source export/reconciliation or full audit certificate"
+    },
+    {
       "area": "source dependency capture and ordered evaluation",
       "code": [
         "crates/editor-core/src/module_path.rs",

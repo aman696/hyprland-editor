@@ -8,6 +8,7 @@ mod devices;
 mod directory_worker;
 mod fd_channel;
 mod gestures;
+mod graph_migration;
 mod history;
 mod monitors;
 mod presentation;
@@ -1312,6 +1313,24 @@ fn main() {
         worker::entry();
         return;
     }
+    if std::env::args_os().nth(1).as_deref()
+        == Some(std::ffi::OsStr::new("--check-workspace-migration"))
+    {
+        let args: Vec<_> = std::env::args_os().skip(2).collect();
+        let result = if args.len() == 1 {
+            graph_migration::check(args[0].clone().into())
+        } else {
+            Err("Specify one saved .hye workspace for read-only migration review".into())
+        };
+        match result {
+            Ok(report) => println!("{report}"),
+            Err(error) => {
+                eprintln!("{}", error.chars().take(1024).collect::<String>());
+                std::process::exit(1);
+            }
+        }
+        return;
+    }
     if std::env::args_os().nth(1).as_deref() == Some(std::ffi::OsStr::new("--check-workspace")) {
         let result = std::env::args_os()
             .nth(2)
@@ -1614,6 +1633,7 @@ mod tests {
             .any(|w| w.is::<gtk::TextView>()));
         review.destroy();
         workflow::test_source_persistence(&window);
+        workflow::test_graph_migration(&window);
         reconciliation::test_review(&window);
         monitors::test_editor(&window);
         devices::test_editor(&window);

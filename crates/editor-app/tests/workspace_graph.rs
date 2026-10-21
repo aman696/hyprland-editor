@@ -296,3 +296,117 @@ fn saved_load_aliases_remain_distinct_and_a_stopped_model_stays_partial() {
     assert_eq!(report.events.len(), 1);
     fs::remove_dir_all(root).unwrap();
 }
+
+fn check_migration(path: &Path) -> (bool, String) {
+    let result = Command::new(env!("CARGO_BIN_EXE_hyprland-editor"))
+        .arg("--check-workspace-migration")
+        .arg(path)
+        .env_clear()
+        .output()
+        .unwrap();
+    (
+        result.status.success(),
+        String::from_utf8(if result.status.success() {
+            result.stdout
+        } else {
+            result.stderr
+        })
+        .unwrap(),
+    )
+}
+#[test]
+fn reviewed_graph_migrations_rebuild_deleted_sources_and_private_pieces_without_writing() {
+    for version in [BASELINE, AUDITED_MAIN] {
+        for old in [
+            "f7017978da7127ee461497d1021e418bb2c2e171b4d28a43b6671f8abb2531dd",
+            "046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371",
+        ] {
+            let root = root();
+            let mut snapshot = fixture(&root, version);
+            let graph = snapshot.source_graph.as_ref().unwrap();
+            let base = graph
+                .program(&snapshot.sources, snapshot.root_source.as_deref(), version)
+                .unwrap();
+            let part = &base.documents[1];
+            let at = part.source.find('3').unwrap();
+            let plan = replay::edits::prepare(
+                &base,
+                vec![replay::edits::SourceEdit {
+                    document: part.id.clone(),
+                    base_sha256: part.sha256.clone(),
+                    span: at..at + 1,
+                    old_bytes_sha256: lua::source_hash("3"),
+                    replacement: "7".into(),
+                    semantic_targets: vec!["general:border_size".into()],
+                }],
+                vec![],
+            )
+            .unwrap();
+            snapshot.source_graph.as_mut().unwrap().revisions =
+                hyprland_editor_core::workspace_graph::revisions::apply(&base, &[], &plan).unwrap();
+            let mut value = serde_json::to_value(&snapshot).unwrap();
+            value["source_graph"]["schema_sha256"] = old.into();
+            let bytes = serde_json::to_vec_pretty(&value).unwrap();
+            let path = root.join("old.hye");
+            fs::write(&path, &bytes).unwrap();
+            assert!(!check(&path).0, "Normal opening must not silently migrate");
+            let (ok, output) = check_migration(&path);
+            assert!(ok, "{output}");
+            let report: serde_json::Value = serde_json::from_str(&output).unwrap();
+            assert_eq!(report["migration"]["previous_model"], old);
+            assert_eq!(report["migration"]["captured_documents"], 2);
+            assert_eq!(report["migration"]["private_revisions"], 1);
+            assert_eq!(report["migration"]["resolution_inputs"], 1);
+            assert_eq!(
+                report["migration"]["input_sha256"],
+                lua::source_hash(std::str::from_utf8(&bytes).unwrap())
+            );
+            for key in [
+                "saved_file_written",
+                "original_paths_opened",
+                "folder_access_restored",
+                "runtime_verified",
+            ] {
+                assert_eq!(report[key], false, "{key}");
+            }
+            assert_eq!(report["needs_review_and_new_private_save"], true);
+            assert_eq!(fs::read(&path).unwrap(), bytes);
+            assert!(!root.join("originals").exists());
+            assert_eq!(fs::read_dir(&root).unwrap().count(), 1);
+            fs::remove_dir_all(root).unwrap();
+        }
+    }
+}
+#[test]
+fn migration_refuses_unknown_models_profiles_corruption_unreached_inputs_and_hidden_payloads() {
+    let root = root();
+    let snapshot = fixture(&root, BASELINE);
+    let path = root.join("old.hye");
+    let mut original = serde_json::to_value(snapshot).unwrap();
+    original["source_graph"]["schema_sha256"] =
+        "f7017978da7127ee461497d1021e418bb2c2e171b4d28a43b6671f8abb2531dd".into();
+    for change in 0..6 {
+        let mut value = original.clone();
+        match change {
+            0 => value["source_graph"]["schema_sha256"] = "0".repeat(64).into(),
+            1 => value["source_graph"]["compiler"]["release"] = "foreign".into(),
+            2 => value["sources"][1]["content"] = "return 999".into(),
+            3 => {
+                value["source_graph"]["bindings"][0]["request"]["module"] =
+                    serde_json::json!([b'x'])
+            }
+            4 => {
+                value["draft"]["values"]["general:border_size"]["hidden"] = "discarded field".into()
+            }
+            _ => value["source_graph"]["views"][1]["document"] = "unknown".into(),
+        }
+        let bytes = serde_json::to_vec(&value).unwrap();
+        fs::write(&path, &bytes).unwrap();
+        assert!(
+            !check_migration(&path).0,
+            "Accepted invalid migration {change}"
+        );
+        assert_eq!(fs::read(&path).unwrap(), bytes);
+    }
+    fs::remove_dir_all(root).unwrap();
+}

@@ -46,7 +46,7 @@
     "crates/editor-core/src/source_path.rs": "c84210ed0c50e50f773ee80eeceff620113837237b92547bc3174b56631b8b12",
     "crates/editor-core/src/source_scope/probe.rs": "dacb8de63706ff37631818993fff67650d4c59e98fa407f846274b911d6228d4",
     "crates/editor-core/src/source_scope.rs": "99c70039062db60e4f9e72a7d9f40556f9b0988ab2e9e2ade99514196c1c57cf",
-    "crates/editor-core/src/storage.rs": "1f7b1d5a30b773e1a36b775fc347ed381c4804c7c77cb02b0ad1b1fa027c7cdb",
+    "crates/editor-core/src/storage.rs": "5a346992177c919ecb841caf78d807975482ea55919846b55577d47bd1827dfc",
     "crates/editor-core/src/workspace.rs": "b89eb58d8a75200bbd48c885288d5efacefccafeef014c3c24c26aaf8a39f422",
     "crates/editor-core/src/workspace_graph/revisions.rs": "be6042a51b9a77c4b7183d81c66778a3e8b97da32c374a936ddcf22a55f95fdd",
     "crates/editor-core/src/workspace_graph.rs": "5e879665bb55a546eab9208aa352da37d1f2d133783d8b8afca79efb6713dd26",
