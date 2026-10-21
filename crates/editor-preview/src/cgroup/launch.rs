@@ -351,9 +351,25 @@ impl Session {
             if let Some(info) = process.event(libc::WSTOPPED | libc::WEXITED | libc::WNOWAIT)? {
                 if info.si_code != libc::CLD_STOPPED || unsafe { info.si_status() } != libc::SIGSTOP
                 {
-                    return Err(io::Error::other(
-                        "Constructor exited before its private launch gate",
-                    ));
+                    let mut record = [0; 8];
+                    let read = self.errors.as_mut().unwrap().read(&mut record);
+                    let diagnostic = match read {
+                        Ok(8) => format!(
+                            "setup phase {}: {}",
+                            i32::from_ne_bytes(record[..4].try_into().unwrap()),
+                            io::Error::from_raw_os_error(i32::from_ne_bytes(
+                                record[4..].try_into().unwrap()
+                            ))
+                        ),
+                        other => format!(
+                            "event {} status {}, error record {other:?}",
+                            info.si_code,
+                            unsafe { info.si_status() }
+                        ),
+                    };
+                    return Err(io::Error::other(format!(
+                        "Constructor exited before its private launch gate ({diagnostic})"
+                    )));
                 }
                 self.domain
                     .as_ref()
@@ -391,6 +407,10 @@ impl Session {
             .ok_or_else(|| invalid("Resource domain is unavailable"))?
             .verify_launch_member(process.pid)
             .map_err(group_error)?;
+        // Resume while execution is still blocked by the private gate. Sending
+        // SIGCONT after release would race a fast-exiting constructor when an
+        // earlier unsolicited SIGCONT had already resumed the child.
+        process.signal(libc::SIGCONT)?;
         let release = self.release.take().unwrap();
         // MSG_NOSIGNAL keeps a dead child from sending SIGPIPE to the parent,
         // even if the embedding process uses SIGPIPE's default disposition.
@@ -408,7 +428,6 @@ impl Session {
         if count != 1 {
             return Err(io::Error::other("Incomplete private release message"));
         }
-        process.signal(libc::SIGCONT)?;
         let mut record = Vec::new();
         let errors = self.errors.as_mut().unwrap();
         loop {
@@ -804,6 +823,71 @@ mod tests {
             report.read(&mut bytes).unwrap_err().kind(),
             io::ErrorKind::WouldBlock
         );
+    }
+    #[test]
+    fn fixed_child_setup_reaches_the_stop_without_executing_the_entry() {
+        // Trusted pre-exec setup only: no cgroup, constructor execution or
+        // rendering claim. The production spawn path has no fork fallback.
+        let file = sealed(b"must never execute", 0o500, SEALS);
+        let null = null();
+        let plan = Plan::new(file.as_fd(), &arguments(), [null.as_fd(); 3], &[]).unwrap();
+        let (error_read, error_write) = pipe().unwrap();
+        let (release_read, _release_write) = gate().unwrap();
+        let minimum = plan.inputs.len() as i32 + 3;
+        let executable = duplicate(plan.executable.as_fd(), minimum).unwrap();
+        let errors = duplicate(error_write.as_fd(), minimum).unwrap();
+        let release = duplicate(release_read.as_fd(), minimum).unwrap();
+        let argv: Vec<_> = plan
+            .arguments
+            .iter()
+            .map(|s| s.as_ptr())
+            .chain([std::ptr::null()])
+            .collect();
+        let parent = unsafe { libc::getpid() };
+        let mask = SignalMask::block().unwrap();
+        let pid = unsafe { libc::fork() };
+        if pid == 0 {
+            unsafe {
+                child(
+                    &plan,
+                    &argv,
+                    executable.as_raw_fd(),
+                    errors.as_raw_fd(),
+                    release.as_raw_fd(),
+                    parent,
+                )
+            }
+        }
+        drop(mask);
+        assert!(pid > 0);
+        let mut status = 0;
+        let end = Instant::now() + Duration::from_secs(1);
+        let seen = loop {
+            let result =
+                unsafe { libc::waitpid(pid, &mut status, libc::WNOHANG | libc::WUNTRACED) };
+            if result == pid {
+                break true;
+            }
+            if result < 0 || Instant::now() >= end {
+                break false;
+            }
+            std::thread::sleep(Duration::from_millis(5));
+        };
+        if !libc::WIFEXITED(status) && !libc::WIFSIGNALED(status) || !seen {
+            unsafe {
+                libc::kill(pid, libc::SIGKILL);
+                libc::waitpid(pid, std::ptr::null_mut(), 0);
+            }
+        }
+        drop((plan, error_write, executable, errors, release));
+        nonblocking(error_read.as_fd()).unwrap();
+        let mut record = Vec::new();
+        let _ = File::from(error_read).read_to_end(&mut record);
+        assert!(
+            seen && libc::WIFSTOPPED(status),
+            "setup status={status}, record={record:?}"
+        );
+        assert!(record.is_empty());
     }
     fn report_started(report: &mut File, pid: i32) {
         let end = Instant::now() + Duration::from_secs(3);

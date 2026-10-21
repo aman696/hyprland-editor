@@ -534,6 +534,7 @@
         ".github/workflows/ci.yml"
       ],
       "test_references": [
+        "fixed_child_setup_reaches_the_stop_without_executing_the_entry",
         "constructor_plan_requires_bounded_arguments_and_a_sealed_executable",
         "closed_private_gate_reports_an_error_without_sigpipe",
         "explicit_descriptor_lifetimes_close_with_the_plan_without_ambient_ownership",
