@@ -478,6 +478,7 @@ dependencies = [
  "hyprland-editor-core",
  "hyprland-editor-discovery",
  "hyprland-editor-preview",
+ "hyprland-editor-projection",
  "libadwaita",
  "libc",
  "serde",

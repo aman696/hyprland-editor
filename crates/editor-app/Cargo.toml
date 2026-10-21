@@ -12,5 +12,6 @@ adw = { package = "libadwaita", version = "0.8", features = ["v1_5"] }
 serde_json.workspace = true
 hyprland-editor-discovery = { path = "../editor-discovery" }
 hyprland-editor-preview = { path = "../editor-preview" }
+hyprland-editor-projection = { path = "../editor-projection" }
 libc = "0.2"
 serde.workspace = true

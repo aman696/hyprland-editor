@@ -320,6 +320,7 @@ fn reviewed_graph_migrations_rebuild_deleted_sources_and_private_pieces_without_
         for old in [
             "f7017978da7127ee461497d1021e418bb2c2e171b4d28a43b6671f8abb2531dd",
             "046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371",
+            "7273a441eca7d6ae6424b92d1188be64e642d007a77ae9e6a909239284f23ffc",
         ] {
             let root = root();
             let mut snapshot = fixture(&root, version);

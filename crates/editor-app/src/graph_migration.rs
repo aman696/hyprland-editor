@@ -9,7 +9,9 @@ use hyprland_editor_core::{
 use serde::Serialize;
 use std::{collections::BTreeSet, path::PathBuf, sync::Arc};
 const FROM: &str = "f7017978da7127ee461497d1021e418bb2c2e171b4d28a43b6671f8abb2531dd";
-const TO: &str = "7273a441eca7d6ae6424b92d1188be64e642d007a77ae9e6a909239284f23ffc";
+const FROM_MIGRATION: &str = "7273a441eca7d6ae6424b92d1188be64e642d007a77ae9e6a909239284f23ffc";
+const MIGRATION: &str = include_str!("../../../data/migrations/graph-model-migration.json");
+const TO: &str = "c1abcce3f3c001585eb7b39e13b7ab888791a3480877f7817bde26d66bba1427";
 const OLD: &str = include_str!("../../../data/migrations/graph-model-before-projection.json");
 const FROM_PROJECTION: &str = "046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371";
 const PROJECTION: &str = include_str!("../../../data/migrations/graph-model-projection.json");
@@ -39,10 +41,19 @@ fn transition(from: &str) -> Result<(), String> {
             &[
                 "Cargo.lock",
                 "Cargo.toml",
+                "crates/editor-app/Cargo.toml",
                 "crates/editor-core/src/storage.rs",
             ],
         ),
-        FROM_PROJECTION => (PROJECTION, &["crates/editor-core/src/storage.rs"]),
+        FROM_PROJECTION => (
+            PROJECTION,
+            &[
+                "Cargo.lock",
+                "crates/editor-app/Cargo.toml",
+                "crates/editor-core/src/storage.rs",
+            ],
+        ),
+        FROM_MIGRATION => (MIGRATION, &["Cargo.lock", "crates/editor-app/Cargo.toml"]),
         _ => return Err("This saved graph model has no reviewed migration".into()),
     };
     if lua::source_hash(previous) != from || workspace_graph::schema_sha256() != TO {
@@ -161,6 +172,7 @@ mod tests {
     fn reviewed_transition_keeps_the_replay_engine_exact_and_refuses_unreviewed_builds() {
         transition(FROM).unwrap();
         transition(FROM_PROJECTION).unwrap();
+        transition(FROM_MIGRATION).unwrap();
         assert!(transition(&"0".repeat(64)).is_err());
         assert_ne!(FROM, TO);
         assert_eq!(lua::source_hash(CURRENT), TO);

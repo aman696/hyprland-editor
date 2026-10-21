@@ -2,24 +2,29 @@
 //! talks to a compositor. A projection and its content identity authorize no run.
 use editor_core::{action, gesture, monitor, workspace::Workspace, Value, MAX_DOCUMENT_BYTES};
 use hyprland_editor_core as editor_core;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
 pub const MAX_ENTRIES: usize = 16384;
 pub const MAX_PIXELS: u64 = 1280 * 720;
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Output {
     pub name: String,
     pub width: u32,
     pub height: u32,
 }
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Scenario {
     /// Requested private names; the future launcher must establish/verify them.
+    #[serde(deserialize_with = "wire::outputs")]
     pub outputs: Vec<Output>,
     /// Explicit draft ID -> scenario output. No host-pattern inference.
+    #[serde(deserialize_with = "wire::targets")]
     pub monitor_targets: BTreeMap<String, String>,
     /// Explicit draft ID -> private synthetic device name.
+    #[serde(deserialize_with = "wire::targets")]
     pub device_targets: BTreeMap<String, String>,
 }
 impl Default for Scenario {
@@ -78,7 +83,7 @@ impl Scenario {
         Ok(())
     }
 }
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Fidelity {
     SampleApproximation,
     MockedEffect,
@@ -86,15 +91,17 @@ pub enum Fidelity {
     HardwareUnverified,
     Unsupported,
 }
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Entry {
     pub subject: String,
     pub fidelity: Fidelity,
-    pub reason: &'static str,
+    pub reason: String,
     /// Constructor/builtin label only; never its raw command or hook arguments.
     pub mocked_intent: Option<String>,
 }
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Report {
     pub version: String,
     pub upstream_commit: String,
@@ -102,10 +109,13 @@ pub struct Report {
     pub workspace_sha256: String,
     pub model_sha256: String,
     pub compiler: editor_core::lua::replay::CompilerProfile,
-    pub schema_pins: BTreeMap<&'static str, String>,
+    #[serde(deserialize_with = "wire::pins")]
+    pub schema_pins: BTreeMap<String, String>,
     pub scenario: Scenario,
+    #[serde(deserialize_with = "wire::entries")]
     pub entries: Vec<Entry>,
-    pub limitations: Vec<&'static str>,
+    #[serde(deserialize_with = "wire::limitations")]
+    pub limitations: Vec<String>,
 }
 #[derive(Debug)]
 pub struct Projection {
@@ -141,7 +151,7 @@ impl Builder {
         self.entries.push(Entry {
             subject,
             fidelity,
-            reason,
+            reason: reason.into(),
             mocked_intent: None,
         });
         Ok(())
@@ -418,11 +428,11 @@ pub fn compile(workspace: &Workspace, scenario: &Scenario) -> Result<Projection,
         load_name: b"@hye-preview-projection".to_vec(),
     })?;
     let report = Report { version: version.into(), upstream_commit: workspace.schema.upstream_commit.clone(), workspace_sha256,
-        model_sha256: editor_core::lua::source_hash(concat!(include_str!("lib.rs"), include_str!("../../editor-core/src/lib.rs"), include_str!("../../editor-core/src/action.rs"), include_str!("../../editor-core/src/animation.rs"), include_str!("../../editor-core/src/binding.rs"), include_str!("../../editor-core/src/device.rs"), include_str!("../../editor-core/src/gesture.rs"), include_str!("../../editor-core/src/monitor.rs"), include_str!("../../editor-core/src/rule.rs"), include_str!("../../editor-core/src/workspace_rule.rs"))),
+        model_sha256: model_sha256(),
         compiler: editor_core::lua::replay::compiler_profile(),
-        schema_pins: BTreeMap::from([("scalar", workspace.schema.catalogue_sha256.clone()), ("monitor", monitor::schema_hash()), ("device", editor_core::device::schema_hash()), ("action", action::schema_hash()), ("binding", editor_core::binding::schema_hash()), ("workspace", editor_core::workspace_rule::schema_hash()), ("rule", editor_core::rule::schema_hash()), ("animation", editor_core::animation::schema_hash()), ("gesture", gesture::schema_hash())]),
+        schema_pins: schema_pins(workspace),
         scenario: scenario.clone(), entries: builder.entries,
-        limitations: vec!["No execution authority or ready-to-run certification", "Source layers/defaults are unresolved; this projects explicit typed drafts only", "Private outputs/devices must be created and verified by a future launcher", "All binding and gesture actions are inert mocks without telemetry", "Assets are not copied; opaque shaders, keymaps, ICC and hooks remain omitted", "Renderer, actual capture/input, resource/isolation/lifecycle and all full audit gates remain unverified"] };
+        limitations: vec!["No execution authority or ready-to-run certification", "Source layers/defaults are unresolved; this projects explicit typed drafts only", "Private outputs/devices must be created and verified by a future launcher", "All binding and gesture actions are inert mocks without telemetry", "Assets are not copied; opaque shaders, keymaps, ICC and hooks remain omitted", "Renderer, actual capture/input, resource/isolation/lifecycle and all full audit gates remain unverified"].into_iter().map(String::from).collect() };
     let manifest = serde_json::to_vec(&report).map_err(|e| e.to_string())?;
     if manifest.len() > 4 * MAX_DOCUMENT_BYTES {
         return Err("Preview report exceeds 4 MiB".into());
@@ -438,6 +448,41 @@ pub fn compile(workspace: &Workspace, scenario: &Scenario) -> Result<Projection,
         identity,
     })
 }
+
+/// Content/model pins only: these do not authenticate a package or authorize execution.
+pub fn model_sha256() -> String {
+    editor_core::lua::source_hash(concat!(
+        include_str!("lib.rs"),
+        include_str!("wire.rs"),
+        include_str!("../../editor-core/src/lib.rs"),
+        include_str!("../../editor-core/src/action.rs"),
+        include_str!("../../editor-core/src/animation.rs"),
+        include_str!("../../editor-core/src/binding.rs"),
+        include_str!("../../editor-core/src/device.rs"),
+        include_str!("../../editor-core/src/gesture.rs"),
+        include_str!("../../editor-core/src/monitor.rs"),
+        include_str!("../../editor-core/src/rule.rs"),
+        include_str!("../../editor-core/src/workspace_rule.rs")
+    ))
+}
+fn schema_pins(workspace: &Workspace) -> BTreeMap<String, String> {
+    BTreeMap::from([
+        ("scalar", workspace.schema.catalogue_sha256.clone()),
+        ("monitor", monitor::schema_hash()),
+        ("device", editor_core::device::schema_hash()),
+        ("action", action::schema_hash()),
+        ("binding", editor_core::binding::schema_hash()),
+        ("workspace", editor_core::workspace_rule::schema_hash()),
+        ("rule", editor_core::rule::schema_hash()),
+        ("animation", editor_core::animation::schema_hash()),
+        ("gesture", gesture::schema_hash()),
+    ])
+    .into_iter()
+    .map(|(key, value)| (key.into(), value))
+    .collect()
+}
+
+pub mod wire;
 
 #[cfg(test)]
 mod tests;

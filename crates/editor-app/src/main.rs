@@ -12,7 +12,9 @@ mod graph_migration;
 mod history;
 mod monitors;
 mod presentation;
+mod preview_preparation;
 mod process_policy;
+mod projection_worker;
 mod reconciliation;
 mod rule_forms;
 mod rules;
@@ -1164,6 +1166,8 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     let source_copy = gtk::Button::with_label("Review Source Copy");
     let diagnostics = gtk::Button::with_label("Import Diagnostics");
     let source_modules = gtk::Button::with_label("Inspect Source Modules");
+    let prepare_preview = gtk::Button::with_label("Prepare Preview Draft");
+    preview_preparation::connect(&prepare_preview, &window, &state);
     source_modules::connect(&source_modules, &window, &state);
     let reattach = gtk::Button::with_label("Verify Source File");
     let reconcile = gtk::Button::with_label("Compare Changed Source");
@@ -1196,6 +1200,7 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
         ("source-copy", &source_copy),
         ("diagnostics", &diagnostics),
         ("source-modules", &source_modules),
+        ("prepare-preview", &prepare_preview),
         ("reattach-source", &reattach),
         ("reconcile-source", &reconcile),
         ("monitors", &monitor_editor),
@@ -1243,6 +1248,34 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     window
 }
 fn main() {
+    if std::env::args_os().nth(1).as_deref()
+        == Some(std::ffi::OsStr::new("--projection-policy-probe"))
+    {
+        projection_worker::policy_probe();
+        return;
+    }
+    if std::env::args_os().nth(1).as_deref() == Some(std::ffi::OsStr::new("--projection-worker")) {
+        projection_worker::entry();
+        return;
+    }
+    if std::env::args_os().nth(1).as_deref()
+        == Some(std::ffi::OsStr::new("--check-preview-projection"))
+    {
+        let args: Vec<_> = std::env::args_os().skip(2).collect();
+        let result = if args.len() == 2 {
+            projection_worker::check(args[0].clone().into(), args[1].clone().into())
+        } else {
+            Err("Specify a saved workspace and private scenario file".into())
+        };
+        match result {
+            Ok(report) => println!("{report}"),
+            Err(error) => {
+                eprintln!("{}", error.chars().take(1024).collect::<String>());
+                std::process::exit(1);
+            }
+        }
+        return;
+    }
     if std::env::args_os().nth(1).as_deref()
         == Some(std::ffi::OsStr::new("--directory-source-worker"))
     {
@@ -1634,6 +1667,7 @@ mod tests {
         review.destroy();
         workflow::test_source_persistence(&window);
         workflow::test_graph_migration(&window);
+        preview_preparation::test_preparation(&window);
         reconciliation::test_review(&window);
         monitors::test_editor(&window);
         devices::test_editor(&window);

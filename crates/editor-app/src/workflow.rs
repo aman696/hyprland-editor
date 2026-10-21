@@ -195,6 +195,27 @@ pub(super) fn connect_save(
         .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".local/state")));
     connect_save_at(button, window, state, status, root);
 }
+pub(super) fn captured_workspace(s: &super::State) -> Result<Workspace, String> {
+    let version = &s.draft.version;
+    let mut snapshot = Workspace::new(s.draft.clone())
+        .with_monitors(s.monitors.get(version).cloned().unwrap_or_default())
+        .with_devices(s.devices.get(version).cloned().unwrap_or_default())
+        .with_bindings(s.bindings.get(version).cloned().unwrap_or_default())
+        .with_workspace_rules(s.workspace_rules.get(version).cloned().unwrap_or_default())
+        .with_rules(s.rules.get(version).cloned().unwrap_or_default())
+        .with_animations(s.animations.get(version).cloned().unwrap_or_default())
+        .with_gestures(s.gestures.get(version).cloned().unwrap_or_default());
+    if let Some(graph) = s.source_graphs.get(version) {
+        snapshot = snapshot.with_graph(&graph.bundle);
+    } else if let Some(doc) = s.sources.get(version) {
+        let origin = s
+            .source_origins
+            .get(version)
+            .ok_or("Reimport the original source before saving its context")?;
+        snapshot = snapshot.with_root(doc.source.clone(), origin.clone());
+    }
+    Ok(snapshot)
+}
 fn connect_save_at(
     button: &gtk::Button,
     window: &adw::ApplicationWindow,
@@ -208,15 +229,7 @@ fn connect_save_at(
     button.connect_clicked(move|button| {
         let Some(win)=win.upgrade() else{return;};
         let (generation,catalogue,workspace)={
-            let s=state.borrow();let mut snapshot=Workspace::new(s.draft.clone()).with_monitors(s.monitors.get(&s.draft.version).cloned().unwrap_or_default()).with_devices(s.devices.get(&s.draft.version).cloned().unwrap_or_default()).with_bindings(s.bindings.get(&s.draft.version).cloned().unwrap_or_default()).with_workspace_rules(s.workspace_rules.get(&s.draft.version).cloned().unwrap_or_default()).with_rules(s.rules.get(&s.draft.version).cloned().unwrap_or_default()).with_animations(s.animations.get(&s.draft.version).cloned().unwrap_or_default()).with_gestures(s.gestures.get(&s.draft.version).cloned().unwrap_or_default());
-            if let Some(graph)=s.source_graphs.get(&s.draft.version) {
-                snapshot=snapshot.with_graph(&graph.bundle);
-            } else if let Some(doc)=s.sources.get(&s.draft.version) {
-                let Some(origin)=s.source_origins.get(&s.draft.version) else {
-                    notice(&win,"Source identity missing","Reimport the original source before saving its context.");return;
-                };
-                snapshot=snapshot.with_root(doc.source.clone(),origin.clone());
-            }
+            let s=state.borrow();let snapshot=match captured_workspace(&s) { Ok(snapshot)=>snapshot,Err(error)=>{notice(&win,"Source identity missing",&error);return;} };
             (s.generation,s.catalogue.clone(),snapshot)
         };
         let saved_gestures=workspace.gestures.clone();let saved_animations=workspace.animations.clone();let saved_rules=workspace.rules.clone();let saved_workspaces=workspace.workspace_rules.clone();let saved_bindings=workspace.bindings.clone();let saved_devices=workspace.devices.clone();let saved_monitors=workspace.monitors.clone();let saved_values=workspace.draft.values.clone();let saved_version=workspace.draft.version.clone();

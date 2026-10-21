@@ -20,7 +20,8 @@
         "crates/editor-app/src/workflow.rs",
         "crates/editor-app/tests/workspace_graph.rs",
         "data/migrations/graph-model-before-projection.json",
-        "data/migrations/graph-model-projection.json"
+        "data/migrations/graph-model-projection.json",
+        "data/migrations/graph-model-migration.json"
       ],
       "test_references": [
         "reviewed_transition_keeps_the_replay_engine_exact_and_refuses_unreviewed_builds",
@@ -28,7 +29,7 @@
         "migration_refuses_unknown_models_profiles_corruption_unreached_inputs_and_hidden_payloads",
         "workflow::test_graph_migration"
       ],
-      "limits": "two exact reviewed dependency/storage-visibility transitions with bounded held-inode input, unknown-payload refusal, fresh restricted-worker captured-view/dependency/private-piece reanalysis, byte/value preservation, cancel/epoch/unsaved guards and new private save; no original-path reads or restored folder access, general model/schema/profile conversion, persistent history, full source export/reconciliation or full audit certificate"
+      "limits": "three exact reviewed dependency/storage-visibility transitions with bounded held-inode input, unknown-payload refusal, fresh restricted-worker captured-view/dependency/private-piece reanalysis, byte/value preservation, cancel/epoch/unsaved guards and new private save; no original-path reads or restored folder access, general model/schema/profile conversion, persistent history, full source export/reconciliation or full audit certificate"
     },
     {
       "area": "source dependency capture and ordered evaluation",
@@ -386,7 +387,11 @@
       "area": "fresh typed-draft preview projection",
       "code": [
         "crates/editor-projection/src/lib.rs",
-        "crates/editor-projection/src/tests.rs"
+        "crates/editor-projection/src/tests.rs",
+        "crates/editor-projection/src/wire.rs",
+        "crates/editor-app/src/projection_worker.rs",
+        "crates/editor-app/src/preview_preparation.rs",
+        "crates/editor-app/tests/preview_projection.rs"
       ],
       "test_references": [
         "opaque_source_hooks_actions_and_asset_paths_never_enter_generated_lua",
@@ -394,9 +399,18 @@
         "every_audited_action_constructor_becomes_an_identified_inert_mock",
         "stale_mapping_invalid_pins_and_oversized_geometry_never_yield_a_projection",
         "unmapped_hardware_is_explicit_and_inert_without_host_name_fallback",
-        "projection_budget_refuses_a_large_valid_draft_without_returning_truncated_output"
+        "projection_budget_refuses_a_large_valid_draft_without_returning_truncated_output",
+        "staged_correlation_refuses_other_inputs_scenarios_profiles_and_changed_content",
+        "worker_collections_refuse_excessive_counts_duplicates_and_hidden_fields",
+        "cancelled_staging_never_reaches_the_launcher",
+        "active_staging_cancellation_and_timeout_reap_the_owned_child",
+        "actual_staging_preserves_inputs_maps_private_hardware_and_keeps_commands_inert",
+        "actual_staging_role_denies_file_network_process_execution_and_closes_inherited_fds",
+        "staging_refuses_unknown_scenarios_and_nonregular_selected_files_without_writes",
+        "direct_staging_role_refuses_unknown_protocol_payload_and_request_overflow",
+        "preview_preparation::test_preparation"
       ],
-      "limits": "fresh bounded Lua/report from validated typed draft families and explicit bounded synthetic identities, inert action replacement, source/hook/opaque asset exclusion, exact input/model/schema/compiler/scenario fingerprints, native compilation and independent syntax reparse; no source-layer/default resolution, copied/decoded assets, GUI or process call site, telemetry/simulated effects, actual scenario clients/renderer/capture/input, combined sandbox or full preview/security certificate"
+      "limits": "fresh bounded Lua/report from validated typed draft families and explicit bounded synthetic identities, inert action replacement, source/hook/opaque asset exclusion, exact input/model/schema/compiler/scenario fingerprints, native compilation and independent syntax reparse; application-linked one-shot restricted staging with bounded nonblocking I/O/deadline/cancellation/reaping, bounded decoded collections, correlated artifacts and explicit native scenario/mapping/search review; no source-layer/default resolution, copied/decoded assets, telemetry/simulated effects, actual scenario clients/renderer/capture/input, combined sandbox or full preview/security certificate"
     },
     {
       "area": "sealed runtime image and explicit private boundary prototype",
