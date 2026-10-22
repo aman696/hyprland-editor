@@ -23,7 +23,9 @@ const DECLARATIONS_MODEL: &str =
     include_str!("../../../data/migrations/graph-model-monitor-declarations.json");
 const MONITOR_LAYOUT: &str = "1dacfb662caa635f63047517d223d73ec0c1922b2d9f93b3a7fa35cecb91909e";
 const LAYOUT_MODEL: &str = include_str!("../../../data/migrations/graph-model-monitor-layout.json");
-const TO: &str = "be2a3bceb486422b079705792d7dae67f4922f96fcfc304004df20fbc22c92f1";
+const MONITOR_REVIEW: &str = "be2a3bceb486422b079705792d7dae67f4922f96fcfc304004df20fbc22c92f1";
+const REVIEW_MODEL: &str = include_str!("../../../data/migrations/graph-model-monitor-review.json");
+const TO: &str = "dbb7803fa4ea318a5b4511fd1f44eb422be73feebd8342ab449a8a4ffa27351d";
 const OLD: &str = include_str!("../../../data/migrations/graph-model-before-projection.json");
 const FROM_PROJECTION: &str = "046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371";
 const PROJECTION: &str = include_str!("../../../data/migrations/graph-model-projection.json");
@@ -280,8 +282,10 @@ fn before_monitor_review_transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
-fn transition(from: &str) -> Result<(), String> {
-    if lua::source_hash(LAYOUT_MODEL) != MONITOR_LAYOUT || workspace_graph::schema_sha256() != TO {
+fn before_mixed_review_transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(LAYOUT_MODEL) != MONITOR_LAYOUT
+        || lua::source_hash(REVIEW_MODEL) != MONITOR_REVIEW
+    {
         return Err(
             "No reviewed monitor reconciliation transition to this exact model is available".into(),
         );
@@ -291,7 +295,8 @@ fn transition(from: &str) -> Result<(), String> {
     }
     let previous: serde_json::Value =
         serde_json::from_str(LAYOUT_MODEL).map_err(|e| e.to_string())?;
-    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let current: serde_json::Value =
+        serde_json::from_str(REVIEW_MODEL).map_err(|e| e.to_string())?;
     let old = previous["inputs"]
         .as_object()
         .ok_or("Invalid previous monitor layout model")?;
@@ -319,6 +324,39 @@ fn transition(from: &str) -> Result<(), String> {
             ]
     {
         return Err("Monitor reconciliation model no longer has only the reviewed module, worker and helper visibility changes".into());
+    }
+    Ok(())
+}
+fn transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(REVIEW_MODEL) != MONITOR_REVIEW || workspace_graph::schema_sha256() != TO {
+        return Err(
+            "No reviewed mixed-family reconciliation transition to this exact model is available"
+                .into(),
+        );
+    }
+    if from != MONITOR_REVIEW {
+        before_mixed_review_transition(from)?;
+    }
+    let previous: serde_json::Value =
+        serde_json::from_str(REVIEW_MODEL).map_err(|e| e.to_string())?;
+    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let old = previous["inputs"]
+        .as_object()
+        .ok_or("Invalid previous monitor review model")?;
+    let new = current["inputs"]
+        .as_object()
+        .ok_or("Invalid mixed reconciliation model")?;
+    let changed = old
+        .keys()
+        .filter(|k| new.get(*k) != Some(&old[*k]))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    if old.len() != 66
+        || new.len() != 66
+        || old.keys().ne(new.keys())
+        || changed != ["crates/editor-core/src/lua/replay/override_review.rs"]
+    {
+        return Err("Mixed reconciliation model no longer has only the reviewed scalar inspection prefix and structural-intent rejection changes".into());
     }
     Ok(())
 }
@@ -424,6 +462,7 @@ mod tests {
         transition(MONITOR_FIELDS).unwrap();
         transition(MONITOR_DECLARATIONS).unwrap();
         transition(MONITOR_LAYOUT).unwrap();
+        transition(MONITOR_REVIEW).unwrap();
         assert!(transition(&"0".repeat(64)).is_err());
         assert_ne!(FROM, TO);
         assert_eq!(lua::source_hash(CURRENT), TO);

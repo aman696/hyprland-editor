@@ -39,6 +39,9 @@ pub struct Row {
     pub declaration_count: usize,
     pub target: Option<Target>,
     pub can_write: bool,
+    /// Primary-value equality under complete modeled scalar-call analysis;
+    /// never an effective compositor observation.
+    pub already_represented: bool,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -72,6 +75,9 @@ pub struct Resolution {
     pub runtime_verified: bool,
 }
 pub fn prepare(program: &Program, draft: &Draft) -> Result<Review, String> {
+    inspect(program, draft, true)
+}
+fn inspect(program: &Program, draft: &Draft, certify_noops: bool) -> Result<Review, String> {
     edits::fingerprint(draft)?;
     draft.validate(&crate::catalogue())?;
     if program.profile != super::Profile::HyprlandLua54 {
@@ -84,9 +90,17 @@ pub fn prepare(program: &Program, draft: &Draft) -> Result<Review, String> {
     let prefix = report
         .events
         .iter()
-        .take_while(|e| e.api == "hl.config")
+        .take_while(|e| matches!(e.api.as_str(), "hl.config" | "hl.monitor"))
         .count();
-    let inspection = config_inspection::inspect(&report.events[..prefix], &program.version)?;
+    // Monitor routing has fixed zero modeled results. Keep its full argument
+    // effects in the replay/edit comparison, but don't pass its table to the
+    // scalar registry or let it truncate later configuration observations.
+    let scalar_events = report.events[..prefix]
+        .iter()
+        .filter(|e| e.api == "hl.config")
+        .cloned()
+        .collect::<Vec<_>>();
+    let inspection = config_inspection::inspect(&scalar_events, &program.version)?;
     let complete = report.halt.is_none()
         && prefix == report.events.len()
         && inspection.stopped.is_none()
@@ -160,6 +174,9 @@ pub fn prepare(program: &Program, draft: &Draft) -> Result<Review, String> {
                                 | "FontWeight"
                         )
                 });
+        let already_represented = certify_noops
+            && complete
+            && matches!(&source,SourceValue::Parsed {native:observed,..} if native(program,id,value).is_ok_and(|desired|desired==*observed));
         rows.push(Row {
             setting_id: id.clone(),
             override_value: value.clone(),
@@ -167,6 +184,7 @@ pub fn prepare(program: &Program, draft: &Draft) -> Result<Review, String> {
             declaration_count: candidates.len(),
             target,
             can_write,
+            already_represented,
         });
     }
     let review = Review {
@@ -224,7 +242,10 @@ pub fn resolve(
                 reduced.values.remove(&row.setting_id);
             }
             Choice::WriteOverride => {
-                let now = prepare(&current, &reduced)?;
+                // Only the outward review needs a per-row no-op certificate.
+                // Internal refreshes compare the selected native value below;
+                // don't repeat every override conversion for every source edit.
+                let now = inspect(&current, &reduced, false)?;
                 let target = now
                     .rows
                     .iter()
@@ -267,7 +288,7 @@ pub fn resolve(
                         &compared.plan,
                     )?;
                     current = workspace_graph::revisions::program(program.clone(), &pieces)?;
-                    let after = prepare(&current, &reduced)?;
+                    let after = inspect(&current, &reduced, false)?;
                     if !after.model_complete || !after.rows.iter().any(|r|r.setting_id==row.setting_id&&matches!(&r.source,SourceValue::Parsed{native,..} if native==&desired)) {
                         return Err("The proposed source does not establish the intended native value under complete configuration-call analysis".into());
                     }
@@ -278,7 +299,7 @@ pub fn resolve(
             }
         }
     }
-    let final_review = prepare(&current, &reduced)?;
+    let final_review = inspect(&current, &reduced, false)?;
     let result = Resolution {
         review_sha256: edits::fingerprint(review)?,
         choices_sha256: edits::fingerprint(choices)?,
@@ -335,12 +356,31 @@ pub fn validate_resolution(
         };
         if plan.edits.len() != 1
             || plan.expected_calls.len() != 1
+            || !plan.structural_calls.is_empty()
             || edit.semantic_targets.len() != 1
-            || !written.insert(id)
+            || !written.insert(id.clone())
             || choices.get(id) != Some(&Choice::WriteOverride)
         {
             return Err("The result contains an unselected or repeated source change".into());
         }
+    }
+    for (id, choice) in choices {
+        if *choice == Choice::WriteOverride {
+            let row = review
+                .rows
+                .iter()
+                .find(|r| r.setting_id == *id)
+                .ok_or("Missing reviewed scalar row")?;
+            if !row.can_write
+                || written.contains(id) == row.already_represented
+                || !result.model_complete
+            {
+                return Err("The result omits a required scalar source edit or invents a no-op/effective-value claim".into());
+            }
+        }
+    }
+    if result.plans.is_empty() && result.program_sha256 != review.program_sha256 {
+        return Err("A result without source edits changed the program identity".into());
     }
     Ok(())
 }

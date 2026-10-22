@@ -49,6 +49,7 @@ struct Ui {
     file: gtk::glib::WeakRef<gtk::DropDown>,
     position: gtk::glib::WeakRef<gtk::DropDown>,
     details: gtk::glib::WeakRef<gtk::Label>,
+    fidelity: gtk::glib::WeakRef<gtk::Label>,
     status: gtk::glib::WeakRef<gtk::Label>,
     output: gtk::glib::WeakRef<gtk::TextView>,
     compare: gtk::glib::WeakRef<gtk::Button>,
@@ -299,6 +300,10 @@ impl Ui {
                 });
                 match result {
                     Ok(r) => {
+                        if let Some(label) = ui.fidelity.upgrade() {
+                            label.set_text(if r.model_complete {""} else {"Analysis is incomplete. Reached observations are provisional; the full source sequence cannot be copied."});
+                            label.set_visible(!r.model_complete);
+                        }
                         let names = r
                             .sources
                             .iter()
@@ -675,6 +680,10 @@ pub(super) fn open(
     body.append(&super::label(
         "Reconcile monitor drafts with captured source. Originals and the desktop stay unchanged.",
     ));
+    let fidelity = super::label("");
+    fidelity.set_widget_name("monitor-review-fidelity");
+    fidelity.set_visible(false);
+    body.append(&fidelity);
     let form = gtk::Box::new(gtk::Orientation::Vertical, 8);
     fn pick(body: &gtk::Box, name: &str, label: &str, values: &[&str]) -> gtk::DropDown {
         body.append(&super::label(label));
@@ -816,6 +825,7 @@ pub(super) fn open(
         file: file.downgrade(),
         position: position.downgrade(),
         details: details.downgrade(),
+        fidelity: fidelity.downgrade(),
         status: status.downgrade(),
         output: output.downgrade(),
         compare: compare.downgrade(),
@@ -1044,6 +1054,110 @@ pub(super) fn test_workflow(parent: &adw::ApplicationWindow) {
             state.borrow().source_graphs[version].fingerprint,
             first.fingerprint
         );
+        // Scalar reconciliation must use the config call after both monitors
+        // and leave the independently selected monitor layer intact.
+        let monitors = state.borrow().monitors[version].clone();
+        view.render();
+        button(pane.upcast_ref(), "source-analysis-overrides").emit_clicked();
+        let scalar_window = gtk::Window::list_toplevels()
+            .into_iter()
+            .filter_map(|w| w.downcast::<adw::Window>().ok())
+            .find(|w| w.title().as_deref() == Some("Review Value Overrides") && w.is_visible())
+            .unwrap();
+        let scalar_compare = button(scalar_window.upcast_ref(), "source-overrides-compare");
+        wait(|| scalar_compare.is_sensitive());
+        let details = named(scalar_window.upcast_ref(), "source-overrides-details")
+            .downcast::<gtk::Label>()
+            .unwrap();
+        assert!(
+            details.text().contains("Last modeled declaration: 1"),
+            "{}",
+            details.text()
+        );
+        assert!(!details.text().contains("provisional"));
+        dropdown(scalar_window.upcast_ref(), "source-overrides-choice").set_selected(2);
+        scalar_compare.emit_clicked();
+        let scalar_keep = button(scalar_window.upcast_ref(), "source-overrides-keep");
+        wait(|| scalar_keep.is_sensitive());
+        scalar_keep.emit_clicked();
+        wait(|| {
+            !state
+                .borrow()
+                .draft
+                .values
+                .contains_key("general:border_size")
+        });
+        assert_eq!(state.borrow().monitors[version], monitors);
+        let changed =
+            source_graph::restore(&state.borrow().source_graphs[version].bundle, version).unwrap();
+        assert!(changed.program.documents[0]
+            .source
+            .contains("border_size=9"));
+        state.borrow_mut().undo_last();
+        assert_eq!(
+            state.borrow().draft.values["general:border_size"],
+            Value::Int(9)
+        );
+        assert_eq!(state.borrow().monitors[version], monitors);
+        assert_eq!(
+            state.borrow().source_graphs[version].fingerprint,
+            first.fingerprint
+        );
+
+        // An incomplete graph offers visible reached observations, but cannot
+        // present them as a complete source sequence.
+        let partial_source = "hl.monitor{output='DP-4',transform=1};unknown()";
+        let partial_path = dir.join("partial.lua");
+        std::fs::write(&partial_path, partial_source).unwrap();
+        let partial_capture = Arc::new(storage::read_source(&partial_path).unwrap());
+        let partial = source_graph::analyze(
+            partial_capture.clone(),
+            Context {
+                main_file: partial_capture.identity.selected_path.clone(),
+                home: None,
+                inherited_package_path: None,
+            },
+            vec![],
+            version.into(),
+            None,
+            Arc::new(std::sync::atomic::AtomicBool::new(false)),
+        )
+        .unwrap();
+        assert!(partial.report.halt.is_some());
+        let partial_model: Model = Rc::new(RefCell::new(Some(Arc::new(partial))));
+        let partial_state = super::initial_state();
+        partial_state.borrow_mut().draft = hyprland_editor_core::Draft::new(version);
+        let partial_window = open(
+            parent.upcast_ref(),
+            &partial_model,
+            &partial_state,
+            Rc::new(|| {}),
+        );
+        let mode = dropdown(partial_window.upcast_ref(), "monitor-review-operation");
+        wait(|| mode.is_sensitive());
+        let fidelity = named(partial_window.upcast_ref(), "monitor-review-fidelity")
+            .downcast::<gtk::Label>()
+            .unwrap();
+        assert!(fidelity.is_visible());
+        assert!(fidelity.text().contains("provisional"));
+        mode.set_selected(3);
+        let compare = button(partial_window.upcast_ref(), "monitor-review-compare");
+        compare.emit_clicked();
+        wait(|| compare.is_sensitive());
+        assert!(!button(partial_window.upcast_ref(), "monitor-review-keep").is_sensitive());
+        let status = named(partial_window.upcast_ref(), "monitor-review-status")
+            .downcast::<gtk::Label>()
+            .unwrap();
+        assert!(
+            status.text().to_lowercase().contains("incomplete"),
+            "{}",
+            status.text()
+        );
+        mode.set_selected(2);
+        compare.emit_clicked();
+        wait(|| button(partial_window.upcast_ref(), "monitor-review-keep").is_sensitive());
+        partial_window.close();
+        assert!(!partial_state.borrow().source_graphs.contains_key(version));
         let saved = Workspace::new(state.borrow().draft.clone())
             .with_monitors(state.borrow().monitors[version].clone())
             .with_graph(&state.borrow().source_graphs[version].bundle)

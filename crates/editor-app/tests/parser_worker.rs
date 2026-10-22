@@ -941,3 +941,34 @@ fn monitor_source_draft_review_and_resolution_stay_in_the_restricted_worker() {
         );
     }
 }
+
+#[test]
+fn scalar_override_reconciliation_after_monitors_uses_the_restricted_complete_trace() {
+    use hyprland_editor_core::{
+        lua::replay::override_review::{Choice, Review},
+        Draft, Value, AUDITED_MAIN, BASELINE,
+    };
+    for version in [BASELINE, AUDITED_MAIN] {
+        let mut program=replay_program("hl.monitor{output='DP-1',transform=1};hl.config{general={border_size=2}};hl.monitor{output='DP-2'};hl.config{general={border_size=3}}");
+        program.version = version.into();
+        let mut draft = Draft::new(version);
+        draft
+            .values
+            .insert("general:border_size".into(), Value::Int(9));
+        let response = request(json!({"ReviewSourceOverrides":{"program":program,"draft":draft}}));
+        let review: Review =
+            serde_json::from_value(response["SourceOverrideReview"].clone()).unwrap();
+        assert!(review.model_complete);
+        assert_eq!(review.rows[0].declaration_count, 2);
+        assert_eq!(review.rows[0].target.as_ref().unwrap().event_order, 3);
+        let response = request(
+            json!({"ResolveSourceOverrides":{"program":program,"draft":draft,"review":review,"choices":{"general:border_size":Choice::WriteOverride}}}),
+        );
+        let result = &response["SourceOverrideResolution"];
+        assert_eq!(result["model_complete"], true);
+        assert_eq!(result["remaining"], 0);
+        assert_eq!(result["plans"][0]["expected_calls"][0]["order"], 3);
+        assert_eq!(result["ownership_verified"], false);
+        assert_eq!(result["runtime_verified"], false);
+    }
+}

@@ -293,7 +293,7 @@ fn client_checks_reject_unselected_layer_changes_and_forged_resolution_claims() 
     let choices = choose("general:border_size", Choice::WriteOverride);
     let result = resolve(&p, &d, &review, &choices).unwrap();
     validate_resolution(&d, &review, &choices, &result).unwrap();
-    for case in 0..6 {
+    for case in 0..9 {
         let mut bad = result.clone();
         match case {
             0 => bad.draft.values.clear(),
@@ -301,7 +301,19 @@ fn client_checks_reject_unselected_layer_changes_and_forged_resolution_claims() 
             2 => bad.runtime_verified = true,
             3 => bad.plans[0].edits[0].semantic_targets[0] = "general:allow_tearing".into(),
             4 => bad.plans.push(bad.plans[0].clone()),
-            _ => bad.choices_sha256 = "0".repeat(64),
+            5 => bad.choices_sha256 = "0".repeat(64),
+            6 => {
+                bad.plans.clear();
+                bad.program_sha256 = review.program_sha256.clone();
+            }
+            7 => bad.plans[0].structural_calls.push(
+                hyprland_editor_core::lua::replay::edits::StructuralCall::RemoveSite {
+                    document: "root".into(),
+                    span: 0..1,
+                    api: "hl.monitor".into(),
+                },
+            ),
+            _ => bad.model_complete = false,
         }
         assert!(
             validate_resolution(&d, &review, &choices, &bad).is_err(),
@@ -359,4 +371,135 @@ fn successive_cross_document_choices_rebase_captured_loader_requests() {
     );
     assert!(replay::replay(&current).unwrap().halt.is_none());
     assert!(current.documents[1].source.contains("border_size=8"));
+}
+
+#[test]
+fn interleaved_monitor_calls_keep_last_scalar_declarations_and_complete_absence_separate() {
+    use hyprland_editor_core::lua::replay::replay;
+    for version in [BASELINE, AUDITED_MAIN] {
+        let p=program("hl.monitor{output='DP-1',transform=1};hl.config{general={border_size=2}};hl.monitor{output='DP-2',scale='auto'};hl.config{general={border_size=3}}",version);
+        let d = draft(
+            version,
+            &[
+                ("general:border_size", Value::Int(9)),
+                ("general:allow_tearing", Value::Bool(true)),
+            ],
+        );
+        let review = prepare(&p, &d).unwrap();
+        assert!(review.model_complete);
+        let border = review
+            .rows
+            .iter()
+            .find(|r| r.setting_id == "general:border_size")
+            .unwrap();
+        assert_eq!(border.declaration_count, 2);
+        assert!(matches!(
+            border.source,
+            SourceValue::Parsed {
+                value: Value::Int(3),
+                provisional: false,
+                ..
+            }
+        ));
+        assert_eq!(border.target.as_ref().unwrap().event_order, 3);
+        assert!(matches!(
+            review
+                .rows
+                .iter()
+                .find(|r| r.setting_id == "general:allow_tearing")
+                .unwrap()
+                .source,
+            SourceValue::Absent
+        ));
+        let result = resolve(
+            &p,
+            &d,
+            &review,
+            &choose("general:border_size", Choice::WriteOverride),
+        )
+        .unwrap();
+        assert_eq!(result.plans.len(), 1);
+        assert_eq!(result.plans[0].expected_calls[0].order, 3);
+        assert_eq!(result.draft.values.len(), 1);
+        let next = materialize(&p, &result);
+        assert_eq!(
+            next.documents[0].source,
+            p.documents[0]
+                .source
+                .replacen("border_size=3", "border_size=9", 1)
+        );
+        let before = replay(&p).unwrap();
+        let after = replay(&next).unwrap();
+        for i in [0, 2] {
+            assert_eq!(
+                serde_json::to_value(&before.events[i].arguments).unwrap(),
+                serde_json::to_value(&after.events[i].arguments).unwrap()
+            );
+        }
+        let none = program("hl.monitor{output='DP-1'}", version);
+        assert!(matches!(
+            prepare(
+                &none,
+                &draft(version, &[("general:border_size", Value::Int(9))])
+            )
+            .unwrap()
+            .rows[0]
+                .source,
+            SourceValue::Absent
+        ));
+    }
+}
+#[test]
+fn removing_monitor_argument_effects_or_crossing_unknown_apis_never_reconciles_a_scalar_override() {
+    for version in [BASELINE, AUDITED_MAIN] {
+        let d = draft(version, &[("general:border_size", Value::Int(9))]);
+        let p=program("local function value() hl.monitor{output='DP-1',transform=1};return 2 end;hl.config{general={border_size=value()}}",version);
+        let review = prepare(&p, &d).unwrap();
+        assert!(review.model_complete);
+        assert!(resolve(
+            &p,
+            &d,
+            &review,
+            &choose("general:border_size", Choice::WriteOverride)
+        )
+        .is_err());
+        for source in [
+            "hl.monitor{output='DP-1'};hl.config{general={border_size=2}};unknown()",
+            "hl.monitor{output='DP-1'};unknown();hl.config{general={border_size=2}}",
+        ] {
+            let p = program(source, version);
+            let review = prepare(&p, &d).unwrap();
+            assert!(!review.model_complete);
+            assert!(resolve(
+                &p,
+                &d,
+                &review,
+                &choose("general:border_size", Choice::WriteOverride)
+            )
+            .is_err());
+        }
+    }
+}
+#[test]
+fn monitor_arguments_that_share_scalar_locals_are_preserved_by_explicit_scalar_read_replacement() {
+    for version in [BASELINE, AUDITED_MAIN] {
+        let p=program("local shared=2;hl.monitor{output='DP-1',transform=shared};hl.config{general={border_size=shared}}",version);
+        let d = draft(version, &[("general:border_size", Value::Int(3))]);
+        let review = prepare(&p, &d).unwrap();
+        let result = resolve(
+            &p,
+            &d,
+            &review,
+            &choose("general:border_size", Choice::WriteOverride),
+        )
+        .unwrap();
+        let next = materialize(&p, &result);
+        assert_eq!(
+            next.documents[0].source,
+            p.documents[0]
+                .source
+                .replacen("border_size=shared", "border_size=3", 1)
+        );
+        assert!(result.draft.values.is_empty());
+    }
 }
