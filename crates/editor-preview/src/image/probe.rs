@@ -115,6 +115,18 @@ fn independent_read(fd: BorrowedFd<'_>) -> File {
 #[ignore = "requires explicit ephemeral CI provider, static fixture and user namespaces; no host fallback"]
 #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
 fn sealed_runtime_executes_only_inside_private_root_and_namespaces() {
+    runtime_probe(false);
+}
+
+#[test]
+#[ignore = "requires the explicit ephemeral CI provider, trusted constructor and delegated launch gate"]
+#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
+fn gated_runtime_image_keeps_resource_placement_and_private_boundaries_together() {
+    runtime_probe(true);
+}
+
+#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
+fn runtime_probe(gated: bool) {
     assert!(unsafe { libc::getuid() } > 0);
     assert_eq!(unsafe { libc::getuid() }, unsafe { libc::geteuid() });
     assert_eq!(unsafe { libc::getgroups(0, std::ptr::null_mut()) }, 0);
@@ -164,8 +176,29 @@ fn sealed_runtime_executes_only_inside_private_root_and_namespaces() {
             rules.len() * std::mem::size_of::<libc::sock_filter>(),
         )
     };
-    let mut policy = super::tests::source(policy);
+    let mut policy = if gated {
+        eprintln!("HYE_GATED_POLICY_SHA256 {:x}", Sha256::digest(policy));
+        frozen_input(policy, false)
+    } else {
+        super::tests::source(policy)
+    };
     policy.seek(SeekFrom::Start(0)).unwrap();
+    let inherited: Vec<_> = snapshots
+        .iter()
+        .map(AsRawFd::as_raw_fd)
+        .chain([policy.as_raw_fd()])
+        .collect();
+    let fd_name = |raw: i32| {
+        if gated {
+            (3 + inherited
+                .iter()
+                .position(|fd| *fd == raw)
+                .expect("Explicit runtime input"))
+            .to_string()
+        } else {
+            raw.to_string()
+        }
+    };
 
     let abstract_name = format!("hye-probe-{}", std::process::id());
     use std::os::linux::net::SocketAddrExt;
@@ -255,12 +288,12 @@ fn sealed_runtime_executes_only_inside_private_root_and_namespaces() {
                 if spec.executable { "0500" } else { "0400" },
                 "--ro-bind-data",
             ])
-            .arg(fd.as_raw_fd().to_string())
+            .arg(fd_name(fd.as_raw_fd()))
             .arg(&spec.destination);
     }
     command
         .args(["--seccomp"])
-        .arg(policy.as_raw_fd().to_string())
+        .arg(fd_name(policy.as_raw_fd()))
         .args(["--remount-ro", "/", "--chdir", "/tmp"]);
     for (key, value) in [
         ("HOME", "/home/lab"),
@@ -287,11 +320,7 @@ fn sealed_runtime_executes_only_inside_private_root_and_namespaces() {
                 .to_string(),
         );
     }
-    let descriptors: Vec<_> = snapshots
-        .iter()
-        .map(AsRawFd::as_raw_fd)
-        .chain([policy.as_raw_fd()])
-        .collect();
+    let descriptors = inherited;
     // Only this child gets inherited data/policy descriptors. No shared parent FD
     // flag changes; all host/cgroup/process authority stays CLOEXEC in the parent.
     unsafe {
@@ -304,9 +333,39 @@ fn sealed_runtime_executes_only_inside_private_root_and_namespaces() {
             Ok(())
         });
     }
-    let mut child = command.spawn().unwrap();
+    let (status_code, success, out, err) = if gated {
+        let passed: Vec<_> = snapshots
+            .iter()
+            .map(AsFd::as_fd)
+            .chain([policy.as_fd()])
+            .collect();
+        gated_probe(&command, &passed)
+    } else {
+        ordinary_probe(command)
+    };
     snapshots.clear();
     drop(policy);
+    eprintln!("HYE_RUNTIME_IMAGE {}\n{out}{err}", image.identity());
+    if std::env::var("HYE_RUNTIME_EXPECT_UNAVAILABLE").as_deref() == Ok("1") {
+        // Separate compatibility refusal, never counted as positive execution.
+        assert_eq!(status_code, Some(1));
+        assert!(out.is_empty());
+        assert_eq!(
+            err.trim(),
+            "bwrap: loopback: Failed RTM_NEWADDR: Operation not permitted"
+        );
+        eprintln!("HYE_RUNTIME_UNAVAILABLE constructor refused before trusted probe execution");
+        return;
+    }
+    assert!(success, "Private runtime probe failed: {status_code:?}");
+    assert!(out.contains("HYE_RUNTIME_RESULT all boundary assertions passed"));
+    if gated {
+        eprintln!("HYE_GATED_RUNTIME_RESULT resource placement, private boundaries and explicit cleanup passed");
+    }
+}
+
+fn ordinary_probe(mut command: Command) -> (Option<i32>, bool, String, String) {
+    let mut child = command.spawn().unwrap();
     let deadline = Instant::now() + Duration::from_secs(12);
     let status = loop {
         if let Some(status) = child.try_wait().unwrap() {
@@ -338,18 +397,170 @@ fn sealed_runtime_executes_only_inside_private_root_and_namespaces() {
         .read_to_string(&mut err)
         .unwrap();
     assert!(out.len() <= 16384 && err.len() <= 16384);
-    eprintln!("HYE_RUNTIME_IMAGE {}\n{out}{err}", image.identity());
-    if std::env::var("HYE_RUNTIME_EXPECT_UNAVAILABLE").as_deref() == Ok("1") {
-        // Separate compatibility refusal, never counted as positive execution.
-        assert_eq!(status.code(), Some(1));
-        assert!(out.is_empty());
+    (status.code(), status.success(), out, err)
+}
+
+fn frozen_input(bytes: &[u8], executable: bool) -> File {
+    use std::os::fd::FromRawFd;
+    assert!(bytes.len() as u64 <= MAX_FILE_BYTES);
+    let permission = if executable {
+        libc::MFD_EXEC
+    } else {
+        libc::MFD_NOEXEC_SEAL
+    };
+    let raw = unsafe {
+        libc::memfd_create(
+            c"hye-ci-frozen-input".as_ptr(),
+            libc::MFD_CLOEXEC | libc::MFD_ALLOW_SEALING | permission,
+        )
+    };
+    assert!(raw >= 0);
+    let mut file = unsafe { File::from_raw_fd(raw) };
+    file.write_all(bytes).unwrap();
+    assert_eq!(
+        unsafe { libc::fchmod(raw, if executable { 0o500 } else { 0o400 }) },
+        0
+    );
+    assert_eq!(unsafe { libc::fcntl(raw, libc::F_ADD_SEALS, SEALS) }, 0);
+    file.seek(SeekFrom::Start(0)).unwrap();
+    file
+}
+
+#[test]
+fn gated_policy_bytes_and_nonexecutable_mode_remain_sealed() {
+    let mut policy = frozen_input(b"fixed policy bytes", false);
+    let mut bytes = Vec::new();
+    policy.read_to_end(&mut bytes).unwrap();
+    assert_eq!(bytes, b"fixed policy bytes");
+    assert_eq!(policy.metadata().unwrap().mode() & 0o777, 0o400);
+    assert_eq!(
+        unsafe { libc::fcntl(policy.as_raw_fd(), libc::F_GET_SEALS) } & SEALS,
+        SEALS
+    );
+    assert_eq!(
+        policy.write(b"changed").unwrap_err().raw_os_error(),
+        Some(libc::EPERM)
+    );
+    assert_eq!(unsafe { libc::fchmod(policy.as_raw_fd(), 0o500) }, -1);
+    assert_eq!(io::Error::last_os_error().raw_os_error(), Some(libc::EPERM));
+}
+
+fn gated_probe(
+    command: &Command,
+    passed: &[BorrowedFd<'_>],
+) -> (Option<i32>, bool, String, String) {
+    use crate::cgroup::{launch, Delegation, Limits};
+    use std::{ffi::CString, os::fd::FromRawFd};
+    // Explicit fixture constructor only. Freeze its bytes before handing any
+    // execution capability to Plan; no dependency discovery or ldd execution.
+    let mut source = File::open(command.get_program()).unwrap();
+    let mut bytes = Vec::new();
+    Read::by_ref(&mut source)
+        .take(MAX_FILE_BYTES + 1)
+        .read_to_end(&mut bytes)
+        .unwrap();
+    assert!(!bytes.is_empty() && bytes.len() as u64 <= MAX_FILE_BYTES);
+    let constructor = frozen_input(&bytes, true);
+    eprintln!("HYE_GATED_CONSTRUCTOR_SHA256 {:x}", Sha256::digest(&bytes));
+    drop((source, bytes));
+    fn pipe() -> (File, File) {
+        let mut pair = [-1; 2];
         assert_eq!(
-            err.trim(),
-            "bwrap: loopback: Failed RTM_NEWADDR: Operation not permitted"
+            unsafe { libc::pipe2(pair.as_mut_ptr(), libc::O_CLOEXEC) },
+            0
         );
-        eprintln!("HYE_RUNTIME_UNAVAILABLE constructor refused before trusted probe execution");
-        return;
+        unsafe { (File::from_raw_fd(pair[0]), File::from_raw_fd(pair[1])) }
     }
-    assert!(status.success(), "Private runtime probe failed: {status}");
-    assert!(out.contains("HYE_RUNTIME_RESULT all boundary assertions passed"));
+    fn nonblocking(file: &File) {
+        let flags = unsafe { libc::fcntl(file.as_raw_fd(), libc::F_GETFL) };
+        assert!(flags >= 0);
+        assert_eq!(
+            unsafe { libc::fcntl(file.as_raw_fd(), libc::F_SETFL, flags | libc::O_NONBLOCK) },
+            0
+        );
+    }
+    fn drain(file: &mut File, output: &mut Vec<u8>) -> io::Result<bool> {
+        for _ in 0..8 {
+            let mut buffer = [0; 4096];
+            match file.read(&mut buffer) {
+                Ok(0) => return Ok(true),
+                Ok(count) => {
+                    if output.len() + count > 16384 {
+                        return Err(io::Error::other(
+                            "Private runtime diagnostic exceeds its limit",
+                        ));
+                    }
+                    output.extend_from_slice(&buffer[..count]);
+                }
+                Err(e) if e.kind() == io::ErrorKind::WouldBlock => return Ok(false),
+                Err(e) if e.kind() == io::ErrorKind::Interrupted => {}
+                Err(e) => return Err(e),
+            }
+        }
+        Ok(false)
+    }
+    let (mut stdout, output) = pipe();
+    let (mut stderr, error) = pipe();
+    nonblocking(&stdout);
+    nonblocking(&stderr);
+    let null = File::options()
+        .read(true)
+        .write(true)
+        .open("/dev/null")
+        .unwrap();
+    let args: Vec<_> = std::iter::once(CString::new("hye-trusted-ci-bwrap").unwrap())
+        .chain(
+            command
+                .get_args()
+                .map(|arg| CString::new(arg.as_encoded_bytes()).unwrap()),
+        )
+        .collect();
+    let plan = launch::Plan::new(
+        constructor.as_fd(),
+        &args,
+        [null.as_fd(), output.as_fd(), error.as_fd()],
+        passed,
+    )
+    .unwrap();
+    let root = File::open(
+        std::env::var_os("HYE_CGROUP_TEST_ROOT").expect("Explicit private delegation required"),
+    )
+    .unwrap();
+    let delegation = Delegation::from_directory(root.as_fd()).unwrap();
+    let domain = delegation.create(Limits::default()).unwrap();
+    let mut session = launch::Session::spawn(domain, plan, Duration::from_secs(3)).unwrap();
+    drop((output, error));
+    let (mut out, mut err) = (Vec::new(), Vec::new());
+    let result = (|| -> io::Result<_> {
+        session.start(Duration::from_secs(3))?;
+        let end = Instant::now() + Duration::from_secs(12);
+        loop {
+            drain(&mut stdout, &mut out)?;
+            drain(&mut stderr, &mut err)?;
+            if let Some(outcome) = session.try_wait()? {
+                return Ok(outcome);
+            }
+            if Instant::now() >= end {
+                return Err(io::Error::new(
+                    io::ErrorKind::TimedOut,
+                    "Gated runtime fixture exceeded its deadline",
+                ));
+            }
+            std::thread::sleep(Duration::from_millis(5));
+        }
+    })();
+    // Even a diagnostic/timeout failure must stop the complete owned leaf.
+    session.stop(Duration::from_secs(3)).unwrap();
+    assert!(
+        drain(&mut stdout, &mut out).unwrap() && drain(&mut stderr, &mut err).unwrap(),
+        "Private runtime output retained a writer after cleanup"
+    );
+    let outcome = result.unwrap_or_else(|e| panic!("{e}; stdout={out:?}; stderr={err:?}"));
+    eprintln!("HYE_GATED_RUNTIME_CLEANUP child_reaped=true leaf_removed=true diagnostic_eof=true");
+    (
+        (outcome.signal.is_none()).then_some(outcome.code),
+        outcome.signal.is_none() && outcome.code == 0,
+        String::from_utf8(out).unwrap(),
+        String::from_utf8(err).unwrap(),
+    )
 }

@@ -78,6 +78,7 @@ jobs:
           assert len(binaries)==1, 'Expected one exact preview library test executable'
           (Path(os.environ['RUNNER_TEMP'])/'hye-kernel-executable').write_text(next(iter(binaries)))
           PYCODE
+          sha256sum "$(cat "$RUNNER_TEMP/hye-kernel-executable")"
       - name: Enforce limits and teardown in a fresh dedicated hierarchy
         timeout-minutes: 2
         run: |
@@ -100,6 +101,10 @@ jobs:
           unshare --version
           sha256sum /usr/bin/unshare /usr/bin/setpriv
           sudo -- /usr/bin/python3 -I -S scripts/cgroup_kernel_probe.py --user-namespace-channel --uid "$(id -u)" --gid "$(id -g)" --test-executable "$(cat "$RUNNER_TEMP/hye-kernel-executable")"
+      - name: Verify gated runtime refusal and complete resource cleanup on this profile
+        timeout-minutes: 2
+        run: |
+          sudo -- /usr/bin/python3 -I -S scripts/cgroup_kernel_probe.py --gated-runtime-image --expect-runtime-unavailable --probe-binary "$RUNNER_TEMP/hye-runtime-probe" --uid "$(id -u)" --gid "$(id -g)" --test-executable "$(cat "$RUNNER_TEMP/hye-kernel-executable")"
 
   runtime-image:
     # Distinct compatibility profile. Never weaken Ubuntu 24.04 policy to pass.
@@ -130,7 +135,12 @@ jobs:
           assert len(binaries)==1, 'Expected one exact preview library test executable'
           (Path(os.environ['RUNNER_TEMP'])/'hye-image-executable').write_text(next(iter(binaries)))
           PYCODE
+          sha256sum "$(cat "$RUNNER_TEMP/hye-image-executable")"
       - name: Test private runtime image and namespaces without a host security override
         timeout-minutes: 2
         run: |
           sudo -- /usr/bin/python3 -I -S scripts/cgroup_kernel_probe.py --runtime-image-probe --constructor-binary "$RUNNER_TEMP/hye-bwrap" --probe-binary "$RUNNER_TEMP/hye-runtime-probe" --uid "$(id -u)" --gid "$(id -g)" --test-executable "$(cat "$RUNNER_TEMP/hye-image-executable")"
+      - name: Verify gated constructor with immutable runtime and private boundaries
+        timeout-minutes: 2
+        run: |
+          sudo -- /usr/bin/python3 -I -S scripts/cgroup_kernel_probe.py --gated-runtime-image --constructor-binary "$RUNNER_TEMP/hye-bwrap" --probe-binary "$RUNNER_TEMP/hye-runtime-probe" --uid "$(id -u)" --gid "$(id -g)" --test-executable "$(cat "$RUNNER_TEMP/hye-image-executable")"

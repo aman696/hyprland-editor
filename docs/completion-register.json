@@ -525,6 +525,20 @@
       "limits": "two exact ephemeral CI kernel jobs observed default CPU throttling, leaf memory OOM handling, task refusal and private subtree/provider removal on one Linux kernel profile, with private-only controller setup and privilege-dropped trusted workers using live resource tokens; no developer-host controller modification, production stopped-child/compositor launch, concurrent-race/runtime/profile/crash/flooding or full preview/security certificate"
     },
     {
+      "area": "combined resource-gate and runtime-image CI experiment",
+      "code": [
+        "crates/editor-preview/src/image/probe.rs",
+        "crates/editor-preview/src/cgroup/launch.rs",
+        "scripts/cgroup_kernel_probe.py",
+        ".github/workflows/ci.yml"
+      ],
+      "test_references": [
+        "gated_policy_bytes_and_nonexecutable_mode_remain_sealed",
+        "gated_runtime_image_keeps_resource_placement_and_private_boundaries_together"
+      ],
+      "limits": "opt-in trusted static-target role combining stopped resource placement with immutable constructor/policy copies, explicit descriptor remapping, fixed private runtime image/namespace policy and bounded nonblocking diagnostics with explicit kill/reap/removal and diagnostic EOF; ordinary policy byte/mode checks pass; actual combined execution/refusal remains unproven until exact hosted observation; no complete constructor/dependency approval, production GUI/runtime, channel/frame/input, compositor/renderer, hostile/crash/orphan/stall lifecycle or full audit certificate"
+    },
+    {
       "area": "gated constructor creation inside a resource leaf",
       "code": [
         "crates/editor-preview/src/cgroup/launch.rs",
