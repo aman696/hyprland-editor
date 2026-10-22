@@ -530,13 +530,14 @@
         "crates/editor-preview/src/image/probe.rs",
         "crates/editor-preview/src/cgroup/launch.rs",
         "scripts/cgroup_kernel_probe.py",
-        ".github/workflows/ci.yml"
+        ".github/workflows/ci.yml",
+        "data/preview-ci-gated-runtime-observation.json"
       ],
       "test_references": [
         "gated_policy_bytes_and_nonexecutable_mode_remain_sealed",
         "gated_runtime_image_keeps_resource_placement_and_private_boundaries_together"
       ],
-      "limits": "opt-in trusted static-target role combining stopped resource placement with immutable constructor/policy copies, explicit descriptor remapping, fixed private runtime image/namespace policy and bounded nonblocking diagnostics with explicit kill/reap/removal and diagnostic EOF; ordinary policy byte/mode checks pass; actual combined execution/refusal remains unproven until exact hosted observation; no complete constructor/dependency approval, production GUI/runtime, channel/frame/input, compositor/renderer, hostile/crash/orphan/stall lifecycle or full audit certificate"
+      "limits": "opt-in trusted static-target role combining stopped resource placement with immutable constructor/policy copies, explicit descriptor remapping, fixed private runtime image/namespace policy and bounded nonblocking diagnostics with explicit kill/reap/removal and diagnostic EOF; ordinary policy byte/mode checks pass; two exact Ubuntu22/Linux6.8 positive target-boundary jobs and two separate Ubuntu24/Linux7.0/6.17 exact constructor-refusal/cleanup jobs with matching checkout trees and actual source/Rust-binary/target/constructor/policy/log identities; no complete constructor/dependency approval, production GUI/runtime, channel/frame/input, compositor/renderer, hostile/crash/orphan/stall lifecycle or full audit certificate"
     },
     {
       "area": "gated constructor creation inside a resource leaf",
