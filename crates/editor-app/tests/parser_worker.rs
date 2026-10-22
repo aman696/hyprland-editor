@@ -972,3 +972,54 @@ fn scalar_override_reconciliation_after_monitors_uses_the_restricted_complete_tr
         assert_eq!(result["runtime_verified"], false);
     }
 }
+
+#[test]
+fn external_source_text_merge_runs_inside_the_restricted_worker_without_execution_claims() {
+    use hyprland_editor_core::source_merge::{self, Choice, Resolution, Review};
+    let base = "local p=require('part');hl.monitor{output='DP-1',transform=1}\n";
+    let private = base.replace("transform=1", "transform=3");
+    let incoming = base.replace("DP-1", "DP-2");
+    let response =
+        request(json!({"ReviewSourceMerge":{"base":base,"private":private,"incoming":incoming}}));
+    let review: Review = serde_json::from_value(response["SourceMergeReview"].clone()).unwrap();
+    source_merge::validate_review(base, &private, &incoming, &review).unwrap();
+    let response = request(
+        json!({"ResolveSourceMerge":{"base":base,"private":private,"incoming":incoming,"review":review,"choices":{}}}),
+    );
+    let resolved: Resolution =
+        serde_json::from_value(response["SourceMergeResolution"].clone()).unwrap();
+    source_merge::validate_resolution(
+        base,
+        &private,
+        &incoming,
+        &review,
+        &Default::default(),
+        &resolved,
+    )
+    .unwrap();
+    assert_eq!(
+        resolved.content,
+        incoming.replace("transform=1", "transform=3")
+    );
+    assert!(
+        !resolved.syntax_verified && !resolved.ownership_verified && !resolved.runtime_verified
+    );
+    let base = "a\n";
+    let private = "b\n";
+    let incoming = "c\n";
+    let review = source_merge::prepare(base, private, incoming).unwrap();
+    let choices = review
+        .regions
+        .iter()
+        .enumerate()
+        .filter(|(_, r)| r.automatic.is_none())
+        .map(|(id, _)| (id, Choice::Private))
+        .collect::<std::collections::BTreeMap<_, _>>();
+    let response = request(
+        json!({"ResolveSourceMerge":{"base":base,"private":private,"incoming":incoming,"review":review,"choices":choices}}),
+    );
+    assert_eq!(response["SourceMergeResolution"]["content"], private);
+    let mut forged = review.clone();
+    forged.regions.clear();
+    assert!(request(json!({"ResolveSourceMerge":{"base":base,"private":private,"incoming":incoming,"review":forged,"choices":choices}}))["Error"].is_string());
+}

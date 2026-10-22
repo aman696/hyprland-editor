@@ -14,6 +14,21 @@
   },
   "foundations": [
     {
+      "area": "external source text merge and graph correspondence foundations",
+      "code": [
+        "crates/editor-core/src/source_merge.rs",
+        "crates/editor-core/src/source_merge/diff.rs",
+        "crates/editor-core/src/workspace_graph/merge.rs",
+        "crates/editor-app/src/worker.rs"
+      ],
+      "test_references": [
+        "crates/editor-core/src/source_merge/tests.rs",
+        "crates/editor-core/tests/graph_merge.rs",
+        "external_source_text_merge_runs_inside_the_restricted_worker_without_execution_claims"
+      ],
+      "limits": "bounded lossless line/Unicode three-way regions, mandatory-anchor ambiguity checks, explicit conflicts/insert ordering, exact input-range provenance and client checks, restricted-worker operations, graph-fingerprint/context correspondence and lazy mapped-file inputs; no external-graph GUI acceptance, new baseline/private dependency composition, independent whole-graph replay, removed-source archive/persistence, root/origin/graph atomic acceptance, syntax/ownership/runtime or full E03/E05 certificate"
+    },
+    {
       "area": "reviewed saved-graph model migration",
       "code": [
         "crates/editor-app/src/graph_migration.rs",
@@ -27,7 +42,8 @@
         "data/migrations/graph-model-monitor-fields.json",
         "data/migrations/graph-model-monitor-declarations.json",
         "data/migrations/graph-model-monitor-layout.json",
-        "data/migrations/graph-model-monitor-review.json"
+        "data/migrations/graph-model-monitor-review.json",
+        "data/migrations/graph-model-mixed-review.json"
       ],
       "test_references": [
         "reviewed_transition_pins_exact_monitor_differences_and_refuses_unreviewed_builds",
@@ -35,7 +51,7 @@
         "migration_refuses_unknown_models_profiles_corruption_unreached_inputs_and_hidden_payloads",
         "workflow::test_graph_migration"
       ],
-      "limits": "nine exact reviewed dependency/storage/monitor transitions with bounded held-inode input, unknown-payload refusal, fresh restricted-worker captured-view/dependency/private-piece reanalysis, byte/value preservation, cancel/epoch/unsaved guards and new private save; no original-path reads or restored folder access, general model/schema/profile conversion, persistent history, full source export/reconciliation or full audit certificate"
+      "limits": "ten exact reviewed dependency/storage/monitor transitions with bounded held-inode input, unknown-payload refusal, fresh restricted-worker captured-view/dependency/private-piece reanalysis, byte/value preservation, cancel/epoch/unsaved guards and new private save; no original-path reads or restored folder access, general model/schema/profile conversion, persistent history, full source export/reconciliation or full audit certificate"
     },
     {
       "area": "source dependency capture and ordered evaluation",

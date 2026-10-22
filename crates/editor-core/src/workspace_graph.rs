@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
 use std::sync::Arc;
+pub mod merge;
 pub mod revisions;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

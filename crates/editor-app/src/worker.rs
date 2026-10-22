@@ -32,6 +32,18 @@ pub enum Request {
         program: lua::replay::Program,
         plan: lua::replay::edits::EditPlan,
     },
+    ReviewSourceMerge {
+        base: String,
+        private: String,
+        incoming: String,
+    },
+    ResolveSourceMerge {
+        base: String,
+        private: String,
+        incoming: String,
+        review: hyprland_editor_core::source_merge::Review,
+        choices: std::collections::BTreeMap<usize, hyprland_editor_core::source_merge::Choice>,
+    },
     CompareScalarSource {
         program: lua::replay::Program,
         change: lua::replay::scalar_edit::Change,
@@ -110,6 +122,8 @@ pub enum Response {
     Dependencies(lua::DependencyInventory),
     Replayed(Box<lua::replay::Report>),
     SourceEditReview(Box<lua::replay::edits::EditReview>),
+    SourceMergeReview(Box<hyprland_editor_core::source_merge::Review>),
+    SourceMergeResolution(Box<hyprland_editor_core::source_merge::Resolution>),
     ScalarSourceComparison(Box<lua::replay::scalar_edit::Comparison>),
     SourceOverrideReview(Box<lua::replay::override_review::Review>),
     SourceMonitorReview(Box<lua::replay::monitor_review::Review>),
@@ -257,6 +271,22 @@ pub fn entry() {
                 lua::replay::edits::review(&program, &plan)
                     .map(|report| Response::SourceEditReview(Box::new(report)))
             }
+            Request::ReviewSourceMerge {
+                base,
+                private,
+                incoming,
+            } => hyprland_editor_core::source_merge::prepare(&base, &private, &incoming)
+                .map(|result| Response::SourceMergeReview(Box::new(result))),
+            Request::ResolveSourceMerge {
+                base,
+                private,
+                incoming,
+                review,
+                choices,
+            } => hyprland_editor_core::source_merge::resolve(
+                &base, &private, &incoming, &review, &choices,
+            )
+            .map(|result| Response::SourceMergeResolution(Box::new(result))),
             Request::InspectDependencies { source, version } => {
                 lua::inspect_dependencies(&source, &version).map(Response::Dependencies)
             }

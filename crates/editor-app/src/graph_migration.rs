@@ -25,7 +25,9 @@ const MONITOR_LAYOUT: &str = "1dacfb662caa635f63047517d223d73ec0c1922b2d9f93b3a7
 const LAYOUT_MODEL: &str = include_str!("../../../data/migrations/graph-model-monitor-layout.json");
 const MONITOR_REVIEW: &str = "be2a3bceb486422b079705792d7dae67f4922f96fcfc304004df20fbc22c92f1";
 const REVIEW_MODEL: &str = include_str!("../../../data/migrations/graph-model-monitor-review.json");
-const TO: &str = "dbb7803fa4ea318a5b4511fd1f44eb422be73feebd8342ab449a8a4ffa27351d";
+const MIXED_REVIEW: &str = "dbb7803fa4ea318a5b4511fd1f44eb422be73feebd8342ab449a8a4ffa27351d";
+const MIXED_MODEL: &str = include_str!("../../../data/migrations/graph-model-mixed-review.json");
+const TO: &str = "071946f5f808e82ef8f38d67fa919d7a427299f2c41c0f5e73368d7c3ee0aae7";
 const OLD: &str = include_str!("../../../data/migrations/graph-model-before-projection.json");
 const FROM_PROJECTION: &str = "046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371";
 const PROJECTION: &str = include_str!("../../../data/migrations/graph-model-projection.json");
@@ -327,8 +329,10 @@ fn before_mixed_review_transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
-fn transition(from: &str) -> Result<(), String> {
-    if lua::source_hash(REVIEW_MODEL) != MONITOR_REVIEW || workspace_graph::schema_sha256() != TO {
+fn before_text_merge_transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(REVIEW_MODEL) != MONITOR_REVIEW
+        || lua::source_hash(MIXED_MODEL) != MIXED_REVIEW
+    {
         return Err(
             "No reviewed mixed-family reconciliation transition to this exact model is available"
                 .into(),
@@ -339,7 +343,8 @@ fn transition(from: &str) -> Result<(), String> {
     }
     let previous: serde_json::Value =
         serde_json::from_str(REVIEW_MODEL).map_err(|e| e.to_string())?;
-    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let current: serde_json::Value =
+        serde_json::from_str(MIXED_MODEL).map_err(|e| e.to_string())?;
     let old = previous["inputs"]
         .as_object()
         .ok_or("Invalid previous monitor review model")?;
@@ -357,6 +362,52 @@ fn transition(from: &str) -> Result<(), String> {
         || changed != ["crates/editor-core/src/lua/replay/override_review.rs"]
     {
         return Err("Mixed reconciliation model no longer has only the reviewed scalar inspection prefix and structural-intent rejection changes".into());
+    }
+    Ok(())
+}
+fn transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(MIXED_MODEL) != MIXED_REVIEW || workspace_graph::schema_sha256() != TO {
+        return Err("No reviewed source merge transition to this exact model is available".into());
+    }
+    if from != MIXED_REVIEW {
+        before_text_merge_transition(from)?;
+    }
+    let previous: serde_json::Value =
+        serde_json::from_str(MIXED_MODEL).map_err(|e| e.to_string())?;
+    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let old = previous["inputs"]
+        .as_object()
+        .ok_or("Invalid previous mixed-call model")?;
+    let new = current["inputs"]
+        .as_object()
+        .ok_or("Invalid source merge model")?;
+    let added = new
+        .keys()
+        .filter(|k| !old.contains_key(*k))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    let changed = old
+        .keys()
+        .filter(|k| new.get(*k) != Some(&old[*k]))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    if old.len() != 66
+        || new.len() != 70
+        || added
+            != [
+                "crates/editor-core/src/source_merge.rs",
+                "crates/editor-core/src/source_merge/diff.rs",
+                "crates/editor-core/src/source_merge/tests.rs",
+                "crates/editor-core/src/workspace_graph/merge.rs",
+            ]
+        || changed
+            != [
+                "crates/editor-app/src/worker.rs",
+                "crates/editor-core/src/lib.rs",
+                "crates/editor-core/src/workspace_graph.rs",
+            ]
+    {
+        return Err("Source merge model no longer has only the reviewed merge modules, registrations and worker changes".into());
     }
     Ok(())
 }
@@ -463,6 +514,7 @@ mod tests {
         transition(MONITOR_DECLARATIONS).unwrap();
         transition(MONITOR_LAYOUT).unwrap();
         transition(MONITOR_REVIEW).unwrap();
+        transition(MIXED_REVIEW).unwrap();
         assert!(transition(&"0".repeat(64)).is_err());
         assert_ne!(FROM, TO);
         assert_eq!(lua::source_hash(CURRENT), TO);
