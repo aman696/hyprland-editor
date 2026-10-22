@@ -797,11 +797,10 @@ impl Controls {
                 .is_some_and(|s| {
                     s.kind == hyprland_editor_core::lua::replay::ExpressionKind::Table
                 });
-            let compound = !monitor
-                && matches!(
-                    &value,
-                    Value::Vec2(_) | Value::CssGap(_) | Value::Gradient { .. }
-                );
+            let compound = matches!(
+                &value,
+                Value::Vec2(_) | Value::CssGap(_) | Value::Gradient { .. }
+            );
             let mut labels = vec![
                 "Selected value expression",
                 "Original literal, if traceable",
@@ -939,10 +938,11 @@ impl Controls {
                             event_order: event,
                             row: candidate.location[1],
                             field: candidate.id,
-                            selection: if scope.selected() == 1 {
-                                monitor_edit::Selection::OriginalLiteral
-                            } else {
-                                monitor_edit::Selection::SelectedExpression
+                            selection: match scope.selected() {
+                                1 => monitor_edit::Selection::OriginalLiteral,
+                                2 => monitor_edit::Selection::PreserveTableLayout,
+                                3 => monitor_edit::Selection::OriginalTableLayout,
+                                _ => monitor_edit::Selection::SelectedExpression,
                             },
                             value: value.unwrap(),
                         },
@@ -1900,11 +1900,11 @@ pub(super) fn test_monitor_workflow(parent: &adw::ApplicationWindow) {
         let invalid = "local rule={transform=99,bitdepth=9223372036854775807};rule.scale=nil;hl.monitor(rule)";
         let repair_path = directory.join("repair.lua");
         std::fs::write(&repair_path, invalid).unwrap();
-        let capture = Arc::new(storage::read_source(&repair_path).unwrap());
+        let repair_capture = Arc::new(storage::read_source(&repair_path).unwrap());
         let repair = super::source_graph::analyze(
-            capture.clone(),
+            repair_capture.clone(),
             Context {
-                main_file: capture.identity.selected_path.clone(),
+                main_file: repair_capture.identity.selected_path.clone(),
                 home: None,
                 inherited_package_path: None,
             },
@@ -1929,7 +1929,7 @@ pub(super) fn test_monitor_workflow(parent: &adw::ApplicationWindow) {
             let doc = LuaDocument::from_report(invalid.into(), *report, &s.catalogue).unwrap();
             s.sources.insert(version.into(), Arc::new(doc));
             s.source_origins
-                .insert(version.into(), capture.identity.clone());
+                .insert(version.into(), repair_capture.identity.clone());
         }
         for field in ["output", "transform", "scale", "bitdepth"] {
             let kept = Rc::new(std::cell::Cell::new(false));
@@ -2020,7 +2020,135 @@ pub(super) fn test_monitor_workflow(parent: &adw::ApplicationWindow) {
         assert!(
             matches!(fields.iter().find(|c| c.field=="bitdepth").unwrap().primary_value, Outcome::Accepted {native:hyprland_editor_core::lua::scalar_codec::NativeValue::Int(v),..} if v==i64::MAX-1)
         );
+        // Exercise the original-table choice through the actual monitor gap
+        // controls, then retain/reopen it after the original file is removed.
+        let gap_source="-- gap header é\r\nlocal gap={top = -1 --[[gap memo]],right='2',bottom=3.0,left=4,note='gap-extra'}\r\nhl.monitor{output='DP-1',reserved=gap}\r\n";
+        let gap_path = directory.join("gap.lua");
+        std::fs::write(&gap_path, gap_source).unwrap();
+        let gap_capture = Arc::new(storage::read_source(&gap_path).unwrap());
+        let gap_analysis = super::source_graph::analyze(
+            gap_capture.clone(),
+            Context {
+                main_file: gap_capture.identity.selected_path.clone(),
+                home: None,
+                inherited_package_path: None,
+            },
+            vec![],
+            version.into(),
+            None,
+            Arc::new(std::sync::atomic::AtomicBool::new(false)),
+        )
+        .unwrap();
+        let gap_model: Model = Rc::new(RefCell::new(Some(Arc::new(gap_analysis))));
+        let gap_state = super::initial_state();
+        let worker::Response::Parsed(report) = worker::run(worker::Request::Parse {
+            source: gap_source.into(),
+            version: version.into(),
+        })
+        .unwrap() else {
+            panic!()
+        };
+        {
+            let mut s = gap_state.borrow_mut();
+            s.draft = hyprland_editor_core::Draft::new(version);
+            let doc = LuaDocument::from_report(gap_source.into(), *report, &s.catalogue).unwrap();
+            s.sources.insert(version.into(), Arc::new(doc));
+            s.source_origins
+                .insert(version.into(), gap_capture.identity.clone());
+        }
+        let gap_kept = Rc::new(std::cell::Cell::new(false));
+        let done = gap_kept.clone();
+        let gap_window = open(
+            parent.upcast_ref(),
+            &gap_model,
+            0,
+            &gap_state,
+            Rc::new(move || done.set(true)),
+        );
+        let gap_analysis = gap_model.borrow().clone().unwrap();
+        let index = picks(&gap_analysis, 0, true)
+            .iter()
+            .position(|p| target(&gap_analysis, p).is_some_and(|c| c.id == "reserved"))
+            .unwrap();
+        named(gap_window.upcast_ref(), "source-change-setting")
+            .downcast::<gtk::DropDown>()
+            .unwrap()
+            .set_selected(index as u32);
+        let scope = named(gap_window.upcast_ref(), "source-change-scope")
+            .downcast::<gtk::DropDown>()
+            .unwrap();
+        assert_eq!(
+            scope.selected(),
+            0,
+            "An alias must not be labeled a directly selected constructor"
+        );
+        assert_eq!(scope.model().unwrap().n_items(), 4);
+        scope.set_selected(3);
+        fn first_spin(root: &gtk::Widget) -> Option<gtk::SpinButton> {
+            if let Some(spin) = root.downcast_ref::<gtk::SpinButton>() {
+                return Some(spin.clone());
+            }
+            let mut child = root.first_child();
+            while let Some(widget) = child {
+                if let Some(spin) = first_spin(&widget) {
+                    return Some(spin);
+                }
+                child = widget.next_sibling();
+            }
+            None
+        }
+        let form = named(gap_window.upcast_ref(), "source-change-inputs");
+        let top = first_spin(&form).unwrap();
+        assert_eq!(top.value(), -1.0);
+        top.set_value(-8.0);
+        named(gap_window.upcast_ref(), "source-change-compare")
+            .downcast::<gtk::Button>()
+            .unwrap()
+            .emit_clicked();
+        let keep = named(gap_window.upcast_ref(), "source-change-keep")
+            .downcast::<gtk::Button>()
+            .unwrap();
+        wait(|| keep.is_sensitive());
+        let view = named(gap_window.upcast_ref(), "source-change-comparison")
+            .downcast::<gtk::TextView>()
+            .unwrap();
+        let text = view
+            .buffer()
+            .text(&view.buffer().start_iter(), &view.buffer().end_iter(), true);
+        assert!(
+            text.contains("Existing comments, spacing and unrelated source fields are retained"),
+            "{text}"
+        );
+        assert!(
+            text.contains("top = -8 --[[gap memo]],right='2',bottom=3.0"),
+            "{text}"
+        );
+        capture(&gap_window, "monitor-gap-layout");
+        keep.emit_clicked();
+        wait(|| gap_kept.get());
+        gap_window.close();
+        assert_eq!(std::fs::read_to_string(&gap_path).unwrap(), gap_source);
+        let gap_saved = Workspace::new(gap_state.borrow().draft.clone())
+            .with_graph(&gap_state.borrow().source_graphs[version].bundle)
+            .to_json(&gap_state.borrow().catalogue)
+            .unwrap();
         std::fs::remove_dir_all(&directory).unwrap();
+        let gap_restored = Workspace::from_json(
+            std::str::from_utf8(&gap_saved).unwrap(),
+            &gap_state.borrow().catalogue,
+        )
+        .unwrap();
+        let gap_bundle = hyprland_editor_core::workspace_graph::Bundle {
+            graph: gap_restored.source_graph.unwrap(),
+            sources: Arc::new(gap_restored.sources),
+        };
+        let gap_restored = super::source_graph::restore(&gap_bundle, version).unwrap();
+        assert_eq!(
+            gap_restored.program.documents[0].source,
+            gap_source.replacen("top = -1", "top = -8", 1)
+        );
+        gap_state.borrow_mut().undo_last();
+        assert!(!gap_state.borrow().source_graphs.contains_key(version));
         let restored = Workspace::from_json(
             std::str::from_utf8(&saved).unwrap(),
             &state.borrow().catalogue,

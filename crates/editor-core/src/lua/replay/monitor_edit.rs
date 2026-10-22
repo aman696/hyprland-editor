@@ -19,6 +19,8 @@ pub type Comparison = scalar_edit::Comparison;
 pub enum Selection {
     SelectedExpression,
     OriginalLiteral,
+    PreserveTableLayout,
+    OriginalTableLayout,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -52,7 +54,7 @@ pub fn compare(program: &Program, change: &Change) -> Result<Comparison, String>
     let Observed::Table(rows) = event.arguments.first().ok_or("Missing monitor table")? else {
         return Err("Missing monitor table".into());
     };
-    let (key, _) = rows.get(change.row).ok_or("Missing monitor field row")?;
+    let (key, current) = rows.get(change.row).ok_or("Missing monitor field row")?;
     let expression = if change.field == "output" {
         if !matches!(key, Observed::Bytes(raw) if raw == b"output") {
             return Err("Output row does not match the exact required field".into());
@@ -75,20 +77,32 @@ pub fn compare(program: &Program, change: &Change) -> Result<Comparison, String>
         }
         candidate.expression
     };
-    let (proposed, outcome) = proposed(&program.version, &change.field, &change.value)?;
+    let (mut proposed, outcome) = proposed(&program.version, &change.field, &change.value)?;
     let mut id = expression.ok_or("No exact expression is recorded for this monitor value")?;
-    if matches!(change.selection, Selection::OriginalLiteral) {
+    if matches!(
+        change.selection,
+        Selection::OriginalLiteral | Selection::OriginalTableLayout
+    ) {
+        let target_kind = if matches!(change.selection, Selection::OriginalTableLayout) {
+            ExpressionKind::Table
+        } else {
+            ExpressionKind::Literal
+        };
         for _ in 0..8192 {
             let node = before
                 .expression_sources
                 .get(id as usize)
                 .ok_or("Missing expression evidence")?;
-            if node.kind == ExpressionKind::Literal {
+            if node.kind == target_kind {
                 break;
             }
-            id = node.selected.ok_or("This monitor value has no single original literal; compare its selected expression instead")?;
+            id = node.selected.ok_or(if matches!(change.selection, Selection::OriginalTableLayout) {
+                "This monitor value has no single original table; compare its selected expression instead"
+            } else {
+                "This monitor value has no single original literal; compare its selected expression instead"
+            })?;
         }
-        if before.expression_sources[id as usize].kind != ExpressionKind::Literal {
+        if before.expression_sources[id as usize].kind != target_kind {
             return Err("Monitor expression traversal exceeds its limit".into());
         }
     }
@@ -104,12 +118,45 @@ pub fn compare(program: &Program, change: &Change) -> Result<Comparison, String>
         .source
         .get(expression.span.clone())
         .ok_or("Invalid monitor expression span")?;
+    let preserve = matches!(
+        change.selection,
+        Selection::PreserveTableLayout | Selection::OriginalTableLayout
+    );
+    let replacement = if preserve {
+        let metadata = monitor_inspection::fields(&program.version)?
+            .iter()
+            .find(|f| f.key == change.field && f.kind == "CssGap")
+            .ok_or("Monitor table layout preservation is available for reserved-area gaps")?;
+        let (replacement, expected) = scalar_edit::layout::prepare(
+            &document.source,
+            expression.span.clone(),
+            &metadata.kind,
+            current,
+            &proposed,
+        )?;
+        let decoded = scalar_codec::decode_batch(&[scalar_codec::Case {
+            codec: monitor_inspection::codec(metadata)?,
+            input: expected.clone(),
+        }])?
+        .remove(0);
+        if !matches!((&decoded, &outcome), (Outcome::Accepted {native:a, ..}, Outcome::Accepted {native:b, ..}) if a==b)
+        {
+            return Err(
+                "Preserving the monitor table does not establish the requested primary value"
+                    .into(),
+            );
+        }
+        proposed = expected;
+        replacement
+    } else {
+        scalar_edit::print(&proposed)?
+    };
     let edit = edits::SourceEdit {
         document: document.id.clone(),
         base_sha256: document.sha256.clone(),
         span: expression.span.clone(),
         old_bytes_sha256: crate::lua::source_hash(old),
-        replacement: scalar_edit::print(&proposed)?,
+        replacement,
         semantic_targets: vec![format!("monitor.{}", change.field)],
     };
     let mut after_arguments = event.arguments.clone();
@@ -131,7 +178,7 @@ pub fn compare(program: &Program, change: &Change) -> Result<Comparison, String>
         plan,
         review,
         proposed_native_value: outcome,
-        table_layout_preserved: false,
+        table_layout_preserved: preserve,
     };
     edits::fingerprint(&result)?;
     Ok(result)

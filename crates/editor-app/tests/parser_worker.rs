@@ -96,6 +96,28 @@ fn monitor_source_inspection_and_comparison_run_in_the_restricted_worker() {
     }
 }
 #[test]
+fn monitor_gap_layout_comparisons_cross_the_worker_with_original_spelling_and_comments() {
+    use hyprland_editor_core::{
+        lua::replay::monitor_edit::{Change, Selection},
+        Value, AUDITED_MAIN, BASELINE,
+    };
+    for version in [BASELINE, AUDITED_MAIN] {
+        for (source, selection) in [
+            ("hl.monitor{output='DP-1',reserved={top=-1 --[[memo]],right='2',bottom=3,left=4, note='stay'}}", Selection::PreserveTableLayout),
+            ("local gap={top=-1 --[[memo]],right='2',bottom=3,left=4, note='stay'};hl.monitor{output='DP-1',reserved=gap}", Selection::OriginalTableLayout),
+        ] {
+            let mut p=replay_program(source);
+            p.version=version.into();
+            let change=Change {event_order:0,row:1,field:"reserved".into(),selection,value:Value::CssGap([-8,2,3,4])};
+            let result=request(json!({"CompareMonitorSource":{"program":p,"change":change}}));
+            assert_eq!(result["ScalarSourceComparison"]["review"]["modeled_observations_match"],true,"{result}");
+            assert_eq!(result["ScalarSourceComparison"]["table_layout_preserved"],true);
+            assert_eq!(result["ScalarSourceComparison"]["review"]["revisions"][0]["content"],source.replacen("top=-1","top=-8",1));
+            assert_eq!(result["ScalarSourceComparison"]["review"]["runtime_verified"],false);
+        }
+    }
+}
+#[test]
 fn monitor_field_presence_edits_cross_the_restricted_worker_with_exact_row_guards() {
     use hyprland_editor_core::{
         lua::replay::{

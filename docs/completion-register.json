@@ -24,7 +24,8 @@
         "data/migrations/graph-model-migration.json",
         "data/migrations/graph-model-before-monitors.json",
         "data/migrations/graph-model-monitor-values.json",
-        "data/migrations/graph-model-monitor-fields.json"
+        "data/migrations/graph-model-monitor-fields.json",
+        "data/migrations/graph-model-monitor-declarations.json"
       ],
       "test_references": [
         "reviewed_transition_pins_exact_monitor_differences_and_refuses_unreviewed_builds",
@@ -32,7 +33,7 @@
         "migration_refuses_unknown_models_profiles_corruption_unreached_inputs_and_hidden_payloads",
         "workflow::test_graph_migration"
       ],
-      "limits": "six exact reviewed dependency/storage/monitor transitions with bounded held-inode input, unknown-payload refusal, fresh restricted-worker captured-view/dependency/private-piece reanalysis, byte/value preservation, cancel/epoch/unsaved guards and new private save; no original-path reads or restored folder access, general model/schema/profile conversion, persistent history, full source export/reconciliation or full audit certificate"
+      "limits": "seven exact reviewed dependency/storage/monitor transitions with bounded held-inode input, unknown-payload refusal, fresh restricted-worker captured-view/dependency/private-piece reanalysis, byte/value preservation, cancel/epoch/unsaved guards and new private save; no original-path reads or restored folder access, general model/schema/profile conversion, persistent history, full source export/reconciliation or full audit certificate"
     },
     {
       "area": "source dependency capture and ordered evaluation",
@@ -344,13 +345,17 @@
         "latest_nil_write_can_add_a_field_without_being_masked_or_guessing_a_future_write",
         "monitor_field_presence_edits_cross_the_restricted_worker_with_exact_row_guards",
         "source_changes::test_monitor_workflow",
+        "monitor_gap_layout_keeps_signed_components_native_spelling_comments_and_unowned_fields",
+        "monitor_original_gap_table_reports_shared_and_later_write_impacts_without_fallback",
+        "monitor_layout_refuses_unowned_shapes_and_keeps_removed_component_effects_visible",
+        "monitor_gap_layout_comparisons_cross_the_worker_with_original_spelling_and_comments",
         "source_declarations::test_workflow",
         "crates/editor-core/tests/monitor_declarations.rs",
         "declaration_sites_and_call_structure_changes_run_in_the_restricted_worker",
         "removed_declaration_dependencies_remain_captured_and_reopen_with_further_source_edits",
         "scripts/monitor_source_probe.py --check"
       ],
-      "limits": "22 versioned field controls and output selector, ordered drafts, static import/export, private snapshots, source-pinned routing/primary codecs, captured value/presence edits, recorded constructor/assignment/rawset/nil writes, exact numeric and explicit invalid-input repair seeds, bounded multi-patch review, whole-declaration insertion/removal (including first/nested/unobserved sites), zero-result embedded removal, bounded API/loader sequence alignment, retained original dependency evidence and private cross-file revisions; no native helper/manager/hardware certificate, arbitrary unresolved-source repair, compound value trivia preservation, complete source/draft reconciliation, ICC decoding, recovery, live apply or rendered preview certification"
+      "limits": "22 versioned field controls and output selector, ordered drafts, static import/export, private snapshots, source-pinned routing/primary codecs, captured value/presence edits, recorded constructor/assignment/rawset/nil writes, exact numeric and explicit invalid-input repair seeds, bounded multi-patch review, whole-declaration insertion/removal (including first/nested/unobserved sites), zero-result embedded removal, bounded API/loader sequence alignment, retained original dependency evidence and private cross-file revisions, reserved-area layout preservation with primary-value equality, comments/unrelated-field retention and explicit original constructors; no native helper/manager/hardware certificate, arbitrary unresolved-source repair, general unsupported-expression trivia recovery, complete source/draft reconciliation, ICC decoding, recovery, live apply or rendered preview certification"
     },
     {
       "area": "scalar draft forms",

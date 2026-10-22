@@ -334,7 +334,7 @@ fn rewrite(
     );
     Ok((output, observed))
 }
-pub(super) fn prepare(
+pub(in crate::lua::replay) fn prepare(
     source: &str,
     span: std::ops::Range<usize>,
     kind: &str,
