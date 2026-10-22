@@ -383,6 +383,7 @@ mod tests {
             report,
             config_batches: vec![],
             config_profile: None,
+            monitors: None,
             captures: vec![],
             edges: vec![],
             blocked: None,

@@ -42,7 +42,7 @@ fn fields(entries: impl IntoIterator<Item = (&'static str, Observed)>) -> Observ
             .collect(),
     )
 }
-fn input(value: &Value, kind: &str) -> Result<Observed, String> {
+pub(super) fn input(value: &Value, kind: &str) -> Result<Observed, String> {
     Ok(match (kind, value) {
         ("Bool", Value::Bool(v)) => Observed::Bool(*v),
         ("Int", Value::Int(v)) => Observed::Int(*v),
@@ -92,7 +92,7 @@ fn input(value: &Value, kind: &str) -> Result<Observed, String> {
         ),
     })
 }
-fn print(value: &Observed) -> Result<String, String> {
+pub(super) fn print(value: &Observed) -> Result<String, String> {
     Ok(match value {
         Observed::Bool(v) => v.to_string(),
         Observed::Int(i64::MIN) => "(-9223372036854775807 - 1)".into(),
@@ -196,11 +196,19 @@ pub fn compare(program: &Program, change: &Change) -> Result<Comparison, String>
         .ok_or("The selected call is unavailable")?;
     if before.events[..=event_index]
         .iter()
-        .any(|e| e.api != "hl.config")
+        .any(|e| !matches!(e.api.as_str(), "hl.config" | "hl.monitor"))
     {
         return Err("An earlier unsupported API prevents typed source comparison".into());
     }
-    let inspection = config_inspection::inspect(&before.events[..=event_index], &program.version)?;
+    // Monitor calls have fixed zero-result routing and do not supply scalar
+    // values. Their inert argument observations still participate in the full
+    // edit comparison, so shared-value edits cannot silently change monitors.
+    let events: Vec<_> = before.events[..=event_index]
+        .iter()
+        .filter(|e| e.api == "hl.config")
+        .cloned()
+        .collect();
+    let inspection = config_inspection::inspect(&events, &program.version)?;
     let candidate = inspection
         .batches
         .iter()

@@ -2,6 +2,7 @@
 //! Module resolutions are supplied observations, never filesystem permissions or path guesses.
 pub mod edits;
 mod eval;
+pub mod monitor_edit;
 mod observed_float;
 pub mod override_review;
 mod path_sources;
@@ -751,6 +752,11 @@ impl<'a> Engine<'a> {
             hl,
             b"config",
             Value::from(Kind::Native(Native::Observe("hl.config"))),
+        )?;
+        e.field_set(
+            hl,
+            b"monitor",
+            Value::from(Kind::Native(Native::Observe("hl.monitor"))),
         )?;
         e.field_set(e.globals, b"hl", Value::from(Kind::Table(hl)))?;
         if program.profile == Profile::SyntheticEmit {

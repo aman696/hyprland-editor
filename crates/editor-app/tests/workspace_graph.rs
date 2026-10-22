@@ -145,13 +145,15 @@ fn fixture_source(root: &Path, version: &str, source: &str) -> Workspace {
     workspace
 }
 fn root() -> std::path::PathBuf {
+    static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
     let root = std::env::temp_dir().join(format!(
-        "he-graph-reopen-{}-{}",
+        "he-graph-reopen-{}-{}-{}",
         std::process::id(),
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
-            .as_nanos()
+            .as_nanos(),
+        NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
     ));
     fs::create_dir(&root).unwrap();
     root
@@ -427,12 +429,44 @@ fn preview_layer_worker_rebuilds_private_module_pieces_and_preserves_deleted_ori
     }
 }
 #[test]
+fn monitor_model_migration_preserves_an_old_stopped_graph_without_guessing_new_dependencies() {
+    for version in [BASELINE, AUDITED_MAIN] {
+        let root = root();
+        let mut snapshot = fixture_source(&root, version, "hl.monitor{output='DP-1',transform=2};local part=require('part');hl.config{general={border_size=part}}");
+        let graph = snapshot.source_graph.as_mut().unwrap();
+        // The preceding model stopped at hl.monitor, so a valid saved capture
+        // from that model contains only its root, without a reached part loader.
+        graph.schema_sha256 =
+            "c1abcce3f3c001585eb7b39e13b7ab888791a3480877f7817bde26d66bba1427".into();
+        graph.bindings.clear();
+        graph.views.retain(|v| v.document == graph.root);
+        snapshot.sources.retain(|s| s.id == graph.root);
+        let bytes = serde_json::to_vec_pretty(&snapshot).unwrap();
+        let path = root.join("old-stopped.hye");
+        fs::write(&path, &bytes).unwrap();
+        let (ok, output) = check_migration(&path);
+        assert!(ok, "{output}");
+        let report: serde_json::Value = serde_json::from_str(&output).unwrap();
+        assert_eq!(report["migration"]["captured_documents"], 1);
+        assert_eq!(report["migration"]["resolution_inputs"], 0);
+        assert!(report["migration"]["reanalysis_findings"].as_u64().unwrap() > 0);
+        assert!(report["migration"]["reanalysis_note"].is_string());
+        assert_eq!(report["original_paths_opened"], false);
+        assert_eq!(report["folder_access_restored"], false);
+        assert_eq!(report["runtime_verified"], false);
+        assert_eq!(fs::read(&path).unwrap(), bytes);
+        assert!(!root.join("originals").exists());
+        fs::remove_dir_all(root).unwrap();
+    }
+}
+#[test]
 fn reviewed_graph_migrations_rebuild_deleted_sources_and_private_pieces_without_writing() {
     for version in [BASELINE, AUDITED_MAIN] {
         for old in [
             "f7017978da7127ee461497d1021e418bb2c2e171b4d28a43b6671f8abb2531dd",
             "046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371",
             "7273a441eca7d6ae6424b92d1188be64e642d007a77ae9e6a909239284f23ffc",
+            "c1abcce3f3c001585eb7b39e13b7ab888791a3480877f7817bde26d66bba1427",
         ] {
             let root = root();
             let mut snapshot = fixture(&root, version);

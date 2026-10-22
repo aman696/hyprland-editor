@@ -1,4 +1,4 @@
-//! Explicit, reviewed dependency/storage-visibility model transition. No writer or saved
+//! Explicit, reviewed dependency/storage/monitor model transitions. No writer or saved
 //! analysis is trusted; current restricted workers rebuild the captured graph.
 use hyprland_editor_core::{
     lua, storage,
@@ -11,7 +11,9 @@ use std::{collections::BTreeSet, path::PathBuf, sync::Arc};
 const FROM: &str = "f7017978da7127ee461497d1021e418bb2c2e171b4d28a43b6671f8abb2531dd";
 const FROM_MIGRATION: &str = "7273a441eca7d6ae6424b92d1188be64e642d007a77ae9e6a909239284f23ffc";
 const MIGRATION: &str = include_str!("../../../data/migrations/graph-model-migration.json");
-const TO: &str = "c1abcce3f3c001585eb7b39e13b7ab888791a3480877f7817bde26d66bba1427";
+const BEFORE_MONITORS: &str = "c1abcce3f3c001585eb7b39e13b7ab888791a3480877f7817bde26d66bba1427";
+const PRE_MONITOR: &str = include_str!("../../../data/migrations/graph-model-before-monitors.json");
+const TO: &str = "d7dd575308699007b7083b5776cfdfb6268b84b78fd4bd7f7f29c023c24f70cd";
 const OLD: &str = include_str!("../../../data/migrations/graph-model-before-projection.json");
 const FROM_PROJECTION: &str = "046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371";
 const PROJECTION: &str = include_str!("../../../data/migrations/graph-model-projection.json");
@@ -54,17 +56,22 @@ fn transition(from: &str) -> Result<(), String> {
             ],
         ),
         FROM_MIGRATION => (MIGRATION, &["Cargo.lock", "crates/editor-app/Cargo.toml"]),
+        BEFORE_MONITORS => (PRE_MONITOR, &[]),
         _ => return Err("This saved graph model has no reviewed migration".into()),
     };
-    if lua::source_hash(previous) != from || workspace_graph::schema_sha256() != TO {
+    if lua::source_hash(previous) != from
+        || lua::source_hash(PRE_MONITOR) != BEFORE_MONITORS
+        || workspace_graph::schema_sha256() != TO
+    {
         return Err("No reviewed graph migration to this model is available".into());
     }
     let old: serde_json::Value = serde_json::from_str(previous).map_err(|e| e.to_string())?;
-    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let intermediate: serde_json::Value =
+        serde_json::from_str(PRE_MONITOR).map_err(|e| e.to_string())?;
     let old = old["inputs"]
         .as_object()
         .ok_or("Invalid previous model inventory")?;
-    let current = current["inputs"]
+    let current = intermediate["inputs"]
         .as_object()
         .ok_or("Invalid current model inventory")?;
     let keys: BTreeSet<_> = old.keys().collect();
@@ -78,6 +85,50 @@ fn transition(from: &str) -> Result<(), String> {
         .collect();
     if changes != allowed {
         return Err("Graph migration no longer has only the reviewed dependency and storage-helper visibility differences".into());
+    }
+    // This transition changes the argument observer, not the saved byte/piece
+    // format. It adds monitor calls with fixed zero results and primary-value
+    // inspection; every reached loader and private revision is freshly rebuilt.
+    // The new model can reach code that was previously unresolved. Such inputs
+    // must pass restore's full saved-graph checks; no old analysis is reused.
+    let next: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let next = next["inputs"]
+        .as_object()
+        .ok_or("Invalid current model inventory")?;
+    let added = next
+        .keys()
+        .filter(|k| !current.contains_key(*k))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    if next.len() != 62
+        || added
+            != [
+                "crates/editor-core/src/lua/monitor_inspection.rs",
+                "crates/editor-core/src/lua/replay/monitor_edit.rs",
+                "data/monitor-source-semantics.json",
+                "data/monitors.json",
+            ]
+    {
+        return Err("Reviewed monitor migration input set changed".into());
+    }
+    let changed = current
+        .keys()
+        .filter(|k| current[*k] != next.get(*k).cloned().unwrap_or_default())
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    if changed
+        != [
+            "crates/editor-app/src/source_graph.rs",
+            "crates/editor-app/src/worker.rs",
+            "crates/editor-core/src/lua.rs",
+            "crates/editor-core/src/lua/replay.rs",
+            "crates/editor-core/src/lua/replay/scalar_edit.rs",
+        ]
+    {
+        return Err(
+            "Monitor migration no longer has only the reviewed observer and worker differences"
+                .into(),
+        );
     }
     Ok(())
 }
@@ -131,7 +182,12 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
     summary.reanalysis_findings = analysis.report.logged_module_errors
         + usize::from(analysis.report.halt.is_some())
         + usize::from(analysis.blocked.is_some());
-    summary.reanalysis_note = analysis.blocked.clone();
+    summary.reanalysis_note = analysis.blocked.clone().or_else(|| analysis.report.halt.as_ref().map(|halt| match halt {
+        lua::replay::Halt::NeedsResolution {..} => "Rebuilt analysis needs a dependency absent from the saved capture. Folder access has not been restored.".into(),
+        lua::replay::Halt::Unresolved {..} => "Rebuilt analysis stopped at an unmodeled source operation.".into(),
+        lua::replay::Halt::LuaError {..} => "Rebuilt analysis encountered a modeled Lua error.".into(),
+        lua::replay::Halt::Budget {..} => "Rebuilt analysis reached a resource limit.".into(),
+    }));
     let saved = Arc::new(super::source_graph::Saved::new(
         bundle,
         &workspace.draft.version,
@@ -169,10 +225,11 @@ pub(super) fn check(path: PathBuf) -> Result<serde_json::Value, String> {
 mod tests {
     use super::*;
     #[test]
-    fn reviewed_transition_keeps_the_replay_engine_exact_and_refuses_unreviewed_builds() {
+    fn reviewed_transition_pins_exact_monitor_differences_and_refuses_unreviewed_builds() {
         transition(FROM).unwrap();
         transition(FROM_PROJECTION).unwrap();
         transition(FROM_MIGRATION).unwrap();
+        transition(BEFORE_MONITORS).unwrap();
         assert!(transition(&"0".repeat(64)).is_err());
         assert_ne!(FROM, TO);
         assert_eq!(lua::source_hash(CURRENT), TO);

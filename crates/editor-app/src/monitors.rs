@@ -73,7 +73,7 @@ fn string_choice(
     let values = values.to_vec();
     Box::new(move || Ok(Value::String(values[picker.selected() as usize].into())))
 }
-fn builder(
+pub(super) fn builder(
     setting: &Setting,
     value: Option<Value>,
     panel: &gtk::Box,

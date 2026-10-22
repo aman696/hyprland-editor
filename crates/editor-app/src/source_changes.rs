@@ -75,9 +75,106 @@ struct Session {
     blocked: bool,
     rows: Vec<(usize, usize)>,
     event: usize,
+    monitor: bool,
     getter: Option<Getter>,
     initial: Option<Value>,
     result: Option<Box<Comparison>>,
+}
+struct Target {
+    id: String,
+    location: Vec<usize>,
+    outcome: Option<Outcome>,
+    expression: Option<u32>,
+    ambiguous: bool,
+    codec: Option<Codec>,
+}
+fn target(analysis: &Analysis, row: (usize, usize), monitor: bool) -> Option<Target> {
+    let (b, c) = row;
+    if monitor {
+        use hyprland_editor_core::lua::monitor_inspection;
+        let batch = analysis.monitors.as_ref()?.batches.get(b)?;
+        if c == usize::MAX {
+            let event = analysis
+                .report
+                .events
+                .iter()
+                .find(|e| e.order == batch.event_order)?;
+            let hyprland_editor_core::lua::replay::Observed::Table(rows) =
+                event.arguments.first()?
+            else {
+                return None;
+            };
+            let row = rows.iter().position(|(k,_)| matches!(k, hyprland_editor_core::lua::replay::Observed::Bytes(v) if v == b"output"))?;
+            return Some(Target {
+                id: "output".into(),
+                location: vec![0, row],
+                outcome: batch.output_value.clone(),
+                expression: event
+                    .argument_sources
+                    .first()
+                    .and_then(|s| s.rows.get(row))
+                    .and_then(|s| s.expression),
+                ambiguous: false,
+                codec: Some(Codec::String { validator: None }),
+            });
+        }
+        let candidate = batch.candidates.get(c)?;
+        let metadata = monitor_inspection::fields(&analysis.program.version)
+            .ok()?
+            .iter()
+            .find(|f| f.key == candidate.field)?;
+        Some(Target {
+            id: candidate.field.clone(),
+            location: vec![0, candidate.row],
+            outcome: Some(candidate.primary_value.clone()),
+            expression: candidate.expression,
+            ambiguous: candidate.ambiguous,
+            codec: monitor_inspection::codec(metadata).ok(),
+        })
+    } else {
+        let candidate = analysis.config_batches.get(b)?.candidates.get(c)?;
+        Some(Target {
+            id: candidate.setting_id.clone(),
+            location: candidate.location.clone(),
+            outcome: candidate.model_value.clone(),
+            expression: candidate.expression,
+            ambiguous: candidate.ambiguous,
+            codec: hyprland_editor_core::lua::registration::by_lua_key(
+                &analysis.program.version,
+                &candidate.lua_key,
+            )
+            .and_then(|e| e.codec.clone()),
+        })
+    }
+}
+// Monitor builders construct all child controls up front. Value changes must
+// invalidate an in-flight comparison just like the scalar controls do.
+fn watch_inputs(root: &gtk::Widget, changed: &Rc<dyn Fn()>) {
+    if let Some(entry) = root.downcast_ref::<gtk::Entry>() {
+        let f = changed.clone();
+        entry.connect_changed(move |_| f());
+    }
+    if let Some(spin) = root.downcast_ref::<gtk::SpinButton>() {
+        let f = changed.clone();
+        spin.connect_value_changed(move |_| f());
+    }
+    if let Some(pick) = root.downcast_ref::<gtk::DropDown>() {
+        let f = changed.clone();
+        pick.connect_selected_notify(move |_| f());
+    }
+    if let Some(toggle) = root.downcast_ref::<gtk::Switch>() {
+        let f = changed.clone();
+        toggle.connect_active_notify(move |_| f());
+    }
+    if let Some(toggle) = root.downcast_ref::<gtk::CheckButton>() {
+        let f = changed.clone();
+        toggle.connect_toggled(move |_| f());
+    }
+    let mut child = root.first_child();
+    while let Some(widget) = child {
+        watch_inputs(&widget, changed);
+        child = widget.next_sibling();
+    }
 }
 #[derive(Clone)]
 struct Controls {
@@ -402,13 +499,9 @@ impl Controls {
             s.getter = None;
             s.initial = None;
         }
-        let candidate = row.and_then(|(b, c)| {
-            analysis
-                .config_batches
-                .get(b)
-                .and_then(|b| b.candidates.get(c))
-        });
-        let value = candidate.and_then(|c| match &c.model_value {
+        let monitor = session.borrow().monitor;
+        let candidate = row.and_then(|row| target(&analysis, row, monitor));
+        let value = candidate.as_ref().and_then(|c| match &c.outcome {
             Some(Outcome::Accepted {
                 representation: Representation::Value { value },
                 ..
@@ -422,15 +515,17 @@ impl Controls {
         if let Some(value) = value {
             if let Some(scope) = self.scope.upgrade() {
                 let table = candidate
+                    .as_ref()
                     .and_then(|c| c.expression)
                     .and_then(|id| analysis.report.expression_sources.get(id as usize))
                     .is_some_and(|e| {
                         e.kind == hyprland_editor_core::lua::replay::ExpressionKind::Table
                     });
-                let compound = matches!(
-                    &value,
-                    Value::Vec2(_) | Value::CssGap(_) | Value::Gradient { .. }
-                );
+                let compound = !monitor
+                    && matches!(
+                        &value,
+                        Value::Vec2(_) | Value::CssGap(_) | Value::Gradient { .. }
+                    );
                 let mut labels = vec![
                     "Selected value expression",
                     "Original literal, if traceable",
@@ -445,15 +540,29 @@ impl Controls {
                 scope.set_selected(if table && compound { 2 } else { 0 });
             }
             let ui = self.clone();
-            let codec = candidate
-                .and_then(|c| {
-                    hyprland_editor_core::lua::registration::by_lua_key(
-                        &analysis.program.version,
-                        &c.lua_key,
-                    )
-                })
-                .and_then(|e| e.codec.as_ref());
-            let getter = input_form(&value, codec, &field, Rc::new(move || ui.invalidate()));
+            let changed: Rc<dyn Fn()> = Rc::new(move || ui.invalidate());
+            let metadata = if monitor {
+                hyprland_editor_core::monitor::catalogue(&analysis.program.version)
+                    .into_iter()
+                    .find(|f| candidate.as_ref().is_some_and(|c| f.lua_key == c.id))
+            } else {
+                None
+            };
+            let getter = if let (Some(metadata), Some(window)) =
+                (metadata, field.root().and_downcast::<adw::Window>())
+            {
+                let builder =
+                    super::monitors::builder(&metadata, Some(value.clone()), &field, &window, &[]);
+                watch_inputs(field.upcast_ref(), &changed);
+                Rc::from(builder)
+            } else {
+                input_form(
+                    &value,
+                    candidate.as_ref().and_then(|c| c.codec.as_ref()),
+                    &field,
+                    changed,
+                )
+            };
             let mut s = session.borrow_mut();
             s.initial = Some(value);
             s.getter = Some(getter);
@@ -505,18 +614,41 @@ impl Controls {
             self.message("Change the value before starting a comparison.");
             return;
         }
-        let candidate = &analysis.config_batches[b].candidates[c];
-        let change = Change {
-            event_order: event,
-            location: candidate.location.clone(),
-            setting_id: candidate.setting_id.clone(),
-            selection: match scope.selected() {
-                1 => Selection::OriginalLiteral,
-                2 => Selection::PreserveTableLayout,
-                3 => Selection::OriginalTableLayout,
-                _ => Selection::SelectedExpression,
-            },
-            value,
+        let monitor = session.borrow().monitor;
+        let Some(candidate) = target(&analysis, (b, c), monitor) else {
+            return;
+        };
+        let request = if monitor {
+            worker::Request::CompareMonitorSource {
+                program: analysis.program.clone(),
+                change: hyprland_editor_core::lua::replay::monitor_edit::Change {
+                    event_order: event,
+                    row: candidate.location[1],
+                    field: candidate.id,
+                    selection: if scope.selected() == 1 {
+                        hyprland_editor_core::lua::replay::monitor_edit::Selection::OriginalLiteral
+                    } else {
+                        hyprland_editor_core::lua::replay::monitor_edit::Selection::SelectedExpression
+                    },
+                    value,
+                },
+            }
+        } else {
+            worker::Request::CompareScalarSource {
+                program: analysis.program.clone(),
+                change: Change {
+                    event_order: event,
+                    location: candidate.location,
+                    setting_id: candidate.id,
+                    selection: match scope.selected() {
+                        1 => Selection::OriginalLiteral,
+                        2 => Selection::PreserveTableLayout,
+                        3 => Selection::OriginalTableLayout,
+                        _ => Selection::SelectedExpression,
+                    },
+                    value,
+                },
+            }
         };
         let permit = match Permit::acquire() {
             Ok(p) => p,
@@ -538,7 +670,6 @@ impl Controls {
         let ui = self.clone();
         // A closed inspector must release its reports/captures immediately.
         // Only the immutable evaluator input is needed by this bounded task.
-        let program = analysis.program.clone();
         workflow::background(
             move || {
                 let _permit = permit;
@@ -546,7 +677,7 @@ impl Controls {
                 while HOLD_COMPARISON.load(std::sync::atomic::Ordering::Acquire) {
                     std::thread::sleep(std::time::Duration::from_millis(2));
                 }
-                match worker::run(worker::Request::CompareScalarSource { program, change })? {
+                match worker::run(request)? {
                     worker::Response::ScalarSourceComparison(result) => Ok(result),
                     _ => Err("Unexpected source comparison response".into()),
                 }
@@ -880,13 +1011,36 @@ pub(super) fn open(
         .borrow()
         .clone()
         .expect("Analysis selected before opening source comparison");
-    let rows = analysis
-        .config_batches
+    let monitor = analysis
+        .report
+        .events
         .iter()
-        .enumerate()
-        .filter(|(_, b)| b.event_order == event)
-        .flat_map(|(b, batch)| (0..batch.candidates.len()).map(move |c| (b, c)))
-        .collect::<Vec<_>>();
+        .any(|e| e.order == event && e.api == "hl.monitor");
+    let rows = if monitor {
+        analysis
+            .monitors
+            .as_ref()
+            .map(|m| {
+                m.batches
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, b)| b.event_order == event)
+                    .flat_map(|(b, batch)| {
+                        std::iter::once((b, usize::MAX))
+                            .chain((0..batch.candidates.len()).map(move |c| (b, c)))
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default()
+    } else {
+        analysis
+            .config_batches
+            .iter()
+            .enumerate()
+            .filter(|(_, b)| b.event_order == event)
+            .flat_map(|(b, batch)| (0..batch.candidates.len()).map(move |c| (b, c)))
+            .collect::<Vec<_>>()
+    };
     let session = Rc::new(RefCell::new(Session {
         epoch: 0,
         pending: None,
@@ -894,6 +1048,7 @@ pub(super) fn open(
         blocked: false,
         rows,
         event,
+        monitor,
         getter: None,
         initial: None,
         result: None,
@@ -927,12 +1082,25 @@ pub(super) fn open(
         .rows
         .iter()
         .map(|(b, c)| {
-            let c = &analysis.config_batches[*b].candidates[*c];
-            format!(
-                "{} · {}",
-                super::presentation::context(&c.setting_id),
-                super::human_name(&c.setting_id)
-            )
+            let Some(c) = target(&analysis, (*b, *c), monitor) else {
+                return "Unavailable field".into();
+            };
+            if monitor {
+                format!(
+                    "Monitor · {}",
+                    if c.id == "output" {
+                        "Output match".into()
+                    } else {
+                        super::human_name(&c.id)
+                    }
+                )
+            } else {
+                format!(
+                    "{} · {}",
+                    super::presentation::context(&c.id),
+                    super::human_name(&c.id)
+                )
+            }
         })
         .collect::<Vec<_>>();
     body.append(&label("Setting"));
@@ -1011,7 +1179,11 @@ pub(super) fn open(
     keep.add_css_class("suggested-action");
     actions.append(&keep);
     footer.append(&actions);
-    footer.append(&label("Source revisions and value overrides stay separate. Review Value Overrides can reconcile scalar layers; Save Draft keeps the private workspace."));
+    footer.append(&label(if monitor {
+        "Monitor source changes and monitor drafts stay separate. Their reconciliation is still pending; Save Draft keeps the private source revision."
+    } else {
+        "Source revisions and value overrides stay separate. Review Value Overrides can reconcile scalar layers; Save Draft keeps the private workspace."
+    }));
     outer.append(&footer);
     window.set_content(Some(&outer));
     let ui = Controls {
@@ -1061,6 +1233,218 @@ pub(super) fn open(
     gtk::prelude::GtkWindowExt::set_focus(&window, Some(&targets));
     window.present();
     window
+}
+
+#[cfg(test)]
+pub(super) fn test_monitor_workflow(parent: &adw::ApplicationWindow) {
+    use hyprland_editor_core::{
+        lua::LuaDocument, module_path::Context, storage, workspace::Workspace, AUDITED_MAIN,
+        BASELINE,
+    };
+    fn named(root: &gtk::Widget, name: &str) -> gtk::Widget {
+        fn find(root: &gtk::Widget, name: &str) -> Option<gtk::Widget> {
+            if root.widget_name() == name {
+                return Some(root.clone());
+            }
+            let mut child = root.first_child();
+            while let Some(widget) = child {
+                if let Some(result) = find(&widget, name) {
+                    return Some(result);
+                }
+                child = widget.next_sibling();
+            }
+            None
+        }
+        find(root, name).unwrap_or_else(|| panic!("Missing {name}"))
+    }
+    fn wait(mut check: impl FnMut() -> bool) {
+        let start = std::time::Instant::now();
+        loop {
+            while gtk::glib::MainContext::default().pending() {
+                gtk::glib::MainContext::default().iteration(false);
+            }
+            if check() {
+                break;
+            }
+            assert!(
+                start.elapsed() < std::time::Duration::from_secs(10),
+                "Monitor source operation timed out"
+            );
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        }
+    }
+    fn dropdown(root: &gtk::Widget) -> Option<gtk::DropDown> {
+        if let Some(pick) = root.downcast_ref::<gtk::DropDown>() {
+            return Some(pick.clone());
+        }
+        let mut child = root.first_child();
+        while let Some(widget) = child {
+            if let Some(pick) = dropdown(&widget) {
+                return Some(pick);
+            }
+            child = widget.next_sibling();
+        }
+        None
+    }
+    for version in [BASELINE, AUDITED_MAIN] {
+        let directory = std::env::temp_dir().join(format!(
+            "hye-monitor-source-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir(&directory).unwrap();
+        let source="local part=require('part');hl.monitor{output='DP-1',transform=part.turn};hl.config{general={border_size=1}}";
+        let part = "-- monitor source comment\nreturn {turn=2, other='keep'}\n";
+        std::fs::write(directory.join("main.lua"), source).unwrap();
+        std::fs::write(directory.join("part.lua"), part).unwrap();
+        let captured = Arc::new(storage::read_source(&directory.join("main.lua")).unwrap());
+        let context = Context {
+            main_file: captured.identity.selected_path.clone(),
+            home: None,
+            inherited_package_path: None,
+        };
+        let grant = Arc::new(super::directory_worker::approve(&directory).unwrap());
+        let analysis = super::source_graph::analyze(
+            captured.clone(),
+            context,
+            vec![grant],
+            version.into(),
+            None,
+            Arc::new(std::sync::atomic::AtomicBool::new(false)),
+        )
+        .unwrap();
+        assert!(analysis.blocked.is_none(), "{:?}", analysis.blocked);
+        assert_eq!(analysis.monitors.as_ref().unwrap().batches.len(), 1);
+        let event = analysis.report.events[0].order;
+        let model: Model = Rc::new(RefCell::new(Some(Arc::new(analysis))));
+        let state = super::initial_state();
+        let worker::Response::Parsed(report) = worker::run(worker::Request::Parse {
+            source: source.into(),
+            version: version.into(),
+        })
+        .unwrap() else {
+            panic!()
+        };
+        {
+            let mut s = state.borrow_mut();
+            s.draft = hyprland_editor_core::Draft::new(version);
+            let doc = LuaDocument::from_report(source.into(), *report, &s.catalogue).unwrap();
+            s.sources.insert(version.into(), Arc::new(doc));
+            s.source_origins
+                .insert(version.into(), captured.identity.clone());
+        }
+        let changes = Rc::new(std::cell::Cell::new(0));
+        let done = changes.clone();
+        let window = open(
+            parent.upcast_ref(),
+            &model,
+            event,
+            &state,
+            Rc::new(move || done.set(done.get() + 1)),
+        );
+        let targets = named(window.upcast_ref(), "source-change-setting")
+            .downcast::<gtk::DropDown>()
+            .unwrap();
+        targets.set_selected(1);
+        let input = dropdown(&named(window.upcast_ref(), "source-change-inputs")).unwrap();
+        assert_eq!(input.selected(), 2);
+        let scope = named(window.upcast_ref(), "source-change-scope")
+            .downcast::<gtk::DropDown>()
+            .unwrap();
+        scope.set_selected(1);
+        let compare = named(window.upcast_ref(), "source-change-compare")
+            .downcast::<gtk::Button>()
+            .unwrap();
+        let keep = named(window.upcast_ref(), "source-change-keep")
+            .downcast::<gtk::Button>()
+            .unwrap();
+        let output = named(window.upcast_ref(), "source-change-comparison")
+            .downcast::<gtk::TextView>()
+            .unwrap();
+        input.set_selected(3);
+        HOLD_COMPARISON.store(true, std::sync::atomic::Ordering::Release);
+        compare.emit_clicked();
+        input.set_selected(4);
+        HOLD_COMPARISON.store(false, std::sync::atomic::Ordering::Release);
+        wait(|| compare.is_sensitive());
+        assert!(
+            !keep.is_sensitive(),
+            "Changed monitor inputs kept a stale result"
+        );
+        assert_eq!(output.buffer().char_count(), 0);
+        input.set_selected(3);
+        compare.emit_clicked();
+        wait(|| keep.is_sensitive());
+        let text = output.buffer().text(
+            &output.buffer().start_iter(),
+            &output.buffer().end_iter(),
+            true,
+        );
+        assert!(text.contains("part.lua"), "{text}");
+        assert!(text.contains("After\n3"), "{text}");
+        if let Ok(path) = std::env::var("HYPRLAND_EDITOR_TEST_CAPTURE") {
+            let paintable = gtk::WidgetPaintable::new(Some(&window));
+            let node = RefCell::new(None);
+            wait(|| {
+                let snapshot = gtk::Snapshot::new();
+                paintable.snapshot(&snapshot, window.width() as f64, window.height() as f64);
+                *node.borrow_mut() = snapshot.to_node();
+                node.borrow().is_some()
+            });
+            window
+                .renderer()
+                .unwrap()
+                .render_texture(node.into_inner().unwrap(), None)
+                .save_to_png(format!("{path}.monitor-source.png"))
+                .unwrap();
+        }
+        keep.emit_clicked();
+        wait(|| changes.get() == 1);
+        assert_eq!(
+            state.borrow().source_graphs[version]
+                .bundle
+                .graph
+                .revisions
+                .len(),
+            1
+        );
+        assert_eq!(
+            std::fs::read_to_string(directory.join("main.lua")).unwrap(),
+            source
+        );
+        assert_eq!(
+            std::fs::read_to_string(directory.join("part.lua")).unwrap(),
+            part
+        );
+        let bundle = state.borrow().source_graphs[version].bundle.clone();
+        let saved = Workspace::new(state.borrow().draft.clone())
+            .with_graph(&bundle)
+            .to_json(&state.borrow().catalogue)
+            .unwrap();
+        std::fs::remove_dir_all(&directory).unwrap();
+        let restored = Workspace::from_json(
+            std::str::from_utf8(&saved).unwrap(),
+            &state.borrow().catalogue,
+        )
+        .unwrap();
+        let bundle = hyprland_editor_core::workspace_graph::Bundle {
+            graph: restored.source_graph.unwrap(),
+            sources: Arc::new(restored.sources),
+        };
+        let restored = super::source_graph::restore(&bundle, version).unwrap();
+        assert!(restored
+            .program
+            .documents
+            .iter()
+            .any(|d| d.source == "-- monitor source comment\nreturn {turn=3, other='keep'}\n"));
+        assert!(!restored.monitors.as_ref().unwrap().runtime_verified);
+        state.borrow_mut().undo_last();
+        assert!(!state.borrow().source_graphs.contains_key(version));
+        window.close();
+    }
 }
 
 #[cfg(test)]

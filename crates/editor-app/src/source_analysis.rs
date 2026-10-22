@@ -286,12 +286,7 @@ impl View {
             return;
         };
         let event = &analysis.report.events[index];
-        if event.api != "hl.config"
-            || !analysis
-                .config_batches
-                .iter()
-                .any(|b| b.event_order == event.order && !b.candidates.is_empty())
-        {
+        if !comparable(&analysis, event) {
             return;
         }
         let Some(parent) = button.root().and_downcast::<gtk::Window>() else {
@@ -493,7 +488,15 @@ impl View {
                 (
                     e.order,
                     Call::Api(i),
-                    format!("{} · Settings declaration", e.order + 1),
+                    format!(
+                        "{} · {}",
+                        e.order + 1,
+                        if e.api == "hl.monitor" {
+                            "Monitor declaration"
+                        } else {
+                            "Settings declaration"
+                        }
+                    ),
                 )
             })
             .chain(analysis.report.loads.iter().enumerate().map(|(i, e)| {
@@ -571,13 +574,7 @@ impl View {
         };
         if let Some(button) = self.compare.upgrade() {
             button.set_sensitive(match row {
-                Call::Api(i) => {
-                    analysis.report.events[i].api == "hl.config"
-                        && analysis.config_batches.iter().any(|b| {
-                            b.event_order == analysis.report.events[i].order
-                                && !b.candidates.is_empty()
-                        })
-                }
+                Call::Api(i) => comparable(&analysis, &analysis.report.events[i]),
                 _ => false,
             });
         }
@@ -617,6 +614,16 @@ impl View {
                     body.push_str(&configuration_fields(batch));
                 } else if e.api == "hl.config" {
                     body.push_str("Field inspection unavailable.\n\n");
+                } else if e.api == "hl.monitor" {
+                    if let Some(batch) = analysis
+                        .monitors
+                        .as_ref()
+                        .and_then(|m| m.batches.iter().find(|b| b.event_order == e.order))
+                    {
+                        body.push_str(&monitor_fields(batch));
+                    } else {
+                        body.push_str("Monitor field inspection unavailable.\n\n");
+                    }
                 }
                 (e.document.as_str(), e.span.clone(), body)
             }
@@ -659,6 +666,73 @@ impl View {
             .unwrap_or_else(|| document.into());
         view.buffer().set_text(&format!("{location}\n\n{body}"));
     }
+}
+fn comparable(analysis: &Analysis, event: &hyprland_editor_core::lua::replay::Event) -> bool {
+    match event.api.as_str() {
+        "hl.config" => analysis
+            .config_batches
+            .iter()
+            .any(|b| b.event_order == event.order && !b.candidates.is_empty()),
+        "hl.monitor" => analysis.monitors.as_ref().is_some_and(|m| {
+            m.batches
+                .iter()
+                .any(|b| b.event_order == event.order && b.models_submission_and_refresh)
+        }),
+        _ => false,
+    }
+}
+fn monitor_fields(batch: &hyprland_editor_core::lua::monitor_inspection::Batch) -> String {
+    use hyprland_editor_core::lua::monitor_inspection::FindingKind as Kind;
+    let mut out = format!(
+        "Monitor declaration · {} recognized fields\nOutput: {}\n\n",
+        batch.candidates.len(),
+        batch.output_bytes.as_deref().map_or_else(
+            || "unresolved".into(),
+            |v| if v.is_empty() {
+                "fallback".into()
+            } else {
+                short(v)
+            }
+        )
+    );
+    for candidate in &batch.candidates {
+        out.push_str(&format!(
+            "{}{} · {}\n",
+            candidate.field,
+            if candidate.ambiguous {
+                " · conflicting aliases"
+            } else {
+                ""
+            },
+            match &candidate.primary_value {
+                Outcome::Accepted { .. } => "primary value parsed",
+                Outcome::Rejected { .. } => "primary value rejected",
+                Outcome::Unresolved { .. } => "primary parsing unresolved",
+            }
+        ));
+    }
+    for finding in batch.findings.iter().take(16) {
+        out.push_str(match finding.kind {
+            Kind::InvalidArgument => "Monitor argument must be a table",
+            Kind::RequiredOutput => {
+                "An exact output field with a text or numeric value is required"
+            }
+            Kind::UnresolvedOutput => "Output parsing is unresolved",
+            Kind::IgnoredNonstringKey => "Non-text field key is ignored",
+            Kind::UnknownField => "Unknown monitor field",
+            Kind::DuplicateStringKey => "Duplicated observed key cannot be resolved",
+            Kind::AmbiguousProperty => "Several keys address the same monitor property",
+            Kind::RejectedPrimaryValue => "The primary parser rejects a field value",
+            Kind::UnresolvedPrimaryValue => "A field's primary parsing is unresolved",
+        });
+        if !finding.raw_key.is_empty() {
+            out.push_str(": ");
+            out.push_str(&short(&finding.raw_key));
+        }
+        out.push('\n');
+    }
+    out.push_str("\nThese are source argument models. Existing rules, helper parsing, profile files and hardware outcomes are unverified. No winning alias value is inferred.\n");
+    out
 }
 fn configuration_fields(batch: &Batch) -> String {
     let mut out = format!(

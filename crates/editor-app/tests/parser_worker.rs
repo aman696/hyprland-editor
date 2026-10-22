@@ -43,6 +43,59 @@ fn request(request: Value) -> Value {
     serde_json::from_slice(&data).unwrap()
 }
 #[test]
+fn monitor_source_inspection_and_comparison_run_in_the_restricted_worker() {
+    use hyprland_editor_core::{
+        lua::replay::{
+            monitor_edit::{Change, Selection},
+            Observed,
+        },
+        AUDITED_MAIN, BASELINE,
+    };
+    for version in [BASELINE, AUDITED_MAIN] {
+        let mut p=replay_program("local turn=2;hl.monitor{output='DP-1',transform=turn};hl.config{general={border_size=1}}");
+        p.version = version.into();
+        let reply = request(json!({"ReplayModules":p}));
+        let events = &reply["Replayed"]["events"];
+        assert!(reply["Replayed"]["halt"].is_null(), "{reply}");
+        assert_eq!(events.as_array().unwrap().len(), 2);
+        let event: hyprland_editor_core::lua::replay::Event =
+            serde_json::from_value(events[0].clone()).unwrap();
+        let result = request(json!({"InspectMonitors":{"events":[event],"version":version}}));
+        assert_eq!(
+            result["Monitors"]["batches"][0]["candidates"][0]["field"],
+            "transform"
+        );
+        assert_eq!(result["Monitors"]["runtime_verified"], false);
+        assert_eq!(
+            result["Monitors"]["batches"][0]["native_application_verified"],
+            false
+        );
+        let Observed::Table(rows) = &event.arguments[0] else {
+            panic!()
+        };
+        let row = rows
+            .iter()
+            .position(|(k, _)| matches!(k,Observed::Bytes(v) if v == b"transform"))
+            .unwrap();
+        let change = Change {
+            event_order: event.order,
+            row,
+            field: "transform".into(),
+            selection: Selection::OriginalLiteral,
+            value: hyprland_editor_core::Value::Int(3),
+        };
+        let result = request(json!({"CompareMonitorSource":{"program":p,"change":change}}));
+        assert_eq!(
+            result["ScalarSourceComparison"]["review"]["modeled_observations_match"], true,
+            "{result}"
+        );
+        assert_eq!(
+            result["ScalarSourceComparison"]["plan"]["edits"][0]["replacement"],
+            "3"
+        );
+    }
+}
+#[test]
 fn private_source_pieces_round_trip_inside_the_restricted_worker_without_rewriting_base() {
     use hyprland_editor_core::lua::{replay::edits::*, source_hash};
     let base = replay_program("hl.config({general={border_size=2}})");

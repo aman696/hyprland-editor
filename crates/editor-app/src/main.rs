@@ -1719,6 +1719,7 @@ mod tests {
         source_modules::test_view(&window);
         source_access::test_retained_graph(&window);
         source_compound_forms::test_workflow(&window);
+        source_changes::test_monitor_workflow(&window);
         rule_forms::test_forms();
         window.close();
         assert!(

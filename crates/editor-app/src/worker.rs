@@ -36,6 +36,10 @@ pub enum Request {
         program: lua::replay::Program,
         change: lua::replay::scalar_edit::Change,
     },
+    CompareMonitorSource {
+        program: lua::replay::Program,
+        change: lua::replay::monitor_edit::Change,
+    },
     ReviewSourceOverrides {
         program: lua::replay::Program,
         draft: Draft,
@@ -57,6 +61,10 @@ pub enum Request {
     },
     DecodePrimitives(Vec<lua::scalar_codec::Case>),
     InspectConfiguration {
+        events: Vec<lua::replay::Event>,
+        version: String,
+    },
+    InspectMonitors {
         events: Vec<lua::replay::Event>,
         version: String,
     },
@@ -91,6 +99,7 @@ pub enum Response {
         outcomes: Vec<lua::scalar_codec::Outcome>,
     },
     Configuration(lua::config_inspection::Inspection),
+    Monitors(lua::monitor_inspection::Inspection),
     ModulePlans(Vec<hyprland_editor_core::module_path::Plan>),
     Registry(hyprland_editor_core::xkb::Registry),
     Copy(String),
@@ -142,6 +151,9 @@ pub fn entry() {
         // Conversion/replay-only requests do not need another parsed catalogue.
         let c = std::sync::LazyLock::new(catalogue);
         match request {
+            Request::InspectMonitors { events, version } => {
+                lua::monitor_inspection::inspect(&events, &version).map(Response::Monitors)
+            }
             Request::InspectConfiguration { events, version } => {
                 lua::config_inspection::inspect(&events, &version).map(Response::Configuration)
             }
@@ -176,6 +188,10 @@ pub fn entry() {
                 .map(Response::SourceRevisions),
             Request::CompareScalarSource { program, change } => {
                 lua::replay::scalar_edit::compare(&program, &change)
+                    .map(|result| Response::ScalarSourceComparison(Box::new(result)))
+            }
+            Request::CompareMonitorSource { program, change } => {
+                lua::replay::monitor_edit::compare(&program, &change)
                     .map(|result| Response::ScalarSourceComparison(Box::new(result)))
             }
             Request::ReviewSourceOverrides { program, draft } => {

@@ -21,15 +21,16 @@
         "crates/editor-app/tests/workspace_graph.rs",
         "data/migrations/graph-model-before-projection.json",
         "data/migrations/graph-model-projection.json",
-        "data/migrations/graph-model-migration.json"
+        "data/migrations/graph-model-migration.json",
+        "data/migrations/graph-model-before-monitors.json"
       ],
       "test_references": [
-        "reviewed_transition_keeps_the_replay_engine_exact_and_refuses_unreviewed_builds",
+        "reviewed_transition_pins_exact_monitor_differences_and_refuses_unreviewed_builds",
         "reviewed_graph_migrations_rebuild_deleted_sources_and_private_pieces_without_writing",
         "migration_refuses_unknown_models_profiles_corruption_unreached_inputs_and_hidden_payloads",
         "workflow::test_graph_migration"
       ],
-      "limits": "three exact reviewed dependency/storage-visibility transitions with bounded held-inode input, unknown-payload refusal, fresh restricted-worker captured-view/dependency/private-piece reanalysis, byte/value preservation, cancel/epoch/unsaved guards and new private save; no original-path reads or restored folder access, general model/schema/profile conversion, persistent history, full source export/reconciliation or full audit certificate"
+      "limits": "four exact reviewed dependency/storage/monitor transitions with bounded held-inode input, unknown-payload refusal, fresh restricted-worker captured-view/dependency/private-piece reanalysis, byte/value preservation, cancel/epoch/unsaved guards and new private save; no original-path reads or restored folder access, general model/schema/profile conversion, persistent history, full source export/reconciliation or full audit certificate"
     },
     {
       "area": "source dependency capture and ordered evaluation",
@@ -308,19 +309,33 @@
       "limits": "47 fields (43 original plus four native tablet-tool additions) and name selector, pressure/default and eraser/button forms, exact legacy-subset schema compatibility without inserted overrides, author category hints, linked XKB choices from installed metadata, numeric acceleration/scroll builders, ordered drafts and private persistence; no hardware capability discovery, effective global/default merge, tag-to-bind analysis, keyboard compilation, source editing, live input recovery or activation/preview certificates"
     },
     {
-      "area": "monitor draft editor",
+      "area": "monitor draft and source value editor",
       "code": [
         "crates/editor-core/src/monitor.rs",
         "crates/editor-app/src/monitors.rs",
-        "data/monitors.json"
+        "data/monitors.json",
+        "crates/editor-core/src/lua/monitor_inspection.rs",
+        "crates/editor-core/src/lua/replay/monitor_edit.rs",
+        "crates/editor-app/src/source_changes.rs",
+        "crates/editor-app/src/source_graph.rs",
+        "data/monitor-source-semantics.json",
+        "data/monitor-source-fixtures.json",
+        "scripts/monitor_source_probe.py"
       ],
       "test_references": [
         "every_audited_monitor_field_has_a_typed_export_and_static_import",
         "test_editor",
         "monitor_drafts_survive_actual_application_reopen_without_replacing_them_with_source",
-        "actual_restricted_worker_projects_monitors_and_keeps_unknown_calls_inert"
+        "actual_restricted_worker_projects_monitors_and_keeps_unknown_calls_inert",
+        "monitor_dispatch_matches_pinned_handler_observations_without_claiming_native_application",
+        "monitor_source_comparison_tracks_cross_file_alias_impacts_and_retains_unrelated_source_bytes",
+        "monitor_output_and_compound_fields_use_exact_coordinates_and_product_validation",
+        "scalar_comparison_after_monitor_keeps_monitor_changes_in_the_review",
+        "monitor_source_inspection_and_comparison_run_in_the_restricted_worker",
+        "source_changes::test_monitor_workflow",
+        "scripts/monitor_source_probe.py --check"
       ],
-      "limits": "22 versioned field controls and output selector, ordered drafts, explicit logical geometry, static Lua import/export and private saved snapshots; no hardware detection, effective rule resolution, source-span mutation/reconciliation, ICC decoding, monitor recovery, live apply or compositor preview certification"
+      "limits": "22 versioned field controls and output selector, ordered drafts, static import/export, private snapshots, source-pinned routing/primary codecs, captured field/output value-expression comparison and private revisions with cross-file/shared-impact review; no native helper/manager/hardware certificate, source field/declaration insertion/removal, compound trivia preservation, rejected-input graphical repair, complete source/draft reconciliation, ICC decoding, recovery, live apply or rendered preview certification"
     },
     {
       "area": "scalar draft forms",

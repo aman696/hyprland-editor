@@ -50,6 +50,7 @@ pub(super) struct Analysis {
     pub(super) report: replay::Report,
     pub(super) config_batches: Vec<config_table::Batch>,
     pub(super) config_profile: Option<config_inspection::ModelContext>,
+    pub(super) monitors: Option<hyprland_editor_core::lua::monitor_inspection::Inspection>,
     pub(super) captures: Vec<CapturedDocument>,
     pub(super) edges: Vec<EdgeEvidence>,
     pub(super) blocked: Option<String>,
@@ -477,6 +478,7 @@ pub(super) fn analyze_with_budget(
             blocked,
             config_batches: vec![],
             config_profile: None,
+            monitors: None,
             retained_bytes: 0,
         },
         &mut budget,
@@ -563,6 +565,64 @@ fn finish(mut analysis: Analysis, budget: &mut Budget) -> Result<Analysis, Strin
     }
     analysis.config_batches = config_batches;
     analysis.config_profile = config_profile;
+    let events: Vec<_> = report
+        .events
+        .iter()
+        .filter(|e| e.api == "hl.monitor")
+        .cloned()
+        .collect();
+    if !events.is_empty() {
+        let result = (|| {
+            use hyprland_editor_core::lua::monitor_inspection;
+            budget.check()?;
+            let expected = events.iter().map(|e| e.order).collect::<Vec<_>>();
+            let worker::Response::Monitors(inspection) =
+                worker::run(worker::Request::InspectMonitors {
+                    events,
+                    version: program.version.clone(),
+                })?
+            else {
+                return Err("Unexpected monitor model response".to_string());
+            };
+            if inspection.version != program.version
+                || inspection.schema_sha256 != monitor_inspection::schema_sha256()
+                || inspection.compiler != report.compiler_profile
+                || inspection.numeric_locale != "C"
+                || inspection.runtime_verified
+                || inspection.batches.len() > expected.len()
+                || inspection.stopped.is_none() && inspection.batches.len() != expected.len()
+                || inspection
+                    .batches
+                    .iter()
+                    .zip(expected)
+                    .any(|(batch, order)| {
+                        batch.event_order != order
+                            || batch.native_application_verified
+                            || batch.order_within_call_known
+                            || batch.existing_rule_state_known
+                            || batch.candidates.iter().any(|c| c.event_order != order)
+                    })
+            {
+                return Err(
+                    "Monitor model context or call order does not match captured analysis".into(),
+                );
+            }
+            budget.check()?;
+            budget.retain(&inspection)?;
+            Ok(inspection)
+        })();
+        match result {
+            Ok(inspection) => {
+                if let Some(reason) = &inspection.stopped {
+                    blocked.get_or_insert(reason.clone());
+                }
+                analysis.monitors = Some(inspection);
+            }
+            Err(reason) => {
+                blocked.get_or_insert(reason);
+            }
+        }
+    }
     analysis.blocked = blocked;
     analysis.retained_bytes = budget.retained;
     Ok(analysis)
@@ -767,6 +827,7 @@ pub(super) fn restore(
             blocked: None,
             config_batches: vec![],
             config_profile: None,
+            monitors: None,
             retained_bytes: 0,
         },
         &mut budget,
@@ -853,6 +914,7 @@ pub(super) fn check(
         "documents":analysis.captures.iter().map(|c|serde_json::json!({"id":c.id,"identity":c.source.identity,"load_name":analysis.program.documents.iter().find(|d|d.id==c.id).map(|d|&d.load_name)})).collect::<Vec<_>>(),
         "resolution_evidence":analysis.edges,"report":analysis.report,"blocked":analysis.blocked,
         "configuration_tables":analysis.config_batches,"configuration_model_context":analysis.config_profile,
+        "monitor_argument_models":analysis.monitors,
         "bindings":analysis.program.bindings.len(),"files_written":false,"lua_executed":false,
         "runtime_verified":false,"atomic_filesystem_snapshot":false
     }))

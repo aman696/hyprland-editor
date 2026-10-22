@@ -2,6 +2,7 @@
 pub mod config_inspection;
 pub mod config_table;
 mod dependencies;
+pub mod monitor_inspection;
 pub mod registration;
 pub mod replay;
 pub mod scalar_codec;
