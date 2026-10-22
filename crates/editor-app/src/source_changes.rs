@@ -73,12 +73,28 @@ struct Session {
     pending: Option<u64>,
     closed: bool,
     blocked: bool,
-    rows: Vec<(usize, usize)>,
+    rows: Vec<Pick>,
+    action: Action,
     event: usize,
     monitor: bool,
     getter: Option<Getter>,
     initial: Option<Value>,
     result: Option<Box<Comparison>>,
+}
+#[derive(Clone)]
+enum Pick {
+    Scalar(usize, usize),
+    Monitor {
+        batch: usize,
+        row: Option<usize>,
+        field: String,
+    },
+}
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Action {
+    Set,
+    Add,
+    Remove,
 }
 struct Target {
     id: String,
@@ -87,65 +103,168 @@ struct Target {
     expression: Option<u32>,
     ambiguous: bool,
     codec: Option<Codec>,
+    present: bool,
+    known: bool,
+    raw_key: Vec<u8>,
 }
-fn target(analysis: &Analysis, row: (usize, usize), monitor: bool) -> Option<Target> {
-    let (b, c) = row;
-    if monitor {
-        use hyprland_editor_core::lua::monitor_inspection;
-        let batch = analysis.monitors.as_ref()?.batches.get(b)?;
-        if c == usize::MAX {
+fn target(analysis: &Analysis, pick: &Pick) -> Option<Target> {
+    match pick {
+        Pick::Monitor { batch, row, field } => {
+            use hyprland_editor_core::lua::{monitor_inspection, replay::Observed};
+            let batch = analysis.monitors.as_ref()?.batches.get(*batch)?;
             let event = analysis
                 .report
                 .events
                 .iter()
                 .find(|e| e.order == batch.event_order)?;
-            let hyprland_editor_core::lua::replay::Observed::Table(rows) =
-                event.arguments.first()?
-            else {
-                return None;
+            let candidate = row.and_then(|row| batch.candidates.iter().find(|c| c.row == row));
+            let metadata = monitor_inspection::fields(&analysis.program.version)
+                .ok()?
+                .iter()
+                .find(|f| f.key == *field);
+            let raw_key = if let Some(row) = row {
+                let Observed::Table(rows) = event.arguments.first()? else {
+                    return None;
+                };
+                let (Observed::Bytes(key), _) = rows.get(*row)? else {
+                    return None;
+                };
+                key.clone()
+            } else {
+                field.as_bytes().to_vec()
             };
-            let row = rows.iter().position(|(k,_)| matches!(k, hyprland_editor_core::lua::replay::Observed::Bytes(v) if v == b"output"))?;
-            return Some(Target {
-                id: "output".into(),
-                location: vec![0, row],
-                outcome: batch.output_value.clone(),
-                expression: event
-                    .argument_sources
-                    .first()
-                    .and_then(|s| s.rows.get(row))
-                    .and_then(|s| s.expression),
-                ambiguous: false,
-                codec: Some(Codec::String { validator: None }),
+            let output = field == "output" && (row.is_none() || raw_key == b"output");
+            let outcome = if output {
+                batch.output_value.clone()
+            } else {
+                candidate.map(|c| c.primary_value.clone())
+            };
+            Some(Target {
+                id: field.clone(),
+                location: row.map_or_else(Vec::new, |row| vec![0, row]),
+                outcome,
+                expression: row
+                    .and_then(|row| event.argument_sources.first()?.rows.get(row)?.expression),
+                ambiguous: candidate.is_some_and(|c| c.ambiguous),
+                codec: if output {
+                    Some(Codec::String { validator: None })
+                } else {
+                    metadata.and_then(|f| monitor_inspection::codec(f).ok())
+                },
+                present: row.is_some(),
+                known: output || metadata.is_some(),
+                raw_key,
+            })
+        }
+        Pick::Scalar(b, c) => {
+            let candidate = analysis.config_batches.get(*b)?.candidates.get(*c)?;
+            Some(Target {
+                id: candidate.setting_id.clone(),
+                location: candidate.location.clone(),
+                outcome: candidate.model_value.clone(),
+                expression: candidate.expression,
+                ambiguous: candidate.ambiguous,
+                codec: hyprland_editor_core::lua::registration::by_lua_key(
+                    &analysis.program.version,
+                    &candidate.lua_key,
+                )
+                .and_then(|e| e.codec.clone()),
+                present: true,
+                known: true,
+                raw_key: vec![],
+            })
+        }
+    }
+}
+fn picks(analysis: &Analysis, event: usize, monitor: bool) -> Vec<Pick> {
+    if !monitor {
+        return analysis
+            .config_batches
+            .iter()
+            .enumerate()
+            .filter(|(_, b)| b.event_order == event)
+            .flat_map(|(b, batch)| (0..batch.candidates.len()).map(move |c| Pick::Scalar(b, c)))
+            .collect();
+    }
+    use hyprland_editor_core::lua::{monitor_inspection, replay::Observed};
+    let Some(inspection) = &analysis.monitors else {
+        return vec![];
+    };
+    let Some((b, batch)) = inspection
+        .batches
+        .iter()
+        .enumerate()
+        .find(|(_, b)| b.event_order == event)
+    else {
+        return vec![];
+    };
+    let Some(event) = analysis.report.events.iter().find(|e| e.order == event) else {
+        return vec![];
+    };
+    let Some(Observed::Table(rows)) = event.arguments.first() else {
+        return vec![];
+    };
+    let output = rows
+        .iter()
+        .position(|(key, _)| matches!(key,Observed::Bytes(k) if k==b"output"));
+    let mut picks = vec![Pick::Monitor {
+        batch: b,
+        row: output,
+        field: "output".into(),
+    }];
+    picks.extend(batch.candidates.iter().map(|c| Pick::Monitor {
+        batch: b,
+        row: Some(c.row),
+        field: c.field.clone(),
+    }));
+    let fields = monitor_inspection::fields(&analysis.program.version).unwrap_or_default();
+    // The handler rejects a missing/bad output before dispatching any fields.
+    // Their raw presence still matters for repair; do not offer duplicate adds.
+    for (row, (key, _)) in rows.iter().enumerate() {
+        if batch.candidates.iter().any(|c| c.row == row) {
+            continue;
+        }
+        let Observed::Bytes(key) = key else {
+            continue;
+        };
+        let native = key.split(|b| *b == 0).next().unwrap_or_default();
+        if let Some(field) = fields.iter().find(|f| f.key.as_bytes() == native) {
+            picks.push(Pick::Monitor {
+                batch: b,
+                row: Some(row),
+                field: field.key.clone(),
             });
         }
-        let candidate = batch.candidates.get(c)?;
-        let metadata = monitor_inspection::fields(&analysis.program.version)
-            .ok()?
-            .iter()
-            .find(|f| f.key == candidate.field)?;
-        Some(Target {
-            id: candidate.field.clone(),
-            location: vec![0, candidate.row],
-            outcome: Some(candidate.primary_value.clone()),
-            expression: candidate.expression,
-            ambiguous: candidate.ambiguous,
-            codec: monitor_inspection::codec(metadata).ok(),
-        })
-    } else {
-        let candidate = analysis.config_batches.get(b)?.candidates.get(c)?;
-        Some(Target {
-            id: candidate.setting_id.clone(),
-            location: candidate.location.clone(),
-            outcome: candidate.model_value.clone(),
-            expression: candidate.expression,
-            ambiguous: candidate.ambiguous,
-            codec: hyprland_editor_core::lua::registration::by_lua_key(
-                &analysis.program.version,
-                &candidate.lua_key,
-            )
-            .and_then(|e| e.codec.clone()),
-        })
     }
+    for field in fields {
+        if !picks
+            .iter()
+            .any(|p| matches!(p,Pick::Monitor {field:name,..} if *name==field.key))
+        {
+            picks.push(Pick::Monitor {
+                batch: b,
+                row: None,
+                field: field.key.clone(),
+            });
+        }
+    }
+    for (row, (key, _)) in rows.iter().enumerate() {
+        if Some(row) == output
+            || picks
+                .iter()
+                .any(|p| matches!(p,Pick::Monitor {row:Some(r),..} if *r==row))
+        {
+            continue;
+        }
+        if let Observed::Bytes(key) = key {
+            picks.push(Pick::Monitor {
+                batch: b,
+                row: Some(row),
+                field: display_path_bytes(&key[..key.len().min(128)]),
+            });
+        }
+    }
+    picks
 }
 // Monitor builders construct all child controls up front. Value changes must
 // invalidate an in-flight comparison just like the scalar controls do.
@@ -185,6 +304,8 @@ struct Controls {
     analysis: std::sync::Weak<Analysis>,
     targets: gtk::glib::WeakRef<gtk::DropDown>,
     scope: gtk::glib::WeakRef<gtk::DropDown>,
+    scope_label: gtk::glib::WeakRef<gtk::Label>,
+    operation: gtk::glib::WeakRef<gtk::DropDown>,
     field: gtk::glib::WeakRef<gtk::Box>,
     input_expander: gtk::glib::WeakRef<gtk::Expander>,
     status: gtk::glib::WeakRef<gtk::Label>,
@@ -421,7 +542,10 @@ impl Controls {
     fn sensitive(&self) {
         let ready = self.session.upgrade().is_some_and(|s| {
             let s = s.borrow();
-            !s.closed && !s.blocked && s.pending.is_none() && s.getter.is_some()
+            !s.closed
+                && !s.blocked
+                && s.pending.is_none()
+                && (s.getter.is_some() || s.action == Action::Remove)
         });
         if let Some(button) = self.compare.upgrade() {
             button.set_sensitive(ready);
@@ -463,7 +587,7 @@ impl Controls {
         s.getter = None;
         s.result = None;
         drop(s);
-        for weak in [&self.targets, &self.scope] {
+        for weak in [&self.targets, &self.scope, &self.operation] {
             if let Some(w) = weak.upgrade() {
                 w.set_sensitive(false);
             }
@@ -477,97 +601,235 @@ impl Controls {
         self.message("The source analysis changed. Close this comparison and open it from the current analysis.");
         self.sensitive();
     }
+    fn choose(&self) {
+        let (Some(session), Some(analysis), Some(pick), Some(operation)) = (
+            self.session.upgrade(),
+            self.analysis.upgrade(),
+            self.targets.upgrade(),
+            self.operation.upgrade(),
+        ) else {
+            return;
+        };
+        let candidate = session
+            .borrow()
+            .rows
+            .get(pick.selected() as usize)
+            .and_then(|p| target(&analysis, p));
+        let labels = match candidate {
+            Some(c) if !c.known => vec!["Remove field"],
+            Some(c) if !c.present => vec!["Add field"],
+            Some(c) if c.raw_key != b"output" && session.borrow().monitor => {
+                vec!["Set value", "Remove field"]
+            }
+            _ => vec!["Set value"],
+        };
+        operation.set_model(Some(&gtk::StringList::new(&labels)));
+        operation.set_selected(0);
+        self.select();
+    }
     fn select(&self) {
         if let Some(expander) = self.input_expander.upgrade() {
             expander.set_expanded(true);
         }
         self.invalidate();
-        let (Some(session), Some(analysis), Some(pick), Some(field)) = (
+        let (Some(session), Some(analysis), Some(pick), Some(field), Some(scope), Some(operation)) = (
             self.session.upgrade(),
             self.analysis.upgrade(),
             self.targets.upgrade(),
             self.field.upgrade(),
+            self.scope.upgrade(),
+            self.operation.upgrade(),
         ) else {
             return;
         };
         while let Some(child) = field.first_child() {
             field.remove(&child);
         }
-        let row = session.borrow().rows.get(pick.selected() as usize).copied();
+        let row = session.borrow().rows.get(pick.selected() as usize).cloned();
+        let monitor = session.borrow().monitor;
+        let candidate = row.as_ref().and_then(|row| target(&analysis, row));
+        let action = match &candidate {
+            Some(c)
+                if monitor
+                    && (!c.known
+                        || c.present && c.raw_key != b"output" && operation.selected() == 1) =>
+            {
+                Action::Remove
+            }
+            Some(c) if monitor && !c.present => Action::Add,
+            _ => Action::Set,
+        };
         {
             let mut s = session.borrow_mut();
             s.getter = None;
             s.initial = None;
+            s.action = action;
         }
-        let monitor = session.borrow().monitor;
-        let candidate = row.and_then(|row| target(&analysis, row, monitor));
-        let value = candidate.as_ref().and_then(|c| match &c.outcome {
+        scope.set_sensitive(action != Action::Remove);
+        scope.set_visible(action != Action::Remove);
+        if let Some(label) = self.scope_label.upgrade() {
+            label.set_visible(action != Action::Remove);
+        }
+        if let Some(expander) = self.input_expander.upgrade() {
+            expander.set_label(Some(if action == Action::Remove {
+                "Removal details"
+            } else {
+                "Proposed value"
+            }));
+        }
+        if action == Action::Remove {
+            scope.set_model(Some(&gtk::StringList::new(&["Recorded field write"])));
+            scope.set_selected(0);
+            field.append(&label("Remove this explicit field at its recorded write. Comments are retained. This does not force a default or remove other alias spellings; the comparison reports additional effects."));
+            self.sensitive();
+            return;
+        }
+        let Some(candidate) = candidate else {
+            self.sensitive();
+            return;
+        };
+        if candidate.ambiguous {
+            field.append(&label("Several key spellings address this property. Remove the conflicting spelling before setting a value."));
+            self.sensitive();
+            return;
+        }
+        let metadata = if monitor {
+            hyprland_editor_core::monitor::catalogue(&analysis.program.version)
+                .into_iter()
+                .find(|f| f.lua_key == candidate.id)
+        } else {
+            None
+        };
+        let current = match &candidate.outcome {
             Some(Outcome::Accepted {
                 representation: Representation::Value { value },
                 ..
-            }) if !c.ambiguous => match value {
+            }) => match value {
                 Value::String(v) if v.len() > 16384 || v.contains('\0') => None,
                 Value::Float(v) if !v.is_finite() => None,
                 _ => Some(value.clone()),
             },
             _ => None,
-        });
-        if let Some(value) = value {
-            if let Some(scope) = self.scope.upgrade() {
-                let table = candidate
-                    .as_ref()
-                    .and_then(|c| c.expression)
-                    .and_then(|id| analysis.report.expression_sources.get(id as usize))
-                    .is_some_and(|e| {
-                        e.kind == hyprland_editor_core::lua::replay::ExpressionKind::Table
-                    });
-                let compound = !monitor
-                    && matches!(
-                        &value,
-                        Value::Vec2(_) | Value::CssGap(_) | Value::Gradient { .. }
-                    );
-                let mut labels = vec![
-                    "Selected value expression",
-                    "Original literal, if traceable",
-                ];
-                if compound {
-                    labels.extend([
-                        "Preserve table layout and comments",
-                        "Original table layout, if traceable",
-                    ]);
+        };
+        let current = if monitor && candidate.id != "output" {
+            current.filter(|value| {
+                let mut rule = hyprland_editor_core::monitor::Rule::new("input");
+                rule.fields.insert(candidate.id.clone(), value.clone());
+                rule.validate(&analysis.program.version).is_ok()
+            })
+        } else {
+            current
+        };
+        let initial = if action == Action::Set {
+            current.clone()
+        } else {
+            None
+        };
+        let value = current.or_else(|| {
+            if monitor {
+                if candidate.id == "output" {
+                    Some(Value::String(String::new()))
+                } else {
+                    metadata.as_ref().and_then(|f| f.known_default())
                 }
-                scope.set_model(Some(&gtk::StringList::new(&labels)));
-                scope.set_selected(if table && compound { 2 } else { 0 });
-            }
-            let ui = self.clone();
-            let changed: Rc<dyn Fn()> = Rc::new(move || ui.invalidate());
-            let metadata = if monitor {
-                hyprland_editor_core::monitor::catalogue(&analysis.program.version)
-                    .into_iter()
-                    .find(|f| candidate.as_ref().is_some_and(|c| f.lua_key == c.id))
             } else {
                 None
-            };
-            let getter = if let (Some(metadata), Some(window)) =
-                (metadata, field.root().and_downcast::<adw::Window>())
-            {
-                let builder =
-                    super::monitors::builder(&metadata, Some(value.clone()), &field, &window, &[]);
-                watch_inputs(field.upcast_ref(), &changed);
-                Rc::from(builder)
+            }
+        });
+        let Some(value) = value else {
+            field.append(&label(
+                "This source value has no supported graphical representation yet.",
+            ));
+            self.sensitive();
+            return;
+        };
+        if monitor && initial.is_none() && action == Action::Set {
+            field.append(&label("The current input cannot be represented by these controls. The value below is a proposed starting value; compare it before keeping a revision."));
+        }
+        if action == Action::Add {
+            scope.set_model(Some(&gtk::StringList::new(&[
+                "Selected table constructor",
+                "Original constructor, if traceable",
+                "Recorded last write, if traceable",
+            ])));
+            let direct = analysis
+                .report
+                .events
+                .iter()
+                .find(|e| e.order == session.borrow().event)
+                .and_then(|e| e.argument_sources.first()?.expression)
+                .and_then(|i| analysis.report.expression_sources.get(i as usize))
+                .is_some_and(|s| {
+                    s.kind == hyprland_editor_core::lua::replay::ExpressionKind::Table
+                });
+            let selected_event = analysis
+                .report
+                .events
+                .iter()
+                .find(|e| e.order == session.borrow().event);
+            let identity = selected_event
+                .and_then(|e| e.argument_sources.first()?.expression)
+                .and_then(|id| analysis.report.expression_sources.get(id as usize))
+                .and_then(|s| s.table_identity);
+            let last=identity.zip(selected_event).is_some_and(|(identity,event)| analysis.report.storage_writes.iter().rev().find(|w| w.at_order<=event.order && matches!(&w.place,hyprland_editor_core::lua::replay::StoragePlace::Table {identity:table,key:hyprland_editor_core::lua::replay::StorageKey::Bytes(key)} if *table==identity && key==candidate.id.as_bytes())).is_some_and(|w| w.deletes_slot));
+            scope.set_selected(if last {
+                2
+            } else if direct {
+                0
             } else {
-                input_form(
-                    &value,
-                    candidate.as_ref().and_then(|c| c.codec.as_ref()),
-                    &field,
-                    changed,
-                )
-            };
-            let mut s = session.borrow_mut();
-            s.initial = Some(value);
-            s.getter = Some(getter);
+                1
+            });
+            field.append(&label("This field is absent. The control value is an explicit proposal, not an inferred effective default."));
         } else {
-            field.append(&label("This value cannot yet be compared with a typed control. Its codec, native representation or key identity is unresolved."));
+            let table = candidate
+                .expression
+                .and_then(|id| analysis.report.expression_sources.get(id as usize))
+                .is_some_and(|s| {
+                    s.kind == hyprland_editor_core::lua::replay::ExpressionKind::Table
+                });
+            let compound = !monitor
+                && matches!(
+                    &value,
+                    Value::Vec2(_) | Value::CssGap(_) | Value::Gradient { .. }
+                );
+            let mut labels = vec![
+                "Selected value expression",
+                "Original literal, if traceable",
+            ];
+            if compound {
+                labels.extend([
+                    "Preserve table layout and comments",
+                    "Original table layout, if traceable",
+                ]);
+            }
+            scope.set_model(Some(&gtk::StringList::new(&labels)));
+            scope.set_selected(if table && compound { 2 } else { 0 });
+        }
+        let ui = self.clone();
+        let changed: Rc<dyn Fn()> = Rc::new(move || ui.invalidate());
+        // Keep exact values outside the draft builder's spin ranges/precision.
+        // These controls accept typed numbers, not source code or expressions.
+        let exact_number = match &value {
+            Value::Float(_) => true,
+            Value::Int(v) => i32::try_from(*v).is_err(),
+            Value::CssGap(v) => v.iter().any(|v| i32::try_from(*v).is_err()),
+            _ => false,
+        };
+        let metadata = if exact_number { None } else { metadata };
+        let getter = if let (Some(metadata), Some(window)) =
+            (metadata, field.root().and_downcast::<adw::Window>())
+        {
+            let builder =
+                super::monitors::builder(&metadata, Some(value.clone()), &field, &window, &[]);
+            watch_inputs(field.upcast_ref(), &changed);
+            Rc::from(builder)
+        } else {
+            input_form(&value, candidate.codec.as_ref(), &field, changed)
+        };
+        {
+            let mut s = session.borrow_mut();
+            s.initial = initial;
+            s.getter = Some(getter);
         }
         self.sensitive();
     }
@@ -584,7 +846,7 @@ impl Controls {
         ) else {
             return;
         };
-        let (epoch, event, row, getter, initial) = {
+        let (epoch, event, row, getter, initial, action, monitor) = {
             let s = session.borrow();
             if s.closed || s.blocked || s.pending.is_some() {
                 return;
@@ -592,45 +854,78 @@ impl Controls {
             (
                 s.epoch,
                 s.event,
-                s.rows.get(pick.selected() as usize).copied(),
+                s.rows.get(pick.selected() as usize).cloned(),
                 s.getter.clone(),
                 s.initial.clone(),
+                s.action,
+                s.monitor,
             )
         };
-        let (Some((b, c)), Some(getter)) = (row, getter) else {
+        let Some(candidate) = row.as_ref().and_then(|p| target(&analysis, p)) else {
             return;
         };
-        let value = match getter() {
-            Ok(value) => value,
-            Err(error) => {
-                self.message(&error);
+        let value = if action == Action::Remove {
+            None
+        } else {
+            let Some(getter) = getter else {
                 return;
+            };
+            match getter() {
+                Ok(value) => Some(value),
+                Err(error) => {
+                    self.message(&error);
+                    return;
+                }
             }
         };
-        if initial
-            .as_ref()
-            .is_some_and(|initial| same_input(initial, &value))
+        if action == Action::Set
+            && initial
+                .as_ref()
+                .zip(value.as_ref())
+                .is_some_and(|(a, b)| same_input(a, b))
         {
             self.message("Change the value before starting a comparison.");
             return;
         }
-        let monitor = session.borrow().monitor;
-        let Some(candidate) = target(&analysis, (b, c), monitor) else {
-            return;
-        };
         let request = if monitor {
-            worker::Request::CompareMonitorSource {
-                program: analysis.program.clone(),
-                change: hyprland_editor_core::lua::replay::monitor_edit::Change {
-                    event_order: event,
-                    row: candidate.location[1],
-                    field: candidate.id,
-                    selection: if scope.selected() == 1 {
-                        hyprland_editor_core::lua::replay::monitor_edit::Selection::OriginalLiteral
-                    } else {
-                        hyprland_editor_core::lua::replay::monitor_edit::Selection::SelectedExpression
+            use hyprland_editor_core::lua::replay::monitor_edit::{
+                self, FieldChange, TableSelection,
+            };
+            match action {
+                Action::Add => worker::Request::CompareMonitorFieldSource {
+                    program: analysis.program.clone(),
+                    change: FieldChange::Add {
+                        event_order: event,
+                        field: candidate.id,
+                        value: value.unwrap(),
+                        selection: match scope.selected() {
+                            1 => TableSelection::OriginalConstructor,
+                            2 => TableSelection::LatestWrite,
+                            _ => TableSelection::SelectedConstructor,
+                        },
                     },
-                    value,
+                },
+                Action::Remove => worker::Request::CompareMonitorFieldSource {
+                    program: analysis.program.clone(),
+                    change: FieldChange::Remove {
+                        event_order: event,
+                        row: candidate.location[1],
+                        raw_key: candidate.raw_key,
+                    },
+                },
+                Action::Set => worker::Request::CompareMonitorSource {
+                    program: analysis.program.clone(),
+                    change: monitor_edit::Change {
+                        event_order: event,
+                        row: candidate.location[1],
+                        field: candidate.id,
+                        selection: if scope.selected() == 1 {
+                            monitor_edit::Selection::OriginalLiteral
+                        } else {
+                            monitor_edit::Selection::SelectedExpression
+                        },
+                        value: value.unwrap(),
+                    },
                 },
             }
         } else {
@@ -646,7 +941,7 @@ impl Controls {
                         3 => Selection::OriginalTableLayout,
                         _ => Selection::SelectedExpression,
                     },
-                    value,
+                    value: value.unwrap(),
                 },
             }
         };
@@ -715,7 +1010,7 @@ impl Controls {
                                 if let Some(expander) = ui.input_expander.upgrade() {
                                     expander.set_expanded(false);
                                 }
-                                ui.message(if result.review.modeled_observations_match {"Only the requested modeled value changed. Ownership and live behavior are still unverified."}else{"Additional modeled changes or incomplete analysis need review. No source change has been saved."});
+                                ui.message(if result.review.modeled_observations_match {"Only the requested modeled change was observed. Ownership and live behavior are still unverified."}else{"Additional modeled changes or incomplete analysis need review. No source change has been saved."});
                                 s.result = Some(result);
                             }
                             Err(error) => ui.message(&error),
@@ -879,7 +1174,8 @@ impl Controls {
 }
 fn describe(analysis: &Analysis, result: &Comparison) -> Result<String, String> {
     use std::fmt::Write;
-    if result.plan.edits.len() != 1
+    if result.plan.edits.is_empty()
+        || result.plan.edits.len() > 512
         || result.review.ownership_verified
         || result.review.runtime_verified
         || result.review.base_program_sha256 != result.plan.base_program_sha256
@@ -890,37 +1186,51 @@ fn describe(analysis: &Analysis, result: &Comparison) -> Result<String, String> 
                 .into(),
         );
     }
-    let edit = result
-        .plan
-        .edits
-        .first()
-        .ok_or("No proposed source change was returned")?;
-    let document = analysis
-        .program
-        .documents
-        .iter()
-        .find(|d| d.id == edit.document)
-        .ok_or("The proposed source document is unavailable")?;
-    let old = document
-        .source
-        .get(edit.span.clone())
-        .ok_or("The proposed source range is invalid")?;
-    if edit.base_sha256 != document.sha256
-        || edit.old_bytes_sha256 != hyprland_editor_core::lua::source_hash(old)
-    {
-        return Err("The proposed source bytes no longer match this analysis".into());
+    let mut text = String::from("Proposed source change\n");
+    for (index, edit) in result.plan.edits.iter().enumerate() {
+        let document = analysis
+            .program
+            .documents
+            .iter()
+            .find(|d| d.id == edit.document)
+            .ok_or("The proposed source document is unavailable")?;
+        let old = document
+            .source
+            .get(edit.span.clone())
+            .ok_or("The proposed source range is invalid")?;
+        if edit.base_sha256 != document.sha256
+            || edit.old_bytes_sha256 != hyprland_editor_core::lua::source_hash(old)
+        {
+            return Err("The proposed source bytes no longer match this analysis".into());
+        }
+        if text.len() < 24 * 1024 {
+            let line = document.source[..edit.span.start]
+                .bytes()
+                .filter(|b| *b == b'\n')
+                .count()
+                + 1;
+            if result.plan.edits.len() > 1 {
+                let _ = writeln!(text, "\nPatch {} of {}", index + 1, result.plan.edits.len());
+            }
+            let _ = writeln!(
+                text,
+                "Before\n{}\n\nAfter\n{}\n\nSource: {} · line {line}\n",
+                if old.is_empty() {
+                    "(insertion point)".into()
+                } else {
+                    super::source_access::excerpt(old)
+                },
+                if edit.replacement.trim().is_empty() {
+                    "(removed)".into()
+                } else {
+                    super::source_access::excerpt(&edit.replacement)
+                },
+                display_path_bytes(&document.load_name)
+            );
+        } else if index + 1 == result.plan.edits.len() {
+            text.push_str("\n… Additional patches are retained but omitted from this excerpt.\n");
+        }
     }
-    let line = document.source[..edit.span.start]
-        .bytes()
-        .filter(|b| *b == b'\n')
-        .count()
-        + 1;
-    let mut text = format!(
-        "Proposed source change\n{} · line {line}\n\nBefore\n{}\n\nAfter\n{}\n",
-        display_path_bytes(&document.load_name),
-        super::source_access::excerpt(&document.source[edit.span.clone()]),
-        super::source_access::excerpt(&edit.replacement)
-    );
     if let Outcome::Accepted {
         representation: Representation::Value { value },
         ..
@@ -932,9 +1242,17 @@ fn describe(analysis: &Analysis, result: &Comparison) -> Result<String, String> 
             super::source_access::excerpt(&value.lua())
         );
     }
+    if let Outcome::Unresolved { reason } = &result.proposed_native_value {
+        let _ = writeln!(text, "\n{}", display_path_bytes(reason.as_bytes()));
+    }
     if result.table_layout_preserved {
-        text.push_str("\nExisting table comments, spacing and unrelated fields are retained. Changed components and added/removed fields are shown above.\n");
-    } else if edit.replacement.starts_with('{') {
+        text.push_str("\nExisting comments, spacing and unrelated source fields are retained. Changed components and added/removed fields are shown above.\n");
+    } else if result
+        .plan
+        .edits
+        .iter()
+        .any(|edit| edit.replacement.starts_with('{'))
+    {
         text.push_str("\nThis replaces the selected value expression. Comments and extra fields inside that expression are included in the replacement.\n");
     }
     if result.review.differences.is_empty() {
@@ -1016,31 +1334,7 @@ pub(super) fn open(
         .events
         .iter()
         .any(|e| e.order == event && e.api == "hl.monitor");
-    let rows = if monitor {
-        analysis
-            .monitors
-            .as_ref()
-            .map(|m| {
-                m.batches
-                    .iter()
-                    .enumerate()
-                    .filter(|(_, b)| b.event_order == event)
-                    .flat_map(|(b, batch)| {
-                        std::iter::once((b, usize::MAX))
-                            .chain((0..batch.candidates.len()).map(move |c| (b, c)))
-                    })
-                    .collect::<Vec<_>>()
-            })
-            .unwrap_or_default()
-    } else {
-        analysis
-            .config_batches
-            .iter()
-            .enumerate()
-            .filter(|(_, b)| b.event_order == event)
-            .flat_map(|(b, batch)| (0..batch.candidates.len()).map(move |c| (b, c)))
-            .collect::<Vec<_>>()
-    };
+    let rows = picks(&analysis, event, monitor);
     let session = Rc::new(RefCell::new(Session {
         epoch: 0,
         pending: None,
@@ -1049,6 +1343,7 @@ pub(super) fn open(
         rows,
         event,
         monitor,
+        action: Action::Set,
         getter: None,
         initial: None,
         result: None,
@@ -1081,17 +1376,26 @@ pub(super) fn open(
         .borrow()
         .rows
         .iter()
-        .map(|(b, c)| {
-            let Some(c) = target(&analysis, (*b, *c), monitor) else {
+        .map(|pick| {
+            let Some(c) = target(&analysis, pick) else {
                 return "Unavailable field".into();
             };
             if monitor {
                 format!(
-                    "Monitor · {}",
+                    "Monitor · {}{}{}",
                     if c.id == "output" {
                         "Output match".into()
                     } else {
                         super::human_name(&c.id)
+                    },
+                    if c.present { "" } else { " · absent" },
+                    if c.present && c.raw_key != c.id.as_bytes() {
+                        format!(
+                            " · key {}",
+                            display_path_bytes(&c.raw_key[..c.raw_key.len().min(96)])
+                        )
+                    } else {
+                        String::new()
                     }
                 )
             } else {
@@ -1111,7 +1415,14 @@ pub(super) fn open(
     targets.set_widget_name("source-change-setting");
     targets.update_property(&[gtk::accessible::Property::Label("Setting to compare")]);
     body.append(&targets);
-    body.append(&label("Source to change"));
+    let operation = gtk::DropDown::from_strings(&["Set value"]);
+    operation.set_widget_name("source-change-operation");
+    operation.update_property(&[gtk::accessible::Property::Label("Field operation")]);
+    super::monitors::compact(&operation);
+    operation.set_visible(monitor);
+    body.append(&operation);
+    let scope_label = label("Source to change");
+    body.append(&scope_label);
     let scope = gtk::DropDown::from_strings(&[
         "Selected value expression",
         "Original literal, if traceable",
@@ -1194,6 +1505,8 @@ pub(super) fn open(
         analysis: Arc::downgrade(&analysis),
         targets: targets.downgrade(),
         scope: scope.downgrade(),
+        scope_label: scope_label.downgrade(),
+        operation: operation.downgrade(),
         field: field.downgrade(),
         input_expander: input_expander.downgrade(),
         status: status.downgrade(),
@@ -1202,7 +1515,9 @@ pub(super) fn open(
         keep: keep.downgrade(),
     };
     let u = ui.clone();
-    targets.connect_selected_notify(move |_| u.select());
+    targets.connect_selected_notify(move |_| u.choose());
+    let u = ui.clone();
+    operation.connect_selected_notify(move |_| u.select());
     let u = ui.clone();
     scope.connect_selected_notify(move |_| u.invalidate());
     let u = ui.clone();
@@ -1229,7 +1544,7 @@ pub(super) fn open(
         }
         gtk::glib::ControlFlow::Continue
     });
-    ui.select();
+    ui.choose();
     gtk::prelude::GtkWindowExt::set_focus(&window, Some(&targets));
     window.present();
     window
@@ -1257,6 +1572,7 @@ pub(super) fn test_monitor_workflow(parent: &adw::ApplicationWindow) {
         }
         find(root, name).unwrap_or_else(|| panic!("Missing {name}"))
     }
+    #[track_caller]
     fn wait(mut check: impl FnMut() -> bool) {
         let start = std::time::Instant::now();
         loop {
@@ -1285,6 +1601,24 @@ pub(super) fn test_monitor_workflow(parent: &adw::ApplicationWindow) {
             child = widget.next_sibling();
         }
         None
+    }
+    fn capture(window: &adw::Window, suffix: &str) {
+        if let Ok(path) = std::env::var("HYPRLAND_EDITOR_TEST_CAPTURE") {
+            let paintable = gtk::WidgetPaintable::new(Some(window));
+            let node = RefCell::new(None);
+            wait(|| {
+                let snapshot = gtk::Snapshot::new();
+                paintable.snapshot(&snapshot, window.width() as f64, window.height() as f64);
+                *node.borrow_mut() = snapshot.to_node();
+                node.borrow().is_some()
+            });
+            window
+                .renderer()
+                .unwrap()
+                .render_texture(node.into_inner().unwrap(), None)
+                .save_to_png(format!("{path}.{suffix}.png"))
+                .unwrap();
+        }
     }
     for version in [BASELINE, AUDITED_MAIN] {
         let directory = std::env::temp_dir().join(format!(
@@ -1385,22 +1719,7 @@ pub(super) fn test_monitor_workflow(parent: &adw::ApplicationWindow) {
         );
         assert!(text.contains("part.lua"), "{text}");
         assert!(text.contains("After\n3"), "{text}");
-        if let Ok(path) = std::env::var("HYPRLAND_EDITOR_TEST_CAPTURE") {
-            let paintable = gtk::WidgetPaintable::new(Some(&window));
-            let node = RefCell::new(None);
-            wait(|| {
-                let snapshot = gtk::Snapshot::new();
-                paintable.snapshot(&snapshot, window.width() as f64, window.height() as f64);
-                *node.borrow_mut() = snapshot.to_node();
-                node.borrow().is_some()
-            });
-            window
-                .renderer()
-                .unwrap()
-                .render_texture(node.into_inner().unwrap(), None)
-                .save_to_png(format!("{path}.monitor-source.png"))
-                .unwrap();
-        }
+        capture(&window, "monitor-source");
         keep.emit_clicked();
         wait(|| changes.get() == 1);
         assert_eq!(
@@ -1411,6 +1730,73 @@ pub(super) fn test_monitor_workflow(parent: &adw::ApplicationWindow) {
                 .len(),
             1
         );
+        window.close();
+        // Add an absent field, then remove it through actual GTK actions. Both
+        // operations use fresh source revisions and the multi-patch review.
+        for (removing, expected_count) in [(false, 2), (true, 3)] {
+            let done = changes.clone();
+            let window = open(
+                parent.upcast_ref(),
+                &model,
+                event,
+                &state,
+                Rc::new(move || done.set(done.get() + 1)),
+            );
+            let analysis = model.borrow().clone().unwrap();
+            let index = picks(&analysis, event, true)
+                .iter()
+                .position(|p| target(&analysis, p).is_some_and(|c| c.id == "scale"))
+                .unwrap();
+            let targets = named(window.upcast_ref(), "source-change-setting")
+                .downcast::<gtk::DropDown>()
+                .unwrap();
+            targets.set_selected(index as u32);
+            let operation = named(window.upcast_ref(), "source-change-operation")
+                .downcast::<gtk::DropDown>()
+                .unwrap();
+            if removing {
+                operation.set_selected(1);
+            }
+            let compare = named(window.upcast_ref(), "source-change-compare")
+                .downcast::<gtk::Button>()
+                .unwrap();
+            let keep = named(window.upcast_ref(), "source-change-keep")
+                .downcast::<gtk::Button>()
+                .unwrap();
+            assert!(compare.is_sensitive());
+            compare.emit_clicked();
+            wait(|| keep.is_sensitive());
+            if removing {
+                let output = named(window.upcast_ref(), "source-change-comparison")
+                    .downcast::<gtk::TextView>()
+                    .unwrap();
+                let text = output.buffer().text(
+                    &output.buffer().start_iter(),
+                    &output.buffer().end_iter(),
+                    true,
+                );
+                assert!(text.contains("Patch 2 of 2"), "{text}");
+                assert!(text.contains("Inherited and effective values remain unresolved"));
+                let (minimum, _, _, _) = window.measure(gtk::Orientation::Horizontal, -1);
+                assert!(minimum <= 350, "Monitor field review needs {minimum}px");
+                // GTK's client-side shadow can sit outside the allocation.
+                window.set_default_size(360, 740);
+                wait(|| (350..=360).contains(&window.width()));
+                let bounds = keep.compute_bounds(&window).unwrap();
+                assert!(bounds.x() >= 0. && bounds.x() + bounds.width() <= window.width() as f32);
+                assert!(bounds.y() >= 0. && bounds.y() + bounds.height() <= window.height() as f32);
+                capture(&window, "monitor-field-remove");
+            }
+            keep.emit_clicked();
+            wait(|| changes.get() == expected_count);
+            let analysis = model.borrow().clone().unwrap();
+            let has_scale = analysis.monitors.as_ref().unwrap().batches[0]
+                .candidates
+                .iter()
+                .any(|c| c.field == "scale");
+            assert_eq!(has_scale, !removing);
+            window.close();
+        }
         assert_eq!(
             std::fs::read_to_string(directory.join("main.lua")).unwrap(),
             source
@@ -1424,6 +1810,131 @@ pub(super) fn test_monitor_workflow(parent: &adw::ApplicationWindow) {
             .with_graph(&bundle)
             .to_json(&state.borrow().catalogue)
             .unwrap();
+        // Repair a missing output and an invalid existing field using the same
+        // source inspector, with proposed seeds explicitly distinct from state.
+        let invalid = "local rule={transform=99,bitdepth=9223372036854775807};rule.scale=nil;hl.monitor(rule)";
+        let repair_path = directory.join("repair.lua");
+        std::fs::write(&repair_path, invalid).unwrap();
+        let capture = Arc::new(storage::read_source(&repair_path).unwrap());
+        let repair = super::source_graph::analyze(
+            capture.clone(),
+            Context {
+                main_file: capture.identity.selected_path.clone(),
+                home: None,
+                inherited_package_path: None,
+            },
+            vec![],
+            version.into(),
+            None,
+            Arc::new(std::sync::atomic::AtomicBool::new(false)),
+        )
+        .unwrap();
+        let repair_model: Model = Rc::new(RefCell::new(Some(Arc::new(repair))));
+        let repair_state = super::initial_state();
+        let worker::Response::Parsed(report) = worker::run(worker::Request::Parse {
+            source: invalid.into(),
+            version: version.into(),
+        })
+        .unwrap() else {
+            panic!()
+        };
+        {
+            let mut s = repair_state.borrow_mut();
+            s.draft = hyprland_editor_core::Draft::new(version);
+            let doc = LuaDocument::from_report(invalid.into(), *report, &s.catalogue).unwrap();
+            s.sources.insert(version.into(), Arc::new(doc));
+            s.source_origins
+                .insert(version.into(), capture.identity.clone());
+        }
+        for field in ["output", "transform", "scale", "bitdepth"] {
+            let kept = Rc::new(std::cell::Cell::new(false));
+            let done = kept.clone();
+            let window = open(
+                parent.upcast_ref(),
+                &repair_model,
+                0,
+                &repair_state,
+                Rc::new(move || done.set(true)),
+            );
+            let analysis = repair_model.borrow().clone().unwrap();
+            let index = picks(&analysis, 0, true)
+                .iter()
+                .position(|p| target(&analysis, p).is_some_and(|c| c.id == field))
+                .unwrap();
+            named(window.upcast_ref(), "source-change-setting")
+                .downcast::<gtk::DropDown>()
+                .unwrap()
+                .set_selected(index as u32);
+            if field == "output" {
+                named(window.upcast_ref(), "source-change-value")
+                    .downcast::<gtk::Entry>()
+                    .unwrap()
+                    .set_text("DP-1");
+            } else if field == "transform" {
+                let form = named(window.upcast_ref(), "source-change-inputs");
+                assert_eq!(
+                    dropdown(&form).unwrap().selected(),
+                    0,
+                    "Invalid transform must use an explicit proposed seed"
+                );
+            } else if field == "scale" {
+                assert_eq!(
+                    named(window.upcast_ref(), "source-change-scope")
+                        .downcast::<gtk::DropDown>()
+                        .unwrap()
+                        .selected(),
+                    2,
+                    "A later nil assignment must select the recorded write"
+                );
+            } else {
+                let input = named(window.upcast_ref(), "source-change-value")
+                    .downcast::<gtk::Entry>()
+                    .unwrap();
+                assert_eq!(
+                    input.text(),
+                    i64::MAX.to_string(),
+                    "Source numeric controls must not clamp or round an existing integer"
+                );
+                input.set_text(&(i64::MAX - 1).to_string());
+            }
+            let compare = named(window.upcast_ref(), "source-change-compare")
+                .downcast::<gtk::Button>()
+                .unwrap();
+            let keep = named(window.upcast_ref(), "source-change-keep")
+                .downcast::<gtk::Button>()
+                .unwrap();
+            compare.emit_clicked();
+            wait(|| keep.is_sensitive());
+            keep.emit_clicked();
+            wait(|| kept.get());
+            window.close();
+        }
+        assert_eq!(std::fs::read_to_string(&repair_path).unwrap(), invalid);
+        let analysis = repair_model.borrow().clone().unwrap();
+        assert_eq!(
+            analysis.monitors.as_ref().unwrap().batches[0]
+                .output_bytes
+                .as_deref(),
+            Some(b"DP-1".as_slice())
+        );
+        let fields = &analysis.monitors.as_ref().unwrap().batches[0].candidates;
+        assert!(matches!(
+            fields
+                .iter()
+                .find(|c| c.field == "transform")
+                .unwrap()
+                .primary_value,
+            Outcome::Accepted {
+                native: hyprland_editor_core::lua::scalar_codec::NativeValue::Int(0),
+                ..
+            }
+        ));
+        assert!(
+            matches!(&fields.iter().find(|c| c.field=="scale").unwrap().primary_value, Outcome::Accepted {native:hyprland_editor_core::lua::scalar_codec::NativeValue::Bytes(b),..} if b==b"auto")
+        );
+        assert!(
+            matches!(fields.iter().find(|c| c.field=="bitdepth").unwrap().primary_value, Outcome::Accepted {native:hyprland_editor_core::lua::scalar_codec::NativeValue::Int(v),..} if v==i64::MAX-1)
+        );
         std::fs::remove_dir_all(&directory).unwrap();
         let restored = Workspace::from_json(
             std::str::from_utf8(&saved).unwrap(),
@@ -1441,6 +1952,10 @@ pub(super) fn test_monitor_workflow(parent: &adw::ApplicationWindow) {
             .iter()
             .any(|d| d.source == "-- monitor source comment\nreturn {turn=3, other='keep'}\n"));
         assert!(!restored.monitors.as_ref().unwrap().runtime_verified);
+        state.borrow_mut().undo_last();
+        assert!(state.borrow().source_graphs.contains_key(version));
+        state.borrow_mut().undo_last();
+        assert!(state.borrow().source_graphs.contains_key(version));
         state.borrow_mut().undo_last();
         assert!(!state.borrow().source_graphs.contains_key(version));
         window.close();

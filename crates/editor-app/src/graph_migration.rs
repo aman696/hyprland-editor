@@ -13,7 +13,9 @@ const FROM_MIGRATION: &str = "7273a441eca7d6ae6424b92d1188be64e642d007a77ae9e6a9
 const MIGRATION: &str = include_str!("../../../data/migrations/graph-model-migration.json");
 const BEFORE_MONITORS: &str = "c1abcce3f3c001585eb7b39e13b7ab888791a3480877f7817bde26d66bba1427";
 const PRE_MONITOR: &str = include_str!("../../../data/migrations/graph-model-before-monitors.json");
-const TO: &str = "d7dd575308699007b7083b5776cfdfb6268b84b78fd4bd7f7f29c023c24f70cd";
+const MONITOR_VALUES: &str = "d7dd575308699007b7083b5776cfdfb6268b84b78fd4bd7f7f29c023c24f70cd";
+const VALUES_MODEL: &str = include_str!("../../../data/migrations/graph-model-monitor-values.json");
+const TO: &str = "05bb2e4e86ef118289b70942ff23ae80ef07ad6ea16c3f44dd676e542c0ece37";
 const OLD: &str = include_str!("../../../data/migrations/graph-model-before-projection.json");
 const FROM_PROJECTION: &str = "046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371";
 const PROJECTION: &str = include_str!("../../../data/migrations/graph-model-projection.json");
@@ -36,7 +38,7 @@ pub(super) struct Prepared {
     pub graph: Arc<super::source_graph::Saved>,
     pub summary: Summary,
 }
-fn transition(from: &str) -> Result<(), String> {
+fn before_field_transition(from: &str) -> Result<(), String> {
     let (previous, allowed): (&str, &[&str]) = match from {
         FROM => (
             OLD,
@@ -91,7 +93,7 @@ fn transition(from: &str) -> Result<(), String> {
     // inspection; every reached loader and private revision is freshly rebuilt.
     // The new model can reach code that was previously unresolved. Such inputs
     // must pass restore's full saved-graph checks; no old analysis is reused.
-    let next: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let next: serde_json::Value = serde_json::from_str(VALUES_MODEL).map_err(|e| e.to_string())?;
     let next = next["inputs"]
         .as_object()
         .ok_or("Invalid current model inventory")?;
@@ -127,6 +129,53 @@ fn transition(from: &str) -> Result<(), String> {
     {
         return Err(
             "Monitor migration no longer has only the reviewed observer and worker differences"
+                .into(),
+        );
+    }
+    Ok(())
+}
+fn transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(VALUES_MODEL) != MONITOR_VALUES || workspace_graph::schema_sha256() != TO {
+        return Err("No reviewed monitor field migration to this exact model is available".into());
+    }
+    if from != MONITOR_VALUES {
+        before_field_transition(from)?;
+    }
+    let previous: serde_json::Value =
+        serde_json::from_str(VALUES_MODEL).map_err(|e| e.to_string())?;
+    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let old = previous["inputs"]
+        .as_object()
+        .ok_or("Invalid monitor value model inventory")?;
+    let new = current["inputs"]
+        .as_object()
+        .ok_or("Invalid monitor field model inventory")?;
+    let added = new
+        .keys()
+        .filter(|k| !old.contains_key(*k))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    if old.len() != 62
+        || new.len() != 63
+        || added != ["crates/editor-core/src/lua/replay/monitor_edit/fields.rs"]
+    {
+        return Err("Reviewed monitor field migration input set changed".into());
+    }
+    let changes = old
+        .keys()
+        .filter(|k| old[*k] != new.get(*k).cloned().unwrap_or_default())
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    if changes
+        != [
+            "crates/editor-app/src/worker.rs",
+            "crates/editor-core/src/lua/replay/monitor_edit.rs",
+            "crates/editor-core/src/lua/replay/scalar_edit.rs",
+            "crates/editor-core/src/lua/replay/scalar_edit/layout.rs",
+        ]
+    {
+        return Err(
+            "Monitor field migration no longer has only the reviewed editor and trivia changes"
                 .into(),
         );
     }
@@ -230,6 +279,7 @@ mod tests {
         transition(FROM_PROJECTION).unwrap();
         transition(FROM_MIGRATION).unwrap();
         transition(BEFORE_MONITORS).unwrap();
+        transition(MONITOR_VALUES).unwrap();
         assert!(transition(&"0".repeat(64)).is_err());
         assert_ne!(FROM, TO);
         assert_eq!(lua::source_hash(CURRENT), TO);

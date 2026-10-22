@@ -2,7 +2,7 @@
 
 Opening a supported older `.hye` workspace rebuilds its saved source graph in the current restricted workers and presents **Review rebuilt workspace**. Cancel is the default. **Use rebuilt copy** retains an in-memory draft; the existing unsaved-draft confirmation still applies. A draft change during either review discards the pending result. The rebuilt copy remains unsaved until the existing Save action writes a new private workspace. The selected old workspace is never overwritten.
 
-Four exact previous model identities are supported:
+Five exact previous model identities are supported:
 
 | Previous model SHA-256 | Reviewed difference from this build |
 | --- | --- |
@@ -10,8 +10,9 @@ Four exact previous model identities are supported:
 | `046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371` | App manifest/lock changes linking the projection crate, plus exposing the existing bounded storage reader |
 | `7273a441eca7d6ae6424b92d1188be64e642d007a77ae9e6a909239284f23ffc` | App manifest/lock changes linking the existing internal projection crate, followed by the monitor transition below |
 | `c1abcce3f3c001585eb7b39e13b7ab888791a3480877f7817bde26d66bba1427` | Monitor argument observation and primary parsing, monitor value comparisons, scalar comparison across monitor observations, and restricted-worker/coordinator integration |
+| `d7dd575308699007b7083b5776cfdfb6268b84b78fd4bd7f7f29c023c24f70cd` | Field presence editing and worker request, shared proposal validation, and string-token trivia repair; replay observations and saved representations are unchanged |
 
-The current target is `d7dd575308699007b7083b5776cfdfb6268b84b78fd4bd7f7f29c023c24f70cd`. The three earlier manifests first undergo the exact previously reviewed dependency/storage checks against the embedded 58-input pre-monitor manifest. All four then undergo an explicit monitor transition: five existing model inputs change (worker, source coordinator, Lua module registry, replay observer, scalar comparison), and four inputs are added (monitor inspection, monitor comparison, pinned monitor factory metadata, and monitor draft catalogue). All other inputs must match. The current manifest contains 62 inputs; both its identity and the pre-monitor manifest identity are fixed in the migration implementation. Any further source/model change disables this transition until reviewed.
+The current target is `05bb2e4e86ef118289b70942ff23ae80ef07ad6ea16c3f44dd676e542c0ece37`. The three earlier manifests first undergo the exact previously reviewed dependency/storage checks against the embedded 58-input pre-monitor manifest. All four then undergo an explicit monitor transition: five existing model inputs change (worker, source coordinator, Lua module registry, replay observer, scalar comparison), and four inputs are added (monitor inspection, monitor comparison, pinned monitor factory metadata, and monitor draft catalogue). All other inputs must match. Those four paths first reach the exact 62-input monitor-value model. All five then undergo the field-editing transition: four inputs change (worker request, monitor editor, scalar editor helper visibility, and comment-preserving string token handling), and the field-presence editor is added as one input. The current manifest contains 63 inputs. All three intermediate/current identities and every allowed difference are fixed in the migration implementation. Any further source/model change disables this transition until reviewed.
 
 This transition extends analysis beyond `hl.monitor` calls that previously stopped the evaluator. Monitor declarations still have zero modeled results; no compositor, assets or native rule manager runs. Fresh analysis must account for every captured view and resolution input, including previously unreachable saved inputs. A previously stopped graph that now needs an uncaptured dependency remains unresolved; no live folder access is inferred. A saved graph containing inconsistent or unreached inputs is refused. Saved bytes, private source pieces and typed draft values retain their original representation.
 
@@ -27,6 +28,6 @@ hyprland-editor --check-workspace-migration /absolute/path/old.hye
 
 It reports the reviewed transition and reanalysis, writes nothing and requires exactly one argument. Ordinary `--check-workspace` continues to reject old graph models; it never silently migrates them.
 
-Tests rebuild all four supported models for both audited Hyprland snapshots with deleted original files and retained private source revisions. They refuse unknown models, foreign compiler profiles, source corruption, mismatched dependency requests, hidden payloads and unknown views. The native GUI workflow covers cancel, changed-draft refusal, protecting unsaved values, explicit replacement, a new private save and unchanged old-file bytes.
+Tests rebuild all five supported models for both audited Hyprland snapshots with deleted original files and retained private source revisions. They refuse unknown models, foreign compiler profiles, source corruption, mismatched dependency requests, hidden payloads and unknown views. The native GUI workflow covers cancel, changed-draft refusal, protecting unsaved values, explicit replacement, a new private save and unchanged old-file bytes.
 
 General older-model conversion, schema transformations, persistent operation history, full feature-family reconciliation and full source export remain required. This specific compatibility path does not certify those broader audit contracts.

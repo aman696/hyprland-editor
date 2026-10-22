@@ -22,7 +22,8 @@
         "data/migrations/graph-model-before-projection.json",
         "data/migrations/graph-model-projection.json",
         "data/migrations/graph-model-migration.json",
-        "data/migrations/graph-model-before-monitors.json"
+        "data/migrations/graph-model-before-monitors.json",
+        "data/migrations/graph-model-monitor-values.json"
       ],
       "test_references": [
         "reviewed_transition_pins_exact_monitor_differences_and_refuses_unreviewed_builds",
@@ -30,7 +31,7 @@
         "migration_refuses_unknown_models_profiles_corruption_unreached_inputs_and_hidden_payloads",
         "workflow::test_graph_migration"
       ],
-      "limits": "four exact reviewed dependency/storage/monitor transitions with bounded held-inode input, unknown-payload refusal, fresh restricted-worker captured-view/dependency/private-piece reanalysis, byte/value preservation, cancel/epoch/unsaved guards and new private save; no original-path reads or restored folder access, general model/schema/profile conversion, persistent history, full source export/reconciliation or full audit certificate"
+      "limits": "five exact reviewed dependency/storage/monitor transitions with bounded held-inode input, unknown-payload refusal, fresh restricted-worker captured-view/dependency/private-piece reanalysis, byte/value preservation, cancel/epoch/unsaved guards and new private save; no original-path reads or restored folder access, general model/schema/profile conversion, persistent history, full source export/reconciliation or full audit certificate"
     },
     {
       "area": "source dependency capture and ordered evaluation",
@@ -316,6 +317,7 @@
         "data/monitors.json",
         "crates/editor-core/src/lua/monitor_inspection.rs",
         "crates/editor-core/src/lua/replay/monitor_edit.rs",
+        "crates/editor-core/src/lua/replay/monitor_edit/fields.rs",
         "crates/editor-app/src/source_changes.rs",
         "crates/editor-app/src/source_graph.rs",
         "data/monitor-source-semantics.json",
@@ -332,10 +334,15 @@
         "monitor_output_and_compound_fields_use_exact_coordinates_and_product_validation",
         "scalar_comparison_after_monitor_keeps_monitor_changes_in_the_review",
         "monitor_source_inspection_and_comparison_run_in_the_restricted_worker",
+        "field_removal_preserves_all_comments_unrelated_fields_and_separator_variants",
+        "adding_fields_preserves_loaders_array_indices_comments_and_nil_placeholders",
+        "removal_uses_recorded_dynamic_keys_and_latest_assignment_or_rawset_without_resurrecting_values",
+        "latest_nil_write_can_add_a_field_without_being_masked_or_guessing_a_future_write",
+        "monitor_field_presence_edits_cross_the_restricted_worker_with_exact_row_guards",
         "source_changes::test_monitor_workflow",
         "scripts/monitor_source_probe.py --check"
       ],
-      "limits": "22 versioned field controls and output selector, ordered drafts, static import/export, private snapshots, source-pinned routing/primary codecs, captured field/output value-expression comparison and private revisions with cross-file/shared-impact review; no native helper/manager/hardware certificate, source field/declaration insertion/removal, compound trivia preservation, rejected-input graphical repair, complete source/draft reconciliation, ICC decoding, recovery, live apply or rendered preview certification"
+      "limits": "22 versioned field controls and output selector, ordered drafts, static import/export, private snapshots, source-pinned routing/primary codecs, captured value/presence edits, recorded constructor/assignment/rawset/nil writes, exact numeric and explicit invalid-input repair seeds, bounded multi-patch review and private cross-file revisions; no native helper/manager/hardware certificate, whole declaration insertion/removal, arbitrary unresolved-source repair, compound value trivia preservation, complete source/draft reconciliation, ICC decoding, recovery, live apply or rendered preview certification"
     },
     {
       "area": "scalar draft forms",

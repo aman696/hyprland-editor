@@ -673,11 +673,13 @@ fn comparable(analysis: &Analysis, event: &hyprland_editor_core::lua::replay::Ev
             .config_batches
             .iter()
             .any(|b| b.event_order == event.order && !b.candidates.is_empty()),
-        "hl.monitor" => analysis.monitors.as_ref().is_some_and(|m| {
-            m.batches
-                .iter()
-                .any(|b| b.event_order == event.order && b.models_submission_and_refresh)
-        }),
+        "hl.monitor" => {
+            matches!(event.arguments.first(), Some(Observed::Table(_)))
+                && analysis
+                    .monitors
+                    .as_ref()
+                    .is_some_and(|m| m.batches.iter().any(|b| b.event_order == event.order))
+        }
         _ => false,
     }
 }

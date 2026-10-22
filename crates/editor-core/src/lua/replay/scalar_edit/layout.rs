@@ -86,7 +86,7 @@ fn key(field: Node<'_>, source: &str, array: &mut i64) -> Result<Key, String> {
 }
 // Remove syntax tokens only. Comments and whitespace survive even inside a
 // removed field or replaced expression. Quoted '--' is a string token, not a comment.
-fn erase_tokens(node: Node<'_>, source: &str) -> Result<String, String> {
+pub(in crate::lua::replay) fn erase_tokens(node: Node<'_>, source: &str) -> Result<String, String> {
     let mut pending = vec![node];
     let mut tokens = vec![];
     let mut visited = 0;
@@ -98,7 +98,10 @@ fn erase_tokens(node: Node<'_>, source: &str) -> Result<String, String> {
         if current.kind() == "comment" {
             continue;
         }
-        if current.child_count() == 0 {
+        // String content can have escape children without nodes for the plain
+        // bytes between them. Treat the entire string as a syntax token; its
+        // whitespace and '--' text are not source trivia or real comments.
+        if current.kind() == "string" || current.child_count() == 0 {
             if !current.byte_range().is_empty() {
                 tokens.push(current.byte_range());
             }

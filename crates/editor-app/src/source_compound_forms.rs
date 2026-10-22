@@ -442,9 +442,8 @@ pub(super) fn test_workflow(parent: &adw::ApplicationWindow) {
         assert!(keep.is_sensitive(), "{index}: {text}");
         assert!(text.contains("Modeled parsed value:"));
         if (1..=3).contains(&index) {
-            assert!(
-                text.contains("Existing table comments, spacing and unrelated fields are retained")
-            );
+            assert!(text
+                .contains("Existing comments, spacing and unrelated source fields are retained"));
         }
         assert!(
             !text.contains("Additional modeled findings"),

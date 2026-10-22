@@ -40,6 +40,10 @@ pub enum Request {
         program: lua::replay::Program,
         change: lua::replay::monitor_edit::Change,
     },
+    CompareMonitorFieldSource {
+        program: lua::replay::Program,
+        change: lua::replay::monitor_edit::FieldChange,
+    },
     ReviewSourceOverrides {
         program: lua::replay::Program,
         draft: Draft,
@@ -192,6 +196,10 @@ pub fn entry() {
             }
             Request::CompareMonitorSource { program, change } => {
                 lua::replay::monitor_edit::compare(&program, &change)
+                    .map(|result| Response::ScalarSourceComparison(Box::new(result)))
+            }
+            Request::CompareMonitorFieldSource { program, change } => {
+                lua::replay::monitor_edit::compare_field(&program, &change)
                     .map(|result| Response::ScalarSourceComparison(Box::new(result)))
             }
             Request::ReviewSourceOverrides { program, draft } => {

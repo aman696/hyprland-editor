@@ -96,6 +96,65 @@ fn monitor_source_inspection_and_comparison_run_in_the_restricted_worker() {
     }
 }
 #[test]
+fn monitor_field_presence_edits_cross_the_restricted_worker_with_exact_row_guards() {
+    use hyprland_editor_core::{
+        lua::replay::{
+            monitor_edit::{FieldChange, TableSelection},
+            Observed,
+        },
+        AUDITED_MAIN, BASELINE,
+    };
+    for version in [BASELINE, AUDITED_MAIN] {
+        let mut p = replay_program("hl.monitor{output='DP-1',transform= -- keep\n 2}");
+        p.version = version.into();
+        let result = request(
+            json!({"CompareMonitorFieldSource":{"program":p,"change":FieldChange::Add {event_order:0,field:"scale".into(),value:hyprland_editor_core::Value::String("auto".into()),selection:TableSelection::SelectedConstructor}}}),
+        );
+        assert_eq!(
+            result["ScalarSourceComparison"]["review"]["modeled_observations_match"], true,
+            "{result}"
+        );
+        let replay = request(json!({"ReplayModules":p}));
+        let event: hyprland_editor_core::lua::replay::Event =
+            serde_json::from_value(replay["Replayed"]["events"][0].clone()).unwrap();
+        let Observed::Table(rows) = &event.arguments[0] else {
+            panic!()
+        };
+        let row = rows
+            .iter()
+            .position(|(k, _)| matches!(k,Observed::Bytes(b) if b==b"transform"))
+            .unwrap();
+        let result = request(
+            json!({"CompareMonitorFieldSource":{"program":p,"change":FieldChange::Remove {event_order:0,row,raw_key:b"transform".to_vec()}}}),
+        );
+        assert_eq!(
+            result["ScalarSourceComparison"]["review"]["modeled_observations_match"], true,
+            "{result}"
+        );
+        assert_eq!(
+            result["ScalarSourceComparison"]["plan"]["edits"]
+                .as_array()
+                .unwrap()
+                .len(),
+            2
+        );
+        assert!(
+            result["ScalarSourceComparison"]["review"]["revisions"][0]["content"]
+                .as_str()
+                .unwrap()
+                .contains("-- keep")
+        );
+        let refused = request(
+            json!({"CompareMonitorFieldSource":{"program":p,"change":FieldChange::Remove {event_order:0,row,raw_key:b"different".to_vec()}}}),
+        );
+        assert!(refused["Error"].is_string());
+        let malformed = request(
+            json!({"CompareMonitorFieldSource":{"program":p,"change":{"operation":"remove","event_order":0,"row":row,"raw_key":b"transform","unexpected":true}}}),
+        );
+        assert!(malformed["Error"].is_string());
+    }
+}
+#[test]
 fn private_source_pieces_round_trip_inside_the_restricted_worker_without_rewriting_base() {
     use hyprland_editor_core::lua::{replay::edits::*, source_hash};
     let base = replay_program("hl.config({general={border_size=2}})");

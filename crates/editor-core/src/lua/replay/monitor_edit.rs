@@ -9,6 +9,8 @@ use crate::{
     monitor, Value,
 };
 use serde::{Deserialize, Serialize};
+mod fields;
+pub use fields::{compare_field, FieldChange, TableSelection};
 
 pub type Comparison = scalar_edit::Comparison;
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -41,37 +43,24 @@ pub fn compare(program: &Program, change: &Change) -> Result<Comparison, String>
         .batches
         .first()
         .ok_or("Monitor argument inspection is incomplete")?;
-    if inspection.stopped.is_some() || !batch.models_submission_and_refresh {
+    if inspection.stopped.is_some()
+        || !batch.models_submission_and_refresh && change.field != "output"
+    {
         return Err("Monitor output identity is unresolved".into());
     }
     let Observed::Table(rows) = event.arguments.first().ok_or("Missing monitor table")? else {
         return Err("Missing monitor table".into());
     };
     let (key, _) = rows.get(change.row).ok_or("Missing monitor field row")?;
-    let (kind, codec, expression) = if change.field == "output" {
+    let expression = if change.field == "output" {
         if !matches!(key, Observed::Bytes(raw) if raw == b"output") {
             return Err("Output row does not match the exact required field".into());
         }
-        let Value::String(text) = &change.value else {
-            return Err("Output needs a text selector".into());
-        };
-        let output = if text.is_empty() {
-            monitor::Output::Fallback
-        } else if let Some(description) = text.strip_prefix("desc:") {
-            monitor::Output::Description(description.into())
-        } else {
-            monitor::Output::Connector(text.clone())
-        };
-        output.validate()?;
-        (
-            "String",
-            scalar_codec::Codec::String { validator: None },
-            event
-                .argument_sources
-                .first()
-                .and_then(|s| s.rows.get(change.row))
-                .and_then(|s| s.expression),
-        )
+        event
+            .argument_sources
+            .first()
+            .and_then(|s| s.rows.get(change.row))
+            .and_then(|s| s.expression)
     } else {
         let candidate = batch
             .candidates
@@ -83,30 +72,9 @@ pub fn compare(program: &Program, change: &Change) -> Result<Comparison, String>
                 "Monitor aliases address the same property; resolve the conflict first".into(),
             );
         }
-        let metadata = monitor_inspection::fields(&program.version)?
-            .iter()
-            .find(|f| f.key == change.field)
-            .ok_or("Missing monitor factory metadata")?;
-        // Product input constraints are separate from native primitive parsing.
-        let mut rule = monitor::Rule::new("comparison");
-        rule.fields
-            .insert(change.field.clone(), change.value.clone());
-        rule.validate(&program.version)?;
-        (
-            metadata.kind.as_str(),
-            monitor_inspection::codec(metadata)?,
-            candidate.expression,
-        )
+        candidate.expression
     };
-    let proposed = scalar_edit::input(&change.value, kind)?;
-    let outcome = scalar_codec::decode_batch(&[scalar_codec::Case {
-        codec,
-        input: proposed.clone(),
-    }])?
-    .remove(0);
-    if !matches!(outcome, Outcome::Accepted { .. }) {
-        return Err("The pinned primary parser rejects this value or cannot resolve it".into());
-    }
+    let (proposed, outcome) = proposed(&program.version, &change.field, &change.value)?;
     let mut id = expression.ok_or("No exact expression is recorded for this monitor value")?;
     if matches!(change.selection, Selection::OriginalLiteral) {
         for _ in 0..8192 {
@@ -166,4 +134,40 @@ pub fn compare(program: &Program, change: &Change) -> Result<Comparison, String>
     };
     edits::fingerprint(&result)?;
     Ok(result)
+}
+
+fn proposed(version: &str, field: &str, value: &Value) -> Result<(Observed, Outcome), String> {
+    let (kind, codec) = if field == "output" {
+        let Value::String(text) = value else {
+            return Err("Output needs a text selector".into());
+        };
+        let output = if text.is_empty() {
+            monitor::Output::Fallback
+        } else if let Some(description) = text.strip_prefix("desc:") {
+            monitor::Output::Description(description.into())
+        } else {
+            monitor::Output::Connector(text.clone())
+        };
+        output.validate()?;
+        ("String", scalar_codec::Codec::String { validator: None })
+    } else {
+        let metadata = monitor_inspection::fields(version)?
+            .iter()
+            .find(|f| f.key == field)
+            .ok_or("Missing monitor factory metadata")?;
+        let mut rule = monitor::Rule::new("comparison");
+        rule.fields.insert(field.into(), value.clone());
+        rule.validate(version)?;
+        (metadata.kind.as_str(), monitor_inspection::codec(metadata)?)
+    };
+    let proposed = scalar_edit::input(value, kind)?;
+    let outcome = scalar_codec::decode_batch(&[scalar_codec::Case {
+        codec,
+        input: proposed.clone(),
+    }])?
+    .remove(0);
+    if !matches!(outcome, Outcome::Accepted { .. }) {
+        return Err("The pinned primary parser rejects this value or cannot resolve it".into());
+    }
+    Ok((proposed, outcome))
 }
