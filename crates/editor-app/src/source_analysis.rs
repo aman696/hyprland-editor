@@ -40,6 +40,7 @@ pub(super) struct View {
     source_expander: gtk::glib::WeakRef<gtk::Expander>,
     compare: gtk::glib::WeakRef<gtk::Button>,
     overrides: gtk::glib::WeakRef<gtk::Button>,
+    monitor_review: gtk::glib::WeakRef<gtk::Button>,
     declarations: gtk::glib::WeakRef<gtk::Button>,
     change_window: Rc<RefCell<Option<gtk::glib::WeakRef<adw::Window>>>>,
 }
@@ -89,6 +90,11 @@ pub(super) fn build(
     overrides.set_halign(gtk::Align::Start);
     overrides.set_sensitive(false);
     body.append(&overrides);
+    let monitor_review = gtk::Button::with_label("Review Monitor Drafts");
+    monitor_review.set_widget_name("source-analysis-monitor-review");
+    monitor_review.set_halign(gtk::Align::Start);
+    monitor_review.set_sensitive(false);
+    body.append(&monitor_review);
     let tabs = gtk::Stack::new();
     let files_page = gtk::Box::new(gtk::Orientation::Vertical, 8);
     let files = gtk::DropDown::from_strings(&[]);
@@ -204,6 +210,7 @@ pub(super) fn build(
         source_expander: source_expander.downgrade(),
         compare: compare.downgrade(),
         overrides: overrides.downgrade(),
+        monitor_review: monitor_review.downgrade(),
         declarations: declarations.downgrade(),
         change_window: Rc::new(RefCell::new(None)),
     };
@@ -216,10 +223,41 @@ pub(super) fn build(
     let v = view.clone();
     overrides.connect_clicked(move |_| v.overrides());
     let v = view.clone();
+    monitor_review.connect_clicked(move |_| v.monitor_review());
+    let v = view.clone();
     declarations.connect_clicked(move |_| v.declarations());
     (body, view)
 }
 impl View {
+    fn monitor_review(&self) {
+        let (Some(model), Some(state), Some(button)) = (
+            self.model.upgrade(),
+            self.state.upgrade(),
+            self.monitor_review.upgrade(),
+        ) else {
+            return;
+        };
+        if model.borrow().is_none() {
+            return;
+        }
+        let Some(parent) = button.root().and_downcast::<gtk::Window>() else {
+            return;
+        };
+        self.close_change();
+        let view = self.clone();
+        let window = super::source_monitors::open(
+            &parent,
+            &model,
+            &state,
+            Rc::new(move || {
+                if let Some(callback) = &view.after_keep {
+                    callback();
+                }
+                view.render();
+            }),
+        );
+        *self.change_window.borrow_mut() = Some(window.downgrade());
+    }
     fn declarations(&self) {
         let (Some(model), Some(state), Some(button), Some(files)) = (
             self.model.upgrade(),
@@ -412,6 +450,9 @@ impl View {
         if let Some(button) = self.overrides.upgrade() {
             button.set_sensitive(false);
         }
+        if let Some(button) = self.monitor_review.upgrade() {
+            button.set_sensitive(false);
+        }
         if let Some(button) = self.compare.upgrade() {
             button.set_sensitive(false);
         }
@@ -448,6 +489,13 @@ impl View {
         };
         if let Some(button) = self.declarations.upgrade() {
             button.set_sensitive(!analysis.program.documents.is_empty());
+        }
+        if let Some(button) = self.monitor_review.upgrade() {
+            button.set_sensitive(
+                self.state
+                    .upgrade()
+                    .is_some_and(|s| s.borrow().draft.version == analysis.program.version),
+            );
         }
         if let Some(button) = self.overrides.upgrade() {
             button.set_sensitive(self.state.upgrade().is_some_and(|s| {

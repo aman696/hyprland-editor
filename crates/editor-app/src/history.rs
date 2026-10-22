@@ -12,6 +12,8 @@ pub(super) enum Undo {
     Graph {
         previous: Option<Arc<super::source_graph::Saved>>,
         changes: Vec<(String, Option<Value>)>,
+        monitor_changed: bool,
+        previous_monitors: Option<Vec<hyprland_editor_core::monitor::Rule>>,
         retained_bytes: usize,
     },
     Field {
@@ -371,6 +373,23 @@ impl History {
         self.push(Undo::Graph {
             previous,
             changes,
+            monitor_changed: false,
+            previous_monitors: None,
+            retained_bytes,
+        })
+    }
+    pub fn graph_monitors(
+        &mut self,
+        previous: Option<Arc<super::source_graph::Saved>>,
+        monitors: Option<Vec<hyprland_editor_core::monitor::Rule>>,
+    ) -> Result<(), String> {
+        let retained_bytes = previous.as_ref().map_or(0, |g| g.history_cost)
+            + monitors.as_ref().map_or(0, monitor_bytes);
+        self.push(Undo::Graph {
+            previous,
+            changes: vec![],
+            monitor_changed: true,
+            previous_monitors: monitors,
             retained_bytes,
         })
     }
@@ -638,6 +657,28 @@ mod tests {
         );
         assert!(history.monitors(vec![oversized]).is_err());
         assert!(matches!(history.pop(),Some(Undo::Field {id,..})if id=="kept"));
+    }
+    #[test]
+    fn combined_monitor_graph_inverse_budgets_before_mutation_and_keeps_absence() {
+        let mut history = History::default();
+        history.graph_monitors(None, None).unwrap();
+        assert!(matches!(
+            history.pop(),
+            Some(Undo::Graph {
+                monitor_changed: true,
+                previous_monitors: None,
+                previous: None,
+                ..
+            })
+        ));
+        history.field("kept", None).unwrap();
+        let mut large = hyprland_editor_core::monitor::Rule::new("large");
+        large.fields.insert(
+            "mirror".into(),
+            Value::String(String::with_capacity(MAX_BYTES + 1)),
+        );
+        assert!(history.graph_monitors(None, Some(vec![large])).is_err());
+        assert!(matches!(history.pop(),Some(Undo::Field {id,..}) if id=="kept"));
     }
     #[test]
     fn device_inverse_preserves_order_and_refuses_excess_capacity() {

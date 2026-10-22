@@ -28,6 +28,7 @@ mod source_context;
 mod source_declarations;
 mod source_graph;
 mod source_modules;
+mod source_monitors;
 mod source_overrides;
 mod source_provenance;
 #[cfg(test)]
@@ -200,6 +201,42 @@ impl State {
     fn keep_graph(&mut self, graph: Arc<source_graph::Saved>) -> Result<(), String> {
         self.keep_graph_and_overrides(graph, self.draft.clone())
     }
+    fn check_graph_root(&self, graph: &source_graph::Saved) -> Result<(), String> {
+        let version = &self.draft.version;
+        let root = graph
+            .bundle
+            .sources
+            .iter()
+            .find(|s| s.id == graph.bundle.graph.root)
+            .ok_or("Graph root missing")?;
+        if graph.version != *version
+            || self.source_origins.get(version) != Some(&root.origin)
+            || self
+                .sources
+                .get(version)
+                .is_none_or(|d| d.source != root.content)
+        {
+            return Err("Analyze the imported root at its exact recorded revision before retaining the graph.".into());
+        }
+        Ok(())
+    }
+    fn keep_graph_and_monitors(
+        &mut self,
+        graph: Arc<source_graph::Saved>,
+        monitors: Vec<hyprland_editor_core::monitor::Rule>,
+    ) -> Result<(), String> {
+        hyprland_editor_core::monitor::validate(&monitors, &self.draft.version)?;
+        self.check_graph_root(&graph)?;
+        let version = self.draft.version.clone();
+        self.undo.graph_monitors(
+            self.source_graphs.get(&version).cloned(),
+            self.monitors.get(&version).cloned(),
+        )?;
+        self.source_graphs.insert(version.clone(), graph);
+        self.monitors.insert(version, monitors);
+        self.generation += 1;
+        Ok(())
+    }
     fn keep_graph_and_overrides(
         &mut self,
         graph: Arc<source_graph::Saved>,
@@ -229,21 +266,7 @@ impl State {
             .map(|(id, v)| (id.clone(), Some(v.clone())))
             .collect::<Vec<_>>();
         let version = &self.draft.version;
-        let root = graph
-            .bundle
-            .sources
-            .iter()
-            .find(|s| s.id == graph.bundle.graph.root)
-            .ok_or("Graph root missing")?;
-        if graph.version != *version
-            || self.source_origins.get(version) != Some(&root.origin)
-            || self
-                .sources
-                .get(version)
-                .is_none_or(|d| d.source != root.content)
-        {
-            return Err("Analyze the imported root at its exact recorded revision before retaining the graph.".into());
-        }
+        self.check_graph_root(&graph)?;
         if changes.is_empty()
             && self
                 .source_graphs
@@ -265,7 +288,11 @@ impl State {
         };
         match operation {
             history::Undo::Graph {
-                previous, changes, ..
+                previous,
+                changes,
+                monitor_changed,
+                previous_monitors,
+                ..
             } => {
                 if let Some(graph) = previous {
                     self.source_graphs.insert(self.draft.version.clone(), graph);
@@ -277,6 +304,13 @@ impl State {
                         self.draft.values.insert(id, value);
                     } else {
                         self.draft.values.remove(&id);
+                    }
+                }
+                if monitor_changed {
+                    if let Some(monitors) = previous_monitors {
+                        self.monitors.insert(self.draft.version.clone(), monitors);
+                    } else {
+                        self.monitors.remove(&self.draft.version);
                     }
                 }
             }
@@ -1721,6 +1755,7 @@ mod tests {
         source_access::test_retained_graph(&window);
         source_compound_forms::test_workflow(&window);
         source_changes::test_monitor_workflow(&window);
+        source_monitors::test_workflow(&window);
         source_declarations::test_workflow(&window);
         rule_forms::test_forms();
         window.close();

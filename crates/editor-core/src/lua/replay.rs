@@ -3,6 +3,7 @@
 pub mod edits;
 mod eval;
 pub mod monitor_edit;
+pub mod monitor_review;
 mod observed_float;
 pub mod override_review;
 mod path_sources;

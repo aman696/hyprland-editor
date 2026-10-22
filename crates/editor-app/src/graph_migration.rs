@@ -21,7 +21,9 @@ const MONITOR_DECLARATIONS: &str =
     "cfa1292e40e8e8111d2f279f98cfeed192f35b05b7a6af49c024c23c47085783";
 const DECLARATIONS_MODEL: &str =
     include_str!("../../../data/migrations/graph-model-monitor-declarations.json");
-const TO: &str = "1dacfb662caa635f63047517d223d73ec0c1922b2d9f93b3a7fa35cecb91909e";
+const MONITOR_LAYOUT: &str = "1dacfb662caa635f63047517d223d73ec0c1922b2d9f93b3a7fa35cecb91909e";
+const LAYOUT_MODEL: &str = include_str!("../../../data/migrations/graph-model-monitor-layout.json");
+const TO: &str = "be2a3bceb486422b079705792d7dae67f4922f96fcfc304004df20fbc22c92f1";
 const OLD: &str = include_str!("../../../data/migrations/graph-model-before-projection.json");
 const FROM_PROJECTION: &str = "046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371";
 const PROJECTION: &str = include_str!("../../../data/migrations/graph-model-projection.json");
@@ -239,9 +241,9 @@ fn before_monitor_layout_transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
-fn transition(from: &str) -> Result<(), String> {
+fn before_monitor_review_transition(from: &str) -> Result<(), String> {
     if lua::source_hash(DECLARATIONS_MODEL) != MONITOR_DECLARATIONS
-        || workspace_graph::schema_sha256() != TO
+        || lua::source_hash(LAYOUT_MODEL) != MONITOR_LAYOUT
     {
         return Err(
             "No reviewed monitor layout transition to this exact model is available".into(),
@@ -252,7 +254,8 @@ fn transition(from: &str) -> Result<(), String> {
     }
     let previous: serde_json::Value =
         serde_json::from_str(DECLARATIONS_MODEL).map_err(|e| e.to_string())?;
-    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let current: serde_json::Value =
+        serde_json::from_str(LAYOUT_MODEL).map_err(|e| e.to_string())?;
     let old = previous["inputs"]
         .as_object()
         .ok_or("Invalid previous declaration model")?;
@@ -274,6 +277,48 @@ fn transition(from: &str) -> Result<(), String> {
         ]
     {
         return Err("Monitor layout model no longer has only the reviewed monitor editor and shared layout visibility changes".into());
+    }
+    Ok(())
+}
+fn transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(LAYOUT_MODEL) != MONITOR_LAYOUT || workspace_graph::schema_sha256() != TO {
+        return Err(
+            "No reviewed monitor reconciliation transition to this exact model is available".into(),
+        );
+    }
+    if from != MONITOR_LAYOUT {
+        before_monitor_review_transition(from)?;
+    }
+    let previous: serde_json::Value =
+        serde_json::from_str(LAYOUT_MODEL).map_err(|e| e.to_string())?;
+    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let old = previous["inputs"]
+        .as_object()
+        .ok_or("Invalid previous monitor layout model")?;
+    let new = current["inputs"]
+        .as_object()
+        .ok_or("Invalid monitor reconciliation model")?;
+    let added = new
+        .keys()
+        .filter(|k| !old.contains_key(*k))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    let changed = old
+        .keys()
+        .filter(|k| new.get(*k) != Some(&old[*k]))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    if old.len() != 65
+        || new.len() != 66
+        || added != ["crates/editor-core/src/lua/replay/monitor_review.rs"]
+        || changed
+            != [
+                "crates/editor-app/src/worker.rs",
+                "crates/editor-core/src/lua/replay.rs",
+                "crates/editor-core/src/lua/replay/monitor_edit.rs",
+            ]
+    {
+        return Err("Monitor reconciliation model no longer has only the reviewed module, worker and helper visibility changes".into());
     }
     Ok(())
 }
@@ -378,6 +423,7 @@ mod tests {
         transition(MONITOR_VALUES).unwrap();
         transition(MONITOR_FIELDS).unwrap();
         transition(MONITOR_DECLARATIONS).unwrap();
+        transition(MONITOR_LAYOUT).unwrap();
         assert!(transition(&"0".repeat(64)).is_err());
         assert_ne!(FROM, TO);
         assert_eq!(lua::source_hash(CURRENT), TO);

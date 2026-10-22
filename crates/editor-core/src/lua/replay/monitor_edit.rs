@@ -184,7 +184,11 @@ pub fn compare(program: &Program, change: &Change) -> Result<Comparison, String>
     Ok(result)
 }
 
-fn proposed(version: &str, field: &str, value: &Value) -> Result<(Observed, Outcome), String> {
+pub(super) fn proposed(
+    version: &str,
+    field: &str,
+    value: &Value,
+) -> Result<(Observed, Outcome), String> {
     let (kind, codec) = if field == "output" {
         let Value::String(text) = value else {
             return Err("Output needs a text selector".into());

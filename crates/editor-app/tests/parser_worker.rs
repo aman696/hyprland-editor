@@ -891,3 +891,53 @@ fn primitive_coercion_stays_in_the_restricted_worker_and_refuses_batch_budgets()
         .contains("2 MiB"));
     assert!(!marker.exists());
 }
+
+#[test]
+fn monitor_source_draft_review_and_resolution_stay_in_the_restricted_worker() {
+    use hyprland_editor_core::{
+        lua::replay::monitor_review::{Choice, Review},
+        monitor::{Output, Rule},
+        Value, AUDITED_MAIN, BASELINE,
+    };
+    for version in [BASELINE, AUDITED_MAIN] {
+        let mut program = replay_program(
+            "hl.monitor{output='DP-1',transform=1};hl.monitor{output='DP-1',transform=2}",
+        );
+        program.version = version.into();
+        let mut rule = Rule::new("draft");
+        rule.output = Output::Connector("DP-1".into());
+        rule.fields.insert("transform".into(), Value::Int(3));
+        let monitors = vec![rule];
+        let result =
+            request(json!({"ReviewSourceMonitors":{"program":program,"monitors":monitors}}));
+        let review: Review = serde_json::from_value(result["SourceMonitorReview"].clone()).unwrap();
+        assert_eq!(review.sources.len(), 2);
+        assert!(review.model_complete);
+        let result = request(
+            json!({"ResolveSourceMonitors":{"program":program,"monitors":monitors,"review":review,"choice":Choice::WriteDraft {draft_id:"draft".into(),event_order:0}}}),
+        );
+        let result = &result["SourceMonitorResolution"];
+        assert_eq!(result["ownership_verified"], false);
+        assert_eq!(result["runtime_verified"], false);
+        assert_eq!(result["plans"].as_array().unwrap().len(), 1);
+        assert_eq!(result["previews"][0]["before"], "1");
+        assert_eq!(result["previews"][0]["after"], "3");
+        let result = request(
+            json!({"ResolveSourceMonitors":{"program":program,"monitors":monitors,"review":review,"choice":Choice::CopySource {event_order:1,replace_id:None}}}),
+        );
+        assert_eq!(
+            result["SourceMonitorResolution"]["monitors"]
+                .as_array()
+                .unwrap()
+                .len(),
+            2
+        );
+        assert_eq!(
+            result["SourceMonitorResolution"]["plans"]
+                .as_array()
+                .unwrap()
+                .len(),
+            0
+        );
+    }
+}

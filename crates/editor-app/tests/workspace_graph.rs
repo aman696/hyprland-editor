@@ -541,6 +541,7 @@ fn reviewed_graph_migrations_rebuild_deleted_sources_and_private_pieces_without_
             "d7dd575308699007b7083b5776cfdfb6268b84b78fd4bd7f7f29c023c24f70cd",
             "05bb2e4e86ef118289b70942ff23ae80ef07ad6ea16c3f44dd676e542c0ece37",
             "cfa1292e40e8e8111d2f279f98cfeed192f35b05b7a6af49c024c23c47085783",
+            "1dacfb662caa635f63047517d223d73ec0c1922b2d9f93b3a7fa35cecb91909e",
         ] {
             let root = root();
             let mut snapshot = fixture(&root, version);

@@ -56,6 +56,16 @@ pub enum Request {
         program: lua::replay::Program,
         draft: Draft,
     },
+    ReviewSourceMonitors {
+        program: lua::replay::Program,
+        monitors: Vec<hyprland_editor_core::monitor::Rule>,
+    },
+    ResolveSourceMonitors {
+        program: lua::replay::Program,
+        monitors: Vec<hyprland_editor_core::monitor::Rule>,
+        review: lua::replay::monitor_review::Review,
+        choice: lua::replay::monitor_review::Choice,
+    },
     ResolveSourceOverrides {
         program: lua::replay::Program,
         draft: Draft,
@@ -102,6 +112,8 @@ pub enum Response {
     SourceEditReview(Box<lua::replay::edits::EditReview>),
     ScalarSourceComparison(Box<lua::replay::scalar_edit::Comparison>),
     SourceOverrideReview(Box<lua::replay::override_review::Review>),
+    SourceMonitorReview(Box<lua::replay::monitor_review::Review>),
+    SourceMonitorResolution(Box<lua::replay::monitor_review::Resolution>),
     SourceOverrideResolution(Box<lua::replay::override_review::Resolution>),
     SourceRevisionProgram(lua::replay::Program),
     SourceRevisions(Vec<hyprland_editor_core::workspace_graph::revisions::Revision>),
@@ -223,6 +235,17 @@ pub fn entry() {
                 lua::replay::override_review::prepare(&program, &draft)
                     .map(|result| Response::SourceOverrideReview(Box::new(result)))
             }
+            Request::ReviewSourceMonitors { program, monitors } => {
+                lua::replay::monitor_review::prepare(&program, &monitors)
+                    .map(|result| Response::SourceMonitorReview(Box::new(result)))
+            }
+            Request::ResolveSourceMonitors {
+                program,
+                monitors,
+                review,
+                choice,
+            } => lua::replay::monitor_review::resolve(&program, &monitors, &review, &choice)
+                .map(|result| Response::SourceMonitorResolution(Box::new(result))),
             Request::ResolveSourceOverrides {
                 program,
                 draft,

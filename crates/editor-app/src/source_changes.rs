@@ -1549,7 +1549,7 @@ fn open_impl(
     actions.append(&keep);
     footer.append(&actions);
     footer.append(&label(if monitor {
-        "Monitor source changes and monitor drafts stay separate. Their reconciliation is still pending; Save Draft keeps the private source revision."
+        "Monitor drafts change only through Review Monitor Drafts. Save Draft keeps this private source revision."
     } else {
         "Source revisions and value overrides stay separate. Review Value Overrides can reconcile scalar layers; Save Draft keeps the private workspace."
     }));
