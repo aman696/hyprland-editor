@@ -40,6 +40,7 @@ pub(super) struct View {
     source_expander: gtk::glib::WeakRef<gtk::Expander>,
     compare: gtk::glib::WeakRef<gtk::Button>,
     overrides: gtk::glib::WeakRef<gtk::Button>,
+    declarations: gtk::glib::WeakRef<gtk::Button>,
     change_window: Rc<RefCell<Option<gtk::glib::WeakRef<adw::Window>>>>,
 }
 fn short(bytes: &[u8]) -> String {
@@ -96,6 +97,11 @@ pub(super) fn build(
     files.set_widget_name("dependency-analysis-file");
     files.update_property(&[gtk::accessible::Property::Label("Analyzed source snapshot")]);
     files_page.append(&files);
+    let declarations = gtk::Button::with_label("Add / Remove Monitor Declaration");
+    declarations.set_widget_name("source-analysis-declarations");
+    declarations.set_halign(gtk::Align::Start);
+    declarations.set_sensitive(false);
+    files_page.append(&declarations);
     let (area, source) = text_area("dependency-analysis-source");
     files_page.append(&area);
     tabs.add_titled(&files_page, Some("files"), "Files");
@@ -198,6 +204,7 @@ pub(super) fn build(
         source_expander: source_expander.downgrade(),
         compare: compare.downgrade(),
         overrides: overrides.downgrade(),
+        declarations: declarations.downgrade(),
         change_window: Rc::new(RefCell::new(None)),
     };
     let v = view.clone();
@@ -208,9 +215,46 @@ pub(super) fn build(
     compare.connect_clicked(move |_| v.compare());
     let v = view.clone();
     overrides.connect_clicked(move |_| v.overrides());
+    let v = view.clone();
+    declarations.connect_clicked(move |_| v.declarations());
     (body, view)
 }
 impl View {
+    fn declarations(&self) {
+        let (Some(model), Some(state), Some(button), Some(files)) = (
+            self.model.upgrade(),
+            self.state.upgrade(),
+            self.declarations.upgrade(),
+            self.files.upgrade(),
+        ) else {
+            return;
+        };
+        let Some(analysis) = model.borrow().clone() else {
+            return;
+        };
+        let Some(doc) = analysis.program.documents.get(files.selected() as usize) else {
+            return;
+        };
+        let Some(parent) = button.root().and_downcast::<gtk::Window>() else {
+            return;
+        };
+        self.close_change();
+        let view = self.clone();
+        let window = super::source_declarations::open(
+            &parent,
+            &model,
+            doc.id.clone(),
+            None,
+            &state,
+            Rc::new(move || {
+                if let Some(callback) = &view.after_keep {
+                    callback();
+                }
+                view.render();
+            }),
+        );
+        *self.change_window.borrow_mut() = Some(window.downgrade());
+    }
     fn overrides(&self) {
         let (Some(model), Some(state), Some(button)) = (
             self.model.upgrade(),
@@ -402,6 +446,9 @@ impl View {
         let Some(analysis) = self.model.upgrade().and_then(|m| m.borrow().clone()) else {
             return;
         };
+        if let Some(button) = self.declarations.upgrade() {
+            button.set_sensitive(!analysis.program.documents.is_empty());
+        }
         if let Some(button) = self.overrides.upgrade() {
             button.set_sensitive(self.state.upgrade().is_some_and(|s| {
                 let s = s.borrow();

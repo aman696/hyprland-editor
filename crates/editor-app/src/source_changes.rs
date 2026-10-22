@@ -15,11 +15,19 @@ use std::{
     sync::Arc,
 };
 pub(super) type Getter = Rc<dyn Fn() -> Result<Value, String>>;
+pub(super) type RequestGetter = Rc<dyn Fn() -> Result<worker::Request, String>>;
+pub(super) type Publish = Rc<dyn Fn(Option<RequestGetter>, &str)>;
+type CustomForm = Box<dyn FnOnce(&gtk::Box, Rc<dyn Fn()>, Publish)>;
 static COMPARING: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 #[cfg(test)]
 static HOLD_COMPARISON: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 #[cfg(test)]
 pub(super) struct HeldComparison;
+#[cfg(test)]
+pub(super) fn hold_comparisons() -> HeldComparison {
+    HOLD_COMPARISON.store(true, std::sync::atomic::Ordering::Release);
+    HeldComparison
+}
 #[cfg(test)]
 impl Drop for HeldComparison {
     fn drop(&mut self) {
@@ -78,6 +86,7 @@ struct Session {
     event: usize,
     monitor: bool,
     getter: Option<Getter>,
+    custom: Option<RequestGetter>,
     initial: Option<Value>,
     result: Option<Box<Comparison>>,
 }
@@ -545,7 +554,7 @@ impl Controls {
             !s.closed
                 && !s.blocked
                 && s.pending.is_none()
-                && (s.getter.is_some() || s.action == Action::Remove)
+                && (s.custom.is_some() || s.getter.is_some() || s.action == Action::Remove)
         });
         if let Some(button) = self.compare.upgrade() {
             button.set_sensitive(ready);
@@ -585,6 +594,7 @@ impl Controls {
         s.blocked = true;
         s.epoch += 1;
         s.getter = None;
+        s.custom = None;
         s.result = None;
         drop(s);
         for weak in [&self.targets, &self.scope, &self.operation] {
@@ -861,88 +871,99 @@ impl Controls {
                 s.monitor,
             )
         };
-        let Some(candidate) = row.as_ref().and_then(|p| target(&analysis, p)) else {
-            return;
-        };
-        let value = if action == Action::Remove {
-            None
-        } else {
-            let Some(getter) = getter else {
-                return;
-            };
+        let custom = session.borrow().custom.clone();
+        let request = if let Some(getter) = custom {
             match getter() {
-                Ok(value) => Some(value),
+                Ok(request) => request,
                 Err(error) => {
                     self.message(&error);
                     return;
                 }
             }
-        };
-        if action == Action::Set
-            && initial
-                .as_ref()
-                .zip(value.as_ref())
-                .is_some_and(|(a, b)| same_input(a, b))
-        {
-            self.message("Change the value before starting a comparison.");
-            return;
-        }
-        let request = if monitor {
-            use hyprland_editor_core::lua::replay::monitor_edit::{
-                self, FieldChange, TableSelection,
-            };
-            match action {
-                Action::Add => worker::Request::CompareMonitorFieldSource {
-                    program: analysis.program.clone(),
-                    change: FieldChange::Add {
-                        event_order: event,
-                        field: candidate.id,
-                        value: value.unwrap(),
-                        selection: match scope.selected() {
-                            1 => TableSelection::OriginalConstructor,
-                            2 => TableSelection::LatestWrite,
-                            _ => TableSelection::SelectedConstructor,
-                        },
-                    },
-                },
-                Action::Remove => worker::Request::CompareMonitorFieldSource {
-                    program: analysis.program.clone(),
-                    change: FieldChange::Remove {
-                        event_order: event,
-                        row: candidate.location[1],
-                        raw_key: candidate.raw_key,
-                    },
-                },
-                Action::Set => worker::Request::CompareMonitorSource {
-                    program: analysis.program.clone(),
-                    change: monitor_edit::Change {
-                        event_order: event,
-                        row: candidate.location[1],
-                        field: candidate.id,
-                        selection: if scope.selected() == 1 {
-                            monitor_edit::Selection::OriginalLiteral
-                        } else {
-                            monitor_edit::Selection::SelectedExpression
-                        },
-                        value: value.unwrap(),
-                    },
-                },
-            }
         } else {
-            worker::Request::CompareScalarSource {
-                program: analysis.program.clone(),
-                change: Change {
-                    event_order: event,
-                    location: candidate.location,
-                    setting_id: candidate.id,
-                    selection: match scope.selected() {
-                        1 => Selection::OriginalLiteral,
-                        2 => Selection::PreserveTableLayout,
-                        3 => Selection::OriginalTableLayout,
-                        _ => Selection::SelectedExpression,
+            let Some(candidate) = row.as_ref().and_then(|p| target(&analysis, p)) else {
+                return;
+            };
+            let value = if action == Action::Remove {
+                None
+            } else {
+                let Some(getter) = getter else {
+                    return;
+                };
+                match getter() {
+                    Ok(value) => Some(value),
+                    Err(error) => {
+                        self.message(&error);
+                        return;
+                    }
+                }
+            };
+            if action == Action::Set
+                && initial
+                    .as_ref()
+                    .zip(value.as_ref())
+                    .is_some_and(|(a, b)| same_input(a, b))
+            {
+                self.message("Change the value before starting a comparison.");
+                return;
+            }
+            if monitor {
+                use hyprland_editor_core::lua::replay::monitor_edit::{
+                    self, FieldChange, TableSelection,
+                };
+                match action {
+                    Action::Add => worker::Request::CompareMonitorFieldSource {
+                        program: analysis.program.clone(),
+                        change: FieldChange::Add {
+                            event_order: event,
+                            field: candidate.id,
+                            value: value.unwrap(),
+                            selection: match scope.selected() {
+                                1 => TableSelection::OriginalConstructor,
+                                2 => TableSelection::LatestWrite,
+                                _ => TableSelection::SelectedConstructor,
+                            },
+                        },
                     },
-                    value: value.unwrap(),
-                },
+                    Action::Remove => worker::Request::CompareMonitorFieldSource {
+                        program: analysis.program.clone(),
+                        change: FieldChange::Remove {
+                            event_order: event,
+                            row: candidate.location[1],
+                            raw_key: candidate.raw_key,
+                        },
+                    },
+                    Action::Set => worker::Request::CompareMonitorSource {
+                        program: analysis.program.clone(),
+                        change: monitor_edit::Change {
+                            event_order: event,
+                            row: candidate.location[1],
+                            field: candidate.id,
+                            selection: if scope.selected() == 1 {
+                                monitor_edit::Selection::OriginalLiteral
+                            } else {
+                                monitor_edit::Selection::SelectedExpression
+                            },
+                            value: value.unwrap(),
+                        },
+                    },
+                }
+            } else {
+                worker::Request::CompareScalarSource {
+                    program: analysis.program.clone(),
+                    change: Change {
+                        event_order: event,
+                        location: candidate.location,
+                        setting_id: candidate.id,
+                        selection: match scope.selected() {
+                            1 => Selection::OriginalLiteral,
+                            2 => Selection::PreserveTableLayout,
+                            3 => Selection::OriginalTableLayout,
+                            _ => Selection::SelectedExpression,
+                        },
+                        value: value.unwrap(),
+                    },
+                }
             }
         };
         let permit = match Permit::acquire() {
@@ -1265,6 +1286,9 @@ fn describe(analysis: &Analysis, result: &Comparison) -> Result<String, String> 
             use hyprland_editor_core::lua::replay::edits::DifferenceKind;
             let description = match finding.kind {
                 DifferenceKind::CallSiteOrApi => "A declaration changed",
+                DifferenceKind::RequestedDeclaration => {
+                    "The requested declaration was not reached or did not match"
+                }
                 DifferenceKind::Arguments => "Other setting values changed",
                 DifferenceKind::MissingCall => "A declaration no longer runs",
                 DifferenceKind::AddedCall => "An additional declaration runs",
@@ -1325,16 +1349,42 @@ pub(super) fn open(
     state: &super::Shared,
     refresh: Rc<dyn Fn()>,
 ) -> adw::Window {
+    open_impl(parent, model, Some(event), state, refresh, None)
+}
+pub(super) fn open_custom(
+    parent: &gtk::Window,
+    model: &Model,
+    state: &super::Shared,
+    refresh: Rc<dyn Fn()>,
+    build: CustomForm,
+) -> adw::Window {
+    open_impl(parent, model, None, state, refresh, Some(build))
+}
+fn open_impl(
+    parent: &gtk::Window,
+    model: &Model,
+    event: Option<usize>,
+    state: &super::Shared,
+    refresh: Rc<dyn Fn()>,
+    custom: Option<CustomForm>,
+) -> adw::Window {
+    let is_custom = custom.is_some();
+    let event = event.unwrap_or_default();
     let analysis = model
         .borrow()
         .clone()
         .expect("Analysis selected before opening source comparison");
-    let monitor = analysis
-        .report
-        .events
-        .iter()
-        .any(|e| e.order == event && e.api == "hl.monitor");
-    let rows = picks(&analysis, event, monitor);
+    let monitor = is_custom
+        || analysis
+            .report
+            .events
+            .iter()
+            .any(|e| e.order == event && e.api == "hl.monitor");
+    let rows = if is_custom {
+        vec![]
+    } else {
+        picks(&analysis, event, monitor)
+    };
     let session = Rc::new(RefCell::new(Session {
         epoch: 0,
         pending: None,
@@ -1345,11 +1395,16 @@ pub(super) fn open(
         monitor,
         action: Action::Set,
         getter: None,
+        custom: None,
         initial: None,
         result: None,
     }));
     let window = adw::Window::builder()
-        .title("Compare a Source Change")
+        .title(if is_custom {
+            "Manage Monitor Declarations"
+        } else {
+            "Compare a Source Change"
+        })
         .transient_for(parent)
         .modal(true)
         .default_width(620)
@@ -1372,6 +1427,9 @@ pub(super) fn open(
         set(body.upcast_ref(), 16);
     }
     body.append(&label("Compare a change, then keep it in your private draft. Original files and the desktop stay unchanged."));
+    let chooser = gtk::Box::new(gtk::Orientation::Vertical, 12);
+    chooser.set_visible(!is_custom);
+    body.append(&chooser);
     let names = session
         .borrow()
         .rows
@@ -1407,22 +1465,22 @@ pub(super) fn open(
             }
         })
         .collect::<Vec<_>>();
-    body.append(&label("Setting"));
+    chooser.append(&label("Setting"));
     let targets =
         gtk::DropDown::from_strings(&names.iter().map(String::as_str).collect::<Vec<_>>());
     super::monitors::compact(&targets);
     targets.set_enable_search(true);
     targets.set_widget_name("source-change-setting");
     targets.update_property(&[gtk::accessible::Property::Label("Setting to compare")]);
-    body.append(&targets);
+    chooser.append(&targets);
     let operation = gtk::DropDown::from_strings(&["Set value"]);
     operation.set_widget_name("source-change-operation");
     operation.update_property(&[gtk::accessible::Property::Label("Field operation")]);
     super::monitors::compact(&operation);
     operation.set_visible(monitor);
-    body.append(&operation);
+    chooser.append(&operation);
     let scope_label = label("Source to change");
-    body.append(&scope_label);
+    chooser.append(&scope_label);
     let scope = gtk::DropDown::from_strings(&[
         "Selected value expression",
         "Original literal, if traceable",
@@ -1432,8 +1490,8 @@ pub(super) fn open(
     scope.update_property(&[gtk::accessible::Property::Label(
         "Source expression selection",
     )]);
-    body.append(&scope);
-    body.append(&label("Shared source expressions can affect several declarations. The comparison reports additional modeled changes."));
+    chooser.append(&scope);
+    chooser.append(&label("Shared source expressions can affect several declarations. The comparison reports additional modeled changes."));
     let field = gtk::Box::new(gtk::Orientation::Vertical, 8);
     let input_expander = gtk::Expander::builder()
         .label("Proposed value")
@@ -1530,6 +1588,7 @@ pub(super) fn open(
         s.epoch += 1;
         s.result = None;
         s.getter = None;
+        s.custom = None;
         gtk::glib::Propagation::Proceed
     });
     let weak = window.downgrade();
@@ -1544,8 +1603,34 @@ pub(super) fn open(
         }
         gtk::glib::ControlFlow::Continue
     });
-    ui.choose();
-    gtk::prelude::GtkWindowExt::set_focus(&window, Some(&targets));
+    if let Some(build) = custom {
+        input_expander.set_label(Some("Declaration"));
+        let changed_ui = ui.clone();
+        let changed: Rc<dyn Fn()> = Rc::new(move || changed_ui.invalidate());
+        let publish_ui = ui.clone();
+        let publish: Publish = Rc::new(move |getter, message| {
+            let Some(session) = publish_ui.session.upgrade() else {
+                return;
+            };
+            if session.borrow().closed {
+                return;
+            }
+            if !publish_ui.current() {
+                publish_ui.stale();
+                return;
+            }
+            session.borrow_mut().custom = getter;
+            publish_ui.message(message);
+            publish_ui.sensitive();
+        });
+        build(&field, changed, publish);
+        ui.sensitive();
+    } else {
+        ui.choose();
+    }
+    if !is_custom {
+        gtk::prelude::GtkWindowExt::set_focus(&window, Some(&targets));
+    }
     window.present();
     window
 }

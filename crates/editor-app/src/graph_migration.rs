@@ -15,7 +15,9 @@ const BEFORE_MONITORS: &str = "c1abcce3f3c001585eb7b39e13b7ab888791a3480877f7817
 const PRE_MONITOR: &str = include_str!("../../../data/migrations/graph-model-before-monitors.json");
 const MONITOR_VALUES: &str = "d7dd575308699007b7083b5776cfdfb6268b84b78fd4bd7f7f29c023c24f70cd";
 const VALUES_MODEL: &str = include_str!("../../../data/migrations/graph-model-monitor-values.json");
-const TO: &str = "05bb2e4e86ef118289b70942ff23ae80ef07ad6ea16c3f44dd676e542c0ece37";
+const MONITOR_FIELDS: &str = "05bb2e4e86ef118289b70942ff23ae80ef07ad6ea16c3f44dd676e542c0ece37";
+const FIELDS_MODEL: &str = include_str!("../../../data/migrations/graph-model-monitor-fields.json");
+const TO: &str = "cfa1292e40e8e8111d2f279f98cfeed192f35b05b7a6af49c024c23c47085783";
 const OLD: &str = include_str!("../../../data/migrations/graph-model-before-projection.json");
 const FROM_PROJECTION: &str = "046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371";
 const PROJECTION: &str = include_str!("../../../data/migrations/graph-model-projection.json");
@@ -134,7 +136,7 @@ fn before_field_transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
-fn transition(from: &str) -> Result<(), String> {
+fn before_declaration_transition(from: &str) -> Result<(), String> {
     if lua::source_hash(VALUES_MODEL) != MONITOR_VALUES || workspace_graph::schema_sha256() != TO {
         return Err("No reviewed monitor field migration to this exact model is available".into());
     }
@@ -143,7 +145,8 @@ fn transition(from: &str) -> Result<(), String> {
     }
     let previous: serde_json::Value =
         serde_json::from_str(VALUES_MODEL).map_err(|e| e.to_string())?;
-    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let current: serde_json::Value =
+        serde_json::from_str(FIELDS_MODEL).map_err(|e| e.to_string())?;
     let old = previous["inputs"]
         .as_object()
         .ok_or("Invalid monitor value model inventory")?;
@@ -178,6 +181,54 @@ fn transition(from: &str) -> Result<(), String> {
             "Monitor field migration no longer has only the reviewed editor and trivia changes"
                 .into(),
         );
+    }
+    Ok(())
+}
+fn transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(FIELDS_MODEL) != MONITOR_FIELDS || workspace_graph::schema_sha256() != TO {
+        return Err("No reviewed declaration transition to this exact model is available".into());
+    }
+    if from != MONITOR_FIELDS {
+        before_declaration_transition(from)?;
+    }
+    let previous: serde_json::Value =
+        serde_json::from_str(FIELDS_MODEL).map_err(|e| e.to_string())?;
+    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let old = previous["inputs"]
+        .as_object()
+        .ok_or("Invalid previous field model")?;
+    let new = current["inputs"]
+        .as_object()
+        .ok_or("Invalid declaration model")?;
+    let added = new
+        .keys()
+        .filter(|k| !old.contains_key(*k))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    if old.len() != 63
+        || new.len() != 65
+        || added
+            != [
+                "crates/editor-core/src/lua/replay/edits/structure.rs",
+                "crates/editor-core/src/lua/replay/monitor_edit/declarations.rs",
+            ]
+    {
+        return Err("Reviewed declaration model input set changed".into());
+    }
+    let changes = old
+        .keys()
+        .filter(|k| old[*k] != new.get(*k).cloned().unwrap_or_default())
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    if changes
+        != [
+            "crates/editor-app/src/worker.rs",
+            "crates/editor-core/src/lua/replay/edits.rs",
+            "crates/editor-core/src/lua/replay/monitor_edit.rs",
+            "crates/editor-core/src/workspace_graph/revisions.rs",
+        ]
+    {
+        return Err("Declaration model no longer has only the reviewed structural editor and resolution preservation changes".into());
     }
     Ok(())
 }
@@ -280,6 +331,7 @@ mod tests {
         transition(FROM_MIGRATION).unwrap();
         transition(BEFORE_MONITORS).unwrap();
         transition(MONITOR_VALUES).unwrap();
+        transition(MONITOR_FIELDS).unwrap();
         assert!(transition(&"0".repeat(64)).is_err());
         assert_ne!(FROM, TO);
         assert_eq!(lua::source_hash(CURRENT), TO);

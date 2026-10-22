@@ -117,32 +117,53 @@ pub fn validate(base: &Program, revisions: &[Revision]) -> Result<(), String> {
     }
     Ok(())
 }
-fn original_span(revision: &Revision, span: &Range<usize>) -> Result<Range<usize>, String> {
+fn original_span(revision: &Revision, span: &Range<usize>) -> Result<Option<Range<usize>>, String> {
     let mut offset = 0usize;
     for piece in &revision.pieces {
         if piece.buffer == Buffer::Original
             && piece.span.start <= span.start
             && piece.span.end >= span.end
         {
-            return Ok(offset + span.start - piece.span.start..offset + span.end - piece.span.start);
+            return Ok(Some(
+                offset + span.start - piece.span.start..offset + span.end - piece.span.start,
+            ));
         }
         offset = offset
             .checked_add(piece.span.len())
             .ok_or("Private source offset overflow")?;
     }
-    Err("A source revision changes a loader request; renewed resolution input is required".into())
+    if revision
+        .pieces
+        .iter()
+        .any(|p| p.buffer == Buffer::Original && p.span.start < span.end && p.span.end > span.start)
+    {
+        return Err("A source revision changes a surviving loader request; renewed resolution input is required".into());
+    }
+    // Its entire original source was removed. Retained captured bytes are not
+    // authority for a new request, even if inserted code contains similar text.
+    Ok(None)
 }
 /// Structural materialization only: no code execution, parsing or file access.
 pub fn program(mut base: Program, revisions: &[Revision]) -> Result<Program, String> {
     validate(&base, revisions)?;
-    for binding in &mut base.bindings {
+    let original_bindings = std::mem::take(&mut base.bindings);
+    let mut dropped = false;
+    for mut binding in original_bindings {
         if let Some(revision) = revisions
             .iter()
             .find(|r| r.document == binding.request.document)
         {
-            binding.request.span = original_span(revision, &binding.request.span)?;
+            let Some(span) = original_span(revision, &binding.request.span)? else {
+                dropped = true;
+                continue;
+            };
+            binding.request.span = span;
             binding.request.sha256 = revision.sha256.clone();
         }
+        base.bindings.push(binding);
+    }
+    if dropped {
+        edits::prune_unreachable_bindings(&mut base);
     }
     for doc in &mut base.documents {
         let Some(revision) = revisions.iter().find(|r| r.document == doc.id) else {

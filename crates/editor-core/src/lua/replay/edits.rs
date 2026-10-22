@@ -10,6 +10,8 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::{collections::BTreeSet, io::Write, ops::Range};
+mod structure;
+pub use structure::StructuralCall;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -38,6 +40,8 @@ pub struct EditPlan {
     pub base_program_sha256: String,
     pub edits: Vec<SourceEdit>,
     pub expected_calls: Vec<ExpectedCall>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub structural_calls: Vec<StructuralCall>,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -59,6 +63,7 @@ pub enum DifferenceKind {
     ReturnValues,
     LoggedModuleErrors,
     IncompleteModel,
+    RequestedDeclaration,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -80,6 +85,8 @@ pub struct EditReview {
     pub revisions: Vec<Revision>,
     pub differences: Vec<Difference>,
     pub expected_calls_matched: usize,
+    #[serde(default)]
+    pub structural_calls_matched: usize,
     pub before_model_complete: bool,
     pub after_model_complete: bool,
     pub before_halt: Option<super::Halt>,
@@ -132,7 +139,18 @@ pub fn prepare(
         base_program_sha256: fingerprint(program)?,
         edits,
         expected_calls,
+        structural_calls: vec![],
     };
+    validate_plan(program, &plan)?;
+    Ok(plan)
+}
+pub fn prepare_structural(
+    program: &Program,
+    edits: Vec<SourceEdit>,
+    calls: Vec<StructuralCall>,
+) -> Result<EditPlan, String> {
+    let mut plan = prepare(program, edits, vec![])?;
+    plan.structural_calls = calls;
     validate_plan(program, &plan)?;
     Ok(plan)
 }
@@ -215,6 +233,7 @@ pub(crate) fn validate_plan(program: &Program, plan: &EditPlan) -> Result<(), St
     {
         return Err("Expected calls are duplicated, unsorted or unchanged".into());
     }
+    structure::validate(plan, &mut nodes)?;
     fingerprint(plan)?;
     Ok(())
 }
@@ -270,6 +289,36 @@ fn rebase_request(
     next.span = map_span(plan, &request.document, &request.span, true)?;
     next.sha256 = document(program, &request.document)?.sha256.clone();
     Ok(next)
+}
+// Conservative captured-resolution reachability only; this neither replays
+// code nor supplies a new loader request. Original graph evidence stays saved.
+pub(crate) fn prune_unreachable_bindings(program: &mut Program) {
+    let mut reached = BTreeSet::from([program.root.clone()]);
+    loop {
+        let previous = reached.len();
+        for binding in &program.bindings {
+            if reached.contains(&binding.request.document) {
+                if let super::Resolution::Loaded { document, .. } = &binding.resolution {
+                    reached.insert(document.clone());
+                }
+            }
+        }
+        if previous == reached.len() {
+            break;
+        }
+    }
+    program
+        .bindings
+        .retain(|b| reached.contains(&b.request.document));
+}
+fn removed_loader(plan: &EditPlan, request: &Request) -> bool {
+    // Dropping a fully replaced request cannot supply resolution rights for any
+    // inserted code. Partial edits of surviving request bytes still refuse.
+    plan.edits.iter().any(|edit| {
+        edit.document == request.document
+            && edit.span.start <= request.span.start
+            && edit.span.end >= request.span.end
+    })
 }
 pub(super) fn same_value(a: &Observed, b: &Observed) -> bool {
     match (a, b) {
@@ -484,12 +533,30 @@ pub(super) fn review_with_before(
             return Err("A changed document does not pass compilation and reparsing".into());
         }
     }
-    for index in 0..proposed.bindings.len() {
-        proposed.bindings[index].request =
-            rebase_request(&proposed, plan, &program.bindings[index].request)?;
+    let mut bindings = Vec::with_capacity(program.bindings.len());
+    let mut dropped = false;
+    for binding in &program.bindings {
+        match rebase_request(&proposed, plan, &binding.request) {
+            Ok(request) => bindings.push(super::Binding {
+                request,
+                resolution: binding.resolution.clone(),
+            }),
+            Err(_) if removed_loader(plan, &binding.request) => dropped = true,
+            Err(error) => return Err(error),
+        }
+    }
+    proposed.bindings = bindings;
+    if dropped {
+        prune_unreachable_bindings(&mut proposed);
     }
     let after = replay(&proposed)?;
-    let (differences, matched) = compare(plan, &proposed, &before, &after)?;
+    let (differences, matched, structural_matched) = if plan.structural_calls.is_empty() && !dropped
+    {
+        let (differences, matched) = compare(plan, &proposed, &before, &after)?;
+        (differences, matched, 0)
+    } else {
+        structure::compare(plan, &proposed, &before, &after)?
+    };
     let revisions = proposed
         .documents
         .into_iter()
@@ -514,9 +581,12 @@ pub(super) fn review_with_before(
         plan_sha256: fingerprint(plan)?,
         revisions,
         expected_calls_matched: matched,
+        structural_calls_matched: structural_matched,
         before_model_complete: before.halt.is_none(),
         after_model_complete: after.halt.is_none(),
-        modeled_observations_match: differences.is_empty() && matched == plan.expected_calls.len(),
+        modeled_observations_match: differences.is_empty()
+            && matched == plan.expected_calls.len()
+            && structural_matched == plan.structural_calls.len(),
         differences,
         ownership_verified: false,
         runtime_verified: false,

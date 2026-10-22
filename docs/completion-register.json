@@ -23,7 +23,8 @@
         "data/migrations/graph-model-projection.json",
         "data/migrations/graph-model-migration.json",
         "data/migrations/graph-model-before-monitors.json",
-        "data/migrations/graph-model-monitor-values.json"
+        "data/migrations/graph-model-monitor-values.json",
+        "data/migrations/graph-model-monitor-fields.json"
       ],
       "test_references": [
         "reviewed_transition_pins_exact_monitor_differences_and_refuses_unreviewed_builds",
@@ -31,7 +32,7 @@
         "migration_refuses_unknown_models_profiles_corruption_unreached_inputs_and_hidden_payloads",
         "workflow::test_graph_migration"
       ],
-      "limits": "five exact reviewed dependency/storage/monitor transitions with bounded held-inode input, unknown-payload refusal, fresh restricted-worker captured-view/dependency/private-piece reanalysis, byte/value preservation, cancel/epoch/unsaved guards and new private save; no original-path reads or restored folder access, general model/schema/profile conversion, persistent history, full source export/reconciliation or full audit certificate"
+      "limits": "six exact reviewed dependency/storage/monitor transitions with bounded held-inode input, unknown-payload refusal, fresh restricted-worker captured-view/dependency/private-piece reanalysis, byte/value preservation, cancel/epoch/unsaved guards and new private save; no original-path reads or restored folder access, general model/schema/profile conversion, persistent history, full source export/reconciliation or full audit certificate"
     },
     {
       "area": "source dependency capture and ordered evaluation",
@@ -45,6 +46,7 @@
         "crates/editor-core/src/lua/replay/storage_sources.rs",
         "crates/editor-core/src/lua/replay/path_sources.rs",
         "crates/editor-core/src/lua/replay/edits.rs",
+        "crates/editor-core/src/lua/replay/edits/structure.rs",
         "crates/editor-core/src/lua/replay/scalar_edit.rs",
         "crates/editor-core/src/lua/replay/scalar_edit/layout.rs",
         "crates/editor-app/src/source_changes.rs",
@@ -310,7 +312,7 @@
       "limits": "47 fields (43 original plus four native tablet-tool additions) and name selector, pressure/default and eraser/button forms, exact legacy-subset schema compatibility without inserted overrides, author category hints, linked XKB choices from installed metadata, numeric acceleration/scroll builders, ordered drafts and private persistence; no hardware capability discovery, effective global/default merge, tag-to-bind analysis, keyboard compilation, source editing, live input recovery or activation/preview certificates"
     },
     {
-      "area": "monitor draft and source value editor",
+      "area": "monitor draft and source declaration editor",
       "code": [
         "crates/editor-core/src/monitor.rs",
         "crates/editor-app/src/monitors.rs",
@@ -318,6 +320,8 @@
         "crates/editor-core/src/lua/monitor_inspection.rs",
         "crates/editor-core/src/lua/replay/monitor_edit.rs",
         "crates/editor-core/src/lua/replay/monitor_edit/fields.rs",
+        "crates/editor-core/src/lua/replay/monitor_edit/declarations.rs",
+        "crates/editor-app/src/source_declarations.rs",
         "crates/editor-app/src/source_changes.rs",
         "crates/editor-app/src/source_graph.rs",
         "data/monitor-source-semantics.json",
@@ -340,9 +344,13 @@
         "latest_nil_write_can_add_a_field_without_being_masked_or_guessing_a_future_write",
         "monitor_field_presence_edits_cross_the_restricted_worker_with_exact_row_guards",
         "source_changes::test_monitor_workflow",
+        "source_declarations::test_workflow",
+        "crates/editor-core/tests/monitor_declarations.rs",
+        "declaration_sites_and_call_structure_changes_run_in_the_restricted_worker",
+        "removed_declaration_dependencies_remain_captured_and_reopen_with_further_source_edits",
         "scripts/monitor_source_probe.py --check"
       ],
-      "limits": "22 versioned field controls and output selector, ordered drafts, static import/export, private snapshots, source-pinned routing/primary codecs, captured value/presence edits, recorded constructor/assignment/rawset/nil writes, exact numeric and explicit invalid-input repair seeds, bounded multi-patch review and private cross-file revisions; no native helper/manager/hardware certificate, whole declaration insertion/removal, arbitrary unresolved-source repair, compound value trivia preservation, complete source/draft reconciliation, ICC decoding, recovery, live apply or rendered preview certification"
+      "limits": "22 versioned field controls and output selector, ordered drafts, static import/export, private snapshots, source-pinned routing/primary codecs, captured value/presence edits, recorded constructor/assignment/rawset/nil writes, exact numeric and explicit invalid-input repair seeds, bounded multi-patch review, whole-declaration insertion/removal (including first/nested/unobserved sites), zero-result embedded removal, bounded API/loader sequence alignment, retained original dependency evidence and private cross-file revisions; no native helper/manager/hardware certificate, arbitrary unresolved-source repair, compound value trivia preservation, complete source/draft reconciliation, ICC decoding, recovery, live apply or rendered preview certification"
     },
     {
       "area": "scalar draft forms",

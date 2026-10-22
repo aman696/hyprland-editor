@@ -159,6 +159,77 @@ fn root() -> std::path::PathBuf {
     root
 }
 #[test]
+fn removed_declaration_dependencies_remain_captured_and_reopen_with_further_source_edits() {
+    use hyprland_editor_core::{
+        lua::replay::monitor_edit::declarations::{self, Anchor, Change},
+        monitor,
+    };
+    for version in [BASELINE, AUDITED_MAIN] {
+        let root = root();
+        let mut snapshot = fixture_source(
+            &root,
+            version,
+            "hl.monitor{output='DP-1',outside=require('part')};hl.config{general={border_size=2}}",
+        );
+        let graph = snapshot.source_graph.as_ref().unwrap();
+        let base = graph
+            .program(&snapshot.sources, snapshot.root_source.as_deref(), version)
+            .unwrap();
+        let original_sources = serde_json::to_value(&snapshot.sources).unwrap();
+        let site = declarations::inspect(&base, "root").unwrap().declarations[0].clone();
+        let comparison = declarations::compare(
+            &base,
+            &Change::Remove {
+                document: "root".into(),
+                span: site.span,
+            },
+        )
+        .unwrap();
+        assert!(!comparison.review.modeled_observations_match);
+        let revisions =
+            hyprland_editor_core::workspace_graph::revisions::apply(&base, &[], &comparison.plan)
+                .unwrap();
+        let changed =
+            hyprland_editor_core::workspace_graph::revisions::program(base.clone(), &revisions)
+                .unwrap();
+        assert!(changed.bindings.is_empty());
+        assert_eq!(changed.documents.len(), 2);
+        let mut rule = monitor::Rule::new("new-source");
+        rule.output = monitor::Output::Connector("DP-2".into());
+        let next = declarations::compare(
+            &changed,
+            &Change::Insert {
+                document: "root".into(),
+                anchor: Anchor::End,
+                rule,
+            },
+        )
+        .unwrap();
+        let revisions =
+            hyprland_editor_core::workspace_graph::revisions::apply(&base, &revisions, &next.plan)
+                .unwrap();
+        snapshot.source_graph.as_mut().unwrap().revisions = revisions;
+        let saved = workspace::save(&root, &snapshot, &catalogue()).unwrap();
+        let (ok, output) = check(&saved);
+        assert!(ok, "{output}");
+        let result: serde_json::Value = serde_json::from_str(&output).unwrap();
+        assert_eq!(result["original_paths_opened"], false);
+        assert_eq!(result["folder_access_restored"], false);
+        let reopened = workspace::read(&saved, &catalogue()).unwrap();
+        assert_eq!(
+            serde_json::to_value(&reopened.sources).unwrap(),
+            original_sources
+        );
+        assert_eq!(
+            reopened.source_graph.as_ref().unwrap().bindings.len(),
+            1,
+            "Original dependency evidence must remain saved"
+        );
+        assert!(!root.join("originals").exists());
+        fs::remove_dir_all(root).unwrap();
+    }
+}
+#[test]
 fn private_piece_revisions_reopen_without_originals_and_preserve_captured_identities() {
     for version in [BASELINE, AUDITED_MAIN] {
         let root = root();
@@ -468,6 +539,7 @@ fn reviewed_graph_migrations_rebuild_deleted_sources_and_private_pieces_without_
             "7273a441eca7d6ae6424b92d1188be64e642d007a77ae9e6a909239284f23ffc",
             "c1abcce3f3c001585eb7b39e13b7ab888791a3480877f7817bde26d66bba1427",
             "d7dd575308699007b7083b5776cfdfb6268b84b78fd4bd7f7f29c023c24f70cd",
+            "05bb2e4e86ef118289b70942ff23ae80ef07ad6ea16c3f44dd676e542c0ece37",
         ] {
             let root = root();
             let mut snapshot = fixture(&root, version);

@@ -44,6 +44,14 @@ pub enum Request {
         program: lua::replay::Program,
         change: lua::replay::monitor_edit::FieldChange,
     },
+    InspectMonitorDeclarations {
+        program: lua::replay::Program,
+        document: String,
+    },
+    CompareMonitorDeclaration {
+        program: lua::replay::Program,
+        change: lua::replay::monitor_edit::declarations::Change,
+    },
     ReviewSourceOverrides {
         program: lua::replay::Program,
         draft: Draft,
@@ -104,6 +112,7 @@ pub enum Response {
     },
     Configuration(lua::config_inspection::Inspection),
     Monitors(lua::monitor_inspection::Inspection),
+    MonitorDeclarationSites(lua::replay::monitor_edit::declarations::Inventory),
     ModulePlans(Vec<hyprland_editor_core::module_path::Plan>),
     Registry(hyprland_editor_core::xkb::Registry),
     Copy(String),
@@ -155,6 +164,14 @@ pub fn entry() {
         // Conversion/replay-only requests do not need another parsed catalogue.
         let c = std::sync::LazyLock::new(catalogue);
         match request {
+            Request::InspectMonitorDeclarations { program, document } => {
+                lua::replay::monitor_edit::declarations::inspect(&program, &document)
+                    .map(Response::MonitorDeclarationSites)
+            }
+            Request::CompareMonitorDeclaration { program, change } => {
+                lua::replay::monitor_edit::declarations::compare(&program, &change)
+                    .map(|result| Response::ScalarSourceComparison(Box::new(result)))
+            }
             Request::InspectMonitors { events, version } => {
                 lua::monitor_inspection::inspect(&events, &version).map(Response::Monitors)
             }

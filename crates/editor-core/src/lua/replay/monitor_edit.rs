@@ -9,6 +9,7 @@ use crate::{
     monitor, Value,
 };
 use serde::{Deserialize, Serialize};
+pub mod declarations;
 mod fields;
 pub use fields::{compare_field, FieldChange, TableSelection};
 

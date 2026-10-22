@@ -25,6 +25,7 @@ mod source_analysis;
 mod source_changes;
 mod source_compound_forms;
 mod source_context;
+mod source_declarations;
 mod source_graph;
 mod source_modules;
 mod source_overrides;
@@ -1720,6 +1721,7 @@ mod tests {
         source_access::test_retained_graph(&window);
         source_compound_forms::test_workflow(&window);
         source_changes::test_monitor_workflow(&window);
+        source_declarations::test_workflow(&window);
         rule_forms::test_forms();
         window.close();
         assert!(

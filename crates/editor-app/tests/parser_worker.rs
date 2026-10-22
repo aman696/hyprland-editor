@@ -155,6 +155,37 @@ fn monitor_field_presence_edits_cross_the_restricted_worker_with_exact_row_guard
     }
 }
 #[test]
+fn declaration_sites_and_call_structure_changes_run_in_the_restricted_worker() {
+    use hyprland_editor_core::{
+        lua::replay::monitor_edit::declarations::{Anchor, Change},
+        monitor, AUDITED_MAIN, BASELINE,
+    };
+    for version in [BASELINE, AUDITED_MAIN] {
+        let mut p = replay_program("-- empty capture\n");
+        p.version = version.into();
+        let result = request(json!({"InspectMonitorDeclarations":{"program":p,"document":"root"}}));
+        assert_eq!(result["MonitorDeclarationSites"]["runtime_verified"], false);
+        assert_eq!(result["MonitorDeclarationSites"]["declarations"], json!([]));
+        let mut rule = monitor::Rule::new("first");
+        rule.output = monitor::Output::Connector("DP-1".into());
+        let result = request(
+            json!({"CompareMonitorDeclaration":{"program":p,"change":Change::Insert {document:"root".into(),anchor:Anchor::End,rule}}}),
+        );
+        assert_eq!(
+            result["ScalarSourceComparison"]["review"]["modeled_observations_match"], true,
+            "{result}"
+        );
+        assert_eq!(
+            result["ScalarSourceComparison"]["review"]["structural_calls_matched"],
+            1
+        );
+        let bad = request(
+            json!({"CompareMonitorDeclaration":{"program":p,"change":{"operation":"remove","document":"root","span":{"start":0,"end":1},"unexpected":true}}}),
+        );
+        assert!(bad["Error"].is_string());
+    }
+}
+#[test]
 fn private_source_pieces_round_trip_inside_the_restricted_worker_without_rewriting_base() {
     use hyprland_editor_core::lua::{replay::edits::*, source_hash};
     let base = replay_program("hl.config({general={border_size=2}})");
