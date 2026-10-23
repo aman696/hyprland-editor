@@ -27,7 +27,9 @@ const MONITOR_REVIEW: &str = "be2a3bceb486422b079705792d7dae67f4922f96fcfc304004
 const REVIEW_MODEL: &str = include_str!("../../../data/migrations/graph-model-monitor-review.json");
 const MIXED_REVIEW: &str = "dbb7803fa4ea318a5b4511fd1f44eb422be73feebd8342ab449a8a4ffa27351d";
 const MIXED_MODEL: &str = include_str!("../../../data/migrations/graph-model-mixed-review.json");
-const TO: &str = "071946f5f808e82ef8f38d67fa919d7a427299f2c41c0f5e73368d7c3ee0aae7";
+const TEXT_MERGE: &str = "071946f5f808e82ef8f38d67fa919d7a427299f2c41c0f5e73368d7c3ee0aae7";
+const TEXT_MODEL: &str = include_str!("../../../data/migrations/graph-model-text-merge.json");
+const TO: &str = "71556836e091dccaaf231bc4510e448e545e588c175a56e59ad8c7d9cd2a3972";
 const OLD: &str = include_str!("../../../data/migrations/graph-model-before-projection.json");
 const FROM_PROJECTION: &str = "046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371";
 const PROJECTION: &str = include_str!("../../../data/migrations/graph-model-projection.json");
@@ -365,8 +367,8 @@ fn before_text_merge_transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
-fn transition(from: &str) -> Result<(), String> {
-    if lua::source_hash(MIXED_MODEL) != MIXED_REVIEW || workspace_graph::schema_sha256() != TO {
+fn before_composition_transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(MIXED_MODEL) != MIXED_REVIEW || lua::source_hash(TEXT_MODEL) != TEXT_MERGE {
         return Err("No reviewed source merge transition to this exact model is available".into());
     }
     if from != MIXED_REVIEW {
@@ -374,7 +376,7 @@ fn transition(from: &str) -> Result<(), String> {
     }
     let previous: serde_json::Value =
         serde_json::from_str(MIXED_MODEL).map_err(|e| e.to_string())?;
-    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let current: serde_json::Value = serde_json::from_str(TEXT_MODEL).map_err(|e| e.to_string())?;
     let old = previous["inputs"]
         .as_object()
         .ok_or("Invalid previous mixed-call model")?;
@@ -408,6 +410,43 @@ fn transition(from: &str) -> Result<(), String> {
             ]
     {
         return Err("Source merge model no longer has only the reviewed merge modules, registrations and worker changes".into());
+    }
+    Ok(())
+}
+fn transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(TEXT_MODEL) != TEXT_MERGE || workspace_graph::schema_sha256() != TO {
+        return Err(
+            "No reviewed graph composition transition to this exact model is available".into(),
+        );
+    }
+    if from != TEXT_MERGE {
+        before_composition_transition(from)?;
+    }
+    let previous: serde_json::Value =
+        serde_json::from_str(TEXT_MODEL).map_err(|e| e.to_string())?;
+    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let old = previous["inputs"]
+        .as_object()
+        .ok_or("Invalid previous text merge model")?;
+    let new = current["inputs"]
+        .as_object()
+        .ok_or("Invalid graph composition model")?;
+    let added = new
+        .keys()
+        .filter(|k| !old.contains_key(*k))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    let changed = old
+        .keys()
+        .filter(|k| new.get(*k) != Some(&old[*k]))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    if old.len() != 70
+        || new.len() != 71
+        || added != ["crates/editor-core/src/workspace_graph/merge/pieces.rs"]
+        || changed != ["crates/editor-core/src/workspace_graph/merge.rs"]
+    {
+        return Err("Graph composition model no longer has only the reviewed provenance composition and bounded hashing changes".into());
     }
     Ok(())
 }
@@ -515,6 +554,7 @@ mod tests {
         transition(MONITOR_LAYOUT).unwrap();
         transition(MONITOR_REVIEW).unwrap();
         transition(MIXED_REVIEW).unwrap();
+        transition(TEXT_MERGE).unwrap();
         assert!(transition(&"0".repeat(64)).is_err());
         assert_ne!(FROM, TO);
         assert_eq!(lua::source_hash(CURRENT), TO);

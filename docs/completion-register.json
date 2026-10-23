@@ -19,14 +19,21 @@
         "crates/editor-core/src/source_merge.rs",
         "crates/editor-core/src/source_merge/diff.rs",
         "crates/editor-core/src/workspace_graph/merge.rs",
-        "crates/editor-app/src/worker.rs"
+        "crates/editor-core/src/workspace_graph/merge/pieces.rs",
+        "crates/editor-app/src/worker.rs",
+        "crates/editor-app/src/main.rs",
+        "crates/editor-app/src/history.rs"
       ],
       "test_references": [
         "crates/editor-core/src/source_merge/tests.rs",
         "crates/editor-core/tests/graph_merge.rs",
-        "external_source_text_merge_runs_inside_the_restricted_worker_without_execution_claims"
+        "external_source_text_merge_runs_inside_the_restricted_worker_without_execution_claims",
+        "crates/editor-core/tests/graph_merge_pieces.rs",
+        "crates/editor-app/src/graph_transaction_tests.rs",
+        "byte_equality_does_not_turn_private_choice_into_captured_provenance",
+        "composed_incoming_graph_reopens_in_actual_application_after_both_capture_trees_are_deleted"
       ],
-      "limits": "bounded lossless line/Unicode three-way regions, mandatory-anchor ambiguity checks, explicit conflicts/insert ordering, exact input-range provenance and client checks, restricted-worker operations, graph-fingerprint/context correspondence and lazy mapped-file inputs; no external-graph GUI acceptance, new baseline/private dependency composition, independent whole-graph replay, removed-source archive/persistence, root/origin/graph atomic acceptance, syntax/ownership/runtime or full E03/E05 certificate"
+      "limits": "bounded lossless line/Unicode three-way regions, mandatory-anchor ambiguity checks, explicit conflicts/insert ordering, exact input-range provenance and client checks, restricted-worker operations, graph-fingerprint/context correspondence, lazy mapped-file inputs, fresh exact text decisions and provenance-aware private composition onto immutable incoming captures with streamed envelope and aggregate piece/buffer bounds, explicit surviving-loader renewal, and internal generation/hash/identity/version-checked atomic root/origin/graph/removed-override inverse with shared allocation accounting; composed graph reopens through actual restricted application workers after both capture trees are removed; no external-graph GUI acceptance, general private dependency composition/resolution, whole-workflow independent replay/removed-source archive/persistence/acceptance, syntax/ownership/runtime or full E03/E05 certificate"
     },
     {
       "area": "reviewed saved-graph model migration",
@@ -43,7 +50,8 @@
         "data/migrations/graph-model-monitor-declarations.json",
         "data/migrations/graph-model-monitor-layout.json",
         "data/migrations/graph-model-monitor-review.json",
-        "data/migrations/graph-model-mixed-review.json"
+        "data/migrations/graph-model-mixed-review.json",
+        "data/migrations/graph-model-text-merge.json"
       ],
       "test_references": [
         "reviewed_transition_pins_exact_monitor_differences_and_refuses_unreviewed_builds",
@@ -51,7 +59,7 @@
         "migration_refuses_unknown_models_profiles_corruption_unreached_inputs_and_hidden_payloads",
         "workflow::test_graph_migration"
       ],
-      "limits": "ten exact reviewed dependency/storage/monitor transitions with bounded held-inode input, unknown-payload refusal, fresh restricted-worker captured-view/dependency/private-piece reanalysis, byte/value preservation, cancel/epoch/unsaved guards and new private save; no original-path reads or restored folder access, general model/schema/profile conversion, persistent history, full source export/reconciliation or full audit certificate"
+      "limits": "eleven exact reviewed dependency/storage/monitor/merge transitions with bounded held-inode input, unknown-payload refusal, fresh restricted-worker captured-view/dependency/private-piece reanalysis, byte/value preservation, cancel/epoch/unsaved guards and new private save; no original-path reads or restored folder access, general model/schema/profile conversion, persistent history, full source export/reconciliation or full audit certificate"
     },
     {
       "area": "source dependency capture and ordered evaluation",

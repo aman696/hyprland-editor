@@ -1,13 +1,11 @@
 //! Structural correspondence of two captured graphs. Historical paths suggest
 //! logical views; they never authorize reads, source ownership or execution.
 use super::{revisions, Bundle};
-use crate::{
-    lua::{self, replay::Program},
-    source_merge,
-    workspace::SourceSnapshot,
-};
+use crate::{lua::replay::Program, source_merge, workspace::SourceSnapshot};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
+mod pieces;
+pub use pieces::{compose, Composed, Decision};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct View {
@@ -62,9 +60,7 @@ pub struct FileInputs {
     pub incoming: String,
 }
 fn hash(value: &impl Serialize) -> Result<String, String> {
-    serde_json::to_vec(value)
-        .map(|v| lua::source_hash(std::str::from_utf8(&v).expect("Serialized JSON")))
-        .map_err(|e| e.to_string())
+    super::encoded(value).map(|v| v.0)
 }
 fn program(bundle: &Bundle, version: &str) -> Result<Program, String> {
     bundle

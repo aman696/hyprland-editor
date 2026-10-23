@@ -9,6 +9,8 @@ mod directory_worker;
 mod fd_channel;
 mod gestures;
 mod graph_migration;
+#[cfg(test)]
+mod graph_transaction_tests;
 mod history;
 mod monitors;
 mod presentation;
@@ -242,7 +244,53 @@ impl State {
         graph: Arc<source_graph::Saved>,
         draft: Draft,
     ) -> Result<(), String> {
+        self.check_graph_root(&graph)?;
+        let version = &self.draft.version;
+        let document = self
+            .sources
+            .get(version)
+            .cloned()
+            .ok_or("Source snapshot missing")?;
+        let origin = self
+            .source_origins
+            .get(version)
+            .cloned()
+            .ok_or("Source identity missing")?;
+        self.keep_graph_revision(graph, draft, document, origin, self.generation)
+    }
+    /// Commit a freshly rebuilt graph and its captured root under one inverse.
+    /// Callers must separately reconstruct dependencies and review merge choices.
+    fn keep_graph_revision(
+        &mut self,
+        graph: Arc<source_graph::Saved>,
+        draft: Draft,
+        document: Arc<hyprland_editor_core::lua::LuaDocument>,
+        origin: SourceIdentity,
+        expected_generation: u64,
+    ) -> Result<(), String> {
+        if self.generation != expected_generation {
+            return Err("The draft changed while its graph revision was being reviewed".into());
+        }
         draft.validate(&self.catalogue)?;
+        origin.validate(&document.source)?;
+        let root = graph
+            .bundle
+            .sources
+            .iter()
+            .find(|s| s.id == graph.bundle.graph.root)
+            .ok_or("Graph root missing")?;
+        if graph.version != self.draft.version
+            || document.report.draft.version != self.draft.version
+            || document.report.source_sha256
+                != hyprland_editor_core::lua::source_hash(&document.source)
+            || root.content != document.source
+            || root.origin != origin
+        {
+            return Err(
+                "The graph and parsed root must use the same captured bytes, identity and snapshot"
+                    .into(),
+            );
+        }
         if draft.version != self.draft.version
             || draft.values.iter().any(|(id, value)| {
                 self.draft
@@ -266,8 +314,19 @@ impl State {
             .map(|(id, v)| (id.clone(), Some(v.clone())))
             .collect::<Vec<_>>();
         let version = &self.draft.version;
-        self.check_graph_root(&graph)?;
+        let old_document = self
+            .sources
+            .get(version)
+            .cloned()
+            .ok_or("Source snapshot missing")?;
+        let old_origin = self
+            .source_origins
+            .get(version)
+            .cloned()
+            .ok_or("Source identity missing")?;
+        let source_changed = old_document.source != document.source || old_origin != origin;
         if changes.is_empty()
+            && !source_changed
             && self
                 .source_graphs
                 .get(version)
@@ -275,8 +334,15 @@ impl State {
         {
             return Ok(());
         }
-        self.undo
-            .graph(self.source_graphs.get(version).cloned(), changes)?;
+        self.undo.graph(
+            self.source_graphs.get(version).cloned(),
+            changes,
+            source_changed.then_some((old_document, old_origin)),
+        )?;
+        if source_changed {
+            self.sources.insert(version.clone(), document);
+            self.source_origins.insert(version.clone(), origin);
+        }
         self.source_graphs.insert(version.clone(), graph);
         self.draft = draft;
         self.generation += 1;
@@ -289,11 +355,18 @@ impl State {
         match operation {
             history::Undo::Graph {
                 previous,
+                source,
                 changes,
                 monitor_changed,
                 previous_monitors,
                 ..
             } => {
+                if let Some(source) = source {
+                    self.sources
+                        .insert(self.draft.version.clone(), source.document);
+                    self.source_origins
+                        .insert(self.draft.version.clone(), source.origin);
+                }
                 if let Some(graph) = previous {
                     self.source_graphs.insert(self.draft.version.clone(), graph);
                 } else {

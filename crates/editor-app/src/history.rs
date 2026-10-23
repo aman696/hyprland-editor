@@ -8,9 +8,15 @@ use std::{
 
 const MAX_OPERATIONS: usize = 1000;
 const MAX_BYTES: usize = 8 * 1024 * 1024;
+pub(super) struct SourceInverse {
+    pub document: Arc<LuaDocument>,
+    pub origin: SourceIdentity,
+    document_bytes: usize,
+}
 pub(super) enum Undo {
     Graph {
         previous: Option<Arc<super::source_graph::Saved>>,
+        source: Option<SourceInverse>,
         changes: Vec<(String, Option<Value>)>,
         monitor_changed: bool,
         previous_monitors: Option<Vec<hyprland_editor_core::monitor::Rule>>,
@@ -333,11 +339,13 @@ impl Undo {
                 Self::Graph {
                     changes,
                     retained_bytes,
+                    source,
                     ..
                 } => {
                     *retained_bytes
                         + changes.capacity() * size_of::<(String, Option<Value>)>()
                         + changes_bytes(changes)
+                        + source.as_ref().map_or(0, |s| origin_bytes(&s.origin))
                 }
                 Self::Gestures { retained_bytes, .. }
                 | Self::Animations { retained_bytes, .. }
@@ -368,10 +376,16 @@ impl History {
         &mut self,
         previous: Option<Arc<super::source_graph::Saved>>,
         changes: Vec<(String, Option<Value>)>,
+        source: Option<(Arc<LuaDocument>, SourceIdentity)>,
     ) -> Result<(), String> {
         let retained_bytes = previous.as_ref().map_or(0, |g| g.history_cost);
         self.push(Undo::Graph {
             previous,
+            source: source.map(|(document, origin)| SourceInverse {
+                document_bytes: document_bytes(&document),
+                document,
+                origin,
+            }),
             changes,
             monitor_changed: false,
             previous_monitors: None,
@@ -387,6 +401,7 @@ impl History {
             + monitors.as_ref().map_or(0, monitor_bytes);
         self.push(Undo::Graph {
             previous,
+            source: None,
             changes: vec![],
             monitor_changed: true,
             previous_monitors: monitors,
@@ -443,10 +458,22 @@ impl History {
                             ..
                         } if sources.insert((0, Arc::as_ptr(document) as usize)) => *document_bytes,
                         Undo::Graph {
-                            previous: Some(graph),
-                            ..
-                        } if sources.insert((1, Arc::as_ptr(&graph.bundle.sources) as usize)) => {
-                            graph.shared_cost
+                            previous, source, ..
+                        } => {
+                            previous.as_ref().map_or(0, |graph| {
+                                if sources.insert((1, Arc::as_ptr(&graph.bundle.sources) as usize))
+                                {
+                                    graph.shared_cost
+                                } else {
+                                    0
+                                }
+                            }) + source.as_ref().map_or(0, |s| {
+                                if sources.insert((0, Arc::as_ptr(&s.document) as usize)) {
+                                    s.document_bytes
+                                } else {
+                                    0
+                                }
+                            })
                         }
                         _ => 0,
                     }
@@ -459,9 +486,11 @@ impl History {
             + match &entry {
                 Undo::Source { document_bytes, .. } => *document_bytes,
                 Undo::Graph {
-                    previous: Some(graph),
-                    ..
-                } => graph.shared_cost,
+                    previous, source, ..
+                } => {
+                    previous.as_ref().map_or(0, |g| g.shared_cost)
+                        + source.as_ref().map_or(0, |s| s.document_bytes)
+                }
                 _ => 0,
             };
         if single + 2 * size_of::<Undo>() > MAX_BYTES {
@@ -623,10 +652,22 @@ mod tests {
                 .unwrap();
         }
         assert_eq!(Arc::strong_count(&doc), 4);
+        history
+            .graph(None, vec![], Some((doc.clone(), origin.clone())))
+            .unwrap();
+        assert_eq!(Arc::strong_count(&doc), 5);
         let expected = history.entries.iter().map(Undo::bytes).sum::<usize>()
             + document_bytes(&doc)
             + history.entries.capacity() * size_of::<Undo>();
         assert_eq!(history.bytes(), expected);
+        let Undo::Graph {
+            source: Some(source),
+            ..
+        } = history.pop().unwrap()
+        else {
+            panic!("combined graph/root inverse")
+        };
+        assert!(Arc::ptr_eq(&source.document, &doc));
         let Undo::Source {
             changes, document, ..
         } = history.pop().unwrap()
@@ -742,7 +783,8 @@ mod tests {
         assert!(history
             .graph(
                 None,
-                vec![("large".into(), Some(Value::String("x".repeat(MAX_BYTES))))]
+                vec![("large".into(), Some(Value::String("x".repeat(MAX_BYTES))))],
+                None,
             )
             .is_err());
         assert!(

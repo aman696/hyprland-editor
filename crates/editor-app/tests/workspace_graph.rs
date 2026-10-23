@@ -230,6 +230,94 @@ fn removed_declaration_dependencies_remain_captured_and_reopen_with_further_sour
     }
 }
 #[test]
+fn composed_incoming_graph_reopens_in_actual_application_after_both_capture_trees_are_deleted() {
+    use hyprland_editor_core::workspace_graph::{merge, revisions};
+    for version in [BASELINE, AUDITED_MAIN] {
+        let root = root();
+        let old_folder = root.join("old");
+        let new_folder = root.join("incoming");
+        fs::create_dir(&old_folder).unwrap();
+        fs::create_dir(&new_folder).unwrap();
+        let old_workspace = fixture(&old_folder, version);
+        let incoming_workspace = fixture_source(&new_folder, version,
+            "local part=require('part');hl.config{general={border_size=part}} -- incoming capture\n");
+        let mut old = Bundle {
+            graph: old_workspace.source_graph.unwrap(),
+            sources: std::sync::Arc::new(old_workspace.sources),
+        };
+        let incoming = Bundle {
+            graph: incoming_workspace.source_graph.unwrap(),
+            sources: std::sync::Arc::new(incoming_workspace.sources),
+        };
+        let base = old
+            .graph
+            .program(&old.sources, Some("root"), version)
+            .unwrap();
+        let part = &base.documents[1];
+        let start = part.source.find('3').unwrap();
+        let plan = edits::prepare(
+            &base,
+            vec![edits::SourceEdit {
+                document: part.id.clone(),
+                base_sha256: part.sha256.clone(),
+                span: start..start + 1,
+                old_bytes_sha256: lua::source_hash("3"),
+                replacement: "7".into(),
+                semantic_targets: vec!["general:border_size".into()],
+            }],
+            vec![],
+        )
+        .unwrap();
+        old.graph.revisions = revisions::apply(&base, &[], &plan).unwrap();
+        let review = merge::prepare(&old, &incoming, version).unwrap();
+        let selection = merge::Selection {
+            pairs: old
+                .sources
+                .iter()
+                .map(|s| (s.id.clone(), Some(s.id.clone())))
+                .collect(),
+            discard_private: Default::default(),
+            accept_context_change: true,
+        };
+        let decisions = old
+            .sources
+            .iter()
+            .map(|s| {
+                let input =
+                    merge::file_inputs(&old, &incoming, &review, &selection, &s.id).unwrap();
+                let review = input.text_review().unwrap();
+                assert!(review.regions.iter().all(|r| r.conflict.is_none()));
+                (
+                    s.id.clone(),
+                    merge::Decision {
+                        review,
+                        choices: Default::default(),
+                    },
+                )
+            })
+            .collect();
+        let composed = merge::compose(&old, &incoming, &review, &selection, &decisions).unwrap();
+        assert!(composed.dependency_renewal.is_none());
+        let saved = Workspace::new(Draft::new(version)).with_graph(&composed.bundle);
+        let path = workspace::save(&root, &saved, &catalogue()).unwrap();
+        let (ok, output) = check(&path);
+        assert!(ok, "{output}");
+        let result: serde_json::Value = serde_json::from_str(&output).unwrap();
+        assert_eq!(result["source_graph_replayed"], true);
+        assert_eq!(result["source_graph_revisions"], 1);
+        assert_eq!(result["original_paths_opened"], false);
+        assert_eq!(result["folder_access_restored"], false);
+        let reopened = workspace::read(&path, &catalogue()).unwrap();
+        assert_eq!(
+            serde_json::to_vec(&reopened.sources).unwrap(),
+            serde_json::to_vec(incoming.sources.as_ref()).unwrap()
+        );
+        assert!(!old_folder.join("originals").exists());
+        assert!(!new_folder.join("originals").exists());
+        fs::remove_dir_all(root).unwrap();
+    }
+}
+#[test]
 fn private_piece_revisions_reopen_without_originals_and_preserve_captured_identities() {
     for version in [BASELINE, AUDITED_MAIN] {
         let root = root();
@@ -544,6 +632,7 @@ fn reviewed_graph_migrations_rebuild_deleted_sources_and_private_pieces_without_
             "1dacfb662caa635f63047517d223d73ec0c1922b2d9f93b3a7fa35cecb91909e",
             "be2a3bceb486422b079705792d7dae67f4922f96fcfc304004df20fbc22c92f1",
             "dbb7803fa4ea318a5b4511fd1f44eb422be73feebd8342ab449a8a4ffa27351d",
+            "071946f5f808e82ef8f38d67fa919d7a427299f2c41c0f5e73368d7c3ee0aae7",
         ] {
             let root = root();
             let mut snapshot = fixture(&root, version);
