@@ -331,7 +331,10 @@
         "crates/editor-app/src/workspaces.rs",
         "crates/editor-app/src/selector_forms.rs",
         "data/workspaces.json",
-        "data/workspace-semantics.json"
+        "data/workspace-semantics.json",
+        "data/workspace-argument-semantics.json",
+        "data/workspace-argument-fixtures.json",
+        "data/workspace-object-fixtures.json"
       ],
       "test_references": [
         "every_audited_workspace_field_round_trips_as_an_explicit_override",
@@ -339,9 +342,11 @@
         "test_editor",
         "actual_restricted_worker_projects_workspace_rules_without_running_empty_hooks",
         "workspace_declarations_survive_application_reopen_and_schema_tampering_is_refused",
-        "scripts/workspace_source_probe.py"
+        "scripts/workspace_source_probe.py",
+        "scripts/workspace_argument_probe.py",
+        "scripts/workspace_object_probe.py"
       ],
-      "limits": "15 field controls, addresses/static filter clauses, enabled/unset, layout choices and retained options, source consolidation findings, private persistence and undo; no complete selector/layout/workflow codecs, source editing, live creation/matching, apply/recovery or preview certification"
+      "limits": "15 field controls, addresses/static filter clauses, enabled/unset, layout choices and retained options, source consolidation findings, private persistence and undo; 78 exact native argument-routing and 42 userdata/method observations with explicit inert parser/selector/manager/state/registration dependencies; ordered evaluator still stops at this API; no native primary-field/manager/reload lifetime certificate, complete selector/layout/workflow codecs, source editing, live creation/matching, apply/recovery or preview certification"
     },
     {
       "area": "binding/submap draft editor",

@@ -32,6 +32,8 @@ jobs:
       - run: python3 scripts/ordered_module_probe.py --check
       - run: python3 scripts/config_table_probe.py --check
       - run: python3 -B scripts/monitor_source_probe.py --check
+      - run: python3 -B scripts/workspace_argument_probe.py --check
+      - run: python3 -B scripts/workspace_object_probe.py --check
       - run: python3 scripts/scalar_value_probe.py --check
       - run: python3 scripts/complex_scalar_probe.py --check
       - run: python3 scripts/scalar_registration_probe.py --check
