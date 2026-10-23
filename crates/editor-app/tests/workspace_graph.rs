@@ -117,6 +117,7 @@ fn fixture_source(root: &Path, version: &str, source: &str) -> Workspace {
         .collect();
     let bundle = Bundle {
         graph: Graph {
+            private: Default::default(),
             revisions: vec![],
             format: "hye-workspace-graph-1".into(),
             schema_sha256: hyprland_editor_core::workspace_graph::schema_sha256(),
@@ -226,6 +227,172 @@ fn removed_declaration_dependencies_remain_captured_and_reopen_with_further_sour
             "Original dependency evidence must remain saved"
         );
         assert!(!root.join("originals").exists());
+        fs::remove_dir_all(root).unwrap();
+    }
+}
+#[test]
+fn private_dependency_inputs_reopen_and_reconstruct_preview_layers_without_original_paths() {
+    use hyprland_editor_core::workspace_graph::{
+        private::Inputs,
+        revisions::{Buffer, Piece, Revision},
+    };
+    for version in [BASELINE, AUDITED_MAIN] {
+        let root = root();
+        let mut snapshot = fixture(&root, version);
+        let base = snapshot
+            .source_graph
+            .as_ref()
+            .unwrap()
+            .program(&snapshot.sources, Some("root"), version)
+            .unwrap();
+        let doc = &base.documents[0];
+        let at = doc.source.find("'part'").unwrap() + 1;
+        let content = format!("{}new{}", &doc.source[..at], &doc.source[at + 4..]);
+        let revision = Revision {
+            document: doc.id.clone(),
+            base_sha256: doc.sha256.clone(),
+            sha256: lua::source_hash(&content),
+            buffers: vec![std::sync::Arc::from("new")],
+            pieces: vec![
+                Piece {
+                    buffer: Buffer::Original,
+                    span: 0..at,
+                },
+                Piece {
+                    buffer: Buffer::Inserted { index: 0 },
+                    span: 0..3,
+                },
+                Piece {
+                    buffer: Buffer::Original,
+                    span: at + 4..doc.source.len(),
+                },
+            ],
+        };
+        let input = root.join("new.lua");
+        fs::write(&input, "return 7").unwrap();
+        let capture = storage::read_source(&input).unwrap();
+        fs::remove_file(input).unwrap();
+        let source = SourceSnapshot {
+            id: "private-new".into(),
+            language: SourceLanguage::Lua,
+            content: capture.content,
+            origin: capture.identity,
+        };
+        let mut inputs = Inputs {
+            sources: std::sync::Arc::new(vec![source.clone()]),
+            views: vec![View {
+                document: source.id.clone(),
+                load_name: source.origin.selected_path.clone(),
+            }],
+            ..Inputs::default()
+        };
+        let pending = inputs
+            .program(&base, std::slice::from_ref(&revision))
+            .unwrap();
+        let Some(Halt::NeedsResolution { request }) = replay::replay(&pending).unwrap().halt else {
+            panic!("private loader request")
+        };
+        inputs.bindings.push(Binding {
+            request,
+            resolution: Resolution::Loaded {
+                document: source.id.clone(),
+                loader_data: source.origin.selected_path.clone(),
+            },
+        });
+        snapshot.source_graph.as_mut().unwrap().revisions = vec![revision];
+        snapshot.source_graph.as_mut().unwrap().private = inputs;
+        let path = workspace::save(&root, &snapshot, &catalogue()).unwrap();
+        let bytes = fs::read(&path).unwrap();
+        let (ok, output) = check(&path);
+        assert!(ok, "{output}");
+        let value: serde_json::Value = serde_json::from_str(&output).unwrap();
+        assert_eq!(value["source_graph_private_documents"], 1);
+        assert_eq!(value["source_graph_private_bindings"], 1);
+        assert_eq!(value["source_graph_archived_private_documents"], 0);
+        assert_eq!(value["original_paths_opened"], false);
+        assert_eq!(value["folder_access_restored"], false);
+        let result = Command::new(env!("CARGO_BIN_EXE_hyprland-editor"))
+            .arg("--check-preview-layers")
+            .arg(&path)
+            .env_clear()
+            .output()
+            .unwrap();
+        assert!(
+            result.status.success(),
+            "{}",
+            String::from_utf8_lossy(&result.stderr)
+        );
+        let review: serde_json::Value = serde_json::from_slice(&result.stdout).unwrap();
+        let row = review["review"]["rows"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|r| r["setting_id"] == "general:border_size")
+            .unwrap();
+        assert_eq!(
+            row["captured"]["value"],
+            serde_json::to_value(Value::Int(7)).unwrap()
+        );
+        assert_eq!(fs::read(&path).unwrap(), bytes);
+        assert!(!root.join("originals").exists());
+        let graph = snapshot.source_graph.as_ref().unwrap();
+        let current = graph.private.program(&base, &graph.revisions).unwrap();
+        let request = graph.private.bindings[0].request.clone();
+        let replace = edits::prepare(
+            &current,
+            vec![edits::SourceEdit {
+                document: request.document.clone(),
+                base_sha256: request.sha256.clone(),
+                span: request.span.clone(),
+                old_bytes_sha256: lua::source_hash(
+                    &current
+                        .documents
+                        .iter()
+                        .find(|d| d.id == request.document)
+                        .unwrap()
+                        .source[request.span],
+                ),
+                replacement: "7".into(),
+                semantic_targets: vec!["general:border_size".into()],
+            }],
+            vec![],
+        )
+        .unwrap();
+        let (revisions, inputs) = graph
+            .private
+            .apply(&base, &graph.revisions, &replace)
+            .unwrap();
+        let mut archived = snapshot.clone();
+        let graph = archived.source_graph.as_mut().unwrap();
+        graph.revisions = revisions;
+        graph.private = inputs;
+        let archive_path = root.join("archived-private.hye");
+        fs::write(&archive_path, archived.to_json(&catalogue()).unwrap()).unwrap();
+        let (ok, output) = check(&archive_path);
+        assert!(ok, "{output}");
+        let value: serde_json::Value = serde_json::from_str(&output).unwrap();
+        assert_eq!(value["source_graph_private_documents"], 1);
+        assert_eq!(value["source_graph_private_bindings"], 0);
+        assert_eq!(value["source_graph_archived_private_documents"], 1);
+        let original: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        for mutation in 0..4 {
+            let mut value = original.clone();
+            match mutation {
+                0 => {
+                    value["source_graph"]["private"]["bindings"][0]["request"]["module"] =
+                        serde_json::json!([b'x'])
+                }
+                1 => value["source_graph"]["private"]["sources"][0]["content"] = "return 99".into(),
+                2 => {
+                    value["source_graph"]["private"]["archived"] =
+                        serde_json::json!(["private-new"])
+                }
+                _ => value["source_graph"]["private"]["bindings"] = serde_json::json!([]),
+            }
+            let bad = root.join("bad-private.hye");
+            fs::write(&bad, serde_json::to_vec(&value).unwrap()).unwrap();
+            assert!(!check(&bad).0, "Accepted changed private input {mutation}");
+        }
         fs::remove_dir_all(root).unwrap();
     }
 }
@@ -633,6 +800,7 @@ fn reviewed_graph_migrations_rebuild_deleted_sources_and_private_pieces_without_
             "be2a3bceb486422b079705792d7dae67f4922f96fcfc304004df20fbc22c92f1",
             "dbb7803fa4ea318a5b4511fd1f44eb422be73feebd8342ab449a8a4ffa27351d",
             "071946f5f808e82ef8f38d67fa919d7a427299f2c41c0f5e73368d7c3ee0aae7",
+            "71556836e091dccaaf231bc4510e448e545e588c175a56e59ad8c7d9cd2a3972",
         ] {
             let root = root();
             let mut snapshot = fixture(&root, version);
@@ -698,7 +866,7 @@ fn migration_refuses_unknown_models_profiles_corruption_unreached_inputs_and_hid
     let mut original = serde_json::to_value(snapshot).unwrap();
     original["source_graph"]["schema_sha256"] =
         "f7017978da7127ee461497d1021e418bb2c2e171b4d28a43b6671f8abb2531dd".into();
-    for change in 0..6 {
+    for change in 0..7 {
         let mut value = original.clone();
         match change {
             0 => value["source_graph"]["schema_sha256"] = "0".repeat(64).into(),
@@ -711,7 +879,11 @@ fn migration_refuses_unknown_models_profiles_corruption_unreached_inputs_and_hid
             4 => {
                 value["draft"]["values"]["general:border_size"]["hidden"] = "discarded field".into()
             }
-            _ => value["source_graph"]["views"][1]["document"] = "unknown".into(),
+            5 => value["source_graph"]["views"][1]["document"] = "unknown".into(),
+            _ => {
+                value["source_graph"]["private"] =
+                    serde_json::json!({"sources":[],"views":[],"bindings":[],"archived":[]})
+            }
         }
         let bytes = serde_json::to_vec(&value).unwrap();
         fs::write(&path, &bytes).unwrap();

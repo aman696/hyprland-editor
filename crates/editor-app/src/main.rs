@@ -440,7 +440,9 @@ impl State {
         if self
             .source_graphs
             .get(&self.draft.version)
-            .is_some_and(|g| !g.bundle.graph.revisions.is_empty())
+            .is_some_and(|g| {
+                !g.bundle.graph.revisions.is_empty() || !g.bundle.graph.private.is_empty()
+            })
         {
             return Err("This draft includes private source revisions. Save the full workspace; override-only export would omit them. Full source export is not available yet.".into());
         }
@@ -674,11 +676,12 @@ fn summary(state: &Shared, status: &gtk::Label) {
             )),
         s.source_graphs
             .get(&s.draft.version)
-            .filter(|g| !g.bundle.graph.revisions.is_empty())
-            .map_or(String::new(), |g| format!(
-                " · {} source revisions",
-                g.bundle.graph.revisions.len()
-            )),
+            .filter(|g| !g.bundle.graph.revisions.is_empty() || !g.bundle.graph.private.is_empty())
+            .map_or(String::new(), |g| if !g.bundle.graph.private.is_empty() {
+                " · Private source data".into()
+            } else {
+                format!(" · {} source revisions", g.bundle.graph.revisions.len())
+            }),
         if s.dirty_version(&s.draft.version) {
             "Unsaved changes"
         } else {
@@ -1826,6 +1829,7 @@ mod tests {
         gestures::test_editor(&window);
         source_modules::test_view(&window);
         source_access::test_retained_graph(&window);
+        graph_transaction_tests::test_private_graph_ui(&window);
         source_compound_forms::test_workflow(&window);
         source_changes::test_monitor_workflow(&window);
         source_monitors::test_workflow(&window);

@@ -43,6 +43,70 @@ fn request(request: Value) -> Value {
     serde_json::from_slice(&data).unwrap()
 }
 #[test]
+fn pending_private_request_worker_drops_changed_inherited_binding_without_granting_acceptance() {
+    use hyprland_editor_core::{
+        lua::{self, replay::*},
+        workspace_graph::{
+            private::Inputs,
+            revisions::{Buffer, Piece, Revision},
+        },
+    };
+    let source = "local p=require('old');hl.config{general={border_size=p}}";
+    let mut p = replay_program(source);
+    let Some(Halt::NeedsResolution { request: binding }) =
+        hyprland_editor_core::lua::replay::replay(&p).unwrap().halt
+    else {
+        panic!("old request")
+    };
+    p.documents.push(Document {
+        id: "old".into(),
+        source: "return 3".into(),
+        sha256: lua::source_hash("return 3"),
+        load_name: b"/old.lua".to_vec(),
+    });
+    p.bindings.push(Binding {
+        request: binding,
+        resolution: Resolution::Loaded {
+            document: "old".into(),
+            loader_data: b"/old.lua".to_vec(),
+        },
+    });
+    let at = source.find("old").unwrap();
+    let replacement = source.replacen("old", "new", 1);
+    let revisions = vec![Revision {
+        document: p.root.clone(),
+        base_sha256: lua::source_hash(source),
+        sha256: lua::source_hash(&replacement),
+        buffers: vec![std::sync::Arc::from("new")],
+        pieces: vec![
+            Piece {
+                buffer: Buffer::Original,
+                span: 0..at,
+            },
+            Piece {
+                buffer: Buffer::Inserted { index: 0 },
+                span: 0..3,
+            },
+            Piece {
+                buffer: Buffer::Original,
+                span: at + 3..source.len(),
+            },
+        ],
+    }];
+    let response = request(
+        json!({"InspectPrivateRequests":{"original":p,"revisions":revisions,"inputs":Inputs::default()}}),
+    );
+    let current: Program =
+        serde_json::from_value(response["SourceRevisionProgram"].clone()).unwrap();
+    assert!(current.bindings.is_empty());
+    assert_eq!(current.documents[0].source, replacement);
+    let response = request(json!({"ReplayModules":current}));
+    let report: Report = serde_json::from_value(response["Replayed"].clone()).unwrap();
+    assert!(matches!(report.halt,Some(Halt::NeedsResolution{request}) if request.module==b"new"));
+    assert!(!report.runtime_verified);
+    assert!(request(json!({"MaterializePrivateInputs":{"original":p,"revisions":revisions,"inputs":Inputs::default()}}))["Error"].is_string());
+}
+#[test]
 fn monitor_source_inspection_and_comparison_run_in_the_restricted_worker() {
     use hyprland_editor_core::{
         lua::replay::{

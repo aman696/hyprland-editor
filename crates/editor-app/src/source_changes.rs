@@ -2363,7 +2363,8 @@ pub(super) fn test_keep_in_draft(parent: &adw::Window, state: &super::Shared) {
             std::thread::sleep(std::time::Duration::from_millis(5));
         }
     }
-    let before = state.borrow().source_graphs[hyprland_editor_core::BASELINE].clone();
+    let version = state.borrow().draft.version.clone();
+    let before = state.borrow().source_graphs[&version].clone();
     let calls = named(parent.upcast_ref(), "dependency-analysis-call")
         .unwrap()
         .downcast::<gtk::DropDown>()
@@ -2421,13 +2422,13 @@ pub(super) fn test_keep_in_draft(parent: &adw::Window, state: &super::Shared) {
         .unwrap();
     assert!(status.text().contains("draft changed"), "{}", status.text());
     assert_eq!(
-        state.borrow().source_graphs[hyprland_editor_core::BASELINE].fingerprint,
+        state.borrow().source_graphs[&version].fingerprint,
         before.fingerprint
     );
     let generation = state.borrow().generation;
     keep.emit_clicked();
     wait(|| !window.is_visible());
-    let after = state.borrow().source_graphs[hyprland_editor_core::BASELINE].clone();
+    let after = state.borrow().source_graphs[&version].clone();
     assert_eq!(state.borrow().generation, generation + 1);
     assert!(state.borrow().dirty());
     assert_eq!(

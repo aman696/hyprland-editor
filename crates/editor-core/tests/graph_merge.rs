@@ -52,6 +52,7 @@ fn bundle(modules: &[(&str, &str, &str, &str)]) -> Bundle {
     }
     Bundle {
         graph: Graph {
+            private: Default::default(),
             format: "hye-workspace-graph-1".into(),
             schema_sha256: workspace_graph::schema_sha256(),
             compiler: replay::compiler_profile(),

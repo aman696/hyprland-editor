@@ -70,6 +70,7 @@ fn fixture(folder: &Path, name: &str, version: &str, value: i32) -> Fixture {
     let report = replay::replay(&program).unwrap();
     assert!(report.halt.is_none());
     let graph = Graph {
+        private: Default::default(),
         revisions: vec![],
         format: "hye-workspace-graph-1".into(),
         schema_sha256: workspace_graph::schema_sha256(),
@@ -313,5 +314,180 @@ fn first_graph_revision_undo_restores_source_and_graph_absence() {
         assert!(Arc::ptr_eq(&s.sources[version], &before.document));
         assert_eq!(s.source_origins[version], before.origin);
         assert!(s.undo.is_empty());
+    }
+}
+
+#[test]
+fn repeated_graph_inverses_share_large_archived_private_capture_allocations() {
+    let temp = test_support::TempDir::new("he-private-history");
+    let f = fixture(temp.path(), "root", BASELINE, 3);
+    let mut bundle = f.graph.bundle.clone();
+    let mut sources = vec![];
+    for n in 0..3 {
+        let path = temp.path().join(format!("archive-{n}.lua"));
+        std::fs::write(&path, " ".repeat(1024 * 1024)).unwrap();
+        let capture = storage::read_source(&path).unwrap();
+        let id = format!("archive-{n}");
+        bundle.graph.private.views.push(View {
+            document: id.clone(),
+            load_name: capture.identity.selected_path.clone(),
+        });
+        bundle.graph.private.archived.insert(id.clone());
+        sources.push(SourceSnapshot {
+            id,
+            language: SourceLanguage::Lua,
+            content: capture.content,
+            origin: capture.identity,
+        });
+    }
+    bundle.graph.private.sources = Arc::new(sources);
+    let graph = Arc::new(source_graph::Saved::new(bundle, BASELINE).unwrap());
+    assert!(graph.private_shared_cost > 6 * 1024 * 1024);
+    let mut history = history::History::default();
+    for _ in 0..3 {
+        history.graph(Some(graph.clone()), vec![], None).unwrap();
+    }
+    for _ in 0..3 {
+        let Some(history::Undo::Graph {
+            previous: Some(previous),
+            ..
+        }) = history.pop()
+        else {
+            panic!("shared private inputs evicted an inverse")
+        };
+        assert!(Arc::ptr_eq(&previous, &graph));
+    }
+    assert!(history.is_empty());
+}
+
+pub(super) fn test_private_graph_ui(parent: &adw::ApplicationWindow) {
+    use hyprland_editor_core::workspace_graph::{
+        private::Inputs,
+        revisions::{Buffer, Piece, Revision},
+    };
+    fn named(root: &gtk::Widget, name: &str) -> Option<gtk::Widget> {
+        if root.widget_name() == name {
+            return Some(root.clone());
+        }
+        let mut child = root.first_child();
+        while let Some(w) = child {
+            if let Some(v) = named(&w, name) {
+                return Some(v);
+            }
+            child = w.next_sibling();
+        }
+        None
+    }
+    fn wait(mut check: impl FnMut() -> bool) {
+        let start = std::time::Instant::now();
+        loop {
+            while gtk::glib::MainContext::default().pending() {
+                gtk::glib::MainContext::default().iteration(false);
+            }
+            if check() {
+                break;
+            }
+            assert!(start.elapsed() < std::time::Duration::from_secs(10));
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        }
+    }
+    for version in [BASELINE, AUDITED_MAIN] {
+        let temp = test_support::TempDir::new("he-private-graph-ui");
+        let old = fixture(temp.path(), "old-root", version, 4);
+        let mut bundle = old.graph.bundle.clone();
+        let original = bundle
+            .graph
+            .program(&bundle.sources, Some("old-root"), version)
+            .unwrap();
+        let doc = &original.documents[0];
+        let at = doc.source.find("'part'").unwrap() + 1;
+        let content = format!("{}new{}", &doc.source[..at], &doc.source[at + 4..]);
+        bundle.graph.revisions = vec![Revision {
+            document: doc.id.clone(),
+            base_sha256: doc.sha256.clone(),
+            sha256: lua::source_hash(&content),
+            buffers: vec![Arc::from("new")],
+            pieces: vec![
+                Piece {
+                    buffer: Buffer::Original,
+                    span: 0..at,
+                },
+                Piece {
+                    buffer: Buffer::Inserted { index: 0 },
+                    span: 0..3,
+                },
+                Piece {
+                    buffer: Buffer::Original,
+                    span: at + 4..doc.source.len(),
+                },
+            ],
+        }];
+        let path = temp.path().join("new.lua");
+        std::fs::write(&path, "return 4").unwrap();
+        let capture = storage::read_source(&path).unwrap();
+        let source = SourceSnapshot {
+            id: "private-new".into(),
+            language: SourceLanguage::Lua,
+            content: capture.content,
+            origin: capture.identity,
+        };
+        let mut inputs = Inputs {
+            sources: Arc::new(vec![source.clone()]),
+            views: vec![View {
+                document: source.id.clone(),
+                load_name: source.origin.selected_path.clone(),
+            }],
+            ..Inputs::default()
+        };
+        let pending = inputs.program(&original, &bundle.graph.revisions).unwrap();
+        let Some(Halt::NeedsResolution { request }) = replay::replay(&pending).unwrap().halt else {
+            panic!("new private request")
+        };
+        inputs.bindings.push(Binding {
+            request,
+            resolution: Resolution::Loaded {
+                document: source.id.clone(),
+                loader_data: source.origin.selected_path.clone(),
+            },
+        });
+        bundle.graph.private = inputs;
+        for path in [
+            temp.path().join("old-root.lua"),
+            temp.path().join("old-root-part.lua"),
+            path,
+        ] {
+            std::fs::remove_file(path).unwrap();
+        }
+        let before = Arc::new(source_graph::Saved::new(bundle, version).unwrap());
+        let state = initial_state();
+        {
+            let mut s = state.borrow_mut();
+            attach(&mut s, &old, version);
+            s.source_graphs.insert(version.into(), before.clone());
+            s.saved_source_graphs
+                .insert(version.into(), Some(before.fingerprint.clone()));
+        }
+        let window = source_analysis::show_saved(parent, &state).unwrap();
+        wait(|| {
+            named(window.upcast_ref(), "dependency-analysis-file")
+                .and_then(|w| w.downcast::<gtk::DropDown>().ok())
+                .and_then(|p| p.model())
+                .is_some_and(|m| m.n_items() == 3)
+        });
+        source_changes::test_keep_in_draft(&window, &state);
+        let after = state.borrow().source_graphs[version].clone();
+        assert!(Arc::ptr_eq(
+            &before.bundle.graph.private.sources,
+            &after.bundle.graph.private.sources
+        ));
+        assert_eq!(after.bundle.graph.private.bindings.len(), 1);
+        assert_eq!(after.bundle.graph.private.sources[0].content, "return 4");
+        workflow::test_graph_persistence(parent, &state, temp.path());
+        state.borrow_mut().undo_last();
+        assert_eq!(
+            state.borrow().source_graphs[version].fingerprint,
+            before.fingerprint
+        );
+        window.close();
     }
 }

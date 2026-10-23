@@ -251,8 +251,8 @@ fn rebuild(workspace: &Workspace) -> Result<Option<replay::Report>, String> {
     }
     if let Some(graph) = &workspace.source_graph {
         check_reached(&program, &base)?;
-        if !graph.revisions.is_empty() {
-            program = editor_core::workspace_graph::revisions::program(program, &graph.revisions)?;
+        if !graph.revisions.is_empty() || !graph.private.is_empty() {
+            program = graph.private.program(&program, &graph.revisions)?;
             for doc in &program.documents {
                 replay::validate_document(doc)?;
             }
@@ -260,6 +260,7 @@ fn rebuild(workspace: &Workspace) -> Result<Option<replay::Report>, String> {
             if revised.runtime_verified || revised.compiler_profile != graph.compiler {
                 return Err("Private revision compiler profile changed".into());
             }
+            graph.private.check_reached(&program, &revised)?;
             return Ok(Some(revised));
         }
     }

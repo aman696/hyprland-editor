@@ -76,7 +76,16 @@ fn sequential_piece_changes_share_inserted_buffers_and_can_restore_captured_byte
         &prepare(&current, vec![edit(&current, "root", "292", "2")], vec![]).unwrap(),
     )
     .unwrap();
-    assert!(restored.is_empty());
+    assert_eq!(restored.len(), 1);
+    assert!(!restored[0].buffers.is_empty());
+    assert_eq!(restored[0].sha256, base.documents[0].sha256);
+    assert_eq!(
+        revisions::program(base.clone(), &restored)
+            .unwrap()
+            .documents[0]
+            .source,
+        original
+    );
 }
 #[test]
 fn unchanged_loader_pieces_rebase_offsets_and_hashes_without_new_resolution_rights() {

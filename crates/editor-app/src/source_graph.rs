@@ -632,6 +632,7 @@ pub(super) struct Saved {
     pub(super) fingerprint: String,
     pub(super) version: String,
     pub(super) shared_cost: usize,
+    pub(super) private_shared_cost: usize,
     pub(super) history_cost: usize,
 }
 impl Saved {
@@ -644,7 +645,7 @@ impl Saved {
             .validate(&hyprland_editor_core::catalogue())?;
         let (fingerprint, bytes) = bundle.fingerprint_with_size()?;
         let cost = bytes.saturating_mul(2);
-        let (shared, metadata) = bundle.component_sizes()?;
+        let (shared, private_shared, metadata) = bundle.component_sizes()?;
         if cost > 8 * MAX_DOCUMENT_BYTES {
             return Err("Retained source graph exceeds its data budget".into());
         }
@@ -653,6 +654,7 @@ impl Saved {
             fingerprint,
             version: version.into(),
             shared_cost: shared.saturating_mul(2),
+            private_shared_cost: private_shared.saturating_mul(2),
             history_cost: metadata.saturating_mul(2),
         })
     }
@@ -669,6 +671,7 @@ pub(super) fn freeze(
     };
     let bundle = Bundle {
         graph: Graph {
+            private: Default::default(),
             revisions: vec![],
             format: "hye-workspace-graph-1".into(),
             schema_sha256: hyprland_editor_core::workspace_graph::schema_sha256(),
@@ -771,15 +774,16 @@ pub(super) fn restore(
     // Reachability above concerns the original captured graph. Private edits
     // may intentionally make a declaration or dependency unreachable; preserve
     // all base evidence rather than silently dropping it from the workspace.
-    if !bundle.graph.revisions.is_empty() {
-        let expected = hyprland_editor_core::workspace_graph::revisions::program(
-            program.clone(),
-            &bundle.graph.revisions,
-        )?;
+    if !bundle.graph.revisions.is_empty() || !bundle.graph.private.is_empty() {
+        let expected = bundle
+            .graph
+            .private
+            .program(&program, &bundle.graph.revisions)?;
         let worker::Response::SourceRevisionProgram(revised) =
-            worker::run(worker::Request::MaterializeSourceRevisions {
-                base: program,
+            worker::run(worker::Request::MaterializePrivateInputs {
+                original: program,
                 revisions: bundle.graph.revisions.clone(),
+                inputs: bundle.graph.private.clone(),
             })?
         else {
             return Err("Unexpected private revision response".into());
@@ -800,6 +804,7 @@ pub(super) fn restore(
         if revised.compiler_profile != bundle.graph.compiler || revised.runtime_verified {
             return Err("Private source model profile changed".into());
         }
+        bundle.graph.private.check_reached(&program, &revised)?;
         report = revised;
     }
     budget.check()?;
@@ -807,6 +812,14 @@ pub(super) fn restore(
     let captures = bundle
         .sources
         .iter()
+        .chain(
+            bundle
+                .graph
+                .private
+                .sources
+                .iter()
+                .filter(|s| !bundle.graph.private.archived.contains(&s.id)),
+        )
         .map(|source| CapturedDocument {
             id: source.id.clone(),
             source: Arc::new(CapturedSource {
@@ -851,10 +864,9 @@ pub(super) fn apply_revisions(
     // Byte generation stays in the trusted client. Parser results validate an
     // exact private input; they cannot substitute different output source text.
     let mut revisions = bundle.graph.revisions.clone();
+    let mut inputs = bundle.graph.private.clone();
     for plan in plans {
-        revisions = hyprland_editor_core::workspace_graph::revisions::prepare_pieces(
-            &base, &revisions, plan,
-        )?;
+        (revisions, inputs) = inputs.apply(&base, &revisions, plan)?;
     }
     // Reuse equal immutable buffers across documents as well as within a
     // revision, so undo does not retain copies of inserted text.
@@ -874,6 +886,7 @@ pub(super) fn apply_revisions(
     }
     let mut next = bundle.clone();
     next.graph.revisions = revisions;
+    next.graph.private = inputs;
     let saved = Arc::new(Saved::new(next, version)?);
     let analysis = restore(&saved.bundle, version)?;
     Ok((saved, analysis))

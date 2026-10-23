@@ -93,6 +93,9 @@ fn views(bundle: &Bundle, program: &Program, current: &Program) -> Result<Vec<Vi
     Ok(result)
 }
 pub fn prepare(old: &Bundle, incoming: &Bundle, version: &str) -> Result<Review, String> {
+    if !old.graph.private.is_empty() || !incoming.graph.private.is_empty() {
+        return Err("Private dependency data needs explicit graph correspondence and preservation choices before external reconciliation".into());
+    }
     let old_program = program(old, version)?;
     let incoming_program = program(incoming, version)?;
     if !incoming.graph.revisions.is_empty() {

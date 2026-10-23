@@ -161,6 +161,9 @@ pub(super) fn check_workspace(path: PathBuf) -> Result<serde_json::Value, String
         "source_graph_documents":imported.graph.as_ref().map_or(0,|g|g.bundle.sources.len()),
         "source_graph_bindings":imported.graph.as_ref().map_or(0,|g|g.bundle.graph.bindings.len()),
         "source_graph_revisions":imported.graph.as_ref().map_or(0,|g|g.bundle.graph.revisions.len()),
+        "source_graph_private_documents":imported.graph.as_ref().map_or(0,|g|g.bundle.graph.private.sources.len()),
+        "source_graph_private_bindings":imported.graph.as_ref().map_or(0,|g|g.bundle.graph.private.bindings.len()),
+        "source_graph_archived_private_documents":imported.graph.as_ref().map_or(0,|g|g.bundle.graph.private.archived.len()),
         "folder_access_restored":false,
         "runtime_verified":false,"original_paths_opened":false}),
     )
@@ -681,6 +684,7 @@ pub(super) fn test_graph_migration(window: &adw::ApplicationWindow) {
     std::fs::remove_file(&original).unwrap();
     let bundle = Bundle {
         graph: Graph {
+            private: Default::default(),
             revisions: vec![],
             format: "hye-workspace-graph-1".into(),
             schema_sha256: workspace_graph::schema_sha256(),
@@ -1041,6 +1045,7 @@ pub(super) fn test_graph_persistence(
     state: &Shared,
     root: &std::path::Path,
 ) {
+    let version = state.borrow().draft.version.clone();
     let saved_files = || {
         std::fs::read_dir(root.join("hyprland-editor"))
             .into_iter()
@@ -1081,14 +1086,14 @@ pub(super) fn test_graph_persistence(
     let imported = read_import(
         path.clone(),
         state.borrow().catalogue.clone(),
-        BASELINE.into(),
+        version.clone(),
     )
     .unwrap();
     let graph = imported.graph.unwrap();
     assert_eq!(graph.bundle.sources.len(), 2);
     assert_eq!(
         graph.fingerprint,
-        state.borrow().source_graphs[BASELINE].fingerprint
+        state.borrow().source_graphs[&version].fingerprint
     );
     assert!(
         source_workspace(path).is_err(),
@@ -1107,7 +1112,7 @@ pub(super) fn test_graph_persistence(
         state
             .borrow()
             .source_graphs
-            .get(BASELINE)
+            .get(&version)
             .map(|g| g.fingerprint.clone()),
         previous
     );

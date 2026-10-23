@@ -280,7 +280,7 @@ fn map_span(
     }
     Ok(shift(span.start, before)?..shift(span.end, before + inside)?)
 }
-fn rebase_request(
+pub(crate) fn rebase_request(
     program: &Program,
     plan: &EditPlan,
     request: &Request,
@@ -311,7 +311,7 @@ pub(crate) fn prune_unreachable_bindings(program: &mut Program) {
         .bindings
         .retain(|b| reached.contains(&b.request.document));
 }
-fn removed_loader(plan: &EditPlan, request: &Request) -> bool {
+pub(crate) fn removed_loader(plan: &EditPlan, request: &Request) -> bool {
     // Dropping a fully replaced request cannot supply resolution rights for any
     // inserted code. Partial edits of surviving request bytes still refuse.
     plan.edits.iter().any(|edit| {

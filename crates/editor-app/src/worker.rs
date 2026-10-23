@@ -88,6 +88,16 @@ pub enum Request {
         base: lua::replay::Program,
         revisions: Vec<hyprland_editor_core::workspace_graph::revisions::Revision>,
     },
+    MaterializePrivateInputs {
+        original: lua::replay::Program,
+        revisions: Vec<hyprland_editor_core::workspace_graph::revisions::Revision>,
+        inputs: hyprland_editor_core::workspace_graph::private::Inputs,
+    },
+    InspectPrivateRequests {
+        original: lua::replay::Program,
+        revisions: Vec<hyprland_editor_core::workspace_graph::revisions::Revision>,
+        inputs: hyprland_editor_core::workspace_graph::private::Inputs,
+    },
     ApplySourceRevision {
         base: lua::replay::Program,
         revisions: Vec<hyprland_editor_core::workspace_graph::revisions::Revision>,
@@ -224,6 +234,34 @@ pub fn entry() {
                         .find(|d| d.id == revision.document)
                         .ok_or("Unknown private source revision")?;
                     lua::replay::validate_document(doc)?;
+                }
+                Ok(Response::SourceRevisionProgram(program))
+            }
+            Request::MaterializePrivateInputs {
+                original,
+                revisions,
+                inputs,
+            } => {
+                let program = inputs.program(&original, &revisions)?;
+                for revision in &revisions {
+                    if let Some(doc) = program.documents.iter().find(|d| d.id == revision.document)
+                    {
+                        lua::replay::validate_document(doc)?;
+                    }
+                }
+                Ok(Response::SourceRevisionProgram(program))
+            }
+            Request::InspectPrivateRequests {
+                original,
+                revisions,
+                inputs,
+            } => {
+                let program = inputs.pending_program(&original, &revisions)?;
+                for revision in &revisions {
+                    if let Some(doc) = program.documents.iter().find(|d| d.id == revision.document)
+                    {
+                        lua::replay::validate_document(doc)?;
+                    }
                 }
                 Ok(Response::SourceRevisionProgram(program))
             }

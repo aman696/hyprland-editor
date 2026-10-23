@@ -506,7 +506,7 @@ impl View {
         let edited = analysis
             .frozen
             .as_ref()
-            .is_some_and(|b| !b.graph.revisions.is_empty());
+            .is_some_and(|b| !b.graph.revisions.is_empty() || !b.graph.private.is_empty());
         let complete = analysis.blocked.is_none() && analysis.report.halt.is_none();
         if let Some(label) = self.summary.upgrade() {
             label.set_text(&format!(

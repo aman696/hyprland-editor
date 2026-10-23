@@ -467,6 +467,15 @@ impl History {
                                 } else {
                                     0
                                 }
+                            }) + previous.as_ref().map_or(0, |graph| {
+                                if sources.insert((
+                                    2,
+                                    Arc::as_ptr(&graph.bundle.graph.private.sources) as usize,
+                                )) {
+                                    graph.private_shared_cost
+                                } else {
+                                    0
+                                }
                             }) + source.as_ref().map_or(0, |s| {
                                 if sources.insert((0, Arc::as_ptr(&s.document) as usize)) {
                                     s.document_bytes
@@ -488,7 +497,9 @@ impl History {
                 Undo::Graph {
                     previous, source, ..
                 } => {
-                    previous.as_ref().map_or(0, |g| g.shared_cost)
+                    previous
+                        .as_ref()
+                        .map_or(0, |g| g.shared_cost + g.private_shared_cost)
                         + source.as_ref().map_or(0, |s| s.document_bytes)
                 }
                 _ => 0,

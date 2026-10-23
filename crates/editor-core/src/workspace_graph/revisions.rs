@@ -145,7 +145,17 @@ fn original_span(revision: &Revision, span: &Range<usize>) -> Result<Option<Rang
 }
 /// Structural materialization only: no code execution, parsing or file access.
 pub fn program(mut base: Program, revisions: &[Revision]) -> Result<Program, String> {
-    validate(&base, revisions)?;
+    materialize(&mut base, revisions, false)?;
+    Ok(base)
+}
+/// Changed requests lose inherited resolution; callers must rebuild and check
+/// an explicit private input layer before accepting the materialized graph.
+pub(crate) fn for_renewal(mut base: Program, revisions: &[Revision]) -> Result<Program, String> {
+    materialize(&mut base, revisions, true)?;
+    Ok(base)
+}
+fn materialize(base: &mut Program, revisions: &[Revision], renew: bool) -> Result<(), String> {
+    validate(base, revisions)?;
     let original_bindings = std::mem::take(&mut base.bindings);
     let mut dropped = false;
     for mut binding in original_bindings {
@@ -153,7 +163,12 @@ pub fn program(mut base: Program, revisions: &[Revision]) -> Result<Program, Str
             .iter()
             .find(|r| r.document == binding.request.document)
         {
-            let Some(span) = original_span(revision, &binding.request.span)? else {
+            let span = match original_span(revision, &binding.request.span) {
+                Ok(span) => span,
+                Err(_) if renew => None,
+                Err(error) => return Err(error),
+            };
+            let Some(span) = span else {
                 dropped = true;
                 continue;
             };
@@ -163,7 +178,7 @@ pub fn program(mut base: Program, revisions: &[Revision]) -> Result<Program, Str
         base.bindings.push(binding);
     }
     if dropped {
-        edits::prune_unreachable_bindings(&mut base);
+        edits::prune_unreachable_bindings(base);
     }
     for doc in &mut base.documents {
         let Some(revision) = revisions.iter().find(|r| r.document == doc.id) else {
@@ -176,8 +191,8 @@ pub fn program(mut base: Program, revisions: &[Revision]) -> Result<Program, Str
         doc.source = content;
         doc.sha256 = revision.sha256.clone();
     }
-    replay::validate_program(&base)?;
-    Ok(base)
+    replay::validate_program(base)?;
+    Ok(())
 }
 fn slice(pieces: &[Piece], span: Range<usize>) -> Vec<Piece> {
     let mut offset = 0usize;
@@ -248,7 +263,18 @@ pub fn prepare_pieces(
     plan: &edits::EditPlan,
 ) -> Result<Vec<Revision>, String> {
     let current = program(base.clone(), revisions)?;
-    edits::validate_plan(&current, plan)?;
+    let result = prepare_from_current(base, revisions, &current, plan)?;
+    program(base.clone(), &result)?;
+    Ok(result)
+}
+pub(crate) fn prepare_from_current(
+    base: &Program,
+    revisions: &[Revision],
+    current: &Program,
+    plan: &edits::EditPlan,
+) -> Result<Vec<Revision>, String> {
+    validate(base, revisions)?;
+    edits::validate_plan(current, plan)?;
     let mut result = revisions.to_vec();
     for doc in &current.documents {
         let changes = plan
@@ -322,12 +348,17 @@ pub fn prepare_pieces(
         }
         revision.sha256 = source_hash(&content);
         result.retain(|r| r.document != doc.id);
-        if content != original.source {
+        let original_only = revision.buffers.is_empty()
+            && (original.source.is_empty() && revision.pieces.is_empty()
+                || revision.pieces.len() == 1
+                    && revision.pieces[0].buffer == Buffer::Original
+                    && revision.pieces[0].span == (0..original.source.len()));
+        if !original_only {
             result.push(revision);
         }
     }
     result.sort_by(|a, b| a.document.cmp(&b.document));
-    program(base.clone(), &result)?;
+    validate(base, &result)?;
     Ok(result)
 }
 pub fn apply(

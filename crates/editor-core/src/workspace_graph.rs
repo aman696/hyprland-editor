@@ -12,6 +12,7 @@ use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
 use std::sync::Arc;
 pub mod merge;
+pub mod private;
 pub mod revisions;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -23,6 +24,8 @@ pub struct View {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Graph {
+    #[serde(default, skip_serializing_if = "private::Inputs::is_empty")]
+    pub private: private::Inputs,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub revisions: Vec<revisions::Revision>,
     pub format: String,
@@ -106,7 +109,7 @@ impl Graph {
             working_directory: self.working_directory.clone(),
         };
         replay::validate_program(&program)?;
-        revisions::validate(&program, &self.revisions)?;
+        self.private.validate(&program, &self.revisions)?;
         Ok(program)
     }
 }
@@ -117,8 +120,14 @@ impl Bundle {
     pub fn fingerprint_with_size(&self) -> Result<(String, usize), String> {
         encoded(self)
     }
-    pub fn component_sizes(&self) -> Result<(usize, usize), String> {
-        Ok((encoded(self.sources.as_ref())?.1, encoded(&self.graph)?.1))
+    pub fn component_sizes(&self) -> Result<(usize, usize, usize), String> {
+        let mut metadata = self.graph.clone();
+        metadata.private.sources = Arc::new(vec![]);
+        Ok((
+            encoded(self.sources.as_ref())?.1,
+            encoded(self.graph.private.sources.as_ref())?.1,
+            encoded(&metadata)?.1,
+        ))
     }
 }
 fn encoded(value: &impl Serialize) -> Result<(String, usize), String> {

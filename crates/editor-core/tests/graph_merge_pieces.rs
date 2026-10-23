@@ -48,6 +48,7 @@ fn bundle(version: &str, main: &str, part: &str) -> Bundle {
         inherited_package_path: None,
     };
     let graph = Graph {
+        private: Default::default(),
         revisions: vec![],
         format: "hye-workspace-graph-1".into(),
         schema_sha256: workspace_graph::schema_sha256(),
