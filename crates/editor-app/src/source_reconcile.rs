@@ -5,7 +5,7 @@ use hyprland_editor_core::{
     lua::LuaDocument,
     source::{display_path_bytes, SourceIdentity},
     source_merge::{self, Choice},
-    workspace_graph::merge,
+    workspace_graph::{merge, Bundle},
 };
 use std::{
     cell::{Cell, RefCell},
@@ -23,6 +23,51 @@ struct Candidate {
     origin: SourceIdentity,
     analysis: Arc<source_graph::Analysis>,
 }
+enum BuildResult {
+    Ready(Candidate),
+    NeedsInputs(Arc<source_graph::Pending>),
+}
+fn prepare_candidate(
+    bundle: Bundle,
+    version: &str,
+    cancel: Arc<AtomicBool>,
+) -> Result<Candidate, String> {
+    check(&cancel)?;
+    let analysis = Arc::new(source_graph::restore_cancellable(
+        &bundle,
+        version,
+        cancel.clone(),
+    )?);
+    let root = bundle
+        .sources
+        .iter()
+        .find(|s| s.id == bundle.graph.root)
+        .ok_or("Merged root missing")?;
+    let worker::Response::Parsed(report) = worker::run_cancellable(
+        worker::Request::Parse {
+            source: root.content.clone(),
+            version: version.into(),
+        },
+        &cancel,
+    )?
+    else {
+        return Err("Unexpected root parser response".into());
+    };
+    let document = Arc::new(LuaDocument::from_report(
+        root.content.clone(),
+        *report,
+        &hyprland_editor_core::catalogue(),
+    )?);
+    let origin = root.origin.clone();
+    let saved = Arc::new(source_graph::Saved::new(bundle, version)?);
+    check(&cancel)?;
+    Ok(Candidate {
+        saved,
+        document,
+        origin,
+        analysis,
+    })
+}
 struct File {
     inputs: merge::FileInputs,
     decision: merge::Decision,
@@ -37,6 +82,8 @@ struct Session {
     decisions: BTreeMap<String, merge::Decision>,
     file: Option<File>,
     candidate: Option<Candidate>,
+    unresolved: Option<Arc<source_graph::Pending>>,
+    import_window: Option<gtk::glib::WeakRef<adw::Window>>,
     model: super::source_analysis::Model,
     epoch: u64,
     pending: bool,
@@ -56,12 +103,16 @@ impl Session {
                 .get(&self.old.version)
                 .is_some_and(|d| d.report.source_sha256 == self.root_hash)
     }
-    fn invalidate(&mut self) {
+    fn reset_result(&mut self) {
         self.epoch += 1;
+        self.candidate = None;
+        self.unresolved = None;
+        self.model.borrow_mut().take();
+    }
+    fn invalidate(&mut self) {
+        self.reset_result();
         self.file = None;
         self.decisions.clear();
-        self.candidate = None;
-        self.model.borrow_mut().take();
     }
 }
 #[derive(Clone)]
@@ -85,6 +136,8 @@ struct Controls {
     choice: gtk::glib::WeakRef<gtk::DropDown>,
     use_file: gtk::glib::WeakRef<gtk::Button>,
     build: gtk::glib::WeakRef<gtk::Button>,
+    resolve: gtk::glib::WeakRef<gtk::Button>,
+    review_pending: gtk::glib::WeakRef<gtk::Button>,
     keep: gtk::glib::WeakRef<gtk::Button>,
     stop: gtk::glib::WeakRef<gtk::Button>,
     partial: gtk::glib::WeakRef<gtk::CheckButton>,
@@ -185,7 +238,7 @@ fn context_description(
         display_path_bytes(&context.main_file),optional(context.home.as_deref()),optional(bundle.graph.working_directory.as_deref()),optional(context.inherited_package_path.as_deref()),
         if unknown{"unknown tail remains"}else{"complete captured assumption"},display_path_bytes(&path)))
 }
-fn page_span(text: &str, page: usize) -> (std::ops::Range<usize>, usize) {
+pub(super) fn page_span(text: &str, page: usize) -> (std::ops::Range<usize>, usize) {
     let count = text.len().div_ceil(16 * 1024).max(1);
     let page = page.clamp(1, count) - 1;
     let mut start = (page * 16 * 1024).min(text.len());
@@ -312,6 +365,14 @@ impl Controls {
                     && s.selection.pairs.values().filter(|x| x.is_some()).count()
                         == s.decisions.len(),
             );
+        }
+        if let Some(b) = self.resolve.upgrade() {
+            b.set_visible(s.unresolved.is_some());
+            b.set_sensitive(available && s.unresolved.is_some());
+        }
+        if let Some(b) = self.review_pending.upgrade() {
+            b.set_visible(s.unresolved.is_some());
+            b.set_sensitive(available && s.unresolved.is_some());
         }
         if let Some(b) = self.keep.upgrade() {
             b.set_sensitive(
@@ -551,12 +612,14 @@ impl Controls {
                 check(&cancel)?;
                 let input =
                     merge::file_inputs(&data.0.bundle, &data.1.bundle, &data.2, &data.3, &data.4)?;
-                let worker::Response::SourceMergeReview(review) =
-                    worker::run(worker::Request::ReviewSourceMerge {
+                let worker::Response::SourceMergeReview(review) = worker::run_cancellable(
+                    worker::Request::ReviewSourceMerge {
                         base: input.base.clone(),
                         private: input.private.clone(),
                         incoming: input.incoming.clone(),
-                    })?
+                    },
+                    &cancel,
+                )?
                 else {
                     return Err("Unexpected text review response".into());
                 };
@@ -765,8 +828,7 @@ impl Controls {
         }
         let id = f.inputs.old.clone();
         s.decisions.remove(&id);
-        s.candidate = None;
-        s.model.borrow_mut().take();
+        s.reset_result();
         drop(s);
         self.analysis
             .reset("Text choices changed. Confirm this file again and rebuild the result.");
@@ -791,14 +853,16 @@ impl Controls {
             move || {
                 let _permit = permit;
                 check(&cancel)?;
-                let worker::Response::SourceMergeResolution(_) =
-                    worker::run(worker::Request::ResolveSourceMerge {
+                let worker::Response::SourceMergeResolution(_) = worker::run_cancellable(
+                    worker::Request::ResolveSourceMerge {
                         base: data.0.base,
                         private: data.0.private,
                         incoming: data.0.incoming,
                         review: data.1.review.clone(),
                         choices: data.1.choices.clone(),
-                    })?
+                    },
+                    &cancel,
+                )?
                 else {
                     return Err("Unexpected text decision response".into());
                 };
@@ -822,8 +886,7 @@ impl Controls {
                             ui.feedback(&e);
                         } else {
                             let count = s.decisions.len();
-                            s.candidate = None;
-                            s.model.borrow_mut().take();
+                            s.reset_result();
                             drop(s);
                             ui.feedback(&format!("{count} file decisions retained for this proposal. Rebuild the result after reviewing every mapped file."));
                         }
@@ -857,6 +920,7 @@ impl Controls {
         {
             let mut s = session.borrow_mut();
             s.candidate = None;
+            s.unresolved = None;
             s.model.borrow_mut().take();
         }
         self.analysis
@@ -867,68 +931,35 @@ impl Controls {
             move || {
                 let _permit = permit;
                 check(&cancel)?;
-                source_graph::restore(&data.0.bundle, &data.0.version)?;
+                source_graph::restore_cancellable(&data.0.bundle, &data.0.version, cancel.clone())?;
                 check(&cancel)?;
-                source_graph::restore(&data.1.bundle, &data.0.version)?;
+                source_graph::restore_cancellable(&data.1.bundle, &data.0.version, cancel.clone())?;
                 check(&cancel)?;
                 let composed =
                     merge::compose(&data.0.bundle, &data.1.bundle, &data.2, &data.3, &data.4)?;
-                if let Some(reason) = composed.dependency_renewal {
-                    return Err(format!(
-                        "The merged import needs fresh resolution before it can be kept. {reason}"
-                    ));
+                let pending = source_graph::inspect_pending(
+                    &composed.bundle,
+                    &data.0.version,
+                    cancel.clone(),
+                )?;
+                if pending.request().is_some() {
+                    return Ok(BuildResult::NeedsInputs(Arc::new(pending)));
                 }
-                let analysis = Arc::new(source_graph::restore(&composed.bundle, &data.0.version)?);
-                check(&cancel)?;
-                let root = composed
-                    .bundle
-                    .sources
-                    .iter()
-                    .find(|s| s.id == composed.bundle.graph.root)
-                    .ok_or("Merged root missing")?;
-                let worker::Response::Parsed(report) = worker::run(worker::Request::Parse {
-                    source: root.content.clone(),
-                    version: data.0.version.clone(),
-                })?
-                else {
-                    return Err("Unexpected root parser response".into());
-                };
-                let document = Arc::new(LuaDocument::from_report(
-                    root.content.clone(),
-                    *report,
-                    &hyprland_editor_core::catalogue(),
-                )?);
-                let origin = root.origin.clone();
-                let saved = Arc::new(source_graph::Saved::new(composed.bundle, &data.0.version)?);
-                check(&cancel)?;
-                Ok(Candidate {
-                    saved,
-                    document,
-                    origin,
-                    analysis,
-                })
+                if let Some(reason) = composed.dependency_renewal {
+                    return Err(format!("Analysis did not reach the changed import, so no exact input can be supplied yet. {reason}"));
+                }
+                drop(pending);
+                prepare_candidate(composed.bundle, &data.0.version, cancel).map(BuildResult::Ready)
             },
             move |result| {
                 let Some(session) = ui.finish(epoch) else {
                     return;
                 };
                 match result {
-                    Ok(candidate) => {
-                        let partial = candidate.analysis.report.halt.is_some()
-                            || candidate.analysis.blocked.is_some();
-                        let mut s = session.borrow_mut();
-                        *s.model.borrow_mut() = Some(candidate.analysis.clone());
-                        s.candidate = Some(candidate);
-                        drop(s);
-                        if let Some(p) = ui.partial.upgrade() {
-                            p.set_active(false);
-                            p.set_visible(partial);
-                        }
-                        ui.analysis.render();
-                        if let Some(pages) = ui.pages.upgrade() {
-                            pages.set_visible_child_name("result");
-                        }
-                        ui.feedback(if partial{"Analysis is partial. Inspect its stopping point before choosing whether to keep this private draft."}else{"Merged inputs rebuilt. Review the files and calls, then keep the merge in this draft."});
+                    Ok(BuildResult::Ready(candidate)) => ui.present_candidate(&session, candidate),
+                    Ok(BuildResult::NeedsInputs(pending)) => {
+                        session.borrow_mut().unresolved = Some(pending);
+                        ui.feedback("The composed source needs an import input. Resolve Imports opens a separate proposal review with fresh folder approval or explicit preserved-data choices.");
                     }
                     Err(e) => ui.feedback(&e),
                 }
@@ -936,6 +967,159 @@ impl Controls {
             },
         );
     }
+    fn present_candidate(&self, session: &Rc<RefCell<Session>>, candidate: Candidate) {
+        let partial =
+            candidate.analysis.report.halt.is_some() || candidate.analysis.blocked.is_some();
+        {
+            let mut s = session.borrow_mut();
+            *s.model.borrow_mut() = Some(candidate.analysis.clone());
+            s.candidate = Some(candidate);
+            s.unresolved = None;
+        }
+        if let Some(p) = self.partial.upgrade() {
+            p.set_active(false);
+            p.set_visible(partial);
+        }
+        self.analysis.render();
+        if let Some(p) = self.pages.upgrade() {
+            p.set_visible_child_name("result");
+        }
+        self.feedback(if partial {"Analysis is partial. Inspect its stopping point before choosing whether to keep this private draft."}else{"Merged inputs rebuilt. Review the files and calls, then keep the merge in this draft."});
+    }
+    fn resolve(&self) {
+        let (Some(session), Some(state), Some(parent)) = (
+            self.session.upgrade(),
+            self.state.upgrade(),
+            self.window.upgrade(),
+        ) else {
+            return;
+        };
+        let (data, epoch) = {
+            let s = session.borrow();
+            if s.pending || !s.current(&state) {
+                return;
+            }
+            if let Some(w) = s
+                .import_window
+                .as_ref()
+                .and_then(|w| w.upgrade())
+                .filter(|w| w.is_visible())
+            {
+                w.present();
+                return;
+            }
+            let Some(data) = s.unresolved.clone() else {
+                return;
+            };
+            (data, s.epoch)
+        };
+        let fingerprint = data.fingerprint().to_string();
+        let weak = Rc::downgrade(&session);
+        let parent_window = parent.downgrade();
+        let state = Rc::downgrade(&state);
+        let pin = fingerprint.clone();
+        let guard: Rc<dyn Fn() -> bool> = Rc::new(move || {
+            weak.upgrade()
+                .zip(state.upgrade())
+                .is_some_and(|(s, state)| {
+                    let s = s.borrow();
+                    s.epoch == epoch
+                        && parent_window.upgrade().is_some_and(|w| w.is_visible())
+                        && s.current(&state)
+                        && s.unresolved
+                            .as_ref()
+                            .is_some_and(|p| p.fingerprint() == pin)
+                })
+        });
+        let ui = self.clone();
+        let window = super::source_pending::open(
+            &parent,
+            data,
+            guard,
+            Rc::new(move |bundle| ui.resolved(bundle, epoch, &fingerprint)),
+        );
+        session.borrow_mut().import_window = Some(window.downgrade());
+    }
+    fn review_pending(&self) {
+        let Some(session) = self.session.upgrade() else {
+            return;
+        };
+        let (bundle, version) = {
+            let s = session.borrow();
+            let Some(data) = &s.unresolved else {
+                return;
+            };
+            (data.bundle().clone(), s.old.version.clone())
+        };
+        let Some((epoch, cancel, permit)) = self.begin() else {
+            return;
+        };
+        let ui = self.clone();
+        self.feedback("Checking whether the unresolved source can be retained as an explicitly partial draft…");
+        workflow::background(
+            move || {
+                let _permit = permit;
+                prepare_candidate(bundle, &version, cancel)
+            },
+            move |result| {
+                let Some(session) = ui.finish(epoch) else {
+                    return;
+                };
+                match result {Ok(candidate)=>ui.present_candidate(&session,candidate),Err(e)=>ui.feedback(&format!("This pending revision needs exact resolution inputs before it can be retained. {e}"))}
+                ui.refresh();
+            },
+        );
+    }
+    fn resolved(&self, bundle: Bundle, expected_epoch: u64, fingerprint: &str) {
+        let (Some(session), Some(state)) = (self.session.upgrade(), self.state.upgrade()) else {
+            return;
+        };
+        let (original, version) = {
+            let s = session.borrow();
+            if s.epoch != expected_epoch || !s.current(&state) {
+                return;
+            }
+            let Some(p) = &s.unresolved else {
+                return;
+            };
+            if p.fingerprint() != fingerprint {
+                return;
+            }
+            (p.bundle().clone(), s.old.version.clone())
+        };
+        let Some((epoch, cancel, permit)) = self.begin() else {
+            return;
+        };
+        let ui = self.clone();
+        self.feedback("Verifying resolved inputs and rebuilding the final result…");
+        workflow::background(
+            move || {
+                let _permit = permit;
+                let mut before = original;
+                let mut after = bundle.clone();
+                before.graph.private = Default::default();
+                after.graph.private = Default::default();
+                if before.fingerprint()? != after.fingerprint()? {
+                    return Err(
+                        "Import resolution changed original captures or reviewed source pieces"
+                            .into(),
+                    );
+                }
+                prepare_candidate(bundle, &version, cancel)
+            },
+            move |result| {
+                let Some(session) = ui.finish(epoch) else {
+                    return;
+                };
+                match result {
+                    Ok(candidate) => ui.present_candidate(&session, candidate),
+                    Err(e) => ui.feedback(&e),
+                }
+                ui.refresh();
+            },
+        );
+    }
+
     fn keep(&self) {
         let (Some(session), Some(state)) = (self.session.upgrade(), self.state.upgrade()) else {
             return;
@@ -991,4 +1175,4 @@ use window::show;
 #[cfg(test)]
 mod tests;
 #[cfg(test)]
-pub(super) use tests::{test_review, test_stale};
+pub(super) use tests::{test_import_stale, test_review, test_stale};

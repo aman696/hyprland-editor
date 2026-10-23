@@ -7,7 +7,8 @@ use hyprland_editor_core::{
 use serde::{Deserialize, Serialize};
 use std::{
     io::{Read, Write},
-    process::{Command, Stdio},
+    process::{Child, Command, ExitStatus, Stdio},
+    sync::atomic::{AtomicBool, Ordering},
     time::{Duration, Instant},
 };
 const MAX_ENVELOPE: usize = 4 * MAX_DOCUMENT_BYTES;
@@ -379,6 +380,10 @@ pub fn entry() {
     let _ = std::io::stdout().write_all(&bytes);
 }
 pub fn run(request: Request) -> Result<Response, String> {
+    run_cancellable(request, &AtomicBool::new(false))
+}
+pub fn run_cancellable(request: Request, cancelled: &AtomicBool) -> Result<Response, String> {
+    cancelled_check(cancelled)?;
     let bytes = serde_json::to_vec(&request).map_err(|e| e.to_string())?;
     if bytes.len() > MAX_ENVELOPE {
         return Err("Parser request exceeds 4 MiB".into());
@@ -407,16 +412,76 @@ pub fn run(request: Request) -> Result<Response, String> {
         use std::os::fd::AsRawFd;
         format!("/proc/self/fd/{}", held_test_executable.as_raw_fd())
     };
-    let mut child = Command::new(exe)
-        .arg("--lua-source-worker")
-        .env_clear()
+    let mut command = Command::new(exe);
+    command.arg("--lua-source-worker").env_clear();
+    execute(command, bytes, cancelled, |_| {})
+}
+fn cancelled_check(cancelled: &AtomicBool) -> Result<(), String> {
+    if cancelled.load(Ordering::Acquire) {
+        Err("Parser operation was cancelled".into())
+    } else {
+        Ok(())
+    }
+}
+struct OwnedChild {
+    child: Child,
+    reaped: bool,
+}
+impl OwnedChild {
+    fn stop(&mut self) -> Result<(), String> {
+        if self.reaped {
+            return Ok(());
+        }
+        // The Child value is the sole process authority. No saved PID or path
+        // is used to find or signal another process.
+        let _ = self.child.kill();
+        self.child
+            .wait()
+            .map_err(|e| format!("Could not reap parser child: {e}"))?;
+        self.reaped = true;
+        Ok(())
+    }
+    fn poll(&mut self) -> Result<Option<ExitStatus>, String> {
+        let status = self.child.try_wait().map_err(|e| e.to_string())?;
+        if status.is_some() {
+            self.reaped = true;
+        }
+        Ok(status)
+    }
+}
+impl Drop for OwnedChild {
+    fn drop(&mut self) {
+        let _ = self.stop();
+    }
+}
+fn execute(
+    mut command: Command,
+    bytes: Vec<u8>,
+    cancelled: &AtomicBool,
+    on_spawn: impl FnOnce(u32),
+) -> Result<Response, String> {
+    cancelled_check(cancelled)?;
+    let child = command
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
         .spawn()
         .map_err(|e| e.to_string())?;
-    let mut input = child.stdin.take().unwrap();
-    let output = child.stdout.take().unwrap();
+    let mut child = OwnedChild {
+        child,
+        reaped: false,
+    };
+    on_spawn(child.child.id());
+    let mut input = child
+        .child
+        .stdin
+        .take()
+        .ok_or("Parser input pipe missing")?;
+    let output = child
+        .child
+        .stdout
+        .take()
+        .ok_or("Parser output pipe missing")?;
     let writer = std::thread::spawn(move || input.write_all(&bytes));
     let reader = std::thread::spawn(move || {
         let mut bytes = vec![];
@@ -427,20 +492,21 @@ pub fn run(request: Request) -> Result<Response, String> {
     });
     let start = Instant::now();
     let status = loop {
-        match child.try_wait() {
+        if let Err(reason) = cancelled_check(cancelled) {
+            break child.stop().and(Err(reason));
+        }
+        match child.poll() {
             Ok(Some(s)) => break Ok(s),
             Ok(None) if start.elapsed() < Duration::from_secs(3) => {
                 std::thread::sleep(Duration::from_millis(10))
             }
             Ok(None) => {
-                let _ = child.kill();
-                let _ = child.wait();
-                break Err("Parser exceeded its wall-clock budget".into());
+                break child
+                    .stop()
+                    .and(Err("Parser exceeded its wall-clock budget".into()));
             }
             Err(e) => {
-                let _ = child.kill();
-                let _ = child.wait();
-                break Err(e.to_string());
+                break child.stop().and(Err(e));
             }
         }
     };
@@ -452,6 +518,7 @@ pub fn run(request: Request) -> Result<Response, String> {
     if !status?.success() {
         return Err("Isolated parser exited unsuccessfully".into());
     }
+    cancelled_check(cancelled)?;
     if bytes.len() > MAX_ENVELOPE {
         return Err("Parser result exceeds 4 MiB".into());
     }
@@ -461,3 +528,6 @@ pub fn run(request: Request) -> Result<Response, String> {
         other => Ok(other),
     }
 }
+
+#[cfg(test)]
+mod cancellation_tests;

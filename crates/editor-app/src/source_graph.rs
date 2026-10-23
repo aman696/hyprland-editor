@@ -19,6 +19,25 @@ use std::{
     },
     time::{Duration, Instant},
 };
+mod private_inputs;
+pub(super) use private_inputs::{
+    accept_input, capture_input, inspect_pending, CapturedInput, InputChoice, Pending,
+};
+
+fn check_report(
+    program: &Program,
+    report: &replay::Report,
+    compiler: &replay::CompilerProfile,
+) -> Result<(), String> {
+    if report.version != program.version
+        || report.profile != program.profile
+        || &report.compiler_profile != compiler
+        || report.runtime_verified
+    {
+        return Err("Source analysis context differs from the requested program".into());
+    }
+    Ok(())
+}
 #[derive(Serialize)]
 enum ProbeOutcome {
     Observed(Observation),
@@ -370,11 +389,14 @@ pub(super) fn analyze_with_budget(
     let mut blocked = None;
     let report = loop {
         resolver.budget.check()?;
-        let worker::Response::Replayed(report) =
-            worker::run(worker::Request::ReplayModules(program.clone()))?
+        let worker::Response::Replayed(report) = worker::run_cancellable(
+            worker::Request::ReplayModules(program.clone()),
+            &resolver.budget.cancelled,
+        )?
         else {
             return Err("Unexpected dependency evaluator response".into());
         };
+        check_report(&program, &report, &replay::compiler_profile())?;
         resolver.budget.check()?;
         let request = match &report.halt {
             Some(Halt::NeedsResolution { request }) => request.clone(),
@@ -500,11 +522,13 @@ fn finish(mut analysis: Analysis, budget: &mut Budget) -> Result<Analysis, Strin
         let result = (|| {
             budget.check()?;
             let expected_orders = events.iter().map(|e| e.order).collect::<Vec<_>>();
-            let worker::Response::Configuration(inspection) =
-                worker::run(worker::Request::InspectConfiguration {
+            let worker::Response::Configuration(inspection) = worker::run_cancellable(
+                worker::Request::InspectConfiguration {
                     events,
                     version: program.version.clone(),
-                })?
+                },
+                &budget.cancelled,
+            )?
             else {
                 return Err("Unexpected configuration model response".to_string());
             };
@@ -576,11 +600,13 @@ fn finish(mut analysis: Analysis, budget: &mut Budget) -> Result<Analysis, Strin
             use hyprland_editor_core::lua::monitor_inspection;
             budget.check()?;
             let expected = events.iter().map(|e| e.order).collect::<Vec<_>>();
-            let worker::Response::Monitors(inspection) =
-                worker::run(worker::Request::InspectMonitors {
+            let worker::Response::Monitors(inspection) = worker::run_cancellable(
+                worker::Request::InspectMonitors {
                     events,
                     version: program.version.clone(),
-                })?
+                },
+                &budget.cancelled,
+            )?
             else {
                 return Err("Unexpected monitor model response".to_string());
             };
@@ -623,6 +649,7 @@ fn finish(mut analysis: Analysis, budget: &mut Budget) -> Result<Analysis, Strin
             }
         }
     }
+    budget.check()?;
     analysis.blocked = blocked;
     analysis.retained_bytes = budget.retained;
     Ok(analysis)
@@ -711,32 +738,40 @@ pub(super) fn freeze(
     bundle.fingerprint()?;
     Ok(bundle)
 }
-pub(super) fn restore(
+struct Original {
+    program: Program,
+    report: Box<replay::Report>,
+    budget: Budget,
+    program_cost: usize,
+}
+fn original(
     bundle: &hyprland_editor_core::workspace_graph::Bundle,
     version: &str,
-) -> Result<Analysis, String> {
-    let mut program = bundle
-        .graph
-        .program(&bundle.sources, Some(&bundle.graph.root), version)?;
+    cancelled: Arc<AtomicBool>,
+) -> Result<Original, String> {
     let mut budget = Budget {
         start: Instant::now(),
         probes: 0,
         retained: 0,
-        cancelled: Arc::new(AtomicBool::new(false)),
+        cancelled,
         limit: 8 * MAX_DOCUMENT_BYTES,
     };
+    budget.check()?;
+    let program = bundle
+        .graph
+        .program(&bundle.sources, Some(&bundle.graph.root), version)?;
     budget.retain(bundle)?;
     let before_program = budget.retained;
     budget.retain(&program)?;
     let original_program_cost = budget.retained - before_program;
-    let worker::Response::Replayed(mut report) =
-        worker::run(worker::Request::ReplayModules(program.clone()))?
+    let worker::Response::Replayed(report) = worker::run_cancellable(
+        worker::Request::ReplayModules(program.clone()),
+        &budget.cancelled,
+    )?
     else {
         return Err("Unexpected saved-graph evaluator response".into());
     };
-    if report.compiler_profile != bundle.graph.compiler || report.runtime_verified {
-        return Err("Saved graph compiler profile differs; explicit reanalysis is required".into());
-    }
+    check_report(&program, &report, &bundle.graph.compiler)?;
     // A saved location/span is not proof of a reached loader. Rebuild and check it.
     for binding in &program.bindings {
         if !report.loads.iter().any(|load| {
@@ -771,6 +806,31 @@ pub(super) fn restore(
             return Err("Saved graph contains a source view that no loader reaches".into());
         }
     }
+    budget.check()?;
+    Ok(Original {
+        program,
+        report,
+        budget,
+        program_cost: original_program_cost,
+    })
+}
+pub(super) fn restore(
+    bundle: &hyprland_editor_core::workspace_graph::Bundle,
+    version: &str,
+) -> Result<Analysis, String> {
+    restore_cancellable(bundle, version, Arc::new(AtomicBool::new(false)))
+}
+pub(super) fn restore_cancellable(
+    bundle: &hyprland_editor_core::workspace_graph::Bundle,
+    version: &str,
+    cancelled: Arc<AtomicBool>,
+) -> Result<Analysis, String> {
+    let Original {
+        mut program,
+        mut report,
+        mut budget,
+        program_cost: original_program_cost,
+    } = original(bundle, version, cancelled)?;
     // Reachability above concerns the original captured graph. Private edits
     // may intentionally make a declaration or dependency unreachable; preserve
     // all base evidence rather than silently dropping it from the workspace.
@@ -779,12 +839,14 @@ pub(super) fn restore(
             .graph
             .private
             .program(&program, &bundle.graph.revisions)?;
-        let worker::Response::SourceRevisionProgram(revised) =
-            worker::run(worker::Request::MaterializePrivateInputs {
+        let worker::Response::SourceRevisionProgram(revised) = worker::run_cancellable(
+            worker::Request::MaterializePrivateInputs {
                 original: program,
                 revisions: bundle.graph.revisions.clone(),
                 inputs: bundle.graph.private.clone(),
-            })?
+            },
+            &budget.cancelled,
+        )?
         else {
             return Err("Unexpected private revision response".into());
         };
@@ -796,14 +858,14 @@ pub(super) fn restore(
         program = expected;
         budget.retained = budget.retained.saturating_sub(original_program_cost);
         budget.retain(&program)?;
-        let worker::Response::Replayed(revised) =
-            worker::run(worker::Request::ReplayModules(program.clone()))?
+        let worker::Response::Replayed(revised) = worker::run_cancellable(
+            worker::Request::ReplayModules(program.clone()),
+            &budget.cancelled,
+        )?
         else {
             return Err("Unexpected private source analysis response".into());
         };
-        if revised.compiler_profile != bundle.graph.compiler || revised.runtime_verified {
-            return Err("Private source model profile changed".into());
-        }
+        check_report(&program, &revised, &bundle.graph.compiler)?;
         bundle.graph.private.check_reached(&program, &revised)?;
         report = revised;
     }

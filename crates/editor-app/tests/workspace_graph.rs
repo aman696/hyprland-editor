@@ -673,62 +673,67 @@ fn external_merge_preserves_private_captures_edits_and_archives_through_actual_r
 #[test]
 fn private_input_model_migration_preserves_active_and_archived_data_with_fresh_reanalysis() {
     const PREVIOUS: &str = "9f77616b432badc333c5a3b70cfbca4d7ed9fe4557ba87b97b7da5348940044f";
-    for version in [BASELINE, AUDITED_MAIN] {
-        for archive in [false, true] {
-            let root = root();
-            let mut snapshot = private_fixture(&root, version);
-            if archive {
-                let graph = snapshot.source_graph.as_mut().unwrap();
-                let base = graph
-                    .program(&snapshot.sources, Some("root"), version)
+    for previous in [
+        PREVIOUS,
+        "e25d982f292e56135f0810194ae06ae6a93a45d4b6f6afd75bb0ada5ecf7b0fc",
+    ] {
+        for version in [BASELINE, AUDITED_MAIN] {
+            for archive in [false, true] {
+                let root = root();
+                let mut snapshot = private_fixture(&root, version);
+                if archive {
+                    let graph = snapshot.source_graph.as_mut().unwrap();
+                    let base = graph
+                        .program(&snapshot.sources, Some("root"), version)
+                        .unwrap();
+                    let p = graph.private.program(&base, &graph.revisions).unwrap();
+                    let request = &graph.private.bindings[0].request;
+                    let d = p
+                        .documents
+                        .iter()
+                        .find(|d| d.id == request.document)
+                        .unwrap();
+                    let plan = edits::prepare(
+                        &p,
+                        vec![edits::SourceEdit {
+                            document: d.id.clone(),
+                            base_sha256: d.sha256.clone(),
+                            span: request.span.clone(),
+                            old_bytes_sha256: lua::source_hash(&d.source[request.span.clone()]),
+                            replacement: "7".into(),
+                            semantic_targets: vec!["general:border_size".into()],
+                        }],
+                        vec![],
+                    )
                     .unwrap();
-                let p = graph.private.program(&base, &graph.revisions).unwrap();
-                let request = &graph.private.bindings[0].request;
-                let d = p
-                    .documents
-                    .iter()
-                    .find(|d| d.id == request.document)
-                    .unwrap();
-                let plan = edits::prepare(
-                    &p,
-                    vec![edits::SourceEdit {
-                        document: d.id.clone(),
-                        base_sha256: d.sha256.clone(),
-                        span: request.span.clone(),
-                        old_bytes_sha256: lua::source_hash(&d.source[request.span.clone()]),
-                        replacement: "7".into(),
-                        semantic_targets: vec!["general:border_size".into()],
-                    }],
-                    vec![],
-                )
-                .unwrap();
-                (graph.revisions, graph.private) =
-                    graph.private.apply(&base, &graph.revisions, &plan).unwrap();
+                    (graph.revisions, graph.private) =
+                        graph.private.apply(&base, &graph.revisions, &plan).unwrap();
+                }
+                snapshot.source_graph.as_mut().unwrap().schema_sha256 = previous.into();
+                let bytes = serde_json::to_vec_pretty(&snapshot).unwrap();
+                let path = root.join("previous-private.hye");
+                fs::write(&path, &bytes).unwrap();
+                assert!(!check(&path).0);
+                let (ok, output) = check_migration(&path);
+                assert!(ok, "{output}");
+                let checked: serde_json::Value = serde_json::from_str(&output).unwrap();
+                assert_eq!(checked["migration"]["previous_model"], previous);
+                assert_eq!(checked["migration"]["private_documents"], 1);
+                assert_eq!(
+                    checked["migration"]["private_resolution_inputs"],
+                    usize::from(!archive)
+                );
+                assert_eq!(
+                    checked["migration"]["archived_documents"],
+                    usize::from(archive)
+                );
+                assert_eq!(checked["migration"]["reanalysis_findings"], 0);
+                assert_eq!(checked["saved_file_written"], false);
+                assert_eq!(checked["original_paths_opened"], false);
+                assert_eq!(fs::read(&path).unwrap(), bytes);
+                assert!(!root.join("originals").exists());
+                fs::remove_dir_all(root).unwrap();
             }
-            snapshot.source_graph.as_mut().unwrap().schema_sha256 = PREVIOUS.into();
-            let bytes = serde_json::to_vec_pretty(&snapshot).unwrap();
-            let path = root.join("previous-private.hye");
-            fs::write(&path, &bytes).unwrap();
-            assert!(!check(&path).0);
-            let (ok, output) = check_migration(&path);
-            assert!(ok, "{output}");
-            let checked: serde_json::Value = serde_json::from_str(&output).unwrap();
-            assert_eq!(checked["migration"]["previous_model"], PREVIOUS);
-            assert_eq!(checked["migration"]["private_documents"], 1);
-            assert_eq!(
-                checked["migration"]["private_resolution_inputs"],
-                usize::from(!archive)
-            );
-            assert_eq!(
-                checked["migration"]["archived_documents"],
-                usize::from(archive)
-            );
-            assert_eq!(checked["migration"]["reanalysis_findings"], 0);
-            assert_eq!(checked["saved_file_written"], false);
-            assert_eq!(checked["original_paths_opened"], false);
-            assert_eq!(fs::read(&path).unwrap(), bytes);
-            assert!(!root.join("originals").exists());
-            fs::remove_dir_all(root).unwrap();
         }
     }
 }
@@ -1050,6 +1055,7 @@ fn reviewed_graph_migrations_rebuild_deleted_sources_and_private_pieces_without_
             "071946f5f808e82ef8f38d67fa919d7a427299f2c41c0f5e73368d7c3ee0aae7",
             "71556836e091dccaaf231bc4510e448e545e588c175a56e59ad8c7d9cd2a3972",
             "9f77616b432badc333c5a3b70cfbca4d7ed9fe4557ba87b97b7da5348940044f",
+            "e25d982f292e56135f0810194ae06ae6a93a45d4b6f6afd75bb0ada5ecf7b0fc",
         ] {
             let root = root();
             let mut snapshot = fixture(&root, version);

@@ -1,6 +1,12 @@
 use super::*;
 #[cfg(test)]
-pub(crate) fn test_review(window: &adw::Window, state: &Shared, expected_partial: bool) {
+pub(crate) fn test_review(
+    window: &adw::Window,
+    state: &Shared,
+    expected_partial: bool,
+    expected_pending: bool,
+    resolve_pending: bool,
+) {
     fn widgets(root: &gtk::Widget) -> Vec<gtk::Widget> {
         let mut all = vec![root.clone()];
         let mut child = root.first_child();
@@ -95,6 +101,35 @@ pub(crate) fn test_review(window: &adw::Window, state: &Shared, expected_partial
     );
     eprintln!("merge GUI: rebuild");
     build.emit_clicked();
+    if expected_pending {
+        if resolve_pending {
+            let resolve: gtk::Button = find(window, "merge-resolve-imports");
+            wait(|| resolve.is_visible() && resolve.is_sensitive());
+            resolve.emit_clicked();
+            let imports = gtk::Window::list_toplevels()
+                .into_iter()
+                .filter_map(|w| w.downcast::<adw::Window>().ok())
+                .find(|w| w.is_visible() && w.title().as_deref() == Some("Resolve Imports"))
+                .unwrap();
+            let mode: gtk::DropDown = find(&imports, "pending-mode");
+            let preserved: gtk::DropDown = find(&imports, "pending-preserved");
+            let use_input: gtk::Button = find(&imports, "pending-use");
+            let finish: gtk::Button = find(&imports, "pending-finish");
+            mode.set_selected(1);
+            // Root then preserved part; archived invalid Lua remains inactive.
+            preserved.set_selected(2);
+            assert!(use_input.is_sensitive());
+            use_input.emit_clicked();
+            wait(|| finish.is_sensitive());
+            assert_eq!(state.borrow().source_graphs[&version].fingerprint, before);
+            finish.emit_clicked();
+            wait(|| !imports.is_visible());
+        } else {
+            let review: gtk::Button = find(window, "merge-review-pending");
+            wait(|| review.is_visible() && review.is_sensitive());
+            review.emit_clicked();
+        }
+    }
     let partial: gtk::CheckButton = find(window, "merge-partial");
     wait(|| keep.is_sensitive() || partial.is_visible());
     assert_eq!(partial.is_visible(), expected_partial);
@@ -259,5 +294,93 @@ pub(crate) fn test_stale(
         if !close {
             window.close();
         }
+    }
+}
+
+#[cfg(test)]
+pub(crate) fn test_import_stale(
+    parent: &adw::ApplicationWindow,
+    state: &Shared,
+    incoming: Arc<source_graph::Saved>,
+) {
+    fn wait(check: impl Fn() -> bool) {
+        let start = std::time::Instant::now();
+        loop {
+            while gtk::glib::MainContext::default().pending() {
+                gtk::glib::MainContext::default().iteration(false);
+            }
+            if check() {
+                return;
+            }
+            assert!(start.elapsed() < std::time::Duration::from_secs(10));
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        }
+    }
+    fn find<T: gtk::glib::prelude::IsA<gtk::Widget> + gtk::glib::object::IsClass>(
+        window: &adw::Window,
+        name: &str,
+    ) -> T {
+        fn walk(root: &gtk::Widget, name: &str) -> Option<gtk::Widget> {
+            if root.widget_name() == name {
+                return Some(root.clone());
+            }
+            let mut child = root.first_child();
+            while let Some(w) = child {
+                if let Some(found) = walk(&w, name) {
+                    return Some(found);
+                }
+                child = w.next_sibling();
+            }
+            None
+        }
+        walk(window.upcast_ref(), name)
+            .unwrap()
+            .downcast::<T>()
+            .ok()
+            .unwrap()
+    }
+    let version = state.borrow().draft.version.clone();
+    for invalidation in ["generation", "choices", "close", "destroy"] {
+        let (window, ui) = show(parent, state, incoming.clone()).unwrap();
+        let session = ui.session.upgrade().unwrap();
+        wait(|| !session.borrow().pending);
+        let pending = source_graph::inspect_pending(
+            &incoming.bundle,
+            &version,
+            Arc::new(AtomicBool::new(false)),
+        )
+        .unwrap();
+        assert!(pending.request().is_some());
+        session.borrow_mut().unresolved = Some(Arc::new(pending));
+        ui.refresh();
+        ui.resolve();
+        let imports = session
+            .borrow()
+            .import_window
+            .as_ref()
+            .unwrap()
+            .upgrade()
+            .unwrap();
+        let mode: gtk::DropDown = find(&imports, "pending-mode");
+        let preserved: gtk::DropDown = find(&imports, "pending-preserved");
+        let use_input: gtk::Button = find(&imports, "pending-use");
+        let finish: gtk::Button = find(&imports, "pending-finish");
+        mode.set_selected(1);
+        preserved.set_selected(2);
+        use_input.emit_clicked();
+        wait(|| finish.is_sensitive());
+        let before = state.borrow().source_graphs[&version].fingerprint.clone();
+        match invalidation {
+            "generation" => state.borrow_mut().generation += 1,
+            "choices" => session.borrow_mut().reset_result(),
+            "close" => window.close(),
+            "destroy" => window.destroy(),
+            _ => unreachable!(),
+        }
+        finish.emit_clicked();
+        wait(|| !imports.is_visible());
+        assert!(session.borrow().candidate.is_none());
+        assert_eq!(state.borrow().source_graphs[&version].fingerprint, before);
+        window.close();
     }
 }

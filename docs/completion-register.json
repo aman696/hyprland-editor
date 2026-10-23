@@ -19,19 +19,24 @@
         "crates/editor-core/src/workspace_graph/private.rs",
         "crates/editor-core/src/workspace_graph/revisions.rs",
         "crates/editor-app/src/source_graph.rs",
+        "crates/editor-app/src/source_graph/private_inputs.rs",
+        "crates/editor-app/src/source_pending.rs",
         "crates/editor-app/src/worker.rs",
         "crates/editor-app/src/history.rs",
         "crates/editor-projection/src/layers.rs"
       ],
       "test_references": [
         "crates/editor-core/tests/private_inputs.rs",
+        "crates/editor-app/src/source_graph/private_inputs/tests.rs",
+        "crates/editor-app/src/source_pending/tests.rs",
+        "crates/editor-app/src/worker/cancellation_tests.rs",
         "private_dependency_inputs_reopen_and_reconstruct_preview_layers_without_original_paths",
         "repeated_graph_inverses_share_large_archived_private_capture_allocations",
         "test_private_graph_ui",
         "pending_private_request_worker_drops_changed_inherited_binding_without_granting_acceptance",
         "migration_refuses_unknown_models_profiles_corruption_unreached_inputs_and_hidden_payloads"
       ],
-      "limits": "shared captured private source pools, explicit final-byte/context loader bindings, separate pending-request inspection without resolution rights, archived data excluded from evaluation, independent original/private restricted reconstruction and reached-input checks, edits/offset rebasing/removal archives, exact private persistence and scalar-layer staging rebuild, byte-equal private provenance and bounded shared undo retention; both pinned versions/four loader modes and actual worker/application/staging/private-display checks; no fresh-folder pending-request GUI or general activation workflow, complete multi-file acceptance/ownership/Lua semantics or full preview/apply/security/release certificate"
+      "limits": "shared captured private source pools, explicit final-byte/context loader bindings, separate pending-request inspection without resolution rights, archived data excluded from evaluation, independent original/private restricted reconstruction and reached-input checks, edits/offset rebasing/removal archives, exact private persistence and scalar-layer staging rebuild, byte-equal private provenance and bounded shared undo retention; both pinned versions/four loader modes and actual worker/application/staging/private-display checks; explicit pending-input GUI with fresh temporary folders, loader-specific capture, selected preserved/archive reuse, acknowledged missing assumptions, sequential replay and one-step proposal undo; owned parser cancellation/reaping and parent generation/epoch/close/destroy guards; no complete multi-file acceptance/ownership/Lua semantics, all-operation interruption, representative resource or full preview/apply/security/release certificate"
     },
     {
       "area": "external source text merge and graph correspondence foundations",
@@ -62,9 +67,10 @@
         "test_incoming",
         "source_reconcile::test_review",
         "source_reconcile::test_stale",
+        "source_reconcile::test_import_stale",
         "source_pages_cover_every_byte_once_without_splitting_unicode"
       ],
-      "limits": "bounded lossless line/Unicode three-way regions, mandatory-anchor ambiguity checks, explicit conflicts/insert ordering, exact input-range provenance and client checks, restricted-worker operations, graph-fingerprint/context correspondence, lazy mapped-file inputs, fresh exact text decisions and provenance-aware private composition onto immutable incoming captures with streamed envelope and aggregate piece/buffer bounds, explicit surviving-loader renewal, private/archive correspondence and exact archive/discard choices, preservation of captured identities/load names/pieces under collision-safe inactive labels without old binding transfer, and internal generation/hash/identity/version-checked atomic root/origin/graph/removed-override inverse with shared allocation accounting; composed graph and edited/invalid-Lua archives reopen through actual restricted application and scalar-staging workers after capture trees are removed; temporary incoming capture plus graphical file/context/conflict/archive choices, lazy paged text review, read-only whole-input result reconstruction and guarded root/origin/graph accept/save/reopen/undo with stale/close lease checks; no integrated changed-private-import folder resolution, archive reactivation, immediate interruption, representative resources, general ownership/Lua/source-export or complete workflow/E03/E05/runtime certificate"
+      "limits": "bounded lossless line/Unicode three-way regions, mandatory-anchor ambiguity checks, explicit conflicts/insert ordering, exact input-range provenance and client checks, restricted-worker operations, graph-fingerprint/context correspondence, lazy mapped-file inputs, fresh exact text decisions and provenance-aware private composition onto immutable incoming captures with streamed envelope and aggregate piece/buffer bounds, explicit surviving-loader renewal, private/archive correspondence and exact archive/discard choices, preservation of captured identities/load names/pieces under collision-safe inactive labels without old binding transfer, and internal generation/hash/identity/version-checked atomic root/origin/graph/removed-override inverse with shared allocation accounting; composed graph and edited/invalid-Lua archives reopen through actual restricted application and scalar-staging workers after capture trees are removed; temporary incoming capture plus graphical file/context/conflict/archive choices, lazy paged text review, read-only whole-input result reconstruction and guarded root/origin/graph accept/save/reopen/undo with stale/close lease checks; separate exact-request import resolution with fresh grants or explicit preserved/archive/missing choices, verified return before final draft acceptance and owned-parser cancellation/reaping; no immediate interruption of all folder/client work, representative resources, general ownership/Lua/source-export or complete workflow/E03/E05/runtime certificate"
     },
     {
       "area": "reviewed saved-graph model migration",
@@ -84,7 +90,8 @@
         "data/migrations/graph-model-mixed-review.json",
         "data/migrations/graph-model-text-merge.json",
         "data/migrations/graph-model-composition.json",
-        "data/migrations/graph-model-private-inputs.json"
+        "data/migrations/graph-model-private-inputs.json",
+        "data/migrations/graph-model-correspondence.json"
       ],
       "test_references": [
         "reviewed_transition_pins_exact_monitor_differences_and_refuses_unreviewed_builds",
@@ -93,7 +100,7 @@
         "workflow::test_graph_migration",
         "private_input_model_migration_preserves_active_and_archived_data_with_fresh_reanalysis"
       ],
-      "limits": "thirteen exact reviewed dependency/storage/monitor/merge/private-input/correspondence transitions with bounded held-inode input, unknown-payload refusal, fresh restricted-worker captured-view/dependency/private-piece reanalysis, byte/value preservation, cancel/epoch/unsaved guards and new private save; no original-path reads or restored folder access, general model/schema/profile conversion, persistent history, full source export/reconciliation or full audit certificate"
+      "limits": "fourteen exact reviewed dependency/storage/monitor/merge/private-input/correspondence/resolution transitions with bounded held-inode input, unknown-payload refusal, fresh restricted-worker captured-view/dependency/private-piece reanalysis, byte/value preservation, cancel/epoch/unsaved guards and new private save; no original-path reads or restored folder access, general model/schema/profile conversion, persistent history, full source export/reconciliation or full audit certificate"
     },
     {
       "area": "source dependency capture and ordered evaluation",

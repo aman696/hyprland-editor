@@ -135,7 +135,12 @@ fn attach(state: &mut State, f: &Fixture, version: &str) {
 #[cfg(test)]
 pub(super) fn test_external_merge_ui(parent: &adw::ApplicationWindow) {
     for version in [BASELINE, AUDITED_MAIN] {
-        for partial in [false, true] {
+        for (partial, pending_import, resolve_pending) in [
+            (false, false, false),
+            (true, false, false),
+            (true, true, false),
+            (false, true, true),
+        ] {
             let temp = test_support::TempDir::new("he-external-merge-ui");
             let old_folder = temp.path().join("old");
             let new_folder = temp.path().join("incoming");
@@ -186,7 +191,7 @@ pub(super) fn test_external_merge_ui(parent: &adw::ApplicationWindow) {
             let incoming = new_folder.join("main.lua");
             std::fs::write(
             &incoming,
-            format!("local part=require('part');hl.config{{general={{border_size=part}}}} -- incoming\n{}",if partial {"hl.unmodeled_test_operation()\n"}else{""}),
+            format!("local part=require('part');hl.config{{general={{border_size=part}}}} -- incoming\n{}",if pending_import {"require('missing')\n"}else if partial {"hl.unmodeled_test_operation()\n"}else{""}),
         )
         .unwrap();
             std::fs::write(new_folder.join("part.lua"), "return 5\n").unwrap();
@@ -211,7 +216,7 @@ pub(super) fn test_external_merge_ui(parent: &adw::ApplicationWindow) {
             ] {
                 std::fs::remove_file(path).unwrap();
             }
-            source_reconcile::test_review(&merge, &state, partial);
+            source_reconcile::test_review(&merge, &state, partial, pending_import, resolve_pending);
             let graph = state.borrow().source_graphs[version].clone();
             assert_ne!(graph.fingerprint, old.graph.fingerprint);
             assert_eq!(
@@ -219,7 +224,10 @@ pub(super) fn test_external_merge_ui(parent: &adw::ApplicationWindow) {
                 "invalid archived source ="
             );
             assert!(graph.bundle.graph.private.archived.contains("archived"));
-            assert!(graph.bundle.graph.private.bindings.is_empty());
+            assert_eq!(
+                graph.bundle.graph.private.bindings.len(),
+                usize::from(resolve_pending)
+            );
             assert_eq!(
                 state.borrow().source_origins[version].selected_path,
                 incoming.as_os_str().as_encoded_bytes()
@@ -244,6 +252,9 @@ pub(super) fn test_external_merge_ui(parent: &adw::ApplicationWindow) {
             );
             assert_eq!(state.borrow().source_origins[version], old.origin);
             assert_eq!(state.borrow().sources[version].source, old.document.source);
+            if pending_import && resolve_pending {
+                source_reconcile::test_import_stale(parent, &state, incoming_graph.clone());
+            }
             source_reconcile::test_stale(parent, &state, incoming_graph);
         }
     }

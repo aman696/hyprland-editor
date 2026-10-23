@@ -128,6 +128,12 @@ pub(super) fn show(
     text_page.append(&use_file);
     let build = button("merge-build", "Rebuild and Review Result");
     text_page.append(&build);
+    let resolve = button("merge-resolve-imports", "Resolve Imports…");
+    resolve.set_visible(false);
+    text_page.append(&resolve);
+    let review_pending = button("merge-review-pending", "Review Unresolved Draft");
+    review_pending.set_visible(false);
+    text_page.append(&review_pending);
     add_page(&pages, &text_page, "text", "Text");
     let result = page();
     let model = Rc::new(RefCell::new(None));
@@ -161,6 +167,8 @@ pub(super) fn show(
         decisions: Default::default(),
         file: None,
         candidate: None,
+        unresolved: None,
+        import_window: None,
         model,
         epoch: 0,
         pending: false,
@@ -187,6 +195,8 @@ pub(super) fn show(
         choice: choice.downgrade(),
         use_file: use_file.downgrade(),
         build: build.downgrade(),
+        resolve: resolve.downgrade(),
+        review_pending: review_pending.downgrade(),
         keep: keep.downgrade(),
         stop: stop.downgrade(),
         partial: partial.downgrade(),
@@ -257,6 +267,10 @@ pub(super) fn show(
     use_file.connect_clicked(move |_| u.use_file());
     let u = ui.clone();
     build.connect_clicked(move |_| u.build());
+    let u = ui.clone();
+    resolve.connect_clicked(move |_| u.resolve());
+    let u = ui.clone();
+    review_pending.connect_clicked(move |_| u.review_pending());
     let u = ui.clone();
     keep.connect_clicked(move |_| u.keep());
     let u = ui.clone();

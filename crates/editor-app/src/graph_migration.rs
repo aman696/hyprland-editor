@@ -35,7 +35,10 @@ const COMPOSITION_MODEL: &str =
 const PRIVATE_INPUTS: &str = "9f77616b432badc333c5a3b70cfbca4d7ed9fe4557ba87b97b7da5348940044f";
 const PRIVATE_MODEL: &str =
     include_str!("../../../data/migrations/graph-model-private-inputs.json");
-const TO: &str = "e25d982f292e56135f0810194ae06ae6a93a45d4b6f6afd75bb0ada5ecf7b0fc";
+const CORRESPONDENCE: &str = "e25d982f292e56135f0810194ae06ae6a93a45d4b6f6afd75bb0ada5ecf7b0fc";
+const CORRESPONDENCE_MODEL: &str =
+    include_str!("../../../data/migrations/graph-model-correspondence.json");
+const TO: &str = "aaa60b286d173a7d4b8818bea1461ce7e87c7a054788fcf90bbd58f8b9925d75";
 const OLD: &str = include_str!("../../../data/migrations/graph-model-before-projection.json");
 const FROM_PROJECTION: &str = "046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371";
 const PROJECTION: &str = include_str!("../../../data/migrations/graph-model-projection.json");
@@ -508,8 +511,10 @@ fn before_private_correspondence_transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
-fn transition(from: &str) -> Result<(), String> {
-    if lua::source_hash(PRIVATE_MODEL) != PRIVATE_INPUTS || workspace_graph::schema_sha256() != TO {
+fn before_resolution_transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(PRIVATE_MODEL) != PRIVATE_INPUTS
+        || lua::source_hash(CORRESPONDENCE_MODEL) != CORRESPONDENCE
+    {
         return Err(
             "No reviewed private graph correspondence transition to this exact model is available"
                 .into(),
@@ -520,7 +525,8 @@ fn transition(from: &str) -> Result<(), String> {
     }
     let previous: serde_json::Value =
         serde_json::from_str(PRIVATE_MODEL).map_err(|e| e.to_string())?;
-    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let current: serde_json::Value =
+        serde_json::from_str(CORRESPONDENCE_MODEL).map_err(|e| e.to_string())?;
     let old = previous["inputs"]
         .as_object()
         .ok_or("Invalid private input model")?;
@@ -544,6 +550,49 @@ fn transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
+fn transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(CORRESPONDENCE_MODEL) != CORRESPONDENCE
+        || workspace_graph::schema_sha256() != TO
+    {
+        return Err(
+            "No reviewed private resolution transition to this exact model is available".into(),
+        );
+    }
+    if from != CORRESPONDENCE {
+        before_resolution_transition(from)?;
+    }
+    let previous: serde_json::Value =
+        serde_json::from_str(CORRESPONDENCE_MODEL).map_err(|e| e.to_string())?;
+    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let old = previous["inputs"]
+        .as_object()
+        .ok_or("Invalid previous correspondence model")?;
+    let new = current["inputs"]
+        .as_object()
+        .ok_or("Invalid private resolution model")?;
+    let added = new
+        .keys()
+        .filter(|k| !old.contains_key(*k))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    let changed = old
+        .keys()
+        .filter(|k| new.get(*k) != Some(&old[*k]))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    if old.len() != 72
+        || new.len() != 73
+        || added != ["crates/editor-app/src/source_graph/private_inputs.rs"]
+        || changed
+            != [
+                "crates/editor-app/src/source_graph.rs",
+                "crates/editor-app/src/worker.rs",
+            ]
+    {
+        return Err("Private resolution model no longer has only the reviewed cancellable reconstruction, owned parser cleanup and explicit pending-input coordinator changes".into());
+    }
+    Ok(())
+}
 pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, String> {
     if text.len() > MAX_WORKSPACE_BYTES {
         return Err("Saved workspace exceeds 8 MiB".into());
@@ -559,7 +608,10 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
     // Known old writer shape only. Whitespace/key order are immaterial, but
     // unknown/discarded payloads or changed numeric representations are refused.
     let raw: serde_json::Value = serde_json::from_str(text).map_err(|e| e.to_string())?;
-    if previous != PRIVATE_INPUTS && raw["source_graph"].get("private").is_some() {
+    if previous != PRIVATE_INPUTS
+        && previous != CORRESPONDENCE
+        && raw["source_graph"].get("private").is_some()
+    {
         return Err("Previous graph writers had no private input layer; new payloads cannot be introduced during migration".into());
     }
     if serde_json::to_value(&workspace).map_err(|e| e.to_string())? != raw {
@@ -657,6 +709,7 @@ mod tests {
         transition(TEXT_MERGE).unwrap();
         transition(COMPOSITION).unwrap();
         transition(PRIVATE_INPUTS).unwrap();
+        transition(CORRESPONDENCE).unwrap();
         assert!(transition(&"0".repeat(64)).is_err());
         assert_ne!(FROM, TO);
         assert_eq!(lua::source_hash(CURRENT), TO);

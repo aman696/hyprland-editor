@@ -16,7 +16,7 @@ def main():
     paths = list((ROOT / "crates/editor-core/src").rglob("*.rs"))
     paths += [ROOT / path for path in [
         "Cargo.toml", "Cargo.lock", "crates/editor-core/Cargo.toml", "crates/editor-app/Cargo.toml", "crates/editor-core/build.rs", "crates/editor-core/native/lua_syntax.cpp",
-        "crates/editor-app/src/source_graph.rs", "crates/editor-app/src/worker.rs",
+        "crates/editor-app/src/source_graph.rs", "crates/editor-app/src/source_graph/private_inputs.rs", "crates/editor-app/src/worker.rs",
         "crates/editor-app/src/process_policy.rs", "data/source-graph-semantics.json",
         "data/lua-profiles.json", "data/scalar-semantics.json", "data/scalars.json",
         "data/monitor-source-semantics.json", "data/monitors.json",
