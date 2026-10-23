@@ -1089,6 +1089,8 @@ pub(super) fn test_graph_persistence(
         version.clone(),
     )
     .unwrap();
+    let document = std::sync::Arc::new(imported.source.unwrap());
+    let origin = imported.origin.unwrap();
     let graph = imported.graph.unwrap();
     assert_eq!(graph.bundle.sources.len(), 2);
     assert_eq!(
@@ -1117,6 +1119,11 @@ pub(super) fn test_graph_persistence(
         previous
     );
     assert!(state.borrow().dirty());
-    state.borrow_mut().keep_graph(graph).unwrap();
+    let draft = state.borrow().draft.clone();
+    let generation = state.borrow().generation;
+    state
+        .borrow_mut()
+        .keep_graph_revision(graph, draft, document, origin, generation)
+        .unwrap();
     assert!(!state.borrow().dirty());
 }

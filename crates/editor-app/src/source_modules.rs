@@ -268,6 +268,18 @@ fn show(parent: &adw::ApplicationWindow, state: &Shared) -> Result<adw::Window, 
                         expected_hash.clone(),
                     );
                     results.append(&access);
+                    if state.borrow().source_graphs.contains_key(&version) {
+                        let incoming = gtk::Button::with_label("Merge Incoming Configuration…");
+                        incoming.set_widget_name("source-module-incoming");
+                        super::source_access::connect_incoming(
+                            &incoming,
+                            &win,
+                            &state,
+                            version.clone(),
+                            expected_hash.clone(),
+                        );
+                        results.append(&incoming);
+                    }
                     report(&results, source, inventory);
                 }
                 Err(error) => feedback.set_text(&error),

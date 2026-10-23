@@ -26,7 +26,7 @@ struct Capture {
     folder: Arc<Identity>,
     cost: usize,
 }
-fn encoded_len(value: &impl serde::Serialize) -> Result<usize, String> {
+pub(super) fn encoded_len(value: &impl serde::Serialize) -> Result<usize, String> {
     struct Counter(usize);
     impl std::io::Write for Counter {
         fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
@@ -68,6 +68,8 @@ impl Capture {
     }
 }
 struct Session {
+    incoming: bool,
+    merge_window: Option<gtk::glib::WeakRef<adw::Window>>,
     version: String,
     root_hash: String,
     generation: u64,
@@ -275,6 +277,8 @@ impl Controls {
         if let Some(button) = self.keep.upgrade() {
             button.set_label(if s.kept {
                 "Files Kept in Draft"
+            } else if s.incoming {
+                "Review Merge…"
             } else {
                 "Keep Analyzed Files in Draft"
             });
@@ -522,6 +526,16 @@ impl Controls {
         let Some(session) = self.session.upgrade() else {
             return;
         };
+        if let Some(window) = session
+            .borrow()
+            .merge_window
+            .as_ref()
+            .and_then(|w| w.upgrade())
+            .filter(|w| w.is_visible())
+        {
+            window.present();
+            return;
+        }
         let analysis = {
             let mut s = session.borrow_mut();
             if s.pending {
@@ -549,6 +563,19 @@ impl Controls {
                 let Some(state) = ui.state.upgrade() else {
                     return;
                 };
+                if session.borrow().incoming {
+                    match result.and_then(|graph| {
+                        let parent = ui.window.upgrade().ok_or("Capture window closed")?;
+                        super::source_reconcile::open(&parent, &state, graph)
+                    }) {
+                        Ok(window) => {
+                            session.borrow_mut().merge_window = Some(window.downgrade());
+                            ui.feedback("Merge review opened. The draft has not changed.");
+                        }
+                        Err(e) => ui.feedback(&e),
+                    }
+                    return;
+                }
                 match result.and_then(|graph| state.borrow_mut().keep_graph(graph)) {
                     Ok(()) => {
                         session.borrow_mut().generation = state.borrow().generation;
@@ -656,8 +683,21 @@ fn show(
     version: String,
     root_hash: String,
 ) -> (adw::Window, Controls) {
+    show_mode(parent, state, version, root_hash, false)
+}
+fn show_mode(
+    parent: &impl IsA<gtk::Window>,
+    state: &Shared,
+    version: String,
+    root_hash: String,
+    incoming: bool,
+) -> (adw::Window, Controls) {
     let win = adw::Window::builder()
-        .title("Dependency files")
+        .title(if incoming {
+            "Incoming Configuration"
+        } else {
+            "Dependency files"
+        })
         .transient_for(parent)
         .default_width(700)
         .default_height(660)
@@ -672,6 +712,9 @@ fn show(
     body.set_margin_top(16);
     body.set_margin_bottom(16);
     let introduction=label("Allow a folder, then choose files to capture for review. Closing this window discards temporary captures. Analyze the imported root, then keep its analyzed files in the draft to save them. Source editing remains in development.");
+    if incoming {
+        introduction.set_text("Allow a folder, capture the incoming main file, then analyze its dependencies. Review Merge compares it with your retained graph. Draft and desktop settings stay unchanged until you explicitly keep a rebuilt result.");
+    }
     introduction.set_selectable(false);
     body.append(&introduction);
     let add = gtk::Button::with_label("Allow Folder…");
@@ -751,6 +794,8 @@ fn show(
     );
     let analysis_model = Rc::new(RefCell::new(None));
     let session = Rc::new(RefCell::new(Session {
+        incoming,
+        merge_window: None,
         version,
         root_hash,
         generation: state.borrow().generation,
@@ -782,9 +827,16 @@ fn show(
             }
         })),
     );
-    let keep = gtk::Button::with_label("Keep Analyzed Files in Draft");
+    if incoming {
+        analysis_view.read_only();
+    }
+    let keep = gtk::Button::with_label(if incoming {
+        "Review Merge…"
+    } else {
+        "Keep Analyzed Files in Draft"
+    });
     keep.set_widget_name("dependency-keep-graph");
-    keep.set_tooltip_text(Some("Requires the imported root at its exact recorded revision; saves no files until Save Draft"));
+    keep.set_tooltip_text(Some(if incoming {"Open file matching and conflict review; the draft changes only after keeping a rebuilt result"}else{"Requires the imported root at its exact recorded revision; saves no files until Save Draft"}));
     let footer = gtk::Box::new(gtk::Orientation::Vertical, 8);
     footer.set_margin_start(16);
     footer.set_margin_end(16);
@@ -872,7 +924,13 @@ fn show(
         }
         if let Some(w) = w.upgrade() {
             w.set_title(Some(if analyzing {
-                "Source analysis"
+                if incoming {
+                    "Incoming analysis"
+                } else {
+                    "Source analysis"
+                }
+            } else if incoming {
+                "Incoming Configuration"
             } else {
                 "Dependency files"
             }));
@@ -1009,6 +1067,97 @@ pub(super) fn connect(
             show(&parent, &state, version.clone(), root_hash.clone());
         }
     });
+}
+
+pub(super) fn connect_incoming(
+    button: &gtk::Button,
+    parent: &adw::Window,
+    state: &Shared,
+    version: String,
+    root_hash: String,
+) {
+    let parent = parent.downgrade();
+    let state = Rc::downgrade(state);
+    button.connect_clicked(move |_| {
+        if let (Some(parent), Some(state)) = (parent.upgrade(), state.upgrade()) {
+            if state.borrow().source_graphs.contains_key(&version) {
+                show_mode(&parent, &state, version.clone(), root_hash.clone(), true);
+            }
+        }
+    });
+}
+
+#[cfg(test)]
+pub(super) fn test_incoming(
+    parent: &impl IsA<gtk::Window>,
+    state: &Shared,
+    path: &std::path::Path,
+) -> (adw::Window, Arc<super::source_graph::Saved>) {
+    fn wait(check: impl Fn() -> bool) {
+        let start = std::time::Instant::now();
+        loop {
+            while gtk::glib::MainContext::default().pending() {
+                gtk::glib::MainContext::default().iteration(false);
+            }
+            if check() {
+                break;
+            }
+            assert!(start.elapsed() < std::time::Duration::from_secs(15));
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        }
+    }
+    let version = state.borrow().draft.version.clone();
+    let hash = state.borrow().sources[&version]
+        .report
+        .source_sha256
+        .clone();
+    let before = state.borrow().source_graphs[&version].fingerprint.clone();
+    let generation = state.borrow().generation;
+    let (window, controls) = show_mode(parent, state, version.clone(), hash, true);
+    let session = controls.session.upgrade().unwrap();
+    eprintln!("incoming GUI: approve");
+    controls.approve(path.parent().unwrap().to_path_buf());
+    wait(|| !session.borrow().pending);
+    assert_eq!(session.borrow().folders.len(), 1);
+    eprintln!("incoming GUI: capture");
+    controls.capture(path.to_path_buf());
+    wait(|| !session.borrow().pending);
+    assert_eq!(session.borrow().captures.len(), 1);
+    eprintln!("incoming GUI: analyze");
+    controls.analyze();
+    wait(|| !session.borrow().pending);
+    assert!(session.borrow().analysis.borrow().is_some());
+    assert_eq!(state.borrow().generation, generation);
+    assert_eq!(state.borrow().source_graphs[&version].fingerprint, before);
+    eprintln!("incoming GUI: launch merge");
+    controls.keep();
+    wait(|| {
+        session
+            .borrow()
+            .merge_window
+            .as_ref()
+            .and_then(|w| w.upgrade())
+            .is_some_and(|w| w.is_visible())
+    });
+    let merge = session
+        .borrow()
+        .merge_window
+        .as_ref()
+        .unwrap()
+        .upgrade()
+        .unwrap();
+    assert_eq!(state.borrow().generation, generation);
+    assert_eq!(state.borrow().source_graphs[&version].fingerprint, before);
+    let analysis = session.borrow().analysis.borrow().clone().unwrap();
+    let incoming = Arc::new(
+        super::source_graph::Saved::new(super::source_graph::freeze(&analysis).unwrap(), &version)
+            .unwrap(),
+    );
+    eprintln!("incoming GUI: close captures");
+    window.close();
+    assert!(session.borrow().folders.is_empty());
+    assert!(session.borrow().captures.is_empty());
+    (merge, incoming)
 }
 
 #[cfg(test)]
@@ -1659,6 +1808,8 @@ mod tests {
         let folder = Arc::new(scope.identity().clone());
         let content = "\u{1}".repeat(MAX_DOCUMENT_BYTES);
         let mut session = Session {
+            incoming: false,
+            merge_window: None,
             version: hyprland_editor_core::BASELINE.into(),
             root_hash: String::new(),
             generation: 0,

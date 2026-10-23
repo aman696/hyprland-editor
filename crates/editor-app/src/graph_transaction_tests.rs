@@ -132,6 +132,122 @@ fn attach(state: &mut State, f: &Fixture, version: &str) {
         .saved_source_origins
         .insert(version.into(), Some(f.origin.clone()));
 }
+#[cfg(test)]
+pub(super) fn test_external_merge_ui(parent: &adw::ApplicationWindow) {
+    for version in [BASELINE, AUDITED_MAIN] {
+        for partial in [false, true] {
+            let temp = test_support::TempDir::new("he-external-merge-ui");
+            let old_folder = temp.path().join("old");
+            let new_folder = temp.path().join("incoming");
+            std::fs::create_dir(&old_folder).unwrap();
+            std::fs::create_dir(&new_folder).unwrap();
+            let mut old = fixture(&old_folder, "old-root", version, 3);
+            let program = old
+                .graph
+                .bundle
+                .graph
+                .program(&old.graph.bundle.sources, Some("old-root"), version)
+                .unwrap();
+            let part = &program.documents[1];
+            let start = part.source.find('3').unwrap();
+            let plan = edits::prepare(
+                &program,
+                vec![edits::SourceEdit {
+                    document: part.id.clone(),
+                    base_sha256: part.sha256.clone(),
+                    span: start..start + 1,
+                    old_bytes_sha256: lua::source_hash("3"),
+                    replacement: "7".into(),
+                    semantic_targets: vec!["general:border_size".into()],
+                }],
+                vec![],
+            )
+            .unwrap();
+            old.graph = source_graph::apply_revision(&old.graph.bundle, version, plan)
+                .unwrap()
+                .0;
+            let archive_path = old_folder.join("archived.lua");
+            std::fs::write(&archive_path, "invalid archived source =").unwrap();
+            let archive = storage::read_source(&archive_path).unwrap();
+            std::fs::remove_file(archive_path).unwrap();
+            let mut bundle = old.graph.bundle.clone();
+            bundle.graph.private.sources = Arc::new(vec![SourceSnapshot {
+                id: "archived".into(),
+                language: SourceLanguage::Lua,
+                content: archive.content,
+                origin: archive.identity.clone(),
+            }]);
+            bundle.graph.private.views = vec![View {
+                document: "archived".into(),
+                load_name: archive.identity.selected_path,
+            }];
+            bundle.graph.private.archived.insert("archived".into());
+            old.graph = Arc::new(source_graph::Saved::new(bundle, version).unwrap());
+            let incoming = new_folder.join("main.lua");
+            std::fs::write(
+            &incoming,
+            format!("local part=require('part');hl.config{{general={{border_size=part}}}} -- incoming\n{}",if partial {"hl.unmodeled_test_operation()\n"}else{""}),
+        )
+        .unwrap();
+            std::fs::write(new_folder.join("part.lua"), "return 5\n").unwrap();
+            let state = initial_state();
+            attach(&mut state.borrow_mut(), &old, version);
+            state
+                .borrow_mut()
+                .draft
+                .values
+                .insert("general:border_size".into(), Value::Int(9));
+            let monitor = hyprland_editor_core::monitor::Rule::new("independent-monitor");
+            state
+                .borrow_mut()
+                .monitors
+                .insert(version.into(), vec![monitor.clone()]);
+            let (merge, incoming_graph) = source_access::test_incoming(parent, &state, &incoming);
+            for path in [
+                old_folder.join("old-root.lua"),
+                old_folder.join("old-root-part.lua"),
+                incoming.clone(),
+                new_folder.join("part.lua"),
+            ] {
+                std::fs::remove_file(path).unwrap();
+            }
+            source_reconcile::test_review(&merge, &state, partial);
+            let graph = state.borrow().source_graphs[version].clone();
+            assert_ne!(graph.fingerprint, old.graph.fingerprint);
+            assert_eq!(
+                graph.bundle.graph.private.sources[0].content,
+                "invalid archived source ="
+            );
+            assert!(graph.bundle.graph.private.archived.contains("archived"));
+            assert!(graph.bundle.graph.private.bindings.is_empty());
+            assert_eq!(
+                state.borrow().source_origins[version].selected_path,
+                incoming.as_os_str().as_encoded_bytes()
+            );
+            let analysis = source_graph::restore(&graph.bundle, version).unwrap();
+            assert_eq!(analysis.report.halt.is_some(), partial);
+            assert!(analysis
+                .program
+                .documents
+                .iter()
+                .any(|d| d.source == "return 7\n"));
+            assert_eq!(
+                state.borrow().draft.values["general:border_size"],
+                Value::Int(9)
+            );
+            assert_eq!(state.borrow().monitors[version], vec![monitor]);
+            workflow::test_graph_persistence(parent, &state, temp.path());
+            state.borrow_mut().undo_last();
+            assert_eq!(
+                state.borrow().source_graphs[version].fingerprint,
+                old.graph.fingerprint
+            );
+            assert_eq!(state.borrow().source_origins[version], old.origin);
+            assert_eq!(state.borrow().sources[version].source, old.document.source);
+            source_reconcile::test_stale(parent, &state, incoming_graph);
+        }
+    }
+}
 #[test]
 fn root_origin_graph_and_override_removal_commit_and_undo_as_one_operation() {
     for version in [BASELINE, AUDITED_MAIN] {

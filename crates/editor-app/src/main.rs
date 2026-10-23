@@ -33,6 +33,7 @@ mod source_modules;
 mod source_monitors;
 mod source_overrides;
 mod source_provenance;
+mod source_reconcile;
 #[cfg(test)]
 mod test_support;
 mod worker;
@@ -1629,6 +1630,11 @@ mod tests {
             .build();
         app.register(None::<&gtk::gio::Cancellable>).unwrap();
         let window = build(&app);
+        if std::env::var("HYE_EXTERNAL_MERGE_ONLY").as_deref() == Ok("1") {
+            graph_transaction_tests::test_external_merge_ui(&window);
+            window.destroy();
+            return;
+        }
         let widgets = descendants(window.upcast_ref());
         let list = widgets
             .iter()
@@ -1830,6 +1836,7 @@ mod tests {
         source_modules::test_view(&window);
         source_access::test_retained_graph(&window);
         graph_transaction_tests::test_private_graph_ui(&window);
+        graph_transaction_tests::test_external_merge_ui(&window);
         source_compound_forms::test_workflow(&window);
         source_changes::test_monitor_workflow(&window);
         source_monitors::test_workflow(&window);

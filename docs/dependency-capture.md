@@ -71,3 +71,7 @@ The native fixture supplies context through the actual editor and verifies a fou
 ![Supplied analysis context](screenshots/dependency-context.png)
 
 The selected settings call now has a collapsed **Value sources** section for [per-value expression evidence](ordered-module-evaluation.md#per-value-expression-evidence). It can trace supported forwarded values into captured modules without giving those expressions editing rights. Complete ownership, consumer-impact and graph import remain required.
+
+## Incoming configuration review
+
+A retained graph enables Merge Incoming Configuration in the source dependency view. It uses a distinct capture session and read-only analysis before opening [file/context/text/result review](source-text-merge.md#graphical-review). The incoming root is not substituted through the same-root keep action. Closing capture drops folder handles while an opened merge review retains immutable data. Only its explicit rebuilt-result acceptance changes the private draft. New private import resolution and general ownership/export remain unfinished.

@@ -23,6 +23,7 @@ enum Call {
 #[derive(Clone)]
 pub(super) struct View {
     state: Weak<RefCell<super::State>>,
+    readonly: Rc<std::cell::Cell<bool>>,
     after_keep: Option<Rc<dyn Fn()>>,
     model: Weak<RefCell<Option<Arc<Analysis>>>>,
     summary: gtk::glib::WeakRef<gtk::Label>,
@@ -193,6 +194,7 @@ pub(super) fn build(
     body.append(&tabs);
     let view = View {
         state: Rc::downgrade(state),
+        readonly: Rc::new(std::cell::Cell::new(false)),
         after_keep,
         model: Rc::downgrade(model),
         summary: summary.downgrade(),
@@ -229,7 +231,24 @@ pub(super) fn build(
     (body, view)
 }
 impl View {
+    pub(super) fn read_only(&self) {
+        self.readonly.set(true);
+        for weak in [
+            &self.compare,
+            &self.overrides,
+            &self.monitor_review,
+            &self.declarations,
+        ] {
+            if let Some(button) = weak.upgrade() {
+                button.set_visible(false);
+                button.set_sensitive(false);
+            }
+        }
+    }
     fn monitor_review(&self) {
+        if self.readonly.get() {
+            return;
+        }
         let (Some(model), Some(state), Some(button)) = (
             self.model.upgrade(),
             self.state.upgrade(),
@@ -259,6 +278,9 @@ impl View {
         *self.change_window.borrow_mut() = Some(window.downgrade());
     }
     fn declarations(&self) {
+        if self.readonly.get() {
+            return;
+        }
         let (Some(model), Some(state), Some(button), Some(files)) = (
             self.model.upgrade(),
             self.state.upgrade(),
@@ -294,6 +316,9 @@ impl View {
         *self.change_window.borrow_mut() = Some(window.downgrade());
     }
     fn overrides(&self) {
+        if self.readonly.get() {
+            return;
+        }
         let (Some(model), Some(state), Some(button)) = (
             self.model.upgrade(),
             self.state.upgrade(),
@@ -342,6 +367,9 @@ impl View {
         }
     }
     fn compare(&self) {
+        if self.readonly.get() {
+            return;
+        }
         if let Some(window) = self
             .change_window
             .borrow()
@@ -488,20 +516,25 @@ impl View {
             return;
         };
         if let Some(button) = self.declarations.upgrade() {
-            button.set_sensitive(!analysis.program.documents.is_empty());
+            button.set_sensitive(!self.readonly.get() && !analysis.program.documents.is_empty());
         }
         if let Some(button) = self.monitor_review.upgrade() {
             button.set_sensitive(
-                self.state
-                    .upgrade()
-                    .is_some_and(|s| s.borrow().draft.version == analysis.program.version),
+                !self.readonly.get()
+                    && self
+                        .state
+                        .upgrade()
+                        .is_some_and(|s| s.borrow().draft.version == analysis.program.version),
             );
         }
         if let Some(button) = self.overrides.upgrade() {
-            button.set_sensitive(self.state.upgrade().is_some_and(|s| {
-                let s = s.borrow();
-                s.draft.version == analysis.program.version && !s.draft.values.is_empty()
-            }));
+            button.set_sensitive(
+                !self.readonly.get()
+                    && self.state.upgrade().is_some_and(|s| {
+                        let s = s.borrow();
+                        s.draft.version == analysis.program.version && !s.draft.values.is_empty()
+                    }),
+            );
         }
         let edited = analysis
             .frozen
@@ -556,7 +589,9 @@ impl View {
                 },
                 |r| format!("Stopped: {}", display_path_bytes(r.as_bytes())),
             );
-            label.set_text(&if edited {
+            label.set_text(&if self.readonly.get() {
+                format!("Review only. Separate draft overrides stay as they are. {message}")
+            }else if edited {
                 format!("Private source revisions modeled. Original captures and separate value overrides are preserved. Review Value Overrides can reconcile scalar layers. Full source export remains unfinished. {message}")
             }else if analysis.restored {
                 format!("Saved resolution inputs replayed. Original files and folder access were not reopened. {message}")
@@ -668,10 +703,13 @@ impl View {
             return;
         };
         if let Some(button) = self.compare.upgrade() {
-            button.set_sensitive(match row {
-                Call::Api(i) => comparable(&analysis, &analysis.report.events[i]),
-                _ => false,
-            });
+            button.set_sensitive(
+                !self.readonly.get()
+                    && match row {
+                        Call::Api(i) => comparable(&analysis, &analysis.report.events[i]),
+                        _ => false,
+                    },
+            );
         }
         for weak in [&self.raw_expander, &self.source_expander] {
             if let Some(e) = weak.upgrade() {
