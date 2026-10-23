@@ -358,7 +358,7 @@ fn review_import(
         );
         return;
     };
-    let mut body = format!("This workspace was saved by an earlier build. Its saved sources have been checked again.\n\nCaptured files: {}\nDependency inputs: {}\nPrivate source edits: {}\n\nYour source bytes, edits and settings are preserved. Original files were not opened. Folder access stays closed.\n\nKeep this copy, then save a new private workspace. The old saved file stays unchanged.",summary.captured_documents,summary.resolution_inputs,summary.private_revisions);
+    let mut body = format!("This workspace was saved by an earlier build. Its saved sources have been checked again.\n\nCaptured files: {}\nDependency inputs: {}\nPrivate source edits: {}\nAdditional captured files: {}\nAdditional dependency inputs: {}\nArchived files: {}\n\nYour source bytes, edits and settings are preserved. Original files were not opened. Folder access stays closed.\n\nKeep this copy, then save a new private workspace. The old saved file stays unchanged.",summary.captured_documents,summary.resolution_inputs,summary.private_revisions,summary.private_documents,summary.private_resolution_inputs,summary.archived_documents);
     if summary.reanalysis_findings != 0 || summary.reanalysis_note.is_some() {
         body.push_str(
             "\n\nSome source behavior is unresolved. Review Source analysis after opening.",

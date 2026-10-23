@@ -15,6 +15,9 @@ pub struct View {
     pub captured_sha256: String,
     pub private_sha256: String,
     pub private_changed: bool,
+    /// Captured after the original graph, including byte-unchanged inputs.
+    pub private_input: bool,
+    pub archived: bool,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -44,8 +47,9 @@ pub struct Review {
 pub struct Selection {
     /// Every old view needs an explicit mapped counterpart or removal choice.
     pub pairs: BTreeMap<String, Option<String>>,
-    /// Required only for removed views with private byte changes.
+    /// Removed private data must be explicitly discarded or archived.
     pub discard_private: BTreeSet<String>,
+    pub archive_private: BTreeSet<String>,
     pub accept_context_change: bool,
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -70,12 +74,7 @@ fn program(bundle: &Bundle, version: &str) -> Result<Program, String> {
 fn views(bundle: &Bundle, program: &Program, current: &Program) -> Result<Vec<View>, String> {
     let mut result = vec![];
     for doc in &program.documents {
-        let origin = &bundle
-            .sources
-            .iter()
-            .find(|s| s.id == doc.id)
-            .ok_or("Missing captured graph source")?
-            .origin;
+        let origin = &source(bundle, &doc.id)?.origin;
         let private = current
             .documents
             .iter()
@@ -87,28 +86,30 @@ fn views(bundle: &Bundle, program: &Program, current: &Program) -> Result<Vec<Vi
             load_name: doc.load_name.clone(),
             captured_sha256: doc.sha256.clone(),
             private_sha256: private.sha256.clone(),
-            private_changed: doc.sha256 != private.sha256,
+            // Equal inserted bytes still carry private provenance.
+            private_changed: bundle.graph.revisions.iter().any(|r| r.document == doc.id),
+            private_input: bundle.graph.private.sources.iter().any(|s| s.id == doc.id),
+            archived: bundle.graph.private.archived.contains(&doc.id),
         });
     }
     Ok(result)
 }
 pub fn prepare(old: &Bundle, incoming: &Bundle, version: &str) -> Result<Review, String> {
-    if !old.graph.private.is_empty() || !incoming.graph.private.is_empty() {
-        return Err("Private dependency data needs explicit graph correspondence and preservation choices before external reconciliation".into());
+    if !incoming.graph.private.is_empty() || !incoming.graph.revisions.is_empty() {
+        return Err(
+            "Incoming graph must describe fresh captured bytes, not another private layer".into(),
+        );
     }
     let old_program = program(old, version)?;
     let incoming_program = program(incoming, version)?;
-    if !incoming.graph.revisions.is_empty() {
-        return Err(
-            "Incoming graph must describe fresh captured bytes, not another private piece layer"
-                .into(),
-        );
-    }
     if old.graph.compiler != incoming.graph.compiler {
         return Err("Captured graph compiler assumptions differ".into());
     }
-    let private = revisions::program(old_program.clone(), &old.graph.revisions)?;
-    let old_views = views(old, &old_program, &private)?;
+    let old_base = old.graph.private.base(&old_program)?;
+    // Include archives in text review, without activating them or copying any
+    // private bindings. Graph::program already validates the retained layer.
+    let private = revisions::for_renewal(old_base.clone(), &old.graph.revisions)?;
+    let old_views = views(old, &old_base, &private)?;
     let incoming_views = views(incoming, &incoming_program, &incoming_program)?;
     let mut rows = vec![];
     for view in &old_views {
@@ -185,6 +186,7 @@ pub fn validate_selection(review: &Review, selection: &Selection) -> Result<(), 
     }
     let mut used = BTreeSet::new();
     let mut discarded = BTreeSet::new();
+    let mut removed = BTreeSet::new();
     for row in &review.rows {
         let mapped = selection
             .pairs
@@ -207,17 +209,26 @@ pub fn validate_selection(review: &Review, selection: &Selection) -> Result<(), 
             if row.root_pair {
                 return Err("Cannot remove the selected graph root".into());
             }
+            removed.insert(row.old.clone());
             if review
                 .old_views
                 .iter()
-                .any(|v| v.document == row.old && v.private_changed)
+                .any(|v| v.document == row.old && (v.private_changed || v.private_input))
+                && !selection.archive_private.contains(&row.old)
             {
                 discarded.insert(row.old.clone());
             }
         }
     }
-    if discarded != selection.discard_private {
-        return Err("Removed private changes require their exact explicit discard choices".into());
+    if discarded != selection.discard_private
+        || !selection.archive_private.is_subset(&removed)
+        || !selection
+            .archive_private
+            .is_disjoint(&selection.discard_private)
+    {
+        return Err(
+            "Removed private data requires exact, separate archive or discard choices".into(),
+        );
     }
     if review.context_changed && !selection.accept_context_change {
         return Err(
@@ -226,9 +237,11 @@ pub fn validate_selection(review: &Review, selection: &Selection) -> Result<(), 
     }
     Ok(())
 }
-fn source<'a>(sources: &'a [SourceSnapshot], id: &str) -> Result<&'a SourceSnapshot, String> {
-    sources
+fn source<'a>(bundle: &'a Bundle, id: &str) -> Result<&'a SourceSnapshot, String> {
+    bundle
+        .sources
         .iter()
+        .chain(bundle.graph.private.sources.iter())
         .find(|s| s.id == id)
         .ok_or_else(|| "Selected graph source no longer exists".into())
 }
@@ -252,13 +265,13 @@ pub fn file_inputs(
         .and_then(Option::as_ref)
         .ok_or("Choose a mapped captured view for text reconciliation")?;
     let base = program(old, &review.version)?;
-    let private = revisions::program(base.clone(), &old.graph.revisions)?;
+    let private = revisions::for_renewal(old.graph.private.base(&base)?, &old.graph.revisions)?;
     Ok(FileInputs {
         review_sha256: hash(review)?,
         selection_sha256: hash(selection)?,
         old: document.into(),
         incoming_document: mapped.clone(),
-        base: source(&old.sources, document)?.content.clone(),
+        base: source(old, document)?.content.clone(),
         private: private
             .documents
             .iter()
@@ -266,7 +279,7 @@ pub fn file_inputs(
             .ok_or("Missing private source view")?
             .source
             .clone(),
-        incoming: source(&incoming.sources, mapped)?.content.clone(),
+        incoming: source(incoming, mapped)?.content.clone(),
     })
 }
 impl FileInputs {

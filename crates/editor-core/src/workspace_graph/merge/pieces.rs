@@ -18,6 +18,8 @@ pub struct Composed {
     pub selection_sha256: String,
     pub decisions_sha256: String,
     pub fingerprint: String,
+    /// Explicit old-to-new labels for preserved, inactive source data.
+    pub archived_documents: BTreeMap<String, String>,
     /// A surviving captured request was changed by the private pieces. Fresh
     /// resolution inputs are needed before this candidate can be materialized.
     pub dependency_renewal: Option<String>,
@@ -116,18 +118,18 @@ pub fn compose(
         return Err("Supply an exact text decision for every mapped captured view".into());
     }
     let original = program(old, &review.version)?;
-    let private = revisions::program(original, &old.graph.revisions)?;
+    let private = revisions::for_renewal(old.graph.private.base(&original)?, &old.graph.revisions)?;
     let mut bundle = incoming.clone();
     let (mut inserted, mut pieces) = (0usize, 0usize);
     for (id, target) in mapped {
-        let base = &source(&old.sources, id)?.content;
+        let base = &source(old, id)?.content;
         let private = &private
             .documents
             .iter()
             .find(|d| d.id == *id)
             .ok_or("Missing private graph view")?
             .source;
-        let incoming = &source(&incoming.sources, target)?.content;
+        let incoming = &source(incoming, target)?.content;
         let decision = &decisions[id];
         let result =
             source_merge::resolve(base, private, incoming, &decision.review, &decision.choices)?;
@@ -143,10 +145,51 @@ pub fn compose(
             bundle.graph.revisions.push(revision);
         }
     }
+    // Archive the actual captured identity plus its piece revision, never a
+    // fabricated snapshot of the edited bytes. IDs are local labels, so rename
+    // on collision with the incoming baseline and report that correspondence.
+    let mut archived_documents = BTreeMap::new();
+    let mut used = bundle
+        .sources
+        .iter()
+        .map(|s| s.id.clone())
+        .collect::<BTreeSet<_>>();
+    let mut archived_sources = vec![];
+    for id in &selection.archive_private {
+        let target = if used.insert(id.clone()) {
+            id.clone()
+        } else {
+            (1..=crate::workspace::MAX_SOURCE_DOCUMENTS)
+                .map(|n| format!("archived-{n}"))
+                .find(|id| used.insert(id.clone()))
+                .ok_or("No archive source identity available within the document budget")?
+        };
+        let mut snapshot = source(old, id)?.clone();
+        snapshot.id = target.clone();
+        archived_sources.push(snapshot);
+        let view = review
+            .old_views
+            .iter()
+            .find(|v| v.document == *id)
+            .ok_or("Missing archive source view")?;
+        bundle.graph.private.views.push(super::super::View {
+            document: target.clone(),
+            load_name: view.load_name.clone(),
+        });
+        bundle.graph.private.archived.insert(target.clone());
+        if let Some(revision) = old.graph.revisions.iter().find(|r| r.document == *id) {
+            let mut revision = revision.clone();
+            revision.document = target.clone();
+            bundle.graph.revisions.push(revision);
+        }
+        archived_documents.insert(id.clone(), target);
+    }
+    bundle.graph.private.sources = Arc::new(archived_sources);
     let base = bundle
         .graph
         .program(&bundle.sources, Some(&bundle.graph.root), &review.version)?;
-    let dependency_renewal = revisions::program(base, &bundle.graph.revisions).err();
+    let dependency_renewal =
+        revisions::program(bundle.graph.private.base(&base)?, &bundle.graph.revisions).err();
     let fingerprint = bundle.fingerprint()?;
     Ok(Composed {
         bundle,
@@ -154,6 +197,7 @@ pub fn compose(
         selection_sha256,
         decisions_sha256,
         fingerprint,
+        archived_documents,
         dependency_renewal,
         syntax_verified: false,
         dependency_replay_verified: false,

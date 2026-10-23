@@ -78,6 +78,7 @@ fn recommended(review: &merge::Review) -> Selection {
             .map(|r| (r.old.clone(), r.recommended.clone()))
             .collect(),
         discard_private: Default::default(),
+        archive_private: Default::default(),
         accept_context_change: review.context_changed,
     }
 }
@@ -237,5 +238,51 @@ fn context_root_forged_review_and_counterpart_reuse_are_explicitly_guarded() {
         let mut selected = recommended(&review);
         selected.pairs.insert("root".into(), None);
         assert!(merge::validate_selection(&review, &selected).is_err());
+    }
+}
+#[test]
+fn equal_inserted_bytes_still_need_preservation_and_unchanged_originals_can_be_archived() {
+    use revisions::{Buffer, Piece, Revision};
+    for version in [BASELINE, AUDITED_MAIN] {
+        let mut old = bundle(&[("part", "/captured/part.lua", "@part", "return 2")]);
+        let incoming = bundle(&[]);
+        old.graph.revisions.push(Revision {
+            document: "part".into(),
+            base_sha256: source_hash("return 2"),
+            sha256: source_hash("return 2"),
+            buffers: vec![Arc::from("return 2")],
+            pieces: vec![Piece {
+                buffer: Buffer::Inserted { index: 0 },
+                span: 0..8,
+            }],
+        });
+        let review = merge::prepare(&old, &incoming, version).unwrap();
+        assert_eq!(
+            review.old_views[1].captured_sha256,
+            review.old_views[1].private_sha256
+        );
+        assert!(review.old_views[1].private_changed);
+        let mut s = recommended(&review);
+        assert!(merge::validate_selection(&review, &s).is_err());
+        s.archive_private.insert("part".into());
+        merge::validate_selection(&review, &s).unwrap();
+        old.graph.revisions.clear();
+        let review = merge::prepare(&old, &incoming, version).unwrap();
+        let mut s = recommended(&review);
+        s.archive_private.insert("part".into());
+        merge::validate_selection(&review, &s).unwrap();
+        let input = merge::file_inputs(&old, &incoming, &review, &s, "root").unwrap();
+        let chosen = [(
+            "root".into(),
+            merge::Decision {
+                review: input.text_review().unwrap(),
+                choices: Default::default(),
+            },
+        )]
+        .into();
+        let c = merge::compose(&old, &incoming, &review, &s, &chosen).unwrap();
+        assert_eq!(c.bundle.graph.private.sources[0].content, "return 2");
+        assert_eq!(c.bundle.graph.private.views[0].load_name, b"@part");
+        assert!(c.bundle.graph.private.archived.contains("part"));
     }
 }

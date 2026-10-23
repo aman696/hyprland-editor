@@ -230,77 +230,87 @@ fn removed_declaration_dependencies_remain_captured_and_reopen_with_further_sour
         fs::remove_dir_all(root).unwrap();
     }
 }
-#[test]
-fn private_dependency_inputs_reopen_and_reconstruct_preview_layers_without_original_paths() {
+fn private_fixture(root: &Path, version: &str) -> Workspace {
     use hyprland_editor_core::workspace_graph::{
         private::Inputs,
         revisions::{Buffer, Piece, Revision},
     };
+    let mut snapshot = fixture(root, version);
+    let base = snapshot
+        .source_graph
+        .as_ref()
+        .unwrap()
+        .program(&snapshot.sources, Some("root"), version)
+        .unwrap();
+    let doc = &base.documents[0];
+    let at = doc.source.find("'part'").unwrap() + 1;
+    let content = format!("{}new{}", &doc.source[..at], &doc.source[at + 4..]);
+    let revision = Revision {
+        document: doc.id.clone(),
+        base_sha256: doc.sha256.clone(),
+        sha256: lua::source_hash(&content),
+        buffers: vec![std::sync::Arc::from("new")],
+        pieces: vec![
+            Piece {
+                buffer: Buffer::Original,
+                span: 0..at,
+            },
+            Piece {
+                buffer: Buffer::Inserted { index: 0 },
+                span: 0..3,
+            },
+            Piece {
+                buffer: Buffer::Original,
+                span: at + 4..doc.source.len(),
+            },
+        ],
+    };
+    let input = root.join("new.lua");
+    fs::write(&input, "return 7").unwrap();
+    let capture = storage::read_source(&input).unwrap();
+    fs::remove_file(input).unwrap();
+    let source = SourceSnapshot {
+        id: "private-new".into(),
+        language: SourceLanguage::Lua,
+        content: capture.content,
+        origin: capture.identity,
+    };
+    let mut inputs = Inputs {
+        sources: std::sync::Arc::new(vec![source.clone()]),
+        views: vec![View {
+            document: source.id.clone(),
+            load_name: source.origin.selected_path.clone(),
+        }],
+        ..Inputs::default()
+    };
+    let pending = inputs
+        .program(&base, std::slice::from_ref(&revision))
+        .unwrap();
+    let Some(Halt::NeedsResolution { request }) = replay::replay(&pending).unwrap().halt else {
+        panic!("private loader request")
+    };
+    inputs.bindings.push(Binding {
+        request,
+        resolution: Resolution::Loaded {
+            document: source.id.clone(),
+            loader_data: source.origin.selected_path.clone(),
+        },
+    });
+    snapshot.source_graph.as_mut().unwrap().revisions = vec![revision];
+    snapshot.source_graph.as_mut().unwrap().private = inputs;
+    snapshot
+}
+#[test]
+fn private_dependency_inputs_reopen_and_reconstruct_preview_layers_without_original_paths() {
     for version in [BASELINE, AUDITED_MAIN] {
         let root = root();
-        let mut snapshot = fixture(&root, version);
+        let snapshot = private_fixture(&root, version);
         let base = snapshot
             .source_graph
             .as_ref()
             .unwrap()
             .program(&snapshot.sources, Some("root"), version)
             .unwrap();
-        let doc = &base.documents[0];
-        let at = doc.source.find("'part'").unwrap() + 1;
-        let content = format!("{}new{}", &doc.source[..at], &doc.source[at + 4..]);
-        let revision = Revision {
-            document: doc.id.clone(),
-            base_sha256: doc.sha256.clone(),
-            sha256: lua::source_hash(&content),
-            buffers: vec![std::sync::Arc::from("new")],
-            pieces: vec![
-                Piece {
-                    buffer: Buffer::Original,
-                    span: 0..at,
-                },
-                Piece {
-                    buffer: Buffer::Inserted { index: 0 },
-                    span: 0..3,
-                },
-                Piece {
-                    buffer: Buffer::Original,
-                    span: at + 4..doc.source.len(),
-                },
-            ],
-        };
-        let input = root.join("new.lua");
-        fs::write(&input, "return 7").unwrap();
-        let capture = storage::read_source(&input).unwrap();
-        fs::remove_file(input).unwrap();
-        let source = SourceSnapshot {
-            id: "private-new".into(),
-            language: SourceLanguage::Lua,
-            content: capture.content,
-            origin: capture.identity,
-        };
-        let mut inputs = Inputs {
-            sources: std::sync::Arc::new(vec![source.clone()]),
-            views: vec![View {
-                document: source.id.clone(),
-                load_name: source.origin.selected_path.clone(),
-            }],
-            ..Inputs::default()
-        };
-        let pending = inputs
-            .program(&base, std::slice::from_ref(&revision))
-            .unwrap();
-        let Some(Halt::NeedsResolution { request }) = replay::replay(&pending).unwrap().halt else {
-            panic!("private loader request")
-        };
-        inputs.bindings.push(Binding {
-            request,
-            resolution: Resolution::Loaded {
-                document: source.id.clone(),
-                loader_data: source.origin.selected_path.clone(),
-            },
-        });
-        snapshot.source_graph.as_mut().unwrap().revisions = vec![revision];
-        snapshot.source_graph.as_mut().unwrap().private = inputs;
         let path = workspace::save(&root, &snapshot, &catalogue()).unwrap();
         let bytes = fs::read(&path).unwrap();
         let (ok, output) = check(&path);
@@ -444,6 +454,7 @@ fn composed_incoming_graph_reopens_in_actual_application_after_both_capture_tree
                 .map(|s| (s.id.clone(), Some(s.id.clone())))
                 .collect(),
             discard_private: Default::default(),
+            archive_private: Default::default(),
             accept_context_change: true,
         };
         let decisions = old
@@ -482,6 +493,243 @@ fn composed_incoming_graph_reopens_in_actual_application_after_both_capture_tree
         assert!(!old_folder.join("originals").exists());
         assert!(!new_folder.join("originals").exists());
         fs::remove_dir_all(root).unwrap();
+    }
+}
+#[test]
+fn external_merge_preserves_private_captures_edits_and_archives_through_actual_reopen_and_staging()
+{
+    use hyprland_editor_core::workspace_graph::merge;
+    for version in [BASELINE, AUDITED_MAIN] {
+        let root = root();
+        let old_folder = root.join("old");
+        let new_folder = root.join("incoming");
+        fs::create_dir(&old_folder).unwrap();
+        fs::create_dir(&new_folder).unwrap();
+        let old_workspace = private_fixture(&old_folder, version);
+        let incoming_workspace = fixture_source(
+            &new_folder,
+            version,
+            "local part=require('incoming');hl.config{general={border_size=part}} -- fresh\n",
+        );
+        let mut old = Bundle {
+            graph: old_workspace.source_graph.unwrap(),
+            sources: std::sync::Arc::new(old_workspace.sources),
+        };
+        let incoming = Bundle {
+            graph: incoming_workspace.source_graph.unwrap(),
+            sources: std::sync::Arc::new(incoming_workspace.sources),
+        };
+        let base = old
+            .graph
+            .program(&old.sources, Some("root"), version)
+            .unwrap();
+        let current = old
+            .graph
+            .private
+            .program(&base, &old.graph.revisions)
+            .unwrap();
+        let change = edits::prepare(
+            &current,
+            vec![edits::SourceEdit {
+                document: "private-new".into(),
+                base_sha256: lua::source_hash("return 7"),
+                span: 7..8,
+                old_bytes_sha256: lua::source_hash("7"),
+                replacement: "9".into(),
+                semantic_targets: vec!["general:border_size".into()],
+            }],
+            vec![],
+        )
+        .unwrap();
+        (old.graph.revisions, old.graph.private) = old
+            .graph
+            .private
+            .apply(&base, &old.graph.revisions, &change)
+            .unwrap();
+        // An invalid historical file must survive as inert data without being
+        // compiled, evaluated or rediscovered through its removed live path.
+        let path = old_folder.join("unused.lua");
+        fs::write(&path, "this archived Lua is invalid =").unwrap();
+        let archived = storage::read_source(&path).unwrap();
+        fs::remove_file(path).unwrap();
+        std::sync::Arc::make_mut(&mut old.graph.private.sources).push(SourceSnapshot {
+            id: "unused".into(),
+            language: SourceLanguage::Lua,
+            content: archived.content,
+            origin: archived.identity.clone(),
+        });
+        old.graph.private.views.push(View {
+            document: "unused".into(),
+            load_name: archived.identity.selected_path,
+        });
+        old.graph.private.archived.insert("unused".into());
+        let review = merge::prepare(&old, &incoming, version).unwrap();
+        let selection = merge::Selection {
+            pairs: [
+                ("root".into(), Some("root".into())),
+                ("part".into(), Some("part".into())),
+                ("private-new".into(), None),
+                ("unused".into(), None),
+            ]
+            .into(),
+            archive_private: ["private-new".into(), "unused".into()].into(),
+            discard_private: Default::default(),
+            accept_context_change: true,
+        };
+        let decisions = ["root", "part"]
+            .into_iter()
+            .map(|id| {
+                let input = merge::file_inputs(&old, &incoming, &review, &selection, id).unwrap();
+                let review = input.text_review().unwrap();
+                let choices = review
+                    .regions
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, r)| r.conflict.is_some())
+                    .map(|(i, _)| (i, hyprland_editor_core::source_merge::Choice::Incoming))
+                    .collect();
+                (id.into(), merge::Decision { review, choices })
+            })
+            .collect();
+        let composed = merge::compose(&old, &incoming, &review, &selection, &decisions).unwrap();
+        assert!(composed.dependency_renewal.is_none());
+        assert!(composed.bundle.graph.private.bindings.is_empty());
+        assert_eq!(
+            composed
+                .bundle
+                .graph
+                .private
+                .sources
+                .iter()
+                .find(|s| s.id == "private-new")
+                .unwrap()
+                .content,
+            "return 7"
+        );
+        let kept = composed
+            .bundle
+            .graph
+            .revisions
+            .iter()
+            .find(|r| r.document == "private-new")
+            .unwrap();
+        assert_eq!(kept.sha256, lua::source_hash("return 9"));
+        let snapshot = Workspace::new(Draft::new(version)).with_graph(&composed.bundle);
+        let path = workspace::save(&root, &snapshot, &catalogue()).unwrap();
+        let bytes = fs::read(&path).unwrap();
+        let (ok, output) = check(&path);
+        assert!(ok, "{output}");
+        let checked: serde_json::Value = serde_json::from_str(&output).unwrap();
+        assert_eq!(checked["source_graph_private_documents"], 2);
+        assert_eq!(checked["source_graph_archived_private_documents"], 2);
+        assert_eq!(checked["source_graph_private_bindings"], 0);
+        assert_eq!(checked["original_paths_opened"], false);
+        assert_eq!(checked["folder_access_restored"], false);
+        let staging = Command::new(env!("CARGO_BIN_EXE_hyprland-editor"))
+            .arg("--check-preview-layers")
+            .arg(&path)
+            .env_clear()
+            .output()
+            .unwrap();
+        assert!(
+            staging.status.success(),
+            "{}",
+            String::from_utf8_lossy(&staging.stderr)
+        );
+        let staged: serde_json::Value = serde_json::from_slice(&staging.stdout).unwrap();
+        let row = staged["review"]["rows"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|r| r["setting_id"] == "general:border_size")
+            .unwrap();
+        assert_eq!(
+            row["captured"]["value"],
+            serde_json::to_value(Value::Int(3)).unwrap()
+        );
+        let reopened = workspace::read(&path, &catalogue()).unwrap();
+        assert_eq!(
+            serde_json::to_vec(&reopened).unwrap(),
+            serde_json::to_vec(&snapshot).unwrap()
+        );
+        assert_eq!(fs::read(&path).unwrap(), bytes);
+        // A subsequent external review still sees both archives and cannot
+        // forget them merely because their bytes are unchanged.
+        let retained = Bundle {
+            graph: reopened.source_graph.unwrap(),
+            sources: std::sync::Arc::new(reopened.sources),
+        };
+        let next = merge::prepare(&retained, &incoming, version).unwrap();
+        assert!(next.old_views.iter().filter(|v| v.archived).count() == 2);
+        let mut missing = selection.clone();
+        missing.archive_private.clear();
+        assert!(merge::validate_selection(&next, &missing).is_err());
+        assert!(!old_folder.join("originals").exists());
+        assert!(!new_folder.join("originals").exists());
+        fs::remove_dir_all(root).unwrap();
+    }
+}
+
+#[test]
+fn private_input_model_migration_preserves_active_and_archived_data_with_fresh_reanalysis() {
+    const PREVIOUS: &str = "9f77616b432badc333c5a3b70cfbca4d7ed9fe4557ba87b97b7da5348940044f";
+    for version in [BASELINE, AUDITED_MAIN] {
+        for archive in [false, true] {
+            let root = root();
+            let mut snapshot = private_fixture(&root, version);
+            if archive {
+                let graph = snapshot.source_graph.as_mut().unwrap();
+                let base = graph
+                    .program(&snapshot.sources, Some("root"), version)
+                    .unwrap();
+                let p = graph.private.program(&base, &graph.revisions).unwrap();
+                let request = &graph.private.bindings[0].request;
+                let d = p
+                    .documents
+                    .iter()
+                    .find(|d| d.id == request.document)
+                    .unwrap();
+                let plan = edits::prepare(
+                    &p,
+                    vec![edits::SourceEdit {
+                        document: d.id.clone(),
+                        base_sha256: d.sha256.clone(),
+                        span: request.span.clone(),
+                        old_bytes_sha256: lua::source_hash(&d.source[request.span.clone()]),
+                        replacement: "7".into(),
+                        semantic_targets: vec!["general:border_size".into()],
+                    }],
+                    vec![],
+                )
+                .unwrap();
+                (graph.revisions, graph.private) =
+                    graph.private.apply(&base, &graph.revisions, &plan).unwrap();
+            }
+            snapshot.source_graph.as_mut().unwrap().schema_sha256 = PREVIOUS.into();
+            let bytes = serde_json::to_vec_pretty(&snapshot).unwrap();
+            let path = root.join("previous-private.hye");
+            fs::write(&path, &bytes).unwrap();
+            assert!(!check(&path).0);
+            let (ok, output) = check_migration(&path);
+            assert!(ok, "{output}");
+            let checked: serde_json::Value = serde_json::from_str(&output).unwrap();
+            assert_eq!(checked["migration"]["previous_model"], PREVIOUS);
+            assert_eq!(checked["migration"]["private_documents"], 1);
+            assert_eq!(
+                checked["migration"]["private_resolution_inputs"],
+                usize::from(!archive)
+            );
+            assert_eq!(
+                checked["migration"]["archived_documents"],
+                usize::from(archive)
+            );
+            assert_eq!(checked["migration"]["reanalysis_findings"], 0);
+            assert_eq!(checked["saved_file_written"], false);
+            assert_eq!(checked["original_paths_opened"], false);
+            assert_eq!(fs::read(&path).unwrap(), bytes);
+            assert!(!root.join("originals").exists());
+            fs::remove_dir_all(root).unwrap();
+        }
     }
 }
 #[test]
@@ -801,6 +1049,7 @@ fn reviewed_graph_migrations_rebuild_deleted_sources_and_private_pieces_without_
             "dbb7803fa4ea318a5b4511fd1f44eb422be73feebd8342ab449a8a4ffa27351d",
             "071946f5f808e82ef8f38d67fa919d7a427299f2c41c0f5e73368d7c3ee0aae7",
             "71556836e091dccaaf231bc4510e448e545e588c175a56e59ad8c7d9cd2a3972",
+            "9f77616b432badc333c5a3b70cfbca4d7ed9fe4557ba87b97b7da5348940044f",
         ] {
             let root = root();
             let mut snapshot = fixture(&root, version);
