@@ -10,10 +10,10 @@ import hashlib
 import json
 from pathlib import Path
 import resource
-import shlex
 import subprocess
 import tempfile
 import urllib.request
+import native_fixture_context as context
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / 'data/scalar-value-fixtures.json'
@@ -128,7 +128,10 @@ def child_limits():
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--check', action='store_true')
+    parser.add_argument('--output', type=Path)
+    context.add_arguments(parser)
     args = parser.parse_args()
+    context.require_output(args, OUTPUT)
     contract = json.loads((ROOT/'docs/hyprland-implementation-contracts.json').read_text())
     paths = [f'src/config/lua/types/LuaConfig{k}.cpp' for k in KINDS]
     rows = [r for r in contract['source_evidence'] if r['path'] in paths]
@@ -141,18 +144,18 @@ def main():
         types = sources[(version, 'src/config/shared/Types.hpp')]
         if not all(alias in types for alias in ['typedef bool', 'typedef int64_t', 'typedef float', 'typedef std::string']):
             raise RuntimeError('Review fixture storage types against upstream aliases')
-    flags = shlex.split(subprocess.check_output(['pkg-config', '--cflags', '--libs', 'lua5.4'], text=True))
+    flags = context.flags(args)
     observations = []
     with tempfile.TemporaryDirectory(prefix='hye-scalar-values-') as folder:
         root = Path(folder)
         for version in ['baseline', 'current']:
             cpp = root/f'{version}.cpp'
-            code = HEADER
+            code = context.guard(args) + HEADER
             for kind in KINDS:
                 code += function(sources[(version, f'src/config/lua/types/LuaConfig{kind}.cpp')], f'SParseError CLuaConfig{kind}::parse(lua_State* s)')
             cpp.write_text(code+MAIN)
             binary = root/version
-            subprocess.run(['c++', '-std=c++23', str(cpp), *flags, '-o', str(binary)], check=True, timeout=90)
+            subprocess.run([args.compiler, '-std='+args.cpp_standard, str(cpp), *flags, '-o', str(binary)], check=True, timeout=90)
             count = 0
             for kind in KINDS:
                 profiles = ['unbounded', 'bounded', 'mapped'] if kind == 'Int' else ['unbounded', 'bounded', 'precision'] if kind == 'Float' else ['unbounded']
@@ -165,11 +168,12 @@ def main():
     result = {'format': 'hye-scalar-value-fixtures-1', 'source_files': rows,
               'evidence_scope': 'Unmodified pinned Bool/Int/Float/String parse methods; explicit inert storage and fixture bounds/maps, no string validator. Stored FLOAT is native binary32 bits. No all-setting registration, formatted diagnostic, effect or runtime-state certificate.', 'cases': observations}
     encoded = json.dumps(result, indent=2)+'\n'
+    output = args.output or OUTPUT
     if args.check:
-        if not OUTPUT.exists() or OUTPUT.read_text() != encoded:
+        if not output.exists() or output.read_text() != encoded:
             raise SystemExit('Primitive scalar observations differ')
     else:
-        OUTPUT.write_text(encoded)
+        output.write_text(encoded)
 
 
 if __name__ == '__main__':

@@ -7,10 +7,10 @@ import concurrent.futures
 import hashlib
 import json
 from pathlib import Path
-import shlex
 import subprocess
 import sys
 import tempfile
+import native_fixture_context as context
 sys.dont_write_bytecode = True
 import source_graph_probe as paths
 ROOT = paths.ROOT
@@ -32,7 +32,8 @@ int main(){auto* L=luaL_newstate();luaL_openlibs(L);std::string line;
 }
 '''
 def main():
-    parser=argparse.ArgumentParser();parser.add_argument('--check',action='store_true');args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument('--check',action='store_true');parser.add_argument('--output',type=Path);context.add_arguments(parser);args=parser.parse_args()
+    context.require_output(args, ROOT/'data/runtime-path-fixtures.json')
     rows=[r for r in paths.MANIFEST['source_files'] if Path(r['path']).name=='ConfigManager.cpp']
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
         source=dict(pool.map(paths.fetch,rows))
@@ -49,14 +50,14 @@ def main():
         cases=[f'{name}\t{path}'.replace('<root>',str(root)) for name in MODULES for path in TEMPLATES]
         cases += [f'{name}\t{root}/config/?.lua;{root}/vendor/?.lua' for name in ['colors','directory','unreadable']]
         requests=cases+['N\t'+p for p in NORMAL_PATHS]
-        cpp=root/'probe.cpp';cpp.write_text(paths.HEADER+functions[0]+MAIN)
-        flags=shlex.split(subprocess.check_output(['pkg-config','--cflags','--libs','lua5.4'],text=True))
-        binary=root/'probe';subprocess.run(['c++','-std=c++23',str(cpp),*flags,'-o',str(binary)],check=True,timeout=45)
+        cpp=root/'probe.cpp';cpp.write_text(context.guard(args)+paths.HEADER+functions[0]+MAIN)
+        flags=context.flags(args)
+        binary=root/'probe';subprocess.run([args.compiler,'-std='+args.cpp_standard,str(cpp),*flags,'-o',str(binary)],check=True,timeout=45)
         result=subprocess.run([str(binary)],input='\n'.join(requests)+'\n',text=True,capture_output=True,check=True,cwd=root,timeout=5)
         records=[json.loads(line.replace(str(root),'<root>')) for line in result.stdout.splitlines()]
         if len(records)!=len(requests):raise RuntimeError('Runtime path observation count differs')
-    value={'format':'hye-runtime-path-fixtures-1','audit_manifest_sha256':hashlib.sha256((ROOT/'data/source-graph-semantics.json').read_bytes()).hexdigest(),'meaning':'Direct system Lua 5.4 package.searchpath C API and identical hash-pinned normalization helpers from both audited snapshots. Private files/directories only; no config execution, actual module loading, authorization, race, ABI or compositor certificate.','search':records[:len(cases)],'normalization':records[len(cases):]}
-    target=ROOT/'data/runtime-path-fixtures.json';content=json.dumps(value,indent=2,sort_keys=True)+'\n'
+    value={'format':'hye-runtime-path-fixtures-1','audit_manifest_sha256':hashlib.sha256((ROOT/'data/source-graph-semantics.json').read_bytes()).hexdigest(),'meaning':f'Direct system Lua {args.lua_package.removeprefix("lua")} package.searchpath C API and identical hash-pinned normalization helpers from both audited snapshots. Private files/directories only; no config execution, actual module loading, authorization, race, ABI or compositor certificate.','search':records[:len(cases)],'normalization':records[len(cases):]}
+    target=args.output or ROOT/'data/runtime-path-fixtures.json';content=json.dumps(value,indent=2,sort_keys=True)+'\n'
     if args.check:
         if target.read_text()!=content:raise RuntimeError('Current search-path observations differ')
     else:target.write_text(content)

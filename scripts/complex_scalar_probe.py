@@ -11,11 +11,11 @@ import hashlib
 import json
 from pathlib import Path
 import resource
-import shlex
 import subprocess
 import sys
 import tempfile
 import urllib.request
+import native_fixture_context as context
 
 sys.dont_write_bytecode = True
 from scalar_registration_probe import block
@@ -178,20 +178,23 @@ def observe(binary, version):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--check', action='store_true')
+    parser.add_argument('--output', type=Path)
+    context.add_arguments(parser)
     args = parser.parse_args()
+    context.require_output(args, OUTPUT)
     manifest = (ROOT / 'data/complex-scalar-sources.json').read_bytes()
     rows = json.loads(manifest)['files']
     with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
         sources = dict(pool.map(fetch, rows))
-    flags = shlex.split(subprocess.check_output(['pkg-config', '--cflags', '--libs', 'lua5.4'], text=True))
+    flags = context.flags(args)
     observations = []
     with tempfile.TemporaryDirectory(prefix='hye-complex-scalars-') as folder:
         root = Path(folder)
         for version in ['baseline', 'current']:
             cpp = root / f'{version}.cpp'
-            cpp.write_text(build_source(sources, version))
+            cpp.write_text(context.guard(args) + build_source(sources, version))
             binary = root / version
-            subprocess.run(['c++', '-std=c++23', str(cpp), *flags, '-o', str(binary)], check=True, timeout=90)
+            subprocess.run([args.compiler, '-std='+args.cpp_standard, str(cpp), *flags, '-o', str(binary)], check=True, timeout=90)
             cases = observe(binary, version)
             observations += cases
             print(f'{version}: {len(cases)} complex parser observations', flush=True)
@@ -199,11 +202,12 @@ def main():
              'scope': 'Pinned original five Lua parsers, color parsing/numeric helpers and primary color conversion; inert graphics/cache adapters and explicit fixture bounds. No compositor/native setter effects, arbitrary table layout, undefined numeric casts, locale/stdlib portability or edit ownership certificate.',
              'cases': observations}
     text = json.dumps(value, indent=2) + '\n'
+    output = args.output or OUTPUT
     if args.check:
-        if not OUTPUT.exists() or OUTPUT.read_text() != text:
+        if not output.exists() or output.read_text() != text:
             raise SystemExit('Complex scalar observations differ')
     else:
-        OUTPUT.write_text(text)
+        output.write_text(text)
 
 
 if __name__ == '__main__':

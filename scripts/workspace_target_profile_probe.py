@@ -42,6 +42,7 @@ def main():
     parser.add_argument('--observation', type=Path)
     parser.add_argument('--compiler', default='c++')
     parser.add_argument('--cpp26-standard', choices=['c++26', 'c++2c'], default='c++2c')
+    parser.add_argument('--source-conformance', action='store_true')
     args = parser.parse_args()
     cflags = subprocess.check_output(['pkg-config', '--cflags', 'lua5.4'], text=True).strip()
     libs = subprocess.check_output(['pkg-config', '--libs', 'lua5.4'], text=True).strip()
@@ -69,7 +70,12 @@ def main():
                     major, minor, patch = map(int, release.split('.'))
                     if profile['header_release'] != major * 10000 + minor * 100 + patch:
                         raise RuntimeError('Target reference did not use the requested private release')
-            observations.append({'release': release, 'archive_url': url, 'archive_sha256': RELEASES[release], 'library_sha256': library, 'matrix': value})
+            observation = {'release': release, 'archive_url': url, 'archive_sha256': RELEASES[release], 'library_sha256': library, 'matrix': value}
+            if args.source_conformance:
+                source_observation = root / 'source-observation.json'
+                subprocess.run([sys.executable, '-B', str(ROOT / 'scripts/lua55_source_probe.py'), '--release', release, '--compiler', args.compiler, '--cpp26-standard', args.cpp26_standard, '--observation', str(source_observation)], env=dict(os.environ, PKG_CONFIG_LIBDIR=str(root), PKG_CONFIG_PATH=''), check=True, cwd=ROOT, timeout=360)
+                observation['source_reference'] = json.loads(source_observation.read_text())
+            observations.append(observation)
             print(f'Lua {release}: private source build and workspace profile matrix passed; temporary source/builds removed on scope exit', flush=True)
     content = {'format': 'hye-workspace-target-release-observation-1', 'profiles': observations, 'selected_compositor_observed': False}
     if args.observation:

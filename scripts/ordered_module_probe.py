@@ -5,13 +5,13 @@ import copy
 import hashlib
 import json
 from pathlib import Path
-import shlex
 import subprocess
 import sys
 import tempfile
 
 sys.dont_write_bytecode = True
 import module_load_probe as loader
+import native_fixture_context as context
 
 paths = loader.paths
 ROOT = paths.ROOT
@@ -93,11 +93,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--check', action='store_true')
     parser.add_argument('--output', type=Path)
+    context.add_arguments(parser)
     args = parser.parse_args()
+    context.require_output(args, ROOT/'data/ordered-module-fixtures.json')
     rows = [r for r in paths.MANIFEST['source_files'] if Path(r['path']).name in ['ConfigManager.cpp', 'MiscFunctions.cpp']]
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
         sources = dict(pool.map(paths.fetch, rows))
-    lua_release = subprocess.check_output(['pkg-config','--modversion','lua5.4'],text=True).strip()
+    lua_release = subprocess.check_output(['pkg-config','--modversion',args.lua_package],text=True).strip()
     matrix=json.loads((ROOT/'data/lua-profiles.json').read_text())
     profile=next((p for p in matrix['profiles'] if p['release']==lua_release),None)
     if profile is None and args.output is None:
@@ -116,14 +118,14 @@ def main():
             target.write_text(code)
         for version in ['baseline', 'current']:
             manager = sources[version, 'ConfigManager.cpp']
-            cpp = loader.HEADER + paths.block(sources[version, 'MiscFunctions.cpp'], 'std::string absolutePath')
+            cpp = context.guard(args) + loader.HEADER + paths.block(sources[version, 'MiscFunctions.cpp'], 'std::string absolutePath')
             cpp += ''.join(paths.block(manager, signature) for signature in signatures)
             cpp += loader.setup(manager) + loader.reload_cache(manager) + main
             source = root/'probe.cpp'
             source.write_text(cpp)
-            flags = shlex.split(subprocess.check_output(['pkg-config', '--cflags', '--libs', 'lua5.4'], text=True))
+            flags = context.flags(args)
             binary = root/'probe'
-            subprocess.run(['c++', '-std=c++23', '-O0', str(source), *flags, '-o', str(binary)], check=True, timeout=45)
+            subprocess.run([args.compiler, '-std='+args.cpp_standard, '-O0', str(source), *flags, '-o', str(binary)], check=True, timeout=45)
             result = subprocess.run([str(binary), str(root)], input='\n'.join(code for _, code in CASES)+'\n', text=True, capture_output=True, check=True, timeout=6, cwd=root, env={'HOME':str(root/'home')})
             marker=[line.removeprefix('HYE_LUA_RELEASE=Lua ') for line in result.stderr.splitlines() if line.startswith('HYE_LUA_RELEASE=')]
             if marker != [lua_release]:
@@ -133,7 +135,7 @@ def main():
                 raise RuntimeError('Ordered probe observation count differs')
             observations.extend({'version':version, 'case':name, 'source':code, **json.loads(line)} for (name, code), line in zip(CASES, lines))
             print(f'{version}: {len(lines)} ordered language/loader observations')
-    content = json.dumps({'format':'hye-ordered-module-fixtures-1', 'meaning':'Real Lua 5.4 and exact pinned require/cache/searcher code, private trusted module fixtures and an inert hl.config argument recorder. No user Lua execution, field-conversion/effective-state, authorization, compositor or ABI certificate.', 'audit_manifest_sha256':hashlib.sha256((ROOT/'data/source-graph-semantics.json').read_bytes()).hexdigest(), 'module_files':FILES, 'cases':observations}, indent=2, sort_keys=True)+'\n'
+    content = json.dumps({'format':'hye-ordered-module-fixtures-1', 'meaning':f'Real Lua {args.lua_package.removeprefix("lua")} and exact pinned require/cache/searcher code, private trusted module fixtures and an inert hl.config argument recorder. No user Lua execution, field-conversion/effective-state, authorization, compositor or ABI certificate.', 'audit_manifest_sha256':hashlib.sha256((ROOT/'data/source-graph-semantics.json').read_bytes()).hexdigest(), 'module_files':FILES, 'cases':observations}, indent=2, sort_keys=True)+'\n'
     target = args.output or ROOT/'data/ordered-module-fixtures.json'
     if args.check:
         expected=json.loads(target.read_text())
