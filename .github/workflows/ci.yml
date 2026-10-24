@@ -62,7 +62,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install private reference build dependencies
-        run: sudo apt-get update && sudo apt-get install -y g++ make pkg-config libre2-dev
+        run: sudo apt-get update && sudo apt-get install -y g++ make pkg-config libre2-dev libxkbcommon-dev
       - name: Pinned reference toolchain
         run: rustup toolchain install 1.90.0 --profile minimal
       - name: Check official and narrowly patched compiler observations against restricted model
