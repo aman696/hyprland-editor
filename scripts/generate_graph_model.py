@@ -20,6 +20,7 @@ def main():
         "crates/editor-app/src/process_policy.rs", "data/source-graph-semantics.json",
         "data/lua-profiles.json", "data/scalar-semantics.json", "data/scalars.json",
         "data/monitor-source-semantics.json", "data/monitors.json",
+        "data/workspace-argument-semantics.json", "data/workspace-object-semantics.json",
         "crates/editor-core/native/complex_text.cpp", "data/complex-scalar-sources.json", "data/complex-scalar-fixtures.json",
     ]]
     value = {"format": "hye-graph-model-source-1", "inputs": {

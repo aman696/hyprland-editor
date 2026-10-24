@@ -1,6 +1,6 @@
 # Workspace draft editor — 0.8
 
-Native source-model reference checks now cover 78 argument-routing cases and 42 userdata/method cases across both pinned versions, with explicitly inert dependencies. They establish reference observations for the next source-editing implementation; the ordered evaluator still stops at this API. See the [workspace source-model plan and evidence](workspace-source-model.md).
+Native source-model reference checks now cover 78 argument-routing cases and 42 userdata/method cases across both pinned versions, with explicitly inert dependencies. They establish reference observations for the next source-editing implementation; the ordered evaluator still stops at this API. A closed post-inspection rule/object state library is now implemented and tested, but argument inspection and the source evaluator/GUI connection remain unfinished. See the [workspace source-model plan and evidence](workspace-source-model.md).
 
 Open **Menu → Edit Workspaces**. This editor stages ordered private workspace declarations, with all 15 audited fields, the workspace selector, optional enabled state and retained typed layout options. It never creates a workspace, runs an empty-workspace command, changes a layout or writes the original configuration.
 

@@ -138,7 +138,7 @@ def main():
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
         originals = list(pool.map(fetch, rows))
     flags = shlex.split(subprocess.check_output(['pkg-config', '--cflags', '--libs', 'lua5.4'], text=True))
-    observations = []
+    observations, schemas = [], []
     with tempfile.TemporaryDirectory(prefix='hye-workspace-objects-') as directory:
         root = Path(directory)
         for row, body in zip(rows, originals):
@@ -146,6 +146,13 @@ def main():
             metatable = re.search(r'static constexpr const char\* MT = "([^"]+)";', source)
             if not metatable or metatable[1] != 'HL.WorkspaceRule':
                 raise RuntimeError('Unreviewed workspace object metatable')
+            index = block(source, 'static int workspaceRuleIndex(lua_State* L)')
+            routes = dict(re.findall(r'if \(key == "([^"]+)"\)\s*lua_pushcfunction\(L, ([A-Za-z0-9_]+)\);', index))
+            expected = {'is_enabled': api['handler_versions'][row['version']]['handler_expression'],
+                        'set_enabled': setter['handler_versions'][row['version']]['handler_expression']}
+            if routes != expected:
+                raise RuntimeError('Workspace object member routing requires review')
+            schemas.append({'version': row['version'], 'source': row, 'metatable': metatable[1], 'methods': routes})
             methods = '\n'.join(block(source, signature) for signature in [
                 'static int workspaceRuleEq(lua_State* L)', 'static int workspaceRuleToString(lua_State* L)',
                 'static int workspaceRuleSetEnabled(lua_State* L)', 'static int workspaceRuleIsEnabled(lua_State* L)',
@@ -165,14 +172,16 @@ def main():
                 assert value['setter_values'] == setters, name
                 assert value['refresh_requests'] == refreshes, name
                 observations.append({'version': row['version'], 'case': name, 'lua': lua, 'observation': value})
-    path = ROOT / 'data/workspace-object-fixtures.json'
     content = {'format': 'hye-workspace-object-fixtures-1', 'scope': 'Exact userdata allocation, weak-reference method bodies, equality, member lookup, required receiver/type checks and callback arity, using inert rule state, refresh and metatable registration adapters. Trusted ref/drop fixture functions model external object lifetime; no actual manager lifetime/reload, helper-protection policy, renderer, hardware or source-ownership certificate.', 'sources': rows, 'cases': observations}
-    rendered = json.dumps(content, ensure_ascii=False, indent=2) + '\n'
-    if args.check:
-        if not path.exists() or path.read_text() != rendered:
-            raise SystemExit('Workspace object reference drift')
-    else:
-        path.write_text(rendered)
+    outputs = {ROOT / 'data/workspace-object-fixtures.json': content,
+               ROOT / 'data/workspace-object-semantics.json': {'format': 'hye-workspace-object-semantics-1', 'scope': 'Original metatable and member routing; native rule lifetime, state/refresh effects and generic registration/protection remain unverified', 'snapshots': schemas}}
+    for path, value in outputs.items():
+        rendered = json.dumps(value, ensure_ascii=False, indent=2) + '\n'
+        if args.check:
+            if not path.exists() or path.read_text() != rendered:
+                raise SystemExit(f'Workspace object reference drift: {path.relative_to(ROOT)}')
+        else:
+            path.write_text(rendered)
     print(f'Observed {len(observations)} pinned workspace object cases; originals/builds removed; manager/reload lifecycle remains unverified')
 
 

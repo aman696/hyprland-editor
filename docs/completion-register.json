@@ -91,7 +91,8 @@
         "data/migrations/graph-model-text-merge.json",
         "data/migrations/graph-model-composition.json",
         "data/migrations/graph-model-private-inputs.json",
-        "data/migrations/graph-model-correspondence.json"
+        "data/migrations/graph-model-correspondence.json",
+        "data/migrations/graph-model-resolution.json"
       ],
       "test_references": [
         "reviewed_transition_pins_exact_monitor_differences_and_refuses_unreviewed_builds",
@@ -100,7 +101,7 @@
         "workflow::test_graph_migration",
         "private_input_model_migration_preserves_active_and_archived_data_with_fresh_reanalysis"
       ],
-      "limits": "fourteen exact reviewed dependency/storage/monitor/merge/private-input/correspondence/resolution transitions with bounded held-inode input, unknown-payload refusal, fresh restricted-worker captured-view/dependency/private-piece reanalysis, byte/value preservation, cancel/epoch/unsaved guards and new private save; no original-path reads or restored folder access, general model/schema/profile conversion, persistent history, full source export/reconciliation or full audit certificate"
+      "limits": "fifteen exact reviewed dependency/storage/monitor/merge/private-input/correspondence/resolution/workspace-state transitions with bounded held-inode input, unknown-payload refusal, fresh restricted-worker captured-view/dependency/private-piece reanalysis, byte/value preservation, cancel/epoch/unsaved guards and new private save; no original-path reads or restored folder access, general model/schema/profile conversion, persistent history, full source export/reconciliation or full audit certificate"
     },
     {
       "area": "source dependency capture and ordered evaluation",
@@ -347,6 +348,21 @@
         "scripts/workspace_object_probe.py"
       ],
       "limits": "15 field controls, addresses/static filter clauses, enabled/unset, layout choices and retained options, source consolidation findings, private persistence and undo; 78 exact native argument-routing and 42 userdata/method observations with explicit inert parser/selector/manager/state/registration dependencies; ordered evaluator still stops at this API; no native primary-field/manager/reload lifetime certificate, complete selector/layout/workflow codecs, source editing, live creation/matching, apply/recovery or preview certification"
+    },
+    {
+      "area": "closed workspace source state",
+      "code": [
+        "crates/editor-core/src/workspace_rule/source_state.rs",
+        "data/workspace-argument-semantics.json",
+        "data/workspace-object-semantics.json"
+      ],
+      "test_references": [
+        "crates/editor-core/src/workspace_rule/source_state/tests.rs",
+        "model_object_methods_match_each_native_reference_scenario",
+        "literal_merge_keeps_shared_rule_identity_and_native_optional_distinctions",
+        "state_library_does_not_silently_enable_an_unmodeled_lua_api"
+      ],
+      "limits": "closed post-inspection literal rule records and separately allocated nonserializable realm-bound wrappers, enabled filtering/mutation and unbound typed methods, uncertainty/byte-option retention, atomic data refusal and encoded/step/wrapper/rule bounds; nine ordinary cases including correlation with 42 native object scenarios; no primary Lua argument/conversion validation, selector/effective/native application or real manager lifetime certificate, source evaluator routing, cross-family effects, graphical source editing/export/persistent history or full audit acceptance"
     },
     {
       "area": "binding/submap draft editor",

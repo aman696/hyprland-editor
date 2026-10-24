@@ -38,7 +38,9 @@ const PRIVATE_MODEL: &str =
 const CORRESPONDENCE: &str = "e25d982f292e56135f0810194ae06ae6a93a45d4b6f6afd75bb0ada5ecf7b0fc";
 const CORRESPONDENCE_MODEL: &str =
     include_str!("../../../data/migrations/graph-model-correspondence.json");
-const TO: &str = "aaa60b286d173a7d4b8818bea1461ce7e87c7a054788fcf90bbd58f8b9925d75";
+const RESOLUTION: &str = "aaa60b286d173a7d4b8818bea1461ce7e87c7a054788fcf90bbd58f8b9925d75";
+const RESOLUTION_MODEL: &str = include_str!("../../../data/migrations/graph-model-resolution.json");
+const TO: &str = "a556ebf4459ee6ee9196ca2593faaa48c2d8c4d8b383a7b030c54e1cf951778c";
 const OLD: &str = include_str!("../../../data/migrations/graph-model-before-projection.json");
 const FROM_PROJECTION: &str = "046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371";
 const PROJECTION: &str = include_str!("../../../data/migrations/graph-model-projection.json");
@@ -550,9 +552,9 @@ fn before_resolution_transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
-fn transition(from: &str) -> Result<(), String> {
+fn before_workspace_state_transition(from: &str) -> Result<(), String> {
     if lua::source_hash(CORRESPONDENCE_MODEL) != CORRESPONDENCE
-        || workspace_graph::schema_sha256() != TO
+        || lua::source_hash(RESOLUTION_MODEL) != RESOLUTION
     {
         return Err(
             "No reviewed private resolution transition to this exact model is available".into(),
@@ -563,7 +565,8 @@ fn transition(from: &str) -> Result<(), String> {
     }
     let previous: serde_json::Value =
         serde_json::from_str(CORRESPONDENCE_MODEL).map_err(|e| e.to_string())?;
-    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let current: serde_json::Value =
+        serde_json::from_str(RESOLUTION_MODEL).map_err(|e| e.to_string())?;
     let old = previous["inputs"]
         .as_object()
         .ok_or("Invalid previous correspondence model")?;
@@ -593,6 +596,49 @@ fn transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
+fn transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(RESOLUTION_MODEL) != RESOLUTION || workspace_graph::schema_sha256() != TO {
+        return Err(
+            "No reviewed workspace state transition to this exact model is available".into(),
+        );
+    }
+    if from != RESOLUTION {
+        before_workspace_state_transition(from)?;
+    }
+    let previous: serde_json::Value =
+        serde_json::from_str(RESOLUTION_MODEL).map_err(|e| e.to_string())?;
+    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let old = previous["inputs"]
+        .as_object()
+        .ok_or("Invalid previous resolution model")?;
+    let new = current["inputs"]
+        .as_object()
+        .ok_or("Invalid workspace state model")?;
+    let added = new
+        .keys()
+        .filter(|k| !old.contains_key(*k))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    let changed = old
+        .keys()
+        .filter(|k| new.get(*k) != Some(&old[*k]))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    if old.len() != 73
+        || new.len() != 77
+        || added
+            != [
+                "crates/editor-core/src/workspace_rule/source_state.rs",
+                "crates/editor-core/src/workspace_rule/source_state/tests.rs",
+                "data/workspace-argument-semantics.json",
+                "data/workspace-object-semantics.json",
+            ]
+        || changed != ["crates/editor-core/src/workspace_rule.rs"]
+    {
+        return Err("Workspace state model no longer has only the reviewed internal state module, post-parse/native-reference tests and pinned factory/object metadata; Lua routing and saved representations must remain unchanged".into());
+    }
+    Ok(())
+}
 pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, String> {
     if text.len() > MAX_WORKSPACE_BYTES {
         return Err("Saved workspace exceeds 8 MiB".into());
@@ -610,6 +656,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
     let raw: serde_json::Value = serde_json::from_str(text).map_err(|e| e.to_string())?;
     if previous != PRIVATE_INPUTS
         && previous != CORRESPONDENCE
+        && previous != RESOLUTION
         && raw["source_graph"].get("private").is_some()
     {
         return Err("Previous graph writers had no private input layer; new payloads cannot be introduced during migration".into());
@@ -710,6 +757,7 @@ mod tests {
         transition(COMPOSITION).unwrap();
         transition(PRIVATE_INPUTS).unwrap();
         transition(CORRESPONDENCE).unwrap();
+        transition(RESOLUTION).unwrap();
         assert!(transition(&"0".repeat(64)).is_err());
         assert_ne!(FROM, TO);
         assert_eq!(lua::source_hash(CURRENT), TO);
