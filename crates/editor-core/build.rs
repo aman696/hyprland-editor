@@ -13,6 +13,7 @@ fn main() {
     }
     build.compile("hye_regex");
     println!("cargo:rerun-if-changed=native/lua_syntax.cpp");
+    println!("cargo:rerun-if-changed=../editor-lua55/native/bridge.inc");
     println!("cargo:rerun-if-changed=native/complex_text.cpp");
     let lua = pkg_config::Config::new().probe("lua5.4").expect(
         "Lua 5.4 development headers/library are required for bounded source compilation and primitive conversion",

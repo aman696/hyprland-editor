@@ -79,6 +79,14 @@ fn install(allowed: &[libc::c_long]) -> Result<(), String> {
 pub(super) fn parser() -> Result<(), String> {
     install(BASE)
 }
+// Also compiled by the separate compiler image, which has bounded nonblocking
+// pipe waits. The GUI's legacy parser keeps its original, narrower policy.
+#[allow(dead_code)]
+pub(super) fn compiler() -> Result<(), String> {
+    let mut allowed = BASE.to_vec();
+    allowed.push(libc::SYS_ppoll);
+    install(&allowed)
+}
 fn capture_syscalls() -> Vec<libc::c_long> {
     let mut allowed = BASE.to_vec();
     allowed.extend([

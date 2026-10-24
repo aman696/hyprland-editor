@@ -677,6 +677,7 @@ fn private_input_model_migration_preserves_active_and_archived_data_with_fresh_r
         PREVIOUS,
         "e25d982f292e56135f0810194ae06ae6a93a45d4b6f6afd75bb0ada5ecf7b0fc",
         "aaa60b286d173a7d4b8818bea1461ce7e87c7a054788fcf90bbd58f8b9925d75",
+        "a556ebf4459ee6ee9196ca2593faaa48c2d8c4d8b383a7b030c54e1cf951778c",
     ] {
         for version in [BASELINE, AUDITED_MAIN] {
             for archive in [false, true] {
@@ -1058,6 +1059,7 @@ fn reviewed_graph_migrations_rebuild_deleted_sources_and_private_pieces_without_
             "9f77616b432badc333c5a3b70cfbca4d7ed9fe4557ba87b97b7da5348940044f",
             "e25d982f292e56135f0810194ae06ae6a93a45d4b6f6afd75bb0ada5ecf7b0fc",
             "aaa60b286d173a7d4b8818bea1461ce7e87c7a054788fcf90bbd58f8b9925d75",
+            "a556ebf4459ee6ee9196ca2593faaa48c2d8c4d8b383a7b030c54e1cf951778c",
         ] {
             let root = root();
             let mut snapshot = fixture(&root, version);

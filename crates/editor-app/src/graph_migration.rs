@@ -40,7 +40,9 @@ const CORRESPONDENCE_MODEL: &str =
     include_str!("../../../data/migrations/graph-model-correspondence.json");
 const RESOLUTION: &str = "aaa60b286d173a7d4b8818bea1461ce7e87c7a054788fcf90bbd58f8b9925d75";
 const RESOLUTION_MODEL: &str = include_str!("../../../data/migrations/graph-model-resolution.json");
-const TO: &str = "a556ebf4459ee6ee9196ca2593faaa48c2d8c4d8b383a7b030c54e1cf951778c";
+const WORKSPACE_STATE: &str = "a556ebf4459ee6ee9196ca2593faaa48c2d8c4d8b383a7b030c54e1cf951778c";
+const STATE_MODEL: &str = include_str!("../../../data/migrations/graph-model-workspace-state.json");
+const TO: &str = "88ba4156fabecf287c34d467b80ba9db8e13a8682afca20af55c106cfc850922";
 const OLD: &str = include_str!("../../../data/migrations/graph-model-before-projection.json");
 const FROM_PROJECTION: &str = "046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371";
 const PROJECTION: &str = include_str!("../../../data/migrations/graph-model-projection.json");
@@ -596,7 +598,7 @@ fn before_workspace_state_transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
-fn transition(from: &str) -> Result<(), String> {
+fn before_compiler_transition(from: &str) -> Result<(), String> {
     if lua::source_hash(RESOLUTION_MODEL) != RESOLUTION || workspace_graph::schema_sha256() != TO {
         return Err(
             "No reviewed workspace state transition to this exact model is available".into(),
@@ -607,7 +609,8 @@ fn transition(from: &str) -> Result<(), String> {
     }
     let previous: serde_json::Value =
         serde_json::from_str(RESOLUTION_MODEL).map_err(|e| e.to_string())?;
-    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let current: serde_json::Value =
+        serde_json::from_str(STATE_MODEL).map_err(|e| e.to_string())?;
     let old = previous["inputs"]
         .as_object()
         .ok_or("Invalid previous resolution model")?;
@@ -639,6 +642,50 @@ fn transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
+fn transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(STATE_MODEL) != WORKSPACE_STATE || workspace_graph::schema_sha256() != TO {
+        return Err(
+            "No reviewed compiler-extraction transition to this exact model is available".into(),
+        );
+    }
+    if from != WORKSPACE_STATE {
+        before_compiler_transition(from)?;
+    }
+    let previous: serde_json::Value =
+        serde_json::from_str(STATE_MODEL).map_err(|e| e.to_string())?;
+    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let old = previous["inputs"]
+        .as_object()
+        .ok_or("Invalid previous state model")?;
+    let new = current["inputs"]
+        .as_object()
+        .ok_or("Invalid current compiler model")?;
+    let added = new
+        .keys()
+        .filter(|k| !old.contains_key(*k))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    let changed = old
+        .keys()
+        .filter(|k| new.get(*k) != Some(&old[*k]))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    if old.len() != 77
+        || new.len() != 78
+        || added != ["crates/editor-lua55/native/bridge.inc"]
+        || changed
+            != [
+                "Cargo.lock",
+                "Cargo.toml",
+                "crates/editor-app/src/process_policy.rs",
+                "crates/editor-core/build.rs",
+                "crates/editor-core/native/lua_syntax.cpp",
+            ]
+    {
+        return Err("Compiler extraction no longer has only the reviewed workspace dependency, legacy wrapper, shared adapter and separate-role policy additions; Lua 5.4 replay and saved representations must remain unchanged".into());
+    }
+    Ok(())
+}
 pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, String> {
     if text.len() > MAX_WORKSPACE_BYTES {
         return Err("Saved workspace exceeds 8 MiB".into());
@@ -657,6 +704,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
     if previous != PRIVATE_INPUTS
         && previous != CORRESPONDENCE
         && previous != RESOLUTION
+        && previous != WORKSPACE_STATE
         && raw["source_graph"].get("private").is_some()
     {
         return Err("Previous graph writers had no private input layer; new payloads cannot be introduced during migration".into());
@@ -758,6 +806,7 @@ mod tests {
         transition(PRIVATE_INPUTS).unwrap();
         transition(CORRESPONDENCE).unwrap();
         transition(RESOLUTION).unwrap();
+        transition(WORKSPACE_STATE).unwrap();
         assert!(transition(&"0".repeat(64)).is_err());
         assert_ne!(FROM, TO);
         assert_eq!(lua::source_hash(CURRENT), TO);

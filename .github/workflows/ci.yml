@@ -63,12 +63,14 @@ jobs:
           persist-credentials: false
       - name: Install fixture compiler and legacy comparison headers
         run: sudo apt-get update && sudo apt-get install -y g++-15 make pkg-config cmake liblua5.4-dev
+      - name: Pinned worker toolchain
+        run: rustup toolchain install 1.90.0 --profile minimal --component clippy
       - name: Verify immutable source build requests
         run: python3 -B scripts/native_build_probe.py --check
       - name: Check private package search semantics
         run: python3 -B scripts/native_selection_probe.py
       - name: Check private target release and explicit compiler/library contexts
-        run: python3 -B scripts/workspace_target_profile_probe.py --source-conformance --release "${{ matrix.release }}" --compiler g++-15 --cpp26-standard c++2c --observation "$RUNNER_TEMP/workspace-target-observation.json"
+        run: python3 -B scripts/workspace_target_profile_probe.py --source-conformance --worker-conformance --release "${{ matrix.release }}" --compiler g++-15 --cpp26-standard c++2c --observation "$RUNNER_TEMP/workspace-target-observation.json"
       - name: Record source, fixture, compiler and library identities
         run: cat "$RUNNER_TEMP/workspace-target-observation.json"
 

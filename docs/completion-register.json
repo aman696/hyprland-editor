@@ -14,6 +14,23 @@
   },
   "foundations": [
     {
+      "area": "separate Lua 5.5 compiler/conversion component",
+      "code": [
+        "crates/editor-lua55/src/main.rs",
+        "crates/editor-lua55/src/native.rs",
+        "crates/editor-lua55/src/protocol.rs",
+        "crates/editor-lua55/native/bridge.inc",
+        "crates/editor-lua55/native/lua55.cpp",
+        "data/lua55-compiler-worker-observation.json"
+      ],
+      "test_references": [
+        "crates/editor-lua55/tests/worker.rs",
+        "scripts/workspace_target_profile_probe.py",
+        "scripts/lua_profile_probe.py"
+      ],
+      "limits": "independent opt-in compiler image with no GUI/core/RE2/Lua54 dependency, common allocator-bounded legacy/55 C++ adapter with distinct symbols and constructors, text-only compilation and fixed protected primitive conversion, exact float/integer/byte transport, correlated strict one-shot protocol, closed descriptor/syscall/resource role and nonblocking pipe deadlines; ten actual process cases for each official Lua55 release, strict role lint and optimized private images with dependency/profile identities; four legacy release bridge checks remain valid; no authenticated production image/dependency launcher, parent cancellation/reaping integration, GUI selection, Lua55 grammar/ordered evaluator or saved-profile admission, representative resources or full security/release certificate"
+    },
+    {
       "area": "explicit native build/profile compatibility evidence",
       "code": [
         "crates/editor-app/src/native_build.rs",
@@ -113,7 +130,8 @@
         "data/migrations/graph-model-composition.json",
         "data/migrations/graph-model-private-inputs.json",
         "data/migrations/graph-model-correspondence.json",
-        "data/migrations/graph-model-resolution.json"
+        "data/migrations/graph-model-resolution.json",
+        "data/migrations/graph-model-workspace-state.json"
       ],
       "test_references": [
         "reviewed_transition_pins_exact_monitor_differences_and_refuses_unreviewed_builds",
@@ -122,7 +140,7 @@
         "workflow::test_graph_migration",
         "private_input_model_migration_preserves_active_and_archived_data_with_fresh_reanalysis"
       ],
-      "limits": "fifteen exact reviewed dependency/storage/monitor/merge/private-input/correspondence/resolution/workspace-state transitions with bounded held-inode input, unknown-payload refusal, fresh restricted-worker captured-view/dependency/private-piece reanalysis, byte/value preservation, cancel/epoch/unsaved guards and new private save; no original-path reads or restored folder access, general model/schema/profile conversion, persistent history, full source export/reconciliation or full audit certificate"
+      "limits": "sixteen exact reviewed dependency/storage/monitor/merge/private-input/correspondence/resolution/workspace-state/compiler-extraction transitions with bounded held-inode input, unknown-payload refusal, fresh restricted-worker captured-view/dependency/private-piece reanalysis, byte/value preservation, cancel/epoch/unsaved guards and new private save; no original-path reads or restored folder access, general model/schema/profile conversion, persistent history, full source export/reconciliation or full audit certificate"
     },
     {
       "area": "source dependency capture and ordered evaluation",

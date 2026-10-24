@@ -77,6 +77,8 @@ The development branch links Lua 5.4 for compilation-only validation in the rest
 
 Both audited Hyprland source snapshots request C++26 and search Lua 5.5 aliases followed by generic alternatives. That search does not enforce a combined Lua version range. The application’s Lua 5.4 model is not verified compatible with the selected compositor. Source analysis displays this limitation; [the compatibility plan and workspace reference matrix](docs/native-runtime-compatibility.md) describe the separate profiles and required worker integration.
 
+An [optional separate Lua 5.5 compiler worker](docs/lua55-compiler-worker.md) now builds and passes isolated process tests against official 5.5.0/5.5.1 libraries. It provides compile-only and primitive C-API operations without GTK or Lua 5.4. GUI selection and Lua 5.5 ordered evaluation remain unfinished; saved graphs still reconstruct with Lua 5.4.
+
 The development worker reports its compiler/library profile; the reference matrix checks Lua 5.4.6–5.4.9. See [ordered evaluation and limits](docs/ordered-module-evaluation.md). For explicitly selected private fixtures, `hyprland-editor --probe-source-folder FOLDER CANDIDATE` reports bounded metadata without reading source bytes; [the capture contract](docs/dependency-capture.md) explains the distinct missing/blocked outcomes. This diagnostic does not import or verify an effective dependency graph.
 
 A saved workspace can be checked without opening the GUI:

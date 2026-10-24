@@ -22,6 +22,7 @@ def main():
         "data/monitor-source-semantics.json", "data/monitors.json",
         "data/workspace-argument-semantics.json", "data/workspace-object-semantics.json",
         "crates/editor-core/native/complex_text.cpp", "data/complex-scalar-sources.json", "data/complex-scalar-fixtures.json",
+        "crates/editor-lua55/native/bridge.inc",
     ]]
     value = {"format": "hye-graph-model-source-1", "inputs": {
         str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest()
