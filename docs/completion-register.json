@@ -14,6 +14,21 @@
   },
   "foundations": [
     {
+      "area": "installed static compiler launcher and on-demand availability check",
+      "code": [
+        "crates/editor-app/src/compiler_client.rs",
+        "crates/editor-app/src/compiler_check.rs",
+        "crates/editor-lua55/src/protocol.rs",
+        "scripts/compiler_install_probe.py"
+      ],
+      "test_references": [
+        "crates/editor-app/tests/compiler_client.rs",
+        "compiler_check::test_ui",
+        "scripts/workspace_target_profile_probe.py --worker-conformance --static-conformance --installed-conformance"
+      ],
+      "limits": "fixed root-owned registry and no-follow regular package channel, exact hash/identity capture, bounded native static ELF checks, separate execution-bit/content/size-sealed memfd, ordinary identity/no-retained-capability requirement, empty environment/parent-death/no-new-privileges/closed descriptor/resource setup, bounded nonblocking parent duplex I/O/EOF/correlation/deadline/cancellation and owned kill/reap; seven ordinary parent cases, both official55 static process/actual parent fixtures and private-display availability/single-flight/cancel/stale/unavailable/window-lifetime checks; separate root-owned temporary-package CI role remains pending exact-head execution; no signed/update/AppImage/distribution trust, complete source-profile selection/Lua55 grammar/evaluator, general staging-read interruption, representative resources or full security/release certificate"
+    },
+    {
       "area": "linked compiler numeric observations",
       "code": [
         "crates/editor-core/src/lua/replay/numeric_codegen.rs",

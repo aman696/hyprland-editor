@@ -46,7 +46,7 @@ jobs:
       - run: cargo test --locked --workspace
       - name: Native graphical smoke test
         timeout-minutes: 5
-        run: xvfb-run -a env GDK_BACKEND=x11 GSK_RENDERER=cairo GSETTINGS_BACKEND=memory HYPRLAND_EDITOR_TEST_EXACT_RESIZE=1 cargo test --locked -p hyprland-editor -- --ignored --test-threads=1
+        run: xvfb-run -a env GDK_BACKEND=x11 GSK_RENDERER=cairo GSETTINGS_BACKEND=memory HYPRLAND_EDITOR_TEST_EXACT_RESIZE=1 cargo test --locked -p hyprland-editor --bin hyprland-editor -- --ignored --test-threads=1
       - run: cargo clippy --locked --workspace --all-targets -- -D warnings
       - run: cargo build --locked --release
 
@@ -80,7 +80,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install fixture compiler and legacy comparison headers
-        run: sudo apt-get update && sudo apt-get install -y g++-15 make pkg-config cmake liblua5.4-dev
+        run: sudo apt-get update && sudo apt-get install -y g++-15 make pkg-config cmake liblua5.4-dev libgtk-4-dev libadwaita-1-dev libxkbcommon-dev libre2-dev
       - name: Pinned worker toolchain
         run: rustup toolchain install 1.90.0 --profile minimal --component clippy
       - name: Verify immutable source build requests
@@ -90,7 +90,7 @@ jobs:
       - name: Check fixed numeric compiler fingerprints and native references
         run: python3 -B scripts/lua_numeric_probe.py --check --release "${{ matrix.release }}"
       - name: Check private target release and explicit compiler/library contexts
-        run: python3 -B scripts/workspace_target_profile_probe.py --source-conformance --worker-conformance --release "${{ matrix.release }}" --compiler g++-15 --cpp26-standard c++2c --observation "$RUNNER_TEMP/workspace-target-observation.json"
+        run: python3 -B scripts/workspace_target_profile_probe.py --source-conformance --worker-conformance --static-conformance --installed-conformance --release "${{ matrix.release }}" --compiler g++-15 --cpp26-standard c++2c --observation "$RUNNER_TEMP/workspace-target-observation.json"
       - name: Record source, fixture, compiler and library identities
         run: cat "$RUNNER_TEMP/workspace-target-observation.json"
 

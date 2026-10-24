@@ -2,6 +2,9 @@ mod animations;
 mod bind_forms;
 mod bindings;
 mod capture_worker;
+mod compiler_check;
+#[allow(dead_code)] // Separate installed role; never selects a saved Lua 5.4 model.
+mod compiler_client;
 mod controls;
 mod device_forms;
 mod devices;
@@ -1332,6 +1335,7 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     let win = window.downgrade();
     mode.connect_activate(move|_,_|{if let Some(win)=win.upgrade(){notice(&win,"Draft Mode","Changes stay in editor drafts. Desktop inspection is read-only. Applying changes and compositor preview are not available in this release.");}});
     window.add_action(&mode);
+    compiler_check::connect(&window, &state);
     app.set_accels_for_action("win.import", &["<Primary>o"]);
     app.set_accels_for_action("win.save-draft", &["<Primary>s"]);
     app.set_accels_for_action("win.undo", &["<Primary>z"]);
@@ -1831,6 +1835,7 @@ mod tests {
         review.destroy();
         workflow::test_source_persistence(&window);
         workflow::test_graph_migration(&window);
+        compiler_check::test_ui(&window);
         preview_preparation::test_preparation(&window);
         reconciliation::test_review(&window);
         monitors::test_editor(&window);

@@ -34,6 +34,8 @@ These are finite trusted fixtures, not complete language support, Tree-sitter gr
 
 The [separate compiler worker](lua55-compiler-worker.md) now implements the bounded compilation/primitive role with shared adapter code and independent Lua 5.5 symbols/seeded construction. Both official releases pass ten process cases, strict lint and optimized image checks; the legacy four-release bridge remains validated. This completes that component, while every integration requirement below remains open unless independently established.
 
+The [installed static launcher](compiler-worker-launcher.md) now adds a root-owned package channel, sealed dependency-free executable and bounded correlated parent lifecycle, with a read-only availability check. Actual static compiler/parent fixtures pass both releases. Positive root-package admission is a separate ephemeral CI profile; complete packaging trust and Lua55 source evaluation/selection remain unproven.
+
 ## Known upstream behavior requiring source-model work
 
 The [official issue tracker](https://www.lua.org/bugs.html#5.5.1) was checked on 24 October 2026. Current reports include GC-parameter undefined behavior, NaN loop semantics, signed-zero subtraction optimization and coroutine closing. The compiler component exposes no imported execution, libraries or GC parameters; those boundaries are not a complete dependency-security audit. Older API reader/stack behavior also needs targeted review before production admission.

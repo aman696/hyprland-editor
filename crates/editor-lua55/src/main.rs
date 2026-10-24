@@ -125,7 +125,7 @@ fn probe() -> Outcome {
 }
 fn handle(bytes: &[u8]) -> Reply {
     let mut reply = Reply {
-        protocol: PROTOCOL,
+        protocol: PROTOCOL.into(),
         request_sha256: format!("{:x}", Sha256::digest(bytes)),
         nonce: None,
         profile: None,
@@ -153,13 +153,13 @@ fn handle(bytes: &[u8]) -> Reply {
     }
     reply.profile = Some(profile);
     let result = match request.operation {
-        Operation::Profile => Ok(Outcome::Profile),
+        Operation::Profile {} => Ok(Outcome::Profile {}),
         Operation::Compile { source, load_name } => native::compile(&source, &load_name)
             .map(|(valid, diagnostic)| Outcome::Compiled { valid, diagnostic }),
         Operation::Convert { values } => {
             native::convert(&values).map(|values| Outcome::Converted { values })
         }
-        Operation::Probe => Ok(probe()),
+        Operation::Probe {} => Ok(probe()),
     };
     reply.outcome = result.unwrap_or_else(Outcome::error);
     reply

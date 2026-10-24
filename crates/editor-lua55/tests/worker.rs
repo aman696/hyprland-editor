@@ -184,6 +184,12 @@ fn release_protocol_unknown_fields_and_executable_operations_are_refused() {
     let refused = bytes(serde_json::to_vec(&value).unwrap());
     assert!(refused["profile"].is_null());
     value.as_object_mut().unwrap().remove("executable");
+    for kind in ["profile", "probe"] {
+        value["operation"] = json!({"kind":kind,"hidden":"must refuse"});
+        let refused = bytes(serde_json::to_vec(&value).unwrap());
+        assert!(refused["profile"].is_null());
+        assert_eq!(refused["outcome"]["kind"], "error");
+    }
     value["operation"] = json!({"kind":"execute","source":[]});
     assert_eq!(
         bytes(serde_json::to_vec(&value).unwrap())["outcome"]["kind"],
