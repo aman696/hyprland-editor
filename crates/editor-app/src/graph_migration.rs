@@ -42,7 +42,11 @@ const RESOLUTION: &str = "aaa60b286d173a7d4b8818bea1461ce7e87c7a054788fcf90bbd58
 const RESOLUTION_MODEL: &str = include_str!("../../../data/migrations/graph-model-resolution.json");
 const WORKSPACE_STATE: &str = "a556ebf4459ee6ee9196ca2593faaa48c2d8c4d8b383a7b030c54e1cf951778c";
 const STATE_MODEL: &str = include_str!("../../../data/migrations/graph-model-workspace-state.json");
-const TO: &str = "88ba4156fabecf287c34d467b80ba9db8e13a8682afca20af55c106cfc850922";
+const COMPILER_EXTRACTION: &str =
+    "88ba4156fabecf287c34d467b80ba9db8e13a8682afca20af55c106cfc850922";
+const COMPILER_MODEL: &str =
+    include_str!("../../../data/migrations/graph-model-compiler-extraction.json");
+const TO: &str = "2f9e39f0f1efb1e7be298cfbc50c43ed754f7e3feb68d64d7cb7ed7fbca76128";
 const OLD: &str = include_str!("../../../data/migrations/graph-model-before-projection.json");
 const FROM_PROJECTION: &str = "046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371";
 const PROJECTION: &str = include_str!("../../../data/migrations/graph-model-projection.json");
@@ -62,6 +66,8 @@ pub(super) struct Summary {
     pub archived_documents: usize,
     pub reanalysis_findings: usize,
     pub reanalysis_note: Option<String>,
+    pub compiler_observation_renewed: bool,
+    pub compiler_numeric_mode_known: bool,
 }
 pub(super) struct Prepared {
     pub workspace: Workspace,
@@ -642,7 +648,7 @@ fn before_compiler_transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
-fn transition(from: &str) -> Result<(), String> {
+fn before_numeric_transition(from: &str) -> Result<(), String> {
     if lua::source_hash(STATE_MODEL) != WORKSPACE_STATE || workspace_graph::schema_sha256() != TO {
         return Err(
             "No reviewed compiler-extraction transition to this exact model is available".into(),
@@ -653,7 +659,8 @@ fn transition(from: &str) -> Result<(), String> {
     }
     let previous: serde_json::Value =
         serde_json::from_str(STATE_MODEL).map_err(|e| e.to_string())?;
-    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let current: serde_json::Value =
+        serde_json::from_str(COMPILER_MODEL).map_err(|e| e.to_string())?;
     let old = previous["inputs"]
         .as_object()
         .ok_or("Invalid previous state model")?;
@@ -686,6 +693,54 @@ fn transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
+fn transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(COMPILER_MODEL) != COMPILER_EXTRACTION
+        || workspace_graph::schema_sha256() != TO
+    {
+        return Err(
+            "No reviewed numeric compiler transition to this exact model is available".into(),
+        );
+    }
+    if from != COMPILER_EXTRACTION {
+        before_numeric_transition(from)?;
+    }
+    let previous: serde_json::Value =
+        serde_json::from_str(COMPILER_MODEL).map_err(|e| e.to_string())?;
+    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let old = previous["inputs"]
+        .as_object()
+        .ok_or("Invalid previous compiler model")?;
+    let new = current["inputs"]
+        .as_object()
+        .ok_or("Invalid numeric compiler model")?;
+    let added = new
+        .keys()
+        .filter(|k| !old.contains_key(*k))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    let changed = old
+        .keys()
+        .filter(|k| new.get(*k) != Some(&old[*k]))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    if old.len() != 78
+        || new.len() != 80
+        || added
+            != [
+                "crates/editor-core/src/lua/replay/numeric_codegen.rs",
+                "data/lua-numeric-codegen.json",
+            ]
+        || changed
+            != [
+                "crates/editor-core/src/lua/replay.rs",
+                "crates/editor-core/src/lua/replay/eval.rs",
+                "crates/editor-lua55/native/bridge.inc",
+            ]
+    {
+        return Err("Numeric transition no longer has only the reviewed fixed compile/dump observation, bounded descriptor model, affected subtraction handling and optional compiler metadata".into());
+    }
+    Ok(())
+}
 pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, String> {
     if text.len() > MAX_WORKSPACE_BYTES {
         return Err("Saved workspace exceeds 8 MiB".into());
@@ -705,9 +760,16 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != CORRESPONDENCE
         && previous != RESOLUTION
         && previous != WORKSPACE_STATE
+        && previous != COMPILER_EXTRACTION
         && raw["source_graph"].get("private").is_some()
     {
         return Err("Previous graph writers had no private input layer; new payloads cannot be introduced during migration".into());
+    }
+    if raw["source_graph"]["compiler"]
+        .get("numeric_codegen")
+        .is_some()
+    {
+        return Err("Previous compiler writers had no numeric observation; saved claims cannot supply a new compiler observation".into());
     }
     if serde_json::to_value(&workspace).map_err(|e| e.to_string())? != raw {
         return Err(
@@ -720,6 +782,13 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         .source_graph
         .as_mut()
         .ok_or("Workspace has no saved graph to migrate")?;
+    let previous_compiler = graph.compiler.clone();
+    let current_compiler = lua::replay::compiler_profile();
+    let mut legacy_compiler = current_compiler.clone();
+    legacy_compiler.numeric_codegen = None;
+    if previous_compiler != legacy_compiler {
+        return Err("Saved compiler differs from the current legacy compiler identity; this review cannot migrate compiler families or releases".into());
+    }
     let mut summary = Summary {
         previous_model: previous.clone(),
         current_model: TO.into(),
@@ -733,8 +802,14 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         archived_documents: graph.private.archived.len(),
         reanalysis_findings: 0,
         reanalysis_note: None,
+        compiler_observation_renewed: true,
+        compiler_numeric_mode_known: current_compiler
+            .numeric_codegen
+            .as_ref()
+            .is_some_and(|p| p.zero_subtraction.is_some()),
     };
     graph.schema_sha256 = TO.into();
+    graph.compiler = current_compiler;
     workspace.validate(catalogue)?;
     let graph = workspace.source_graph.as_ref().unwrap();
     let bundle = Bundle {
@@ -763,6 +838,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
     // typed declarations, resolution inputs and source identity evidence.
     let mut reversed: Workspace = serde_json::from_slice(&rebuilt).map_err(|e| e.to_string())?;
     reversed.source_graph.as_mut().unwrap().schema_sha256 = previous;
+    reversed.source_graph.as_mut().unwrap().compiler = previous_compiler;
     let before: serde_json::Value = serde_json::from_str(text).map_err(|e| e.to_string())?;
     if serde_json::to_value(&reversed).map_err(|e| e.to_string())? != before {
         return Err("Migration changed saved data beyond the reviewed model metadata".into());
@@ -807,6 +883,7 @@ mod tests {
         transition(CORRESPONDENCE).unwrap();
         transition(RESOLUTION).unwrap();
         transition(WORKSPACE_STATE).unwrap();
+        transition(COMPILER_EXTRACTION).unwrap();
         assert!(transition(&"0".repeat(64)).is_err());
         assert_ne!(FROM, TO);
         assert_eq!(lua::source_hash(CURRENT), TO);

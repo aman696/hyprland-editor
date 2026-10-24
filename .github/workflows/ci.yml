@@ -50,6 +50,24 @@ jobs:
       - run: cargo clippy --locked --workspace --all-targets -- -D warnings
       - run: cargo build --locked --release
 
+  numeric-compiler-references:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        release: ["5.4.6", "5.4.7", "5.4.8", "5.4.9"]
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Install private reference build dependencies
+        run: sudo apt-get update && sudo apt-get install -y g++ make pkg-config libre2-dev
+      - name: Pinned reference toolchain
+        run: rustup toolchain install 1.90.0 --profile minimal
+      - name: Check official and narrowly patched compiler observations against restricted model
+        run: python3 -B scripts/lua_numeric_probe.py --check --model-reference --release "${{ matrix.release }}"
+
   native-target-references:
     runs-on: ubuntu-26.04
     timeout-minutes: 15
@@ -69,6 +87,8 @@ jobs:
         run: python3 -B scripts/native_build_probe.py --check
       - name: Check private package search semantics
         run: python3 -B scripts/native_selection_probe.py
+      - name: Check fixed numeric compiler fingerprints and native references
+        run: python3 -B scripts/lua_numeric_probe.py --check --release "${{ matrix.release }}"
       - name: Check private target release and explicit compiler/library contexts
         run: python3 -B scripts/workspace_target_profile_probe.py --source-conformance --worker-conformance --release "${{ matrix.release }}" --compiler g++-15 --cpp26-standard c++2c --observation "$RUNNER_TEMP/workspace-target-observation.json"
       - name: Record source, fixture, compiler and library identities

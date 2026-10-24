@@ -4,7 +4,9 @@ pub mod edits;
 mod eval;
 pub mod monitor_edit;
 pub mod monitor_review;
+mod numeric_codegen;
 mod observed_float;
+pub use numeric_codegen::{NumericCodegen, ZeroSubtraction};
 pub mod override_review;
 mod path_sources;
 mod provenance;
@@ -48,6 +50,8 @@ pub struct CompilerProfile {
     pub primitive_conversions_profiled: bool,
     pub complex_text_profile: Option<String>,
     pub schema_sha256: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub numeric_codegen: Option<NumericCodegen>,
 }
 /// The model's linked compiler is an explicit assumption, not a detected target
 /// compositor dependency. Unknown profiles cannot supply guessed call locations.
@@ -82,6 +86,7 @@ pub fn compiler_profile() -> CompilerProfile {
             primitive_conversions_profiled,
             complex_text_profile: super::scalar_codec::complex::text_profile(),
             schema_sha256: source_hash(source),
+            numeric_codegen: numeric_codegen::observe(),
         }
     });
     PROFILE.clone()

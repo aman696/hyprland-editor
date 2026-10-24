@@ -47,6 +47,48 @@ static void* allocate(void* data, void* pointer, size_t old_size, size_t size) {
         budget->bytes = budget->bytes - old_size + size;
     return result;
 }
+struct ProbeOutput {
+    unsigned char* bytes;
+    size_t capacity;
+    size_t written;
+    bool exceeded;
+};
+static int write_probe(lua_State*, const void* data, size_t count, void* context) {
+    auto* output = static_cast<ProbeOutput*>(context);
+    if (count > output->capacity - output->written) {
+        output->exceeded = true;
+        return 1;
+    }
+    if (count)
+        std::memcpy(output->bytes + output->written, data, count);
+    output->written += count;
+    return 0;
+}
+// Observe the linked compiler, including backports, without invoking Lua code.
+// No source/name comes from a request. Only stripped bytes of this fixed probe
+// are returned; callers hash them and match an independently checked profile.
+extern "C" int HYE_LUA_API(subtract_probe)(unsigned char* output, size_t capacity, size_t* written) {
+    if (!output || !written || capacity > 4096)
+        return 3;
+    *written = 0;
+    Budget budget{0};
+    lua_State* state = hye_newstate(allocate, &budget);
+    if (!state)
+        return 2;
+    static constexpr const char source[] = "return function(x) return x - 0 end";
+    const int loaded = luaL_loadbufferx(state, source, sizeof(source)-1, "@hye-numeric-profile", "t");
+    if (loaded != LUA_OK) {
+        lua_close(state);
+        return loaded == LUA_ERRMEM ? 2 : 1;
+    }
+    ProbeOutput result{output, capacity, 0, false};
+    const int dumped = lua_dump(state, write_probe, &result, 1);
+    lua_close(state);
+    if (dumped || result.exceeded)
+        return 3;
+    *written = result.written;
+    return 0;
+}
 extern "C" int HYE_LUA_API(compile)(const unsigned char* source, size_t length,
                                 const char* name, unsigned char* error,
                                 size_t capacity, size_t* written) {

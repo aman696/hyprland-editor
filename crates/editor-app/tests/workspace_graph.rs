@@ -678,6 +678,7 @@ fn private_input_model_migration_preserves_active_and_archived_data_with_fresh_r
         "e25d982f292e56135f0810194ae06ae6a93a45d4b6f6afd75bb0ada5ecf7b0fc",
         "aaa60b286d173a7d4b8818bea1461ce7e87c7a054788fcf90bbd58f8b9925d75",
         "a556ebf4459ee6ee9196ca2593faaa48c2d8c4d8b383a7b030c54e1cf951778c",
+        "88ba4156fabecf287c34d467b80ba9db8e13a8682afca20af55c106cfc850922",
     ] {
         for version in [BASELINE, AUDITED_MAIN] {
             for archive in [false, true] {
@@ -712,6 +713,12 @@ fn private_input_model_migration_preserves_active_and_archived_data_with_fresh_r
                         graph.private.apply(&base, &graph.revisions, &plan).unwrap();
                 }
                 snapshot.source_graph.as_mut().unwrap().schema_sha256 = previous.into();
+                snapshot
+                    .source_graph
+                    .as_mut()
+                    .unwrap()
+                    .compiler
+                    .numeric_codegen = None;
                 let bytes = serde_json::to_vec_pretty(&snapshot).unwrap();
                 let path = root.join("previous-private.hye");
                 fs::write(&path, &bytes).unwrap();
@@ -827,7 +834,7 @@ fn graph_reopen_refuses_inconsistent_profiles_views_hashes_and_unreached_binding
     let root = root();
     let snapshot = fixture(&root, BASELINE);
     let path = root.join("forged.hye");
-    for change in 0..7 {
+    for change in 0..11 {
         let mut value = serde_json::to_value(&snapshot).unwrap();
         match change {
             0 => value["source_graph"]["compiler"]["release"] = "foreign".into(),
@@ -842,6 +849,21 @@ fn graph_reopen_refuses_inconsistent_profiles_views_hashes_and_unreached_binding
                 value["source_graph"]["context"]["main_file"] =
                     serde_json::json!(b"/different/main.lua".to_vec())
             }
+            7 => {
+                value["source_graph"]["compiler"]["numeric_codegen"]["probe_sha256"] =
+                    "0".repeat(64).into()
+            }
+            8 => {
+                value["source_graph"]["compiler"]["numeric_codegen"]["zero_subtraction"] =
+                    serde_json::Value::Null
+            }
+            9 => value["source_graph"]["compiler"]["numeric_codegen"] = serde_json::Value::Null,
+            10 => {
+                value["source_graph"]["compiler"]
+                    .as_object_mut()
+                    .unwrap()
+                    .remove("numeric_codegen");
+            }
             _ => value["source_graph"]["bindings"] = serde_json::json!([]),
         }
         fs::write(&path, serde_json::to_vec(&value).unwrap()).unwrap();
@@ -853,6 +875,67 @@ fn graph_reopen_refuses_inconsistent_profiles_views_hashes_and_unreached_binding
     fs::write(&path, missing.to_json(&catalogue()).unwrap()).unwrap();
     assert!(!check(&path).0);
     fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn numeric_private_revisions_reopen_with_observed_compiler_and_original_zero_sign() {
+    for version in [BASELINE, AUDITED_MAIN] {
+        let root = root();
+        let mut snapshot = fixture_source(&root, version, "local nz=-0.0;local z=0;return nz-0");
+        let graph = snapshot.source_graph.as_ref().unwrap();
+        let base = graph
+            .program(&snapshot.sources, snapshot.root_source.as_deref(), version)
+            .unwrap();
+        let doc = &base.documents[0];
+        let end = doc.source.len();
+        let plan = edits::prepare(
+            &base,
+            vec![edits::SourceEdit {
+                document: doc.id.clone(),
+                base_sha256: doc.sha256.clone(),
+                span: end - 1..end,
+                old_bytes_sha256: lua::source_hash("0"),
+                replacement: "z".into(),
+                semantic_targets: vec!["numeric-return".into()],
+            }],
+            vec![],
+        )
+        .unwrap();
+        let original = replay(&base).unwrap();
+        snapshot.source_graph.as_mut().unwrap().revisions =
+            hyprland_editor_core::workspace_graph::revisions::apply(&base, &[], &plan).unwrap();
+        let path = workspace::save(&root, &snapshot, &catalogue()).unwrap();
+        let (ok, output) = check(&path);
+        assert!(ok, "{output}");
+        let saved = workspace::read(&path, &catalogue()).unwrap();
+        let graph = saved.source_graph.as_ref().unwrap();
+        assert_eq!(graph.compiler, compiler_profile());
+        let reopened_base = graph
+            .program(&saved.sources, saved.root_source.as_deref(), version)
+            .unwrap();
+        let revised = hyprland_editor_core::workspace_graph::revisions::program(
+            reopened_base.clone(),
+            &graph.revisions,
+        )
+        .unwrap();
+        let report = replay(&revised).unwrap();
+        let [Observed::Float(v)] = report.returns.as_slice() else {
+            panic!("revised numeric return")
+        };
+        assert_eq!(v.to_bits(), (-0.0f64).to_bits());
+        assert_eq!(saved.sources[0].content, base.documents[0].source);
+        assert_eq!(saved.sources[0].origin, snapshot.sources[0].origin);
+        let restored = replay(&reopened_base).unwrap();
+        let [Observed::Float(before)] = original.returns.as_slice() else {
+            panic!("original numeric return")
+        };
+        let [Observed::Float(after)] = restored.returns.as_slice() else {
+            panic!("restored numeric return")
+        };
+        assert_eq!(before.to_bits(), after.to_bits());
+        assert!(!report.runtime_verified && !root.join("originals").exists());
+        fs::remove_dir_all(root).unwrap();
+    }
 }
 
 #[test]
@@ -1019,6 +1102,7 @@ fn monitor_model_migration_preserves_an_old_stopped_graph_without_guessing_new_d
         // from that model contains only its root, without a reached part loader.
         graph.schema_sha256 =
             "c1abcce3f3c001585eb7b39e13b7ab888791a3480877f7817bde26d66bba1427".into();
+        graph.compiler.numeric_codegen = None;
         graph.bindings.clear();
         graph.views.retain(|v| v.document == graph.root);
         snapshot.sources.retain(|s| s.id == graph.root);
@@ -1060,6 +1144,7 @@ fn reviewed_graph_migrations_rebuild_deleted_sources_and_private_pieces_without_
             "e25d982f292e56135f0810194ae06ae6a93a45d4b6f6afd75bb0ada5ecf7b0fc",
             "aaa60b286d173a7d4b8818bea1461ce7e87c7a054788fcf90bbd58f8b9925d75",
             "a556ebf4459ee6ee9196ca2593faaa48c2d8c4d8b383a7b030c54e1cf951778c",
+            "88ba4156fabecf287c34d467b80ba9db8e13a8682afca20af55c106cfc850922",
         ] {
             let root = root();
             let mut snapshot = fixture(&root, version);
@@ -1086,6 +1171,10 @@ fn reviewed_graph_migrations_rebuild_deleted_sources_and_private_pieces_without_
                 hyprland_editor_core::workspace_graph::revisions::apply(&base, &[], &plan).unwrap();
             let mut value = serde_json::to_value(&snapshot).unwrap();
             value["source_graph"]["schema_sha256"] = old.into();
+            value["source_graph"]["compiler"]
+                .as_object_mut()
+                .unwrap()
+                .remove("numeric_codegen");
             let bytes = serde_json::to_vec_pretty(&value).unwrap();
             let path = root.join("old.hye");
             fs::write(&path, &bytes).unwrap();
@@ -1110,6 +1199,8 @@ fn reviewed_graph_migrations_rebuild_deleted_sources_and_private_pieces_without_
                 assert_eq!(report[key], false, "{key}");
             }
             assert_eq!(report["needs_review_and_new_private_save"], true);
+            assert_eq!(report["migration"]["compiler_observation_renewed"], true);
+            assert_eq!(report["migration"]["compiler_numeric_mode_known"], true);
             assert_eq!(fs::read(&path).unwrap(), bytes);
             assert!(!root.join("originals").exists());
             assert_eq!(fs::read_dir(&root).unwrap().count(), 1);
@@ -1125,7 +1216,15 @@ fn migration_refuses_unknown_models_profiles_corruption_unreached_inputs_and_hid
     let mut original = serde_json::to_value(snapshot).unwrap();
     original["source_graph"]["schema_sha256"] =
         "f7017978da7127ee461497d1021e418bb2c2e171b4d28a43b6671f8abb2531dd".into();
-    for change in 0..7 {
+    let numeric = original["source_graph"]["compiler"]
+        .as_object_mut()
+        .unwrap()
+        .remove("numeric_codegen")
+        .unwrap();
+    // A valid legacy profile is rebuilt before adding each independent corruption.
+    fs::write(&path, serde_json::to_vec(&original).unwrap()).unwrap();
+    assert!(check_migration(&path).0);
+    for change in 0..9 {
         let mut value = original.clone();
         match change {
             0 => value["source_graph"]["schema_sha256"] = "0".repeat(64).into(),
@@ -1139,6 +1238,8 @@ fn migration_refuses_unknown_models_profiles_corruption_unreached_inputs_and_hid
                 value["draft"]["values"]["general:border_size"]["hidden"] = "discarded field".into()
             }
             5 => value["source_graph"]["views"][1]["document"] = "unknown".into(),
+            7 => value["source_graph"]["compiler"]["numeric_codegen"] = numeric.clone(),
+            8 => value["source_graph"]["compiler"]["numeric_codegen"] = serde_json::Value::Null,
             _ => {
                 value["source_graph"]["private"] =
                     serde_json::json!({"sources":[],"views":[],"bindings":[],"archived":[]})

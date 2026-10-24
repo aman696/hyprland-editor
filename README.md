@@ -79,6 +79,8 @@ Both audited Hyprland source snapshots request C++26 and search Lua 5.5 aliases 
 
 An [optional separate Lua 5.5 compiler worker](docs/lua55-compiler-worker.md) now builds and passes isolated process tests against official 5.5.0/5.5.1 libraries. It provides compile-only and primitive C-API operations without GTK or Lua 5.4. GUI selection and Lua 5.5 ordered evaluation remain unfinished; saved graphs still reconstruct with Lua 5.4.
 
+The [numeric compiler observation](docs/lua-numeric-codegen.md) distinguishes the linked compiler’s zero-subtraction optimization, including reviewed backports. A fixed compile/dump probe never runs Lua; unknown modes leave affected expressions unresolved. Source comparisons and private save/reopen/undo retain zero sign bits. Older saved graphs require explicit review before the compiler observation is renewed.
+
 The development worker reports its compiler/library profile; the reference matrix checks Lua 5.4.6–5.4.9. See [ordered evaluation and limits](docs/ordered-module-evaluation.md). For explicitly selected private fixtures, `hyprland-editor --probe-source-folder FOLDER CANDIDATE` reports bounded metadata without reading source bytes; [the capture contract](docs/dependency-capture.md) explains the distinct missing/blocked outcomes. This diagnostic does not import or verify an effective dependency graph.
 
 A saved workspace can be checked without opening the GUI:

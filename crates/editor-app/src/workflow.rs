@@ -359,6 +359,12 @@ fn review_import(
         return;
     };
     let mut body = format!("This workspace was saved by an earlier build. Its saved sources have been checked again.\n\nCaptured files: {}\nDependency inputs: {}\nPrivate source edits: {}\nAdditional captured files: {}\nAdditional dependency inputs: {}\nArchived files: {}\n\nYour source bytes, edits and settings are preserved. Original files were not opened. Folder access stays closed.\n\nKeep this copy, then save a new private workspace. The old saved file stays unchanged.",summary.captured_documents,summary.resolution_inputs,summary.private_revisions,summary.private_documents,summary.private_resolution_inputs,summary.archived_documents);
+    if summary.compiler_observation_renewed {
+        body.push_str("\n\nThe current compiler was checked again. This can change how numeric expressions are interpreted in source analysis.");
+        if !summary.compiler_numeric_mode_known {
+            body.push_str(" Its zero-subtraction behavior is unrecognized; affected expressions remain unresolved.");
+        }
+    }
     if summary.reanalysis_findings != 0 || summary.reanalysis_note.is_some() {
         body.push_str(
             "\n\nSome source behavior is unresolved. Review Source analysis after opening.",
@@ -711,6 +717,10 @@ pub(super) fn test_graph_migration(window: &adw::ApplicationWindow) {
     };
     let workspace = Workspace::new(Draft::new(BASELINE)).with_graph(&bundle);
     let mut value = serde_json::to_value(workspace).unwrap();
+    value["source_graph"]["compiler"]
+        .as_object_mut()
+        .unwrap()
+        .remove("numeric_codegen");
     value["source_graph"]["schema_sha256"] = hyprland_editor_core::lua::source_hash(include_str!(
         "../../../data/migrations/graph-model-before-projection.json"
     ))
@@ -756,6 +766,7 @@ pub(super) fn test_graph_migration(window: &adw::ApplicationWindow) {
     settle();
     let review = dialog("Review rebuilt workspace");
     assert_eq!(review.default_response().as_deref(), Some("cancel"));
+    assert!(review.body().contains("current compiler was checked again"));
     if let Ok(path) = std::env::var("HYPRLAND_EDITOR_TEST_CAPTURE") {
         let paintable = gtk::WidgetPaintable::new(Some(&review));
         let snapshot = gtk::Snapshot::new();

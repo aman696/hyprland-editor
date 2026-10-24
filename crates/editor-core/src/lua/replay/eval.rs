@@ -648,6 +648,45 @@ impl<'a> Engine<'a> {
         let (Some(a), Some(b)) = (Self::number(&left), Self::number(&right)) else {
             return self.unknown(doc, node, "Numeric coercion or metamethod is not modeled");
         };
+        if op == "-" && a == 0.0 && a.is_sign_negative() && matches!(right.kind, Kind::Int(0)) {
+            match compiler_profile()
+                .numeric_codegen
+                .and_then(|p| p.zero_subtraction)
+            {
+                Some(ZeroSubtraction::PreservesSubtraction) => {}
+                Some(ZeroSubtraction::RewritesConstantIntegerZero) => {
+                    let right_node = self.required(node, "right")?;
+                    let (constant, visits) = numeric_codegen::integer_zero(
+                        right_node,
+                        &self.documents[doc].document.source,
+                    );
+                    for _ in 0..visits {
+                        self.tick()?;
+                    }
+                    match constant {
+                        Ok(true) => return Ok(Value::from(Kind::Float(0.0))),
+                        Ok(false) => {}
+                        Err(numeric_codegen::Refusal::Budget) => {
+                            return self.budget("Compiler constant inspection exceeds its bounds")
+                        }
+                        Err(numeric_codegen::Refusal::Unsupported) => {
+                            return self.unknown(
+                                doc,
+                                node,
+                                "Compiler constant-expression shape is not modeled",
+                            )
+                        }
+                    }
+                }
+                None => {
+                    return self.unknown(
+                        doc,
+                        node,
+                        "Linked compiler zero-subtraction code generation is unrecognized",
+                    )
+                }
+            }
+        }
         let v = match op {
             "+" => a + b,
             "-" => a - b,

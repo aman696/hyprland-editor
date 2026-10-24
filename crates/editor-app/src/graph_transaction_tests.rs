@@ -20,12 +20,15 @@ struct Fixture {
     origin: SourceIdentity,
 }
 fn fixture(folder: &Path, name: &str, version: &str, value: i32) -> Fixture {
+    fixture_part(folder, name, version, &format!("return {value}\n"))
+}
+fn fixture_part(folder: &Path, name: &str, version: &str, part_source: &str) -> Fixture {
     let main = folder.join(format!("{name}.lua"));
     let part = folder.join(format!("{name}-part.lua"));
     let content =
         format!("local part=require('part');hl.config{{general={{border_size=part}}}} -- {name}\n");
     std::fs::write(&main, &content).unwrap();
-    std::fs::write(&part, format!("return {value}\n")).unwrap();
+    std::fs::write(&part, part_source).unwrap();
     let captured = storage::read_source(&main).unwrap();
     let dependency = storage::read_source(&part).unwrap();
     let context = Context {
@@ -116,6 +119,79 @@ fn fixture(folder: &Path, name: &str, version: &str, value: i32) -> Fixture {
             .unwrap(),
         ),
         origin: captured.identity,
+    }
+}
+#[test]
+fn numeric_module_source_transaction_and_undo_keep_compiler_bits_and_capture_identity() {
+    fn bits(graph: &source_graph::Saved, version: &str) -> u64 {
+        let report = source_graph::restore(&graph.bundle, version)
+            .unwrap()
+            .report;
+        assert!(report.halt.is_none());
+        let Observed::Table(outer) = &report.events[0].arguments[0] else {
+            panic!("config arguments")
+        };
+        let Observed::Table(inner) = &outer[0].1 else {
+            panic!("general arguments")
+        };
+        let Observed::Float(v) = inner[0].1 else {
+            panic!("source number")
+        };
+        v.to_bits()
+    }
+    for version in [BASELINE, AUDITED_MAIN] {
+        let temp = test_support::TempDir::new("he-numeric-transaction");
+        let before = fixture_part(
+            temp.path(),
+            "root",
+            version,
+            "local nz=-0.0;local z=0;return nz-0",
+        );
+        let mut bundle = before.graph.bundle.clone();
+        let base = bundle
+            .graph
+            .program(&bundle.sources, Some("root"), version)
+            .unwrap();
+        let part = &base.documents[1];
+        let end = part.source.len();
+        let plan = replay::edits::prepare(
+            &base,
+            vec![replay::edits::SourceEdit {
+                document: part.id.clone(),
+                base_sha256: part.sha256.clone(),
+                span: end - 1..end,
+                old_bytes_sha256: lua::source_hash("0"),
+                replacement: "z".into(),
+                semantic_targets: vec!["general:border_size".into()],
+            }],
+            vec![],
+        )
+        .unwrap();
+        bundle.graph.revisions = workspace_graph::revisions::apply(&base, &[], &plan).unwrap();
+        let after = Arc::new(source_graph::Saved::new(bundle, version).unwrap());
+        let initial_bits = bits(&before.graph, version);
+        let state = initial_state();
+        attach(&mut state.borrow_mut(), &before, version);
+        std::fs::remove_dir_all(temp.path()).unwrap();
+        state.borrow_mut().keep_graph(after.clone()).unwrap();
+        assert_eq!(
+            bits(&state.borrow().source_graphs[version], version),
+            (-0.0f64).to_bits()
+        );
+        assert_eq!(
+            after.bundle.graph.compiler,
+            before.graph.bundle.graph.compiler
+        );
+        state.borrow_mut().undo_last();
+        let state = state.borrow();
+        assert_eq!(
+            state.source_graphs[version].fingerprint,
+            before.graph.fingerprint
+        );
+        assert_eq!(bits(&state.source_graphs[version], version), initial_bits);
+        assert_eq!(state.source_origins[version], before.origin);
+        assert_eq!(state.sources[version].source, before.document.source);
+        assert!(!state.dirty_version(version));
     }
 }
 fn attach(state: &mut State, f: &Fixture, version: &str) {

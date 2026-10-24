@@ -11,7 +11,7 @@
         "source_inputs": {
           "crates/editor-lua55/Cargo.toml": "b7a3c3dbdb028d933034993cbc92ec7ff4620e39113ca9d56ff15fbe5dec71d5",
           "crates/editor-lua55/build.rs": "001d85ef72f5c2e255b274dab8a68b93212fca44ab32fd2010ab383d8541d2f6",
-          "crates/editor-lua55/native/bridge.inc": "9e800651771b175350b2ac212442d90359233913095ebd550e86a41d6d71c8f5",
+          "crates/editor-lua55/native/bridge.inc": "ebfb85942242cb2959b4b107add901433214343daf81f18621728a73053efe3b",
           "crates/editor-lua55/native/lua55.cpp": "7901400b8ea931d49b5a0b50b3ccee657f0d64b48a2075c64d026ff560f1fe4f",
           "crates/editor-lua55/src/protocol.rs": "fe44bb24ece2db6dacbc109c71f15a7c12d5a242b2dd08bf31e99b24361d2619",
           "crates/editor-lua55/src/native.rs": "3178c7ca928b4f51c960a200f48d99ba7d2616683922f93dbf334f0b5eca3615",
@@ -95,7 +95,7 @@
         "source_inputs": {
           "crates/editor-lua55/Cargo.toml": "b7a3c3dbdb028d933034993cbc92ec7ff4620e39113ca9d56ff15fbe5dec71d5",
           "crates/editor-lua55/build.rs": "001d85ef72f5c2e255b274dab8a68b93212fca44ab32fd2010ab383d8541d2f6",
-          "crates/editor-lua55/native/bridge.inc": "9e800651771b175350b2ac212442d90359233913095ebd550e86a41d6d71c8f5",
+          "crates/editor-lua55/native/bridge.inc": "ebfb85942242cb2959b4b107add901433214343daf81f18621728a73053efe3b",
           "crates/editor-lua55/native/lua55.cpp": "7901400b8ea931d49b5a0b50b3ccee657f0d64b48a2075c64d026ff560f1fe4f",
           "crates/editor-lua55/src/protocol.rs": "fe44bb24ece2db6dacbc109c71f15a7c12d5a242b2dd08bf31e99b24361d2619",
           "crates/editor-lua55/src/native.rs": "3178c7ca928b4f51c960a200f48d99ba7d2616683922f93dbf334f0b5eca3615",
