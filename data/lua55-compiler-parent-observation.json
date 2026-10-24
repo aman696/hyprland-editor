@@ -1,7 +1,7 @@
 {
   "format": "hye-lua55-compiler-parent-observation-1",
   "scope": "Hash-pinned temporary official Lua releases; ordinary/static compiler role suites and actual sealed static-image parent checks. No local root-package fixture, source evaluator/profile selection, selected compositor or full security/resource/release certificate. Temporary sources and build products removed.",
-  "tool_sha256": "59914baf7b75a0374dba4b7f4c4bf41740aa7e28cdf4776d21cfbe295f74e98a",
+  "tool_sha256": "b04a35172fe22ff5e581c86f9bd35df9f053d8b41db3cec79592a49e3c965ea3",
   "profiles": [
     {
       "release": "5.5.0",
@@ -10,20 +10,20 @@
       "library_sha256": "2c9fe9b5c7c047e18d0d2cc099de4636f5cd710e7f9bb313c22bc7f76c93558a",
       "static_parent": {
         "source_inputs": {
-          "crates/editor-app/src/compiler_client.rs": "56f8b75a1e7222b297b44eb3a36d65ca1d6e46778bf7f1a41a7a244d1ee70b17",
+          "crates/editor-app/src/compiler_client.rs": "ea18cfc6683487692ead79bab96546cc85291cc967773c9d792f4229a942cc3f",
           "crates/editor-app/tests/compiler_client.rs": "e64b07770a6e3b8a6776ab5e5d3fa9a0de1aa19517ed1d3f14cf3e960fed9e05",
           "crates/editor-lua55/src/protocol.rs": "b53a82c9966270b09575148bd19d2ab815c92ad59c855b95b0185be0f0d9b92a",
           "crates/editor-preview/src/image.rs": "407bd0b4190c0743ec03ef4dc2ab63179e40046d7d687bf3e40b54951f00118e",
-          "scripts/compiler_install_probe.py": "d5502b72786f38d3c5ffc0ea3cc9ae9111ff6c98a2d45939aae4ebaa5c43788d",
+          "scripts/compiler_install_probe.py": "662a0250fe125f6b2bc8a4d1453c7692250d25ec6187195c73d306d1c605cfbb",
           "Cargo.toml": "7d654efdc2dfa4b6f607f6f339b6fe60d353b1c2599c943193b111c02609742c",
           "Cargo.lock": "0c828e50e9642a4820734dac526146def1279139d3d00558558f76014f6db86f",
           "data/graph-model.json": "2f9e39f0f1efb1e7be298cfbc50c43ed754f7e3feb68d64d7cb7ed7fbca76128"
         },
         "host": "x86_64-unknown-linux-gnu",
-        "image_sha256": "2923488da443c51b2f35f8c4ce067beba703c582b7f486da5492d22a2af5f2bf",
-        "image_bytes": 1819712,
-        "parent_test_sha256": "c3b948340d848f9055d1fb56960a8ecf5f357a0f8f6d894eae3e83f2f779bc7a",
-        "elf_headers_sha256": "24a779567dfcca8ab31936d75422fafb7e9f4dc44e5ef6c5ddc4977c3a7a9f66",
+        "image_sha256": "fe7f1002d07ce15e4ccf537a052a6207e79de66b51cdc94909fa2b817f53ea94",
+        "image_bytes": 1885616,
+        "parent_test_sha256": "4e22c4fbb2930183728ad7b9b644a3fe73493f5f9e49c26e79fcfa84b04d26a2",
+        "elf_headers_sha256": "9e9e2f730e5fd95097ce0b79bd6646eda90412a7fe1bef20a0f313688d562811",
         "interpreter_present": false,
         "needed_shared_libraries": [],
         "installed_root_package_verified": false,
@@ -38,20 +38,20 @@
       "library_sha256": "a369bcfd5800bb52d4332d7be6e0e57dd4a83a8a454ee541383beda6622cc36d",
       "static_parent": {
         "source_inputs": {
-          "crates/editor-app/src/compiler_client.rs": "56f8b75a1e7222b297b44eb3a36d65ca1d6e46778bf7f1a41a7a244d1ee70b17",
+          "crates/editor-app/src/compiler_client.rs": "ea18cfc6683487692ead79bab96546cc85291cc967773c9d792f4229a942cc3f",
           "crates/editor-app/tests/compiler_client.rs": "e64b07770a6e3b8a6776ab5e5d3fa9a0de1aa19517ed1d3f14cf3e960fed9e05",
           "crates/editor-lua55/src/protocol.rs": "b53a82c9966270b09575148bd19d2ab815c92ad59c855b95b0185be0f0d9b92a",
           "crates/editor-preview/src/image.rs": "407bd0b4190c0743ec03ef4dc2ab63179e40046d7d687bf3e40b54951f00118e",
-          "scripts/compiler_install_probe.py": "d5502b72786f38d3c5ffc0ea3cc9ae9111ff6c98a2d45939aae4ebaa5c43788d",
+          "scripts/compiler_install_probe.py": "662a0250fe125f6b2bc8a4d1453c7692250d25ec6187195c73d306d1c605cfbb",
           "Cargo.toml": "7d654efdc2dfa4b6f607f6f339b6fe60d353b1c2599c943193b111c02609742c",
           "Cargo.lock": "0c828e50e9642a4820734dac526146def1279139d3d00558558f76014f6db86f",
           "data/graph-model.json": "2f9e39f0f1efb1e7be298cfbc50c43ed754f7e3feb68d64d7cb7ed7fbca76128"
         },
         "host": "x86_64-unknown-linux-gnu",
-        "image_sha256": "560e38d01d5d30afd20f398c1c85da741012e6fa3268041d6265fc671ae3af83",
-        "image_bytes": 1820608,
-        "parent_test_sha256": "c3b948340d848f9055d1fb56960a8ecf5f357a0f8f6d894eae3e83f2f779bc7a",
-        "elf_headers_sha256": "e4391343ff2c4bd37ae55642d83860c887f26f36db25c18d6d9a50eabf3a1180",
+        "image_sha256": "fab781b5eb8d365f841169b9f680ecf0a5161969348e1c92e83aa7c7ded8adea",
+        "image_bytes": 1885616,
+        "parent_test_sha256": "4e22c4fbb2930183728ad7b9b644a3fe73493f5f9e49c26e79fcfa84b04d26a2",
+        "elf_headers_sha256": "b5a71ca3b15f0508cffc2c9a5fb09252878207233722a58358c9d7cff4c7d011",
         "interpreter_present": false,
         "needed_shared_libraries": [],
         "installed_root_package_verified": false,
@@ -59,5 +59,6 @@
         "source_evaluator_verified": false
       }
     }
-  ]
+  ],
+  "static_linker": "GNU ld.bfd explicitly selected through the compiler driver"
 }

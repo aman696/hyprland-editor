@@ -27,6 +27,8 @@ The existing runtime-image capture verifies exact size, SHA-256 and original ide
 
 Only that approved snapshot is copied into a new executable memfd, mode 0500, sealed against content/size changes and execution-bit changes with `F_SEAL_EXEC`. No source file descriptor or package directory survives into the worker. This path requires the kernel's executable-memfd support; unavailable support yields an error without switching to a pathname or dynamic image. The old Lua 5.4 source model remains available independently.
 
+A hosted GNU ld failure exposed archive ordering that the local default linker tolerated. The worker build now emits its native adapter before Lua and checks that the selected package/header context stayed consistent. The private static wrapper explicitly selects GNU ld.bfd and both release suites/actual parent fixtures pass under it.
+
 Private GNU builds use explicit native targets and `-C target-feature=+crt-static`, linking the exact hash-pinned private Lua archive. ELF inspection must show no interpreter or `DT_NEEDED` libraries, and the actual profile must match the requested release. In local reference builds the two images are about 1.8 MiB. They are created temporarily, exercised and removed; no system package is installed. A dynamically linked worker remains usable as the existing development component but is refused by this installed launcher.
 
 ## Parent protocol and lifecycle

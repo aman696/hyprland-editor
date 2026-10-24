@@ -53,6 +53,7 @@ def main():
         for name in ['good', 'writable-directory', 'writable-manifest', 'foreign-image', 'symlink-image', 'symlink-manifest', 'fifo-image', 'hardlink-image', 'wrong-hash', 'unknown-manifest']:
             folder = root / name
             folder.mkdir(mode=0o755)
+            folder.chmod(0o755)
             registry = folder / 'manifest.json'
             registry.write_text(json.dumps(manifest))
             registry.chmod(0o444)

@@ -42,7 +42,7 @@ def check_static_parent(root, release, compiler, installed=False):
     if host not in ['x86_64-unknown-linux-gnu', 'aarch64-unknown-linux-gnu']:
         raise RuntimeError('Private static compiler comparison requires an explicit native GNU profile')
     target = root / 'static-target'
-    env = dict(os.environ, PKG_CONFIG_LIBDIR=str(root), PKG_CONFIG_PATH='', CARGO_TARGET_DIR=str(target), HYE_LUA55_TEST_RELEASE=release, CXX=compiler, RUSTFLAGS=f'-C target-feature=+crt-static -C linker={compiler}')
+    env = dict(os.environ, PKG_CONFIG_LIBDIR=str(root), PKG_CONFIG_PATH='', CARGO_TARGET_DIR=str(target), HYE_LUA55_TEST_RELEASE=release, CXX=compiler, RUSTFLAGS=f'-C target-feature=+crt-static -C linker={compiler} -C link-arg=-fuse-ld=bfd')
     env.pop('CARGO_ENCODED_RUSTFLAGS', None)
     subprocess.run(['cargo', 'test', '--locked', '--release', '--target', host, '-p', 'hyprland-editor-lua55', '--features', 'native55', '--', '--test-threads=2'], cwd=ROOT, env=env, check=True, timeout=240)
     image = target / host / 'release/hyprland-editor-lua55'
@@ -65,7 +65,7 @@ def check_static_parent(root, release, compiler, installed=False):
     print(result.stdout, end='', flush=True)
     parent_sha = hashlib.sha256(parent.read_bytes()).hexdigest()
     if installed:
-        subprocess.run(['sudo', '--', '/usr/bin/python3', '-I', '-S', str(ROOT/'scripts/compiler_install_probe.py'), '--worker', str(image), '--worker-sha256', image_sha, '--parent', str(parent), '--parent-sha256', parent_sha, '--release', release, '--uid', str(os.getuid()), '--gid', str(os.getgid())], check=True, cwd=ROOT, timeout=45)
+        subprocess.run(['sudo', '--non-interactive', '--', '/usr/bin/python3', '-I', '-S', str(ROOT/'scripts/compiler_install_probe.py'), '--worker', str(image), '--worker-sha256', image_sha, '--parent', str(parent), '--parent-sha256', parent_sha, '--release', release, '--uid', str(os.getuid()), '--gid', str(os.getgid())], check=True, cwd=ROOT, timeout=45)
     inputs = ['crates/editor-app/src/compiler_client.rs', 'crates/editor-app/tests/compiler_client.rs', 'crates/editor-lua55/src/protocol.rs', 'crates/editor-preview/src/image.rs', 'scripts/compiler_install_probe.py', 'Cargo.toml', 'Cargo.lock', 'data/graph-model.json']
     print(f'Lua {release}: static worker process suite and actual sealed-image parent compilation/conversion/correlation/denial checks passed', flush=True)
     return {'source_inputs': {name:hashlib.sha256((ROOT/name).read_bytes()).hexdigest() for name in inputs}, 'host':host, 'image_sha256':image_sha, 'image_bytes':image.stat().st_size, 'parent_test_sha256':parent_sha, 'elf_headers_sha256':hashlib.sha256(headers.encode()).hexdigest(), 'interpreter_present':False, 'needed_shared_libraries':[], 'installed_root_package_verified':installed, 'gui_selection_verified':False, 'source_evaluator_verified':False}
