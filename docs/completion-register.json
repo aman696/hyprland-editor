@@ -14,6 +14,22 @@
   },
   "foundations": [
     {
+      "area": "native Lua release admission before constructors",
+      "code": [
+        "crates/editor-core/native/lua_syntax.cpp",
+        "crates/editor-lua55/native/lua55.cpp",
+        "crates/editor-lua55/native/bridge.inc",
+        "crates/editor-core/build.rs",
+        "data/lua-release-admission-observation.json"
+      ],
+      "test_references": [
+        "scripts/lua_admission_probe.py",
+        "scripts/lua_profile_probe.py",
+        "numeric_writer_migration_preserves_existing_observation_and_refuses_observation_renewal"
+      ],
+      "limits": "exact compiled-header/linked-library constant release prefix guard before version/state creation, guarded compilation/fixed probe/primitive factories for both families, native core adapter-before-library GNU ordering, thirty instrumented rejected mismatches and six matching stub paths across six official releases, default and explicit GNU workspace checks, eighteen reviewed predecessor models with exact numeric-observation retention and six prior active/archive private writers; no complete ABI/build-option/publisher, language/evaluator/target-compositor or full security/release certificate"
+    },
+    {
       "area": "installed static compiler launcher and on-demand availability check",
       "code": [
         "crates/editor-app/src/compiler_client.rs",
@@ -165,7 +181,8 @@
         "data/migrations/graph-model-correspondence.json",
         "data/migrations/graph-model-resolution.json",
         "data/migrations/graph-model-workspace-state.json",
-        "data/migrations/graph-model-compiler-extraction.json"
+        "data/migrations/graph-model-compiler-extraction.json",
+        "data/migrations/graph-model-numeric-codegen.json"
       ],
       "test_references": [
         "reviewed_transition_pins_exact_monitor_differences_and_refuses_unreviewed_builds",
@@ -174,7 +191,7 @@
         "workflow::test_graph_migration",
         "private_input_model_migration_preserves_active_and_archived_data_with_fresh_reanalysis"
       ],
-      "limits": "seventeen exact reviewed dependency/storage/monitor/merge/private-input/correspondence/resolution/workspace-state/compiler-extraction/numeric-observation transitions with bounded held-inode input, unknown-payload refusal, fresh restricted-worker captured-view/dependency/private-piece reanalysis, exact legacy compiler match and reviewed numeric-observation renewal, byte/value preservation, cancel/epoch/unsaved guards and new private save; no original-path reads or restored folder access, general model/schema/profile conversion, persistent history, full source export/reconciliation or full audit certificate"
+      "limits": "eighteen exact reviewed dependency/storage/monitor/merge/private-input/correspondence/resolution/workspace-state/compiler-extraction/numeric-observation/native-admission transitions with bounded held-inode input, unknown-payload refusal, fresh restricted-worker captured-view/dependency/private-piece reanalysis, exact legacy compiler match and reviewed numeric-observation renewal, byte/value preservation, cancel/epoch/unsaved guards and new private save; no original-path reads or restored folder access, general model/schema/profile conversion, persistent history, full source export/reconciliation or full audit certificate"
     },
     {
       "area": "source dependency capture and ordered evaluation",

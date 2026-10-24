@@ -13,6 +13,11 @@ extern "C" unsigned int HYE_LUA_API(release)() {
     return LUA_VERSION_RELEASE_NUM;
 }
 extern "C" int HYE_LUA_API(runtime_matches_header)() {
+    // The public constant identity can be checked before calling an API whose
+    // ABI may differ across Lua families (including lua_version itself).
+    static constexpr const char expected[] = "$LuaVersion: " LUA_RELEASE " ";
+    if (std::strncmp(lua_ident, expected, sizeof(expected) - 1) != 0)
+        return 0;
     return lua_version(nullptr) == LUA_VERSION_NUM;
 }
 extern "C" size_t HYE_LUA_API(identity)(unsigned char* output, size_t capacity) {

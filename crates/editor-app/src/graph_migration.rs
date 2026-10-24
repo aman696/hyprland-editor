@@ -46,7 +46,10 @@ const COMPILER_EXTRACTION: &str =
     "88ba4156fabecf287c34d467b80ba9db8e13a8682afca20af55c106cfc850922";
 const COMPILER_MODEL: &str =
     include_str!("../../../data/migrations/graph-model-compiler-extraction.json");
-const TO: &str = "2f9e39f0f1efb1e7be298cfbc50c43ed754f7e3feb68d64d7cb7ed7fbca76128";
+const NUMERIC_CODEGEN: &str = "2f9e39f0f1efb1e7be298cfbc50c43ed754f7e3feb68d64d7cb7ed7fbca76128";
+const NUMERIC_MODEL: &str =
+    include_str!("../../../data/migrations/graph-model-numeric-codegen.json");
+const TO: &str = "09e8ff83ee94a51dcd54a7c7cbabc543d956b4e1c50eb5369b3b56cf34b3b0b9";
 const OLD: &str = include_str!("../../../data/migrations/graph-model-before-projection.json");
 const FROM_PROJECTION: &str = "046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371";
 const PROJECTION: &str = include_str!("../../../data/migrations/graph-model-projection.json");
@@ -693,7 +696,7 @@ fn before_numeric_transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
-fn transition(from: &str) -> Result<(), String> {
+fn before_admission_transition(from: &str) -> Result<(), String> {
     if lua::source_hash(COMPILER_MODEL) != COMPILER_EXTRACTION
         || workspace_graph::schema_sha256() != TO
     {
@@ -706,7 +709,8 @@ fn transition(from: &str) -> Result<(), String> {
     }
     let previous: serde_json::Value =
         serde_json::from_str(COMPILER_MODEL).map_err(|e| e.to_string())?;
-    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let current: serde_json::Value =
+        serde_json::from_str(NUMERIC_MODEL).map_err(|e| e.to_string())?;
     let old = previous["inputs"]
         .as_object()
         .ok_or("Invalid previous compiler model")?;
@@ -741,6 +745,43 @@ fn transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
+fn transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(NUMERIC_MODEL) != NUMERIC_CODEGEN || workspace_graph::schema_sha256() != TO
+    {
+        return Err(
+            "No reviewed native release-admission transition to this model is available".into(),
+        );
+    }
+    if from != NUMERIC_CODEGEN {
+        before_admission_transition(from)?;
+    }
+    let previous: serde_json::Value =
+        serde_json::from_str(NUMERIC_MODEL).map_err(|e| e.to_string())?;
+    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let old = previous["inputs"]
+        .as_object()
+        .ok_or("Invalid previous numeric model")?;
+    let new = current["inputs"]
+        .as_object()
+        .ok_or("Invalid native admission model")?;
+    let changed = old
+        .keys()
+        .filter(|key| new.get(*key) != Some(&old[*key]))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    if old.len() != 80
+        || old.keys().ne(new.keys())
+        || changed
+            != [
+                "crates/editor-core/build.rs",
+                "crates/editor-core/native/lua_syntax.cpp",
+                "crates/editor-lua55/native/bridge.inc",
+            ]
+    {
+        return Err("Native admission transition no longer contains only the reviewed legacy adapter/link ordering and shared preconstructor release guard".into());
+    }
+    Ok(())
+}
 pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, String> {
     if text.len() > MAX_WORKSPACE_BYTES {
         return Err("Saved workspace exceeds 8 MiB".into());
@@ -761,13 +802,15 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != RESOLUTION
         && previous != WORKSPACE_STATE
         && previous != COMPILER_EXTRACTION
+        && previous != NUMERIC_CODEGEN
         && raw["source_graph"].get("private").is_some()
     {
         return Err("Previous graph writers had no private input layer; new payloads cannot be introduced during migration".into());
     }
-    if raw["source_graph"]["compiler"]
-        .get("numeric_codegen")
-        .is_some()
+    if previous != NUMERIC_CODEGEN
+        && raw["source_graph"]["compiler"]
+            .get("numeric_codegen")
+            .is_some()
     {
         return Err("Previous compiler writers had no numeric observation; saved claims cannot supply a new compiler observation".into());
     }
@@ -784,10 +827,13 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         .ok_or("Workspace has no saved graph to migrate")?;
     let previous_compiler = graph.compiler.clone();
     let current_compiler = lua::replay::compiler_profile();
-    let mut legacy_compiler = current_compiler.clone();
-    legacy_compiler.numeric_codegen = None;
-    if previous_compiler != legacy_compiler {
-        return Err("Saved compiler differs from the current legacy compiler identity; this review cannot migrate compiler families or releases".into());
+    let compiler_observation_renewed = previous != NUMERIC_CODEGEN;
+    let mut expected_compiler = current_compiler.clone();
+    if compiler_observation_renewed {
+        expected_compiler.numeric_codegen = None;
+    }
+    if previous_compiler != expected_compiler {
+        return Err("Saved compiler differs from the reviewed current identity; this review cannot change compiler family, release or an existing numeric observation".into());
     }
     let mut summary = Summary {
         previous_model: previous.clone(),
@@ -802,7 +848,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         archived_documents: graph.private.archived.len(),
         reanalysis_findings: 0,
         reanalysis_note: None,
-        compiler_observation_renewed: true,
+        compiler_observation_renewed,
         compiler_numeric_mode_known: current_compiler
             .numeric_codegen
             .as_ref()
@@ -884,6 +930,7 @@ mod tests {
         transition(RESOLUTION).unwrap();
         transition(WORKSPACE_STATE).unwrap();
         transition(COMPILER_EXTRACTION).unwrap();
+        transition(NUMERIC_CODEGEN).unwrap();
         assert!(transition(&"0".repeat(64)).is_err());
         assert_ne!(FROM, TO);
         assert_eq!(lua::source_hash(CURRENT), TO);

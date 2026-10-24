@@ -42,6 +42,8 @@ jobs:
       - run: python3 scripts/generate_scalar_semantics.py --check
       - run: python3 scripts/generate_graph_model.py --check
       - run: python3 scripts/lua_profile_probe.py --check
+      - name: Refuse mixed Lua releases before native construction
+        run: python3 -B scripts/lua_admission_probe.py --observation "$RUNNER_TEMP/lua-admission.json"
       - run: python3 scripts/implementation_report.py --check
       - run: cargo test --locked --workspace
       - name: Native graphical smoke test
@@ -49,6 +51,23 @@ jobs:
         run: xvfb-run -a env GDK_BACKEND=x11 GSK_RENDERER=cairo GSETTINGS_BACKEND=memory HYPRLAND_EDITOR_TEST_EXACT_RESIZE=1 cargo test --locked -p hyprland-editor --bin hyprland-editor -- --ignored --test-threads=1
       - run: cargo clippy --locked --workspace --all-targets -- -D warnings
       - run: cargo build --locked --release
+
+  gnu-core-linker:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Native core dependencies
+        run: sudo apt-get update && sudo apt-get install -y libgtk-4-dev libadwaita-1-dev libxkbcommon-dev libre2-dev liblua5.4-dev pkg-config g++ binutils
+      - name: Pinned toolchain
+        run: rustup toolchain install 1.90.0 --profile minimal
+      - name: Test the full core/application workspace with GNU archive resolution
+        env:
+          CARGO_TARGET_DIR: ${{ runner.temp }}/gnu-core-target
+          RUSTFLAGS: -C linker=c++ -C link-arg=-fuse-ld=bfd
+        run: cargo test --locked --workspace
 
   numeric-compiler-references:
     runs-on: ubuntu-24.04
