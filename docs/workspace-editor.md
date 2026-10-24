@@ -1,5 +1,7 @@
 # Workspace draft editor — 0.8
 
+Native source-model reference checks now cover 78 argument-routing cases and 42 userdata/method cases across both pinned versions, with explicitly inert dependencies. They establish reference observations for the next source-editing implementation; the ordered evaluator still stops at this API. A closed post-inspection rule/object state library is now implemented and tested, but argument inspection and the source evaluator/GUI connection remain unfinished. See the [workspace source-model plan and evidence](workspace-source-model.md).
+
 Open **Menu → Edit Workspaces**. This editor stages ordered private workspace declarations, with all 15 audited fields, the workspace selector, optional enabled state and retained typed layout options. It never creates a workspace, runs an empty-workspace command, changes a layout or writes the original configuration.
 
 Choose a declaration and one field at a time. Set This Field distinguishes an override from absence. Explicit false, zero, empty strings and border-size -1 remain literal values. Field and declaration switches retain valid form edits; invalid forms block switching. Add, duplicate, reorder, remove and undo work on the staged list. Save Draft records all editor families and any source snapshot in the private schema-pinned workspace. Closing an invalid form offers a discard choice; closing a valid form stages it in memory.

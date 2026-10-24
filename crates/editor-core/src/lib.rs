@@ -6,15 +6,20 @@ pub mod device;
 pub mod gesture;
 pub mod import;
 pub mod lua;
+pub mod module_cache;
+pub mod module_path;
 pub mod monitor;
 pub mod reconcile;
 pub mod regex;
 pub mod rule;
 pub mod rule_codec;
 pub mod source;
+pub mod source_merge;
 pub mod source_path;
+pub mod source_scope;
 pub mod storage;
 pub mod workspace;
+pub mod workspace_graph;
 pub mod workspace_rule;
 pub mod workspace_selector;
 pub mod xkb;
@@ -60,7 +65,7 @@ pub enum Value {
     Gradient { colors: Vec<u32>, angle: f64 },
     Vec2([f64; 2]),
     CssGap([i64; 4]),
-    FontWeight(u16),
+    FontWeight(i64),
 }
 
 impl Setting {
@@ -88,13 +93,9 @@ impl Setting {
                 }
                 ("Vec2", None)
             }
-            Value::CssGap(v) => {
-                if v.iter().any(|n| *n < 0 || *n > 100_000) {
-                    return Err("Each gap must be between 0 and 100000".into());
-                }
-                ("CssGap", None)
-            }
-            Value::FontWeight(v) => ("FontWeight", Some(f64::from(*v))),
+            Value::CssGap(_) => ("CssGap", None),
+            Value::FontWeight(v) if *v >= 0 => ("FontWeight", Some(*v as f64)),
+            Value::FontWeight(_) => return Err("Font weight must not be negative".into()),
         };
         if self.kind != kind {
             return Err(format!("Expected {}, received {kind}", self.kind));

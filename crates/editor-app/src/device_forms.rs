@@ -430,6 +430,156 @@ pub(super) fn form(
         }
     }
     match key.as_str() {
+        "pressure_range_min" | "pressure_range_max" => {
+            let value = match initial {
+                Some(Value::Float(v)) => v,
+                _ => -1.0,
+            };
+            let automatic = gtk::CheckButton::with_label("Use hardware default");
+            automatic.set_widget_name("device-pressure-default");
+            automatic.set_active(value < 0.0);
+            panel.append(&automatic);
+            let input = number(
+                panel,
+                "Pressure (0–1)",
+                if value >= 0.0 {
+                    value
+                } else if key == "pressure_range_max" {
+                    1.0
+                } else {
+                    0.0
+                },
+                0.0,
+                1.0,
+                6,
+            );
+            input.set_widget_name("device-pressure-value");
+            input.set_sensitive(!automatic.is_active());
+            // Formatting a stored value to six display digits must not become an edit.
+            let manual_changed = Rc::new(Cell::new(false));
+            let flag = manual_changed.clone();
+            input.connect_changed(move |_| flag.set(true));
+            panel.append(&label("Negative source values use the tool's hardware default. The device's measured pressure range is not detected here."));
+            let changed = Rc::new(Cell::new(false));
+            let flag = changed.clone();
+            let weak = input.downgrade();
+            automatic.connect_toggled(move |w| {
+                flag.set(true);
+                if let Some(input) = weak.upgrade() {
+                    input.set_sensitive(!w.is_active());
+                }
+            });
+            Box::new(move || {
+                let v = if automatic.is_active() {
+                    if value < 0.0 && !changed.get() {
+                        value
+                    } else {
+                        -1.0
+                    }
+                } else if value >= 0.0 && !manual_changed.get() {
+                    value
+                } else {
+                    input.update();
+                    input.value()
+                };
+                Ok(value_map(&key, Value::Float(v)))
+            })
+        }
+        "eraser_button_mode" => {
+            let value = match initial {
+                Some(Value::Int(v)) => v,
+                _ => 0,
+            };
+            let pick = choices(
+                panel,
+                &[
+                    "Hardware behavior (0)",
+                    "Send a button event (1)",
+                    "Other mode number",
+                ],
+                if value == 0 {
+                    0
+                } else if value == 1 {
+                    1
+                } else {
+                    2
+                },
+            );
+            pick.set_widget_name("device-eraser-mode");
+            let other = gtk::Box::new(gtk::Orientation::Vertical, 6);
+            panel.append(&other);
+            let input = number(&other, "Mode number", value.max(2) as f64, 2.0, 6.0, 0);
+            input.set_widget_name("device-eraser-other-mode");
+            other.set_visible(pick.selected() == 2);
+            let weak = other.downgrade();
+            pick.connect_selected_notify(move |w| {
+                if let Some(input) = weak.upgrade() {
+                    input.set_visible(w.selected() == 2);
+                }
+            });
+            panel.append(&label("The source describes modes 0 and 1. Other declared mode numbers remain available without assuming their hardware behavior."));
+            Box::new(move || {
+                Ok(value_map(
+                    &key,
+                    Value::Int(match pick.selected() {
+                        0 => 0,
+                        1 => 1,
+                        _ => {
+                            input.update();
+                            input.value() as i64
+                        }
+                    }),
+                ))
+            })
+        }
+        "eraser_button_override" => {
+            // Stable Linux input UAPI button identifiers; no event device is read.
+            const BUTTONS: &[(&str, i64)] = &[
+                ("Default (0)", 0),
+                ("Stylus button (BTN_STYLUS)", 0x14b),
+                ("Second stylus button (BTN_STYLUS2)", 0x14c),
+                ("Third stylus button (BTN_STYLUS3)", 0x149),
+                ("Touch contact (BTN_TOUCH)", 0x14a),
+                ("Left button (BTN_LEFT)", 0x110),
+                ("Right button (BTN_RIGHT)", 0x111),
+                ("Middle button (BTN_MIDDLE)", 0x112),
+                ("Side button (BTN_SIDE)", 0x113),
+                ("Extra button (BTN_EXTRA)", 0x114),
+            ];
+            let value = match initial {
+                Some(Value::Int(v)) => v,
+                _ => 0,
+            };
+            let index = BUTTONS
+                .iter()
+                .position(|(_, code)| *code == value)
+                .unwrap_or(BUTTONS.len());
+            let mut labels = BUTTONS.iter().map(|(name, _)| *name).collect::<Vec<_>>();
+            labels.push("Other numeric button code");
+            let pick = choices(panel, &labels, index as u32);
+            pick.set_widget_name("device-eraser-button");
+            let other = gtk::Box::new(gtk::Orientation::Vertical, 6);
+            panel.append(&other);
+            let get = controls::form(setting, Some(Value::Int(value)), &other);
+            other.set_visible(index == BUTTONS.len());
+            let weak = other.downgrade();
+            pick.connect_selected_notify(move |w| {
+                if let Some(other) = weak.upgrade() {
+                    other.set_visible(w.selected() as usize == BUTTONS.len());
+                }
+            });
+            panel.append(&label("Used with eraser mode 1. Choose a real button code; keyboard keys and fake BTN_TOOL identifiers are not button overrides. This stores a draft only."));
+            Box::new(move || {
+                Ok(value_map(
+                    &key,
+                    if let Some((_, code)) = BUTTONS.get(pick.selected() as usize) {
+                        Value::Int(*code)
+                    } else {
+                        get()?
+                    },
+                ))
+            })
+        }
         "accel_profile" => {
             let value = Acceleration::parse(text).unwrap_or(Acceleration::Default);
             let index = match value {

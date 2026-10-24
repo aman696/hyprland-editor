@@ -1,4 +1,5 @@
 //! Ordered workspace declarations. This model never creates workspaces or runs empty hooks.
+pub mod source_state;
 use crate::{quote_lua, Setting, Value, AUDITED_MAIN, BASELINE, MAX_DOCUMENT_BYTES};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};

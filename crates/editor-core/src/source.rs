@@ -52,7 +52,8 @@ pub struct SourceIdentity {
     pub recorded_ownership: RecordedOwnership,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct CapturedSource {
     pub content: String,
     pub identity: SourceIdentity,

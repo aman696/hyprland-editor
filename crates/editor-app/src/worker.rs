@@ -7,7 +7,8 @@ use hyprland_editor_core::{
 use serde::{Deserialize, Serialize};
 use std::{
     io::{Read, Write},
-    process::{Command, Stdio},
+    process::{Child, Command, ExitStatus, Stdio},
+    sync::atomic::{AtomicBool, Ordering},
     time::{Duration, Instant},
 };
 const MAX_ENVELOPE: usize = 4 * MAX_DOCUMENT_BYTES;
@@ -23,6 +24,102 @@ pub enum Request {
         report: Box<LuaReport>,
         draft: Draft,
     },
+    InspectDependencies {
+        source: String,
+        version: String,
+    },
+    ReplayModules(lua::replay::Program),
+    ReviewSourceEdits {
+        program: lua::replay::Program,
+        plan: lua::replay::edits::EditPlan,
+    },
+    ReviewSourceMerge {
+        base: String,
+        private: String,
+        incoming: String,
+    },
+    ResolveSourceMerge {
+        base: String,
+        private: String,
+        incoming: String,
+        review: hyprland_editor_core::source_merge::Review,
+        choices: std::collections::BTreeMap<usize, hyprland_editor_core::source_merge::Choice>,
+    },
+    CompareScalarSource {
+        program: lua::replay::Program,
+        change: lua::replay::scalar_edit::Change,
+    },
+    CompareMonitorSource {
+        program: lua::replay::Program,
+        change: lua::replay::monitor_edit::Change,
+    },
+    CompareMonitorFieldSource {
+        program: lua::replay::Program,
+        change: lua::replay::monitor_edit::FieldChange,
+    },
+    InspectMonitorDeclarations {
+        program: lua::replay::Program,
+        document: String,
+    },
+    CompareMonitorDeclaration {
+        program: lua::replay::Program,
+        change: lua::replay::monitor_edit::declarations::Change,
+    },
+    ReviewSourceOverrides {
+        program: lua::replay::Program,
+        draft: Draft,
+    },
+    ReviewSourceMonitors {
+        program: lua::replay::Program,
+        monitors: Vec<hyprland_editor_core::monitor::Rule>,
+    },
+    ResolveSourceMonitors {
+        program: lua::replay::Program,
+        monitors: Vec<hyprland_editor_core::monitor::Rule>,
+        review: lua::replay::monitor_review::Review,
+        choice: lua::replay::monitor_review::Choice,
+    },
+    ResolveSourceOverrides {
+        program: lua::replay::Program,
+        draft: Draft,
+        review: lua::replay::override_review::Review,
+        choices: std::collections::BTreeMap<String, lua::replay::override_review::Choice>,
+    },
+    MaterializeSourceRevisions {
+        base: lua::replay::Program,
+        revisions: Vec<hyprland_editor_core::workspace_graph::revisions::Revision>,
+    },
+    MaterializePrivateInputs {
+        original: lua::replay::Program,
+        revisions: Vec<hyprland_editor_core::workspace_graph::revisions::Revision>,
+        inputs: hyprland_editor_core::workspace_graph::private::Inputs,
+    },
+    InspectPrivateRequests {
+        original: lua::replay::Program,
+        revisions: Vec<hyprland_editor_core::workspace_graph::revisions::Revision>,
+        inputs: hyprland_editor_core::workspace_graph::private::Inputs,
+    },
+    ApplySourceRevision {
+        base: lua::replay::Program,
+        revisions: Vec<hyprland_editor_core::workspace_graph::revisions::Revision>,
+        plan: lua::replay::edits::EditPlan,
+    },
+    DecodePrimitives(Vec<lua::scalar_codec::Case>),
+    InspectConfiguration {
+        events: Vec<lua::replay::Event>,
+        version: String,
+    },
+    InspectMonitors {
+        events: Vec<lua::replay::Event>,
+        version: String,
+    },
+    PlanModules {
+        context: hyprland_editor_core::module_path::Context,
+        #[serde(default)]
+        mode: hyprland_editor_core::module_path::RequireMode,
+        modules: Vec<Vec<u8>>,
+        version: String,
+    },
     ParseRegistry {
         xml: String,
     },
@@ -33,6 +130,27 @@ pub enum Request {
 #[serde(deny_unknown_fields)]
 pub enum Response {
     Parsed(Box<LuaReport>),
+    Dependencies(lua::DependencyInventory),
+    Replayed(Box<lua::replay::Report>),
+    SourceEditReview(Box<lua::replay::edits::EditReview>),
+    SourceMergeReview(Box<hyprland_editor_core::source_merge::Review>),
+    SourceMergeResolution(Box<hyprland_editor_core::source_merge::Resolution>),
+    ScalarSourceComparison(Box<lua::replay::scalar_edit::Comparison>),
+    SourceOverrideReview(Box<lua::replay::override_review::Review>),
+    SourceMonitorReview(Box<lua::replay::monitor_review::Review>),
+    SourceMonitorResolution(Box<lua::replay::monitor_review::Resolution>),
+    SourceOverrideResolution(Box<lua::replay::override_review::Resolution>),
+    SourceRevisionProgram(lua::replay::Program),
+    SourceRevisions(Vec<hyprland_editor_core::workspace_graph::revisions::Revision>),
+    Primitives {
+        profile: lua::replay::CompilerProfile,
+        numeric_locale: String,
+        outcomes: Vec<lua::scalar_codec::Outcome>,
+    },
+    Configuration(lua::config_inspection::Inspection),
+    Monitors(lua::monitor_inspection::Inspection),
+    MonitorDeclarationSites(lua::replay::monitor_edit::declarations::Inventory),
+    ModulePlans(Vec<hyprland_editor_core::module_path::Plan>),
     Registry(hyprland_editor_core::xkb::Registry),
     Copy(String),
     RegexMatch(bool),
@@ -41,22 +159,6 @@ pub enum Response {
         network_denied: bool,
     },
     Error(String),
-}
-fn statement(code: u16, k: u32) -> libc::sock_filter {
-    libc::sock_filter {
-        code,
-        jt: 0,
-        jf: 0,
-        k,
-    }
-}
-fn jump(k: u32) -> libc::sock_filter {
-    libc::sock_filter {
-        code: 0x15,
-        jt: 0,
-        jf: 1,
-        k,
-    }
 }
 fn isolate() -> Result<(), String> {
     // All restrictions apply only to this child, after dynamic library startup.
@@ -80,64 +182,7 @@ fn isolate() -> Result<(), String> {
     if unsafe { libc::prctl(libc::PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) } != 0 {
         return Err("Cannot disable parser privilege escalation".into());
     }
-    #[cfg(target_arch = "x86_64")]
-    let arch = 0xc000003e;
-    #[cfg(target_arch = "aarch64")]
-    let arch = 0xc00000b7;
-    #[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
-    return Err("Parser syscall isolation is unavailable on this architecture".into());
-    #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
-    {
-        // Validate the syscall ABI before the allowlist, including x32 rejection on x86-64.
-        let mut filter = vec![
-            statement(0x20, 4),
-            libc::sock_filter {
-                code: 0x15,
-                jt: 1,
-                jf: 0,
-                k: arch,
-            },
-            statement(0x06, 0x80000000),
-            statement(0x20, 0),
-        ];
-        let allowed = [
-            libc::SYS_read,
-            libc::SYS_write,
-            libc::SYS_close,
-            libc::SYS_fstat,
-            libc::SYS_brk,
-            libc::SYS_mmap,
-            libc::SYS_mprotect,
-            libc::SYS_munmap,
-            libc::SYS_mremap,
-            libc::SYS_madvise,
-            libc::SYS_futex,
-            libc::SYS_clock_gettime,
-            libc::SYS_getrandom,
-            libc::SYS_rt_sigaction,
-            libc::SYS_rt_sigprocmask,
-            libc::SYS_rt_sigreturn,
-            libc::SYS_sched_yield,
-            libc::SYS_getpid,
-            libc::SYS_gettid,
-            libc::SYS_sigaltstack,
-            libc::SYS_exit,
-            libc::SYS_exit_group,
-            libc::SYS_restart_syscall,
-        ];
-        for syscall in allowed {
-            filter.push(jump(syscall as u32));
-            filter.push(statement(0x06, 0x7fff0000));
-        }
-        filter.push(statement(0x06, 0x00050000 | libc::EPERM as u32));
-        let program = libc::sock_fprog {
-            len: filter.len() as u16,
-            filter: filter.as_mut_ptr(),
-        };
-        if unsafe { libc::prctl(libc::PR_SET_SECCOMP, libc::SECCOMP_MODE_FILTER, &program) } != 0 {
-            return Err("Cannot install parser syscall isolation".into());
-        }
-    }
+    super::process_policy::parser()?;
     Ok(())
 }
 pub fn entry() {
@@ -153,8 +198,146 @@ pub fn entry() {
         }
         let request: Request =
             serde_json::from_slice(&bytes).map_err(|_| "Invalid parser request")?;
-        let c = catalogue();
+        // Conversion/replay-only requests do not need another parsed catalogue.
+        let c = std::sync::LazyLock::new(catalogue);
         match request {
+            Request::InspectMonitorDeclarations { program, document } => {
+                lua::replay::monitor_edit::declarations::inspect(&program, &document)
+                    .map(Response::MonitorDeclarationSites)
+            }
+            Request::CompareMonitorDeclaration { program, change } => {
+                lua::replay::monitor_edit::declarations::compare(&program, &change)
+                    .map(|result| Response::ScalarSourceComparison(Box::new(result)))
+            }
+            Request::InspectMonitors { events, version } => {
+                lua::monitor_inspection::inspect(&events, &version).map(Response::Monitors)
+            }
+            Request::InspectConfiguration { events, version } => {
+                lua::config_inspection::inspect(&events, &version).map(Response::Configuration)
+            }
+            Request::DecodePrimitives(cases) => {
+                lua::scalar_codec::decode_batch(&cases).map(|outcomes| Response::Primitives {
+                    profile: lua::replay::compiler_profile(),
+                    numeric_locale: "C".into(),
+                    outcomes,
+                })
+            }
+            Request::ReplayModules(program) => {
+                lua::replay::replay(&program).map(|report| Response::Replayed(Box::new(report)))
+            }
+            Request::MaterializeSourceRevisions { base, revisions } => {
+                let program =
+                    hyprland_editor_core::workspace_graph::revisions::program(base, &revisions)?;
+                for revision in &revisions {
+                    let doc = program
+                        .documents
+                        .iter()
+                        .find(|d| d.id == revision.document)
+                        .ok_or("Unknown private source revision")?;
+                    lua::replay::validate_document(doc)?;
+                }
+                Ok(Response::SourceRevisionProgram(program))
+            }
+            Request::MaterializePrivateInputs {
+                original,
+                revisions,
+                inputs,
+            } => {
+                let program = inputs.program(&original, &revisions)?;
+                for revision in &revisions {
+                    if let Some(doc) = program.documents.iter().find(|d| d.id == revision.document)
+                    {
+                        lua::replay::validate_document(doc)?;
+                    }
+                }
+                Ok(Response::SourceRevisionProgram(program))
+            }
+            Request::InspectPrivateRequests {
+                original,
+                revisions,
+                inputs,
+            } => {
+                let program = inputs.pending_program(&original, &revisions)?;
+                for revision in &revisions {
+                    if let Some(doc) = program.documents.iter().find(|d| d.id == revision.document)
+                    {
+                        lua::replay::validate_document(doc)?;
+                    }
+                }
+                Ok(Response::SourceRevisionProgram(program))
+            }
+            Request::ApplySourceRevision {
+                base,
+                revisions,
+                plan,
+            } => hyprland_editor_core::workspace_graph::revisions::apply(&base, &revisions, &plan)
+                .map(Response::SourceRevisions),
+            Request::CompareScalarSource { program, change } => {
+                lua::replay::scalar_edit::compare(&program, &change)
+                    .map(|result| Response::ScalarSourceComparison(Box::new(result)))
+            }
+            Request::CompareMonitorSource { program, change } => {
+                lua::replay::monitor_edit::compare(&program, &change)
+                    .map(|result| Response::ScalarSourceComparison(Box::new(result)))
+            }
+            Request::CompareMonitorFieldSource { program, change } => {
+                lua::replay::monitor_edit::compare_field(&program, &change)
+                    .map(|result| Response::ScalarSourceComparison(Box::new(result)))
+            }
+            Request::ReviewSourceOverrides { program, draft } => {
+                lua::replay::override_review::prepare(&program, &draft)
+                    .map(|result| Response::SourceOverrideReview(Box::new(result)))
+            }
+            Request::ReviewSourceMonitors { program, monitors } => {
+                lua::replay::monitor_review::prepare(&program, &monitors)
+                    .map(|result| Response::SourceMonitorReview(Box::new(result)))
+            }
+            Request::ResolveSourceMonitors {
+                program,
+                monitors,
+                review,
+                choice,
+            } => lua::replay::monitor_review::resolve(&program, &monitors, &review, &choice)
+                .map(|result| Response::SourceMonitorResolution(Box::new(result))),
+            Request::ResolveSourceOverrides {
+                program,
+                draft,
+                review,
+                choices,
+            } => lua::replay::override_review::resolve(&program, &draft, &review, &choices)
+                .map(|result| Response::SourceOverrideResolution(Box::new(result))),
+            Request::ReviewSourceEdits { program, plan } => {
+                lua::replay::edits::review(&program, &plan)
+                    .map(|report| Response::SourceEditReview(Box::new(report)))
+            }
+            Request::ReviewSourceMerge {
+                base,
+                private,
+                incoming,
+            } => hyprland_editor_core::source_merge::prepare(&base, &private, &incoming)
+                .map(|result| Response::SourceMergeReview(Box::new(result))),
+            Request::ResolveSourceMerge {
+                base,
+                private,
+                incoming,
+                review,
+                choices,
+            } => hyprland_editor_core::source_merge::resolve(
+                &base, &private, &incoming, &review, &choices,
+            )
+            .map(|result| Response::SourceMergeResolution(Box::new(result))),
+            Request::InspectDependencies { source, version } => {
+                lua::inspect_dependencies(&source, &version).map(Response::Dependencies)
+            }
+            Request::PlanModules {
+                context,
+                mode,
+                modules,
+                version,
+            } => hyprland_editor_core::module_path::plan_requests_for(
+                &context, &modules, &version, mode,
+            )
+            .map(Response::ModulePlans),
             Request::ParseRegistry { xml } => {
                 hyprland_editor_core::xkb::parse(&xml).map(Response::Registry)
             }
@@ -197,6 +380,10 @@ pub fn entry() {
     let _ = std::io::stdout().write_all(&bytes);
 }
 pub fn run(request: Request) -> Result<Response, String> {
+    run_cancellable(request, &AtomicBool::new(false))
+}
+pub fn run_cancellable(request: Request, cancelled: &AtomicBool) -> Result<Response, String> {
+    cancelled_check(cancelled)?;
     let bytes = serde_json::to_vec(&request).map_err(|e| e.to_string())?;
     if bytes.len() > MAX_ENVELOPE {
         return Err("Parser request exceeds 4 MiB".into());
@@ -225,16 +412,76 @@ pub fn run(request: Request) -> Result<Response, String> {
         use std::os::fd::AsRawFd;
         format!("/proc/self/fd/{}", held_test_executable.as_raw_fd())
     };
-    let mut child = Command::new(exe)
-        .arg("--lua-source-worker")
-        .env_clear()
+    let mut command = Command::new(exe);
+    command.arg("--lua-source-worker").env_clear();
+    execute(command, bytes, cancelled, |_| {})
+}
+fn cancelled_check(cancelled: &AtomicBool) -> Result<(), String> {
+    if cancelled.load(Ordering::Acquire) {
+        Err("Parser operation was cancelled".into())
+    } else {
+        Ok(())
+    }
+}
+struct OwnedChild {
+    child: Child,
+    reaped: bool,
+}
+impl OwnedChild {
+    fn stop(&mut self) -> Result<(), String> {
+        if self.reaped {
+            return Ok(());
+        }
+        // The Child value is the sole process authority. No saved PID or path
+        // is used to find or signal another process.
+        let _ = self.child.kill();
+        self.child
+            .wait()
+            .map_err(|e| format!("Could not reap parser child: {e}"))?;
+        self.reaped = true;
+        Ok(())
+    }
+    fn poll(&mut self) -> Result<Option<ExitStatus>, String> {
+        let status = self.child.try_wait().map_err(|e| e.to_string())?;
+        if status.is_some() {
+            self.reaped = true;
+        }
+        Ok(status)
+    }
+}
+impl Drop for OwnedChild {
+    fn drop(&mut self) {
+        let _ = self.stop();
+    }
+}
+fn execute(
+    mut command: Command,
+    bytes: Vec<u8>,
+    cancelled: &AtomicBool,
+    on_spawn: impl FnOnce(u32),
+) -> Result<Response, String> {
+    cancelled_check(cancelled)?;
+    let child = command
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
         .spawn()
         .map_err(|e| e.to_string())?;
-    let mut input = child.stdin.take().unwrap();
-    let output = child.stdout.take().unwrap();
+    let mut child = OwnedChild {
+        child,
+        reaped: false,
+    };
+    on_spawn(child.child.id());
+    let mut input = child
+        .child
+        .stdin
+        .take()
+        .ok_or("Parser input pipe missing")?;
+    let output = child
+        .child
+        .stdout
+        .take()
+        .ok_or("Parser output pipe missing")?;
     let writer = std::thread::spawn(move || input.write_all(&bytes));
     let reader = std::thread::spawn(move || {
         let mut bytes = vec![];
@@ -245,20 +492,21 @@ pub fn run(request: Request) -> Result<Response, String> {
     });
     let start = Instant::now();
     let status = loop {
-        match child.try_wait() {
+        if let Err(reason) = cancelled_check(cancelled) {
+            break child.stop().and(Err(reason));
+        }
+        match child.poll() {
             Ok(Some(s)) => break Ok(s),
             Ok(None) if start.elapsed() < Duration::from_secs(3) => {
                 std::thread::sleep(Duration::from_millis(10))
             }
             Ok(None) => {
-                let _ = child.kill();
-                let _ = child.wait();
-                break Err("Parser exceeded its wall-clock budget".into());
+                break child
+                    .stop()
+                    .and(Err("Parser exceeded its wall-clock budget".into()));
             }
             Err(e) => {
-                let _ = child.kill();
-                let _ = child.wait();
-                break Err(e.to_string());
+                break child.stop().and(Err(e));
             }
         }
     };
@@ -270,6 +518,7 @@ pub fn run(request: Request) -> Result<Response, String> {
     if !status?.success() {
         return Err("Isolated parser exited unsuccessfully".into());
     }
+    cancelled_check(cancelled)?;
     if bytes.len() > MAX_ENVELOPE {
         return Err("Parser result exceeds 4 MiB".into());
     }
@@ -279,3 +528,6 @@ pub fn run(request: Request) -> Result<Response, String> {
         other => Ok(other),
     }
 }
+
+#[cfg(test)]
+mod cancellation_tests;

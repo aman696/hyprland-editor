@@ -1,0 +1,236 @@
+{
+  "format": "hye-workspace-argument-semantics-1",
+  "scope": "Declared factories, not effective/default values or actual application",
+  "snapshots": [
+    {
+      "version": "baseline",
+      "source": {
+        "version": "baseline",
+        "url": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsConfigRules.cpp",
+        "sha256": "157c3e45b364f3e41b6fd7cf13fd19e7477e8c03a6a75c6c46fde5e2b5715be9"
+      },
+      "fields": [
+        {
+          "key": "monitor",
+          "kind": "String",
+          "declared_default_cpp": "STRVAL_EMPTY",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "default",
+          "kind": "Bool",
+          "declared_default_cpp": "false",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "persistent",
+          "kind": "Bool",
+          "declared_default_cpp": "false",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "gaps_in",
+          "kind": "CssGap",
+          "declared_default_cpp": "5",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "gaps_out",
+          "kind": "CssGap",
+          "declared_default_cpp": "20",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "float_gaps",
+          "kind": "CssGap",
+          "declared_default_cpp": "0",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "border_size",
+          "kind": "Int",
+          "declared_default_cpp": "-1",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "no_border",
+          "kind": "Bool",
+          "declared_default_cpp": "false",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "no_rounding",
+          "kind": "Bool",
+          "declared_default_cpp": "false",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "decorate",
+          "kind": "Bool",
+          "declared_default_cpp": "true",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "no_shadow",
+          "kind": "Bool",
+          "declared_default_cpp": "false",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "on_created_empty",
+          "kind": "String",
+          "declared_default_cpp": "STRVAL_EMPTY",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "default_name",
+          "kind": "String",
+          "declared_default_cpp": "STRVAL_EMPTY",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "layout",
+          "kind": "String",
+          "declared_default_cpp": "STRVAL_EMPTY",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "animation",
+          "kind": "String",
+          "declared_default_cpp": "STRVAL_EMPTY",
+          "minimum": null,
+          "maximum": null
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "source": {
+        "version": "current",
+        "url": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsConfigRules.cpp",
+        "sha256": "789b1425c25b5a26c82f25e4d5d0b8176a6f56481573fc6e658662d1de7ea5ae"
+      },
+      "fields": [
+        {
+          "key": "monitor",
+          "kind": "String",
+          "declared_default_cpp": "STRVAL_EMPTY",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "default",
+          "kind": "Bool",
+          "declared_default_cpp": "false",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "persistent",
+          "kind": "Bool",
+          "declared_default_cpp": "false",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "gaps_in",
+          "kind": "CssGap",
+          "declared_default_cpp": "5",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "gaps_out",
+          "kind": "CssGap",
+          "declared_default_cpp": "20",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "float_gaps",
+          "kind": "CssGap",
+          "declared_default_cpp": "0",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "border_size",
+          "kind": "Int",
+          "declared_default_cpp": "-1",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "no_border",
+          "kind": "Bool",
+          "declared_default_cpp": "false",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "no_rounding",
+          "kind": "Bool",
+          "declared_default_cpp": "false",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "decorate",
+          "kind": "Bool",
+          "declared_default_cpp": "true",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "no_shadow",
+          "kind": "Bool",
+          "declared_default_cpp": "false",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "on_created_empty",
+          "kind": "String",
+          "declared_default_cpp": "STRVAL_EMPTY",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "default_name",
+          "kind": "String",
+          "declared_default_cpp": "STRVAL_EMPTY",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "layout",
+          "kind": "String",
+          "declared_default_cpp": "STRVAL_EMPTY",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "animation",
+          "kind": "String",
+          "declared_default_cpp": "STRVAL_EMPTY",
+          "minimum": null,
+          "maximum": null
+        }
+      ]
+    }
+  ]
+}

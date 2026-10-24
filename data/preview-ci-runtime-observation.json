@@ -1,0 +1,233 @@
+{
+  "format": 1,
+  "measured_source_head": "9ce67b194d0f7304de46e19eedcfb0f36d5a23c1",
+  "scope": "Two independent trusted static-program private-root boundary experiments; two separate explicit constructor refusals. No compositor, renderer or production preview certificate.",
+  "sources": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "2da5c61ccceae3bc249d23230e8f622e6738e86a7848f2bd3abe839a15404519"
+    },
+    {
+      "path": "scripts/cgroup_kernel_probe.py",
+      "sha256": "8f4f6448a84124ce9ad731ce7903cc00442f581d485d010deba96b3e2e52df93"
+    },
+    {
+      "path": "scripts/build_bwrap_probe.py",
+      "sha256": "aa26fe2f7a201cbbc6706341f14052bb66b30009b691690fc3d736dbe985902a"
+    },
+    {
+      "path": "crates/editor-preview/Cargo.toml",
+      "sha256": "d64b1a45174edbd835722d81bfcb48cab34bed6ff1aa5e2db6a1e3c2d24c952d"
+    },
+    {
+      "path": "crates/editor-preview/src/image.rs",
+      "sha256": "407bd0b4190c0743ec03ef4dc2ab63179e40046d7d687bf3e40b54951f00118e"
+    },
+    {
+      "path": "crates/editor-preview/src/image/tests.rs",
+      "sha256": "161367a4aae49b87ba56d7bd1b44cbc36ee3f113d0e1e5b30b23c8053a31e7da"
+    },
+    {
+      "path": "crates/editor-preview/src/image/probe.rs",
+      "sha256": "e23c338a7d5b920f6ac88c453c5389dad527ee150a756332381e3c0098763057"
+    },
+    {
+      "path": "crates/editor-preview/tests/fixtures/runtime_probe.c",
+      "sha256": "ddf0f0a05de3101e90806f22c03f44f7f1f29b8ca9552514f69b0e4248a5db6f"
+    },
+    {
+      "path": "Cargo.lock",
+      "sha256": "4758e39ac71a306c11649bd9503daaf3210a6e4bf62cc74319d58c1a4f94b947"
+    }
+  ],
+  "constructor_source": {
+    "version": "0.11.0",
+    "url": "https://codeload.github.com/containers/bubblewrap/tar.gz/refs/tags/v0.11.0",
+    "archive_sha256": "cfeeb15fcc47d177d195f06fdf0847e93ee3aa6bf46f6ac0a141fa142759e2c3",
+    "originals_removed": true
+  },
+  "positive_profile": {
+    "runner": "ubuntu-22.04",
+    "architecture": "x86_64",
+    "trusted_static_probe": true,
+    "initial_execve_allowed": true,
+    "environment": {
+      "HOME": "/home/lab",
+      "XDG_RUNTIME_DIR": "/run/lab",
+      "XDG_CONFIG_HOME": "/state/config",
+      "XDG_DATA_HOME": "/state/data",
+      "XDG_CACHE_HOME": "/state/cache",
+      "LC_ALL": "C",
+      "TMPDIR": "/tmp",
+      "PWD": "/tmp"
+    },
+    "writable_tmpfs_max_bytes": {
+      "/tmp": 33554432,
+      "/run": 16777216,
+      "/home": 16777216,
+      "/state": 33554432
+    },
+    "driver_limits": {
+      "memory_bytes": 268435456,
+      "swap_bytes": 0,
+      "pids": 64,
+      "cpu_max": "200000 100000"
+    },
+    "observations": [
+      {
+        "job_url": "https://github.com/aman696/hyprland-editor/actions/runs/39268411873/job/118113971762",
+        "job_conclusion": "success",
+        "reported_source_head": "9ce67b194d0f7304de46e19eedcfb0f36d5a23c1",
+        "raw_log_sha256": "4f6c5c867e906e00a3c918f25639f88ff693391adf18d7707f504a1ec0a9af9f",
+        "kernel": "6.8.0-1064-azure",
+        "constructor_version": "0.11.0",
+        "constructor_sha256": "88fe5277e4b514335d7cea43272b33249cb292d504d54fb0f297d0a6c4908370",
+        "probe_sha256": "38cea910518aa4900c0dd32573a26b550c8c76142d7f4eaf5c2b13ce1a5d09fe",
+        "image_identity": "8d519a913d0f62a03b5a682072e864a9c85a94f11fdb72bcecea94534618c368",
+        "result_marker": "HYE_RUNTIME_RESULT all boundary assertions passed",
+        "private_provider_removals": 1,
+        "namespace_ids": {
+          "user": "4026532319",
+          "mnt": "4026532258",
+          "pid": "4026532261",
+          "net": "4026532263",
+          "ipc": "4026532260",
+          "uts": "4026532259",
+          "cgroup": "4026532262"
+        },
+        "visible_uid_map": [
+          "1000",
+          "0",
+          "1"
+        ],
+        "visible_gid_map": [
+          "1000",
+          "0",
+          "1"
+        ],
+        "namespace_constructor_refusal": null
+      },
+      {
+        "job_url": "https://github.com/aman696/hyprland-editor/actions/runs/39268416724/job/118113986829",
+        "job_conclusion": "success",
+        "reported_source_head": "9ce67b194d0f7304de46e19eedcfb0f36d5a23c1",
+        "raw_log_sha256": "494bddba1b4e105685df82dcdc13de2268146122d4211a7e1ae53c4d4f347d0c",
+        "kernel": "6.8.0-1064-azure",
+        "constructor_version": "0.11.0",
+        "constructor_sha256": "88fe5277e4b514335d7cea43272b33249cb292d504d54fb0f297d0a6c4908370",
+        "probe_sha256": "38cea910518aa4900c0dd32573a26b550c8c76142d7f4eaf5c2b13ce1a5d09fe",
+        "image_identity": "8d519a913d0f62a03b5a682072e864a9c85a94f11fdb72bcecea94534618c368",
+        "result_marker": "HYE_RUNTIME_RESULT all boundary assertions passed",
+        "private_provider_removals": 1,
+        "namespace_ids": {
+          "user": "4026532413",
+          "mnt": "4026532347",
+          "pid": "4026532353",
+          "net": "4026532355",
+          "ipc": "4026532352",
+          "uts": "4026532351",
+          "cgroup": "4026532354"
+        },
+        "visible_uid_map": [
+          "1000",
+          "0",
+          "1"
+        ],
+        "visible_gid_map": [
+          "1000",
+          "0",
+          "1"
+        ],
+        "namespace_constructor_refusal": null
+      }
+    ]
+  },
+  "refused_profile": {
+    "runner": "ubuntu-24.04",
+    "architecture": "x86_64",
+    "security_policy_overridden": false,
+    "observations": [
+      {
+        "job_url": "https://github.com/aman696/hyprland-editor/actions/runs/39268411873/job/118113972241",
+        "job_conclusion": "success",
+        "reported_source_head": "9ce67b194d0f7304de46e19eedcfb0f36d5a23c1",
+        "raw_log_sha256": "a7939d03eec3746c2c0fd3206de24acfbe8b893b70797ee4e1686ef052aaf5b1",
+        "kernel": "6.17.0-1022-azure",
+        "constructor_version": "0.9.0",
+        "constructor_sha256": "e318903862396f96de3df57264e0158682b952fd3fb53ac23d876413e7b30f71",
+        "probe_sha256": "6434d6ef86b2796be32140158a9f378b0206166e07c49035125415450ee18b24",
+        "image_identity": "e58cb5d77b74d387becdc0aeec9293f39c2bd9ef6e40c21a7505905bc53d3914",
+        "result_marker": "HYE_RUNTIME_UNAVAILABLE constructor refused before trusted probe execution",
+        "private_provider_removals": 3,
+        "namespace_ids": {},
+        "visible_uid_map": null,
+        "visible_gid_map": null,
+        "namespace_constructor_refusal": "bwrap: loopback: Failed RTM_NEWADDR: Operation not permitted"
+      },
+      {
+        "job_url": "https://github.com/aman696/hyprland-editor/actions/runs/39268416724/job/118113987682",
+        "job_conclusion": "success",
+        "reported_source_head": "9ce67b194d0f7304de46e19eedcfb0f36d5a23c1",
+        "raw_log_sha256": "e2298961c0009839750618374163b91a89c46cf5ddfb9aeddd82ffb674837ea5",
+        "kernel": "6.17.0-1022-azure",
+        "constructor_version": "0.9.0",
+        "constructor_sha256": "e318903862396f96de3df57264e0158682b952fd3fb53ac23d876413e7b30f71",
+        "probe_sha256": "6434d6ef86b2796be32140158a9f378b0206166e07c49035125415450ee18b24",
+        "image_identity": "e58cb5d77b74d387becdc0aeec9293f39c2bd9ef6e40c21a7505905bc53d3914",
+        "result_marker": "HYE_RUNTIME_UNAVAILABLE constructor refused before trusted probe execution",
+        "private_provider_removals": 3,
+        "namespace_ids": {},
+        "visible_uid_map": null,
+        "visible_gid_map": null,
+        "namespace_constructor_refusal": "bwrap: loopback: Failed RTM_NEWADDR: Operation not permitted"
+      }
+    ]
+  },
+  "verified_for_static_fixture": [
+    "exact sealed asset after origin mutation",
+    "distinct user/mount/PID/network/IPC/UTS/cgroup namespaces",
+    "private proc PID1/PID2 only",
+    "UID/GID1000 and empty groups/capabilities",
+    "no-new-privileges and seccomp filter",
+    "no descriptors3..4095",
+    "exact eight environment entries",
+    "read-only mount flags and refused writes",
+    "bounded writable tmpfs paths",
+    "host canary and listed sensitive paths absent",
+    "real host abstract Unix listener unreachable",
+    "forbidden network families and process/mount/namespace/BPF/io_uring/execveat/clone3 calls return EPERM",
+    "private provider removed"
+  ],
+  "fixture_boundary_observed": true,
+  "full_workflow_success_recorded": true,
+  "production_stopped_child_placement_verified": false,
+  "image_authenticity_and_dependency_closure_verified": false,
+  "compositor_verified": false,
+  "renderer_verified": false,
+  "capture_and_input_verified": false,
+  "user_namespace_channel_mapping_verified": false,
+  "combined_pidfs_runtime_profile_verified": false,
+  "malicious_peer_and_crash_supervision_verified": false,
+  "lab_profile_certified": false,
+  "limitations": [
+    "x86_64 observations only; aarch64 code path untested",
+    "Static probe allowlist is not a compositor/Mesa syscall policy",
+    "New procfs and isolated filesystem observations do not attest executable safety",
+    "Read-only mount checks are independent of DAC-versus-EROFS error ordering",
+    "Constructor regenerates PWD; its exact value is checked",
+    "Positive image kernel and earlier pidfs-channel kernel differ; separate observations cannot certify a combined profile",
+    "Full source editing/reconciliation/history/export, effective discovery, apply/recovery, hardware, accessibility/localization, representative resources, packaging and all original release/security gates remain required"
+  ],
+  "full_workflows": [
+    {
+      "run_url": "https://github.com/aman696/hyprland-editor/actions/runs/39268411873",
+      "head": "9ce67b194d0f7304de46e19eedcfb0f36d5a23c1",
+      "conclusion": "success"
+    },
+    {
+      "run_url": "https://github.com/aman696/hyprland-editor/actions/runs/39268416724",
+      "head": "9ce67b194d0f7304de46e19eedcfb0f36d5a23c1",
+      "conclusion": "success"
+    }
+  ]
+}

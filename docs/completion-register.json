@@ -8,10 +8,333 @@
   },
   "inputs": {
     "docs/hyprland-implementation-contracts.json": "73f4cfb0e08112a0849864f7eb692e8b30e2daf441283a84cec33d4b92930d32",
-    "docs/engineering-blueprint.md": "afef2a41f1cee3fe4b2d9a1853115dcffa9acd894a64d073dc363730c21770fb",
-    "docs/complete-editor-plan.md": "72fcb25c83e4f95b5be94a7186044f0424c237cca538d819e13aaec6eae55871"
+    "docs/engineering-blueprint.md": "72f16c1978f5f2f7ec5af18f9c37f8b7b92879026e14bb3199a05438920a2851",
+    "docs/complete-editor-plan.md": "72fcb25c83e4f95b5be94a7186044f0424c237cca538d819e13aaec6eae55871",
+    "docs/registration-scope-findings.json": "ed7d0e16e4b7e488c29b060a589479bb88a9ed28890f40e2ee163796ff2469f1"
   },
   "foundations": [
+    {
+      "area": "installed static compiler launcher and on-demand availability check",
+      "code": [
+        "crates/editor-app/src/compiler_client.rs",
+        "crates/editor-app/src/compiler_check.rs",
+        "crates/editor-lua55/src/protocol.rs",
+        "scripts/compiler_install_probe.py"
+      ],
+      "test_references": [
+        "crates/editor-app/tests/compiler_client.rs",
+        "compiler_check::test_ui",
+        "scripts/workspace_target_profile_probe.py --worker-conformance --static-conformance --installed-conformance"
+      ],
+      "limits": "fixed root-owned registry and no-follow regular package channel, exact hash/identity capture, bounded native static ELF checks, separate execution-bit/content/size-sealed memfd, ordinary identity/no-retained-capability requirement, empty environment/parent-death/no-new-privileges/closed descriptor/resource setup, bounded nonblocking parent duplex I/O/EOF/correlation/deadline/cancellation and owned kill/reap; seven ordinary parent cases, both official55 static process/actual parent fixtures and private-display availability/single-flight/cancel/stale/unavailable/window-lifetime checks; separate root-owned temporary-package CI role remains pending exact-head execution; no signed/update/AppImage/distribution trust, complete source-profile selection/Lua55 grammar/evaluator, general staging-read interruption, representative resources or full security/release certificate"
+    },
+    {
+      "area": "linked compiler numeric observations",
+      "code": [
+        "crates/editor-core/src/lua/replay/numeric_codegen.rs",
+        "crates/editor-core/src/lua/replay/eval.rs",
+        "crates/editor-lua55/native/bridge.inc",
+        "data/lua-numeric-codegen.json",
+        "data/lua-numeric-fixtures.json"
+      ],
+      "test_references": [
+        "scripts/lua_numeric_probe.py",
+        "crates/editor-core/tests/numeric_codegen.rs",
+        "numeric_module_source_transaction_and_undo_keep_compiler_bits_and_capture_identity",
+        "numeric_private_revisions_reopen_with_observed_compiler_and_original_zero_sign",
+        "migration_refuses_unknown_models_profiles_corruption_unreached_inputs_and_hidden_payloads"
+      ],
+      "limits": "fixed non-executing bounded compile/dump fingerprint, explicit known/unknown code-generation mode, bounded supported constant-descriptor inspection and sign-sensitive subtraction/source comparison, profile-bound private save/reopen/module transaction/undo, seventeen exact reviewed predecessors and five earlier active/archive private-layer writers with strict old-payload refusal; 592 restricted-model/native comparisons plus 444 native expression observations across original/narrowly patched official releases; no complete numeric/compiler/language, Lua55 production routing, selected-compositor, preview/apply/recovery or full security/resource/release certificate"
+    },
+    {
+      "area": "separate Lua 5.5 compiler/conversion component",
+      "code": [
+        "crates/editor-lua55/src/main.rs",
+        "crates/editor-lua55/src/native.rs",
+        "crates/editor-lua55/src/protocol.rs",
+        "crates/editor-lua55/native/bridge.inc",
+        "crates/editor-lua55/native/lua55.cpp",
+        "data/lua55-compiler-worker-observation.json"
+      ],
+      "test_references": [
+        "crates/editor-lua55/tests/worker.rs",
+        "scripts/workspace_target_profile_probe.py",
+        "scripts/lua_profile_probe.py"
+      ],
+      "limits": "independent opt-in compiler image with no GUI/core/RE2/Lua54 dependency, common allocator-bounded legacy/55 C++ adapter with distinct symbols and constructors, text-only compilation and fixed protected primitive conversion, exact float/integer/byte transport, correlated strict one-shot protocol, closed descriptor/syscall/resource role and nonblocking pipe deadlines; ten actual process cases for each official Lua55 release, strict role lint and optimized private images with dependency/profile identities; four legacy release bridge checks remain valid; no authenticated production image/dependency launcher, parent cancellation/reaping integration, GUI selection, Lua55 grammar/ordered evaluator or saved-profile admission, representative resources or full security/release certificate"
+    },
+    {
+      "area": "explicit native build/profile compatibility evidence",
+      "code": [
+        "crates/editor-app/src/native_build.rs",
+        "crates/editor-app/src/source_analysis.rs",
+        "data/native-build-profiles.json",
+        "data/workspace-runtime-fixtures.json",
+        "data/lua55-language-fixtures.json",
+        "data/lua55-source-reference-observation.json"
+      ],
+      "test_references": [
+        "scripts/native_build_probe.py",
+        "scripts/native_selection_probe.py",
+        "scripts/workspace_runtime_probe.py",
+        "scripts/workspace_target_profile_probe.py",
+        "scripts/lua55_source_probe.py",
+        "scripts/lua55_language_probe.py",
+        "source_access::test_review"
+      ],
+      "limits": "immutable source/blob/version build requests, twelve private CMake alternative-search selections/refusals, actual model-release disclosure, original workspace callback/object cases under four requested Lua/C++ contexts and separate fixed-six/general numeric-text groups, official hash-pinned private Lua 5.5.0/5.5.1 builds with temporary cleanup, 7520 finite source/parser/path/language observations including sixteen dedicated default-flag language cases per context and canonical legacy output refusal; no selected-compositor dependency observation, production Lua 5.5 worker/evaluator integration, complete language/grammar/primary parsing/manager lifetime or full feature/security/release acceptance"
+    },
+    {
+      "area": "explicit private dependency inputs, archival and reconstruction",
+      "code": [
+        "crates/editor-core/src/workspace_graph/private.rs",
+        "crates/editor-core/src/workspace_graph/revisions.rs",
+        "crates/editor-app/src/source_graph.rs",
+        "crates/editor-app/src/source_graph/private_inputs.rs",
+        "crates/editor-app/src/source_pending.rs",
+        "crates/editor-app/src/worker.rs",
+        "crates/editor-app/src/history.rs",
+        "crates/editor-projection/src/layers.rs"
+      ],
+      "test_references": [
+        "crates/editor-core/tests/private_inputs.rs",
+        "crates/editor-app/src/source_graph/private_inputs/tests.rs",
+        "crates/editor-app/src/source_pending/tests.rs",
+        "crates/editor-app/src/worker/cancellation_tests.rs",
+        "private_dependency_inputs_reopen_and_reconstruct_preview_layers_without_original_paths",
+        "repeated_graph_inverses_share_large_archived_private_capture_allocations",
+        "test_private_graph_ui",
+        "pending_private_request_worker_drops_changed_inherited_binding_without_granting_acceptance",
+        "migration_refuses_unknown_models_profiles_corruption_unreached_inputs_and_hidden_payloads"
+      ],
+      "limits": "shared captured private source pools, explicit final-byte/context loader bindings, separate pending-request inspection without resolution rights, archived data excluded from evaluation, independent original/private restricted reconstruction and reached-input checks, edits/offset rebasing/removal archives, exact private persistence and scalar-layer staging rebuild, byte-equal private provenance and bounded shared undo retention; both pinned versions/four loader modes and actual worker/application/staging/private-display checks; explicit pending-input GUI with fresh temporary folders, loader-specific capture, selected preserved/archive reuse, acknowledged missing assumptions, sequential replay and one-step proposal undo; owned parser cancellation/reaping and parent generation/epoch/close/destroy guards; no complete multi-file acceptance/ownership/Lua semantics, all-operation interruption, representative resource or full preview/apply/security/release certificate"
+    },
+    {
+      "area": "external source text merge and graph correspondence foundations",
+      "code": [
+        "crates/editor-core/src/source_merge.rs",
+        "crates/editor-core/src/source_merge/diff.rs",
+        "crates/editor-core/src/workspace_graph/merge.rs",
+        "crates/editor-core/src/workspace_graph/merge/pieces.rs",
+        "crates/editor-app/src/worker.rs",
+        "crates/editor-app/src/main.rs",
+        "crates/editor-app/src/history.rs",
+        "crates/editor-app/src/source_access.rs",
+        "crates/editor-app/src/source_reconcile.rs",
+        "crates/editor-app/src/source_reconcile/window.rs",
+        "crates/editor-app/src/source_analysis.rs",
+        "crates/editor-app/src/source_modules.rs"
+      ],
+      "test_references": [
+        "crates/editor-core/src/source_merge/tests.rs",
+        "crates/editor-core/tests/graph_merge.rs",
+        "external_source_text_merge_runs_inside_the_restricted_worker_without_execution_claims",
+        "crates/editor-core/tests/graph_merge_pieces.rs",
+        "crates/editor-app/src/graph_transaction_tests.rs",
+        "byte_equality_does_not_turn_private_choice_into_captured_provenance",
+        "composed_incoming_graph_reopens_in_actual_application_after_both_capture_trees_are_deleted",
+        "external_merge_preserves_private_captures_edits_and_archives_through_actual_reopen_and_staging",
+        "test_external_merge_ui",
+        "test_incoming",
+        "source_reconcile::test_review",
+        "source_reconcile::test_stale",
+        "source_reconcile::test_import_stale",
+        "source_pages_cover_every_byte_once_without_splitting_unicode"
+      ],
+      "limits": "bounded lossless line/Unicode three-way regions, mandatory-anchor ambiguity checks, explicit conflicts/insert ordering, exact input-range provenance and client checks, restricted-worker operations, graph-fingerprint/context correspondence, lazy mapped-file inputs, fresh exact text decisions and provenance-aware private composition onto immutable incoming captures with streamed envelope and aggregate piece/buffer bounds, explicit surviving-loader renewal, private/archive correspondence and exact archive/discard choices, preservation of captured identities/load names/pieces under collision-safe inactive labels without old binding transfer, and internal generation/hash/identity/version-checked atomic root/origin/graph/removed-override inverse with shared allocation accounting; composed graph and edited/invalid-Lua archives reopen through actual restricted application and scalar-staging workers after capture trees are removed; temporary incoming capture plus graphical file/context/conflict/archive choices, lazy paged text review, read-only whole-input result reconstruction and guarded root/origin/graph accept/save/reopen/undo with stale/close lease checks; separate exact-request import resolution with fresh grants or explicit preserved/archive/missing choices, verified return before final draft acceptance and owned-parser cancellation/reaping; no immediate interruption of all folder/client work, representative resources, general ownership/Lua/source-export or complete workflow/E03/E05/runtime certificate"
+    },
+    {
+      "area": "reviewed saved-graph model migration",
+      "code": [
+        "crates/editor-app/src/graph_migration.rs",
+        "crates/editor-app/src/workflow.rs",
+        "crates/editor-app/tests/workspace_graph.rs",
+        "data/migrations/graph-model-before-projection.json",
+        "data/migrations/graph-model-projection.json",
+        "data/migrations/graph-model-migration.json",
+        "data/migrations/graph-model-before-monitors.json",
+        "data/migrations/graph-model-monitor-values.json",
+        "data/migrations/graph-model-monitor-fields.json",
+        "data/migrations/graph-model-monitor-declarations.json",
+        "data/migrations/graph-model-monitor-layout.json",
+        "data/migrations/graph-model-monitor-review.json",
+        "data/migrations/graph-model-mixed-review.json",
+        "data/migrations/graph-model-text-merge.json",
+        "data/migrations/graph-model-composition.json",
+        "data/migrations/graph-model-private-inputs.json",
+        "data/migrations/graph-model-correspondence.json",
+        "data/migrations/graph-model-resolution.json",
+        "data/migrations/graph-model-workspace-state.json",
+        "data/migrations/graph-model-compiler-extraction.json"
+      ],
+      "test_references": [
+        "reviewed_transition_pins_exact_monitor_differences_and_refuses_unreviewed_builds",
+        "reviewed_graph_migrations_rebuild_deleted_sources_and_private_pieces_without_writing",
+        "migration_refuses_unknown_models_profiles_corruption_unreached_inputs_and_hidden_payloads",
+        "workflow::test_graph_migration",
+        "private_input_model_migration_preserves_active_and_archived_data_with_fresh_reanalysis"
+      ],
+      "limits": "seventeen exact reviewed dependency/storage/monitor/merge/private-input/correspondence/resolution/workspace-state/compiler-extraction/numeric-observation transitions with bounded held-inode input, unknown-payload refusal, fresh restricted-worker captured-view/dependency/private-piece reanalysis, exact legacy compiler match and reviewed numeric-observation renewal, byte/value preservation, cancel/epoch/unsaved guards and new private save; no original-path reads or restored folder access, general model/schema/profile conversion, persistent history, full source export/reconciliation or full audit certificate"
+    },
+    {
+      "area": "source dependency capture and ordered evaluation",
+      "code": [
+        "crates/editor-core/src/module_path.rs",
+        "crates/editor-core/src/module_cache.rs",
+        "crates/editor-core/src/lua/dependencies.rs",
+        "crates/editor-core/src/lua/replay.rs",
+        "crates/editor-core/src/lua/replay/eval.rs",
+        "crates/editor-core/src/lua/replay/provenance.rs",
+        "crates/editor-core/src/lua/replay/storage_sources.rs",
+        "crates/editor-core/src/lua/replay/path_sources.rs",
+        "crates/editor-core/src/lua/replay/edits.rs",
+        "crates/editor-core/src/lua/replay/edits/structure.rs",
+        "crates/editor-core/src/lua/replay/scalar_edit.rs",
+        "crates/editor-core/src/lua/replay/scalar_edit/layout.rs",
+        "crates/editor-app/src/source_changes.rs",
+        "crates/editor-app/src/source_overrides.rs",
+        "crates/editor-core/src/lua/replay/override_review.rs",
+        "crates/editor-core/src/lua/config_table.rs",
+        "crates/editor-core/src/lua/scalar_codec.rs",
+        "crates/editor-core/src/lua/scalar_codec/complex.rs",
+        "crates/editor-core/native/complex_text.cpp",
+        "crates/editor-app/src/source_compound_forms.rs",
+        "data/complex-scalar-fixtures.json",
+        "crates/editor-core/src/lua/registration.rs",
+        "crates/editor-core/src/lua/config_inspection.rs",
+        "data/scalar-semantics.json",
+        "crates/editor-core/src/lua/replay/observed_float.rs",
+        "data/scalar-value-fixtures.json",
+        "data/config-table-fixtures.json",
+        "crates/editor-core/native/lua_syntax.cpp",
+        "crates/editor-core/src/source_scope.rs",
+        "crates/editor-core/src/source_scope/probe.rs",
+        "data/lua-profiles.json",
+        "crates/editor-app/src/capture_worker.rs",
+        "crates/editor-app/src/directory_worker.rs",
+        "crates/editor-app/src/fd_channel.rs",
+        "crates/editor-app/src/source_modules.rs",
+        "crates/editor-app/src/source_access.rs",
+        "crates/editor-app/src/source_graph.rs",
+        "crates/editor-app/src/source_analysis.rs",
+        "crates/editor-app/src/source_context.rs",
+        "crates/editor-app/src/source_provenance.rs",
+        "crates/editor-core/src/workspace_graph.rs",
+        "crates/editor-core/src/workspace_graph/revisions.rs",
+        "crates/editor-app/src/workflow.rs",
+        "crates/editor-app/src/history.rs",
+        "data/graph-model.json"
+      ],
+      "test_references": [
+        "original_table_selection_is_explicit_and_preserves_definition_comments_and_alias_reads",
+        "identical_tables_and_overwritten_aliases_select_the_reached_definition_by_provenance",
+        "shared_definition_changes_report_every_additional_reached_use",
+        "captured_module_table_edits_keep_main_bytes_and_historical_resolution",
+        "constructor_selection_refuses_external_fields_and_reports_later_overwrite_conflicts",
+        "changing_a_component_preserves_exact_unrelated_bytes_and_unused_fields",
+        "gradient_array_separator_matrix_keeps_every_comment_for_all_length_changes",
+        "unchanged_native_components_keep_original_spelling_and_computations",
+        "override_reconciliation_preserves_literal_layout_and_never_falls_back_after_refusal",
+        "removing_component_effects_is_reported_instead_of_certifying_constructor_ownership",
+        "complex_primary_values_match_original_parser_observations_for_both_snapshots",
+        "every_compound_family_compares_and_keeps_native_validated_literals_without_changing_originals",
+        "forwarded_vector_validators_match_original_factory_callbacks_for_every_registered_vector",
+        "finite_observations_preserve_every_binary64_bit_through_worker_json",
+        "undefined_casts_ambiguous_snapshots_and_representation_limits_remain_explicit",
+        "each_layer_stays_private_until_an_explicit_choice_and_originals_stay_exact",
+        "successive_cross_document_choices_rebase_captured_loader_requests",
+        "client_checks_reject_unselected_layer_changes_and_forged_resolution_claims",
+        "interleaved_monitor_calls_keep_last_scalar_declarations_and_complete_absence_separate",
+        "removing_monitor_argument_effects_or_crossing_unknown_apis_never_reconciles_a_scalar_override",
+        "monitor_arguments_that_share_scalar_locals_are_preserved_by_explicit_scalar_read_replacement",
+        "scalar_override_reconciliation_after_monitors_uses_the_restricted_complete_trace",
+        "source_override_review_and_resolution_rebuild_evidence_in_the_restricted_worker",
+        "graph_and_override_inverse_budget_failure_preserves_existing_history",
+        "application_replays_all_saved_graph_inputs_without_original_files_or_folder_access",
+        "graph_reopen_refuses_inconsistent_profiles_views_hashes_and_unreached_bindings",
+        "saved_load_aliases_remain_distinct_and_a_stopped_model_stays_partial",
+        "test_retained_graph",
+        "scripts/generate_graph_model.py",
+        "table_keys_keep_first_insertion_latest_address_and_delete_reinsert_history_separate",
+        "lexical_cells_parameter_bindings_and_nil_assignments_do_not_merge_by_name_or_value",
+        "cached_module_aliases_keep_shared_table_identity_and_cross_document_field_writes",
+        "provenance_growth_fails_without_later_effects_or_dangling_write_references",
+        "assignment_details_preserve_current_value_key_and_prior_write_roles",
+        "branches_and_short_circuits_preserve_executed_tests_and_never_invent_skipped_effects",
+        "loop_paths_freeze_observations_and_include_false_termination_and_integer_boundaries",
+        "history_remains_conservative_across_returns_caught_errors_and_loaded_modules",
+        "path_history_is_bounded_and_failure_cannot_be_swallowed_by_pcall",
+        "path_details_show_only_the_observation_prefix_and_bound_earlier_history",
+        "private_patch_preserves_utf8_comments_line_endings_and_unaffected_calls",
+        "shared_values_unexpected_arguments_and_path_changes_are_visible_instead_of_authorized",
+        "source_graph_edits_rebase_only_unchanged_recorded_loader_sites_and_keep_logical_ids",
+        "stale_program_schema_compiler_old_bytes_and_noncanonical_or_overlapping_ranges_are_refused",
+        "syntax_failure_in_an_unreached_document_and_new_effects_never_pass_review",
+        "insertion_deletion_negative_zero_and_partial_models_keep_their_distinctions",
+        "patch_size_expectation_depth_and_argument_preconditions_have_bounded_failures",
+        "unchanged_modeled_calls_do_not_certify_unexecuted_callable_effects",
+        "changed_computed_loader_context_does_not_reuse_a_different_modules_resolution",
+        "source_edit_review_uses_immutable_revisions_inside_the_restricted_worker",
+        "selected_read_and_original_shared_literal_have_distinct_source_and_impact",
+        "computed_expression_replacement_is_explicit_and_never_guesses_an_original_operand",
+        "primitive_printers_preserve_float_kind_signed_zero_integer_min_and_string_data",
+        "native_version_constraints_wrong_types_nonfinite_and_unknown_coordinates_are_not_bypassed",
+        "a_cross_document_original_literal_exposes_changed_branch_effects",
+        "typed_source_comparisons_rebuild_coordinates_and_native_validation_in_the_worker",
+        "source_changes::test_editor",
+        "sequential_piece_changes_share_inserted_buffers_and_can_restore_captured_bytes",
+        "unchanged_loader_pieces_rebase_offsets_and_hashes_without_new_resolution_rights",
+        "deleted_calls_and_incomplete_models_remain_private_data_without_dropping_base_sources",
+        "forged_piece_hashes_buffers_ranges_duplicate_ids_and_stale_plans_are_refused",
+        "inserted_source_limits_and_unreached_syntax_errors_are_checked",
+        "private_source_pieces_round_trip_inside_the_restricted_worker_without_rewriting_base",
+        "private_piece_revisions_reopen_without_originals_and_preserve_captured_identities",
+        "source_changes::test_keep_in_draft",
+        "scripts/source_graph_probe.py",
+        "scripts/module_load_probe.py",
+        "scripts/ordered_module_probe.py",
+        "scripts/config_table_probe.py",
+        "scripts/scalar_value_probe.py",
+        "scripts/scalar_registration_probe.py",
+        "scripts/generate_scalar_semantics.py",
+        "source_registered_models_keep_declared_metadata_separate_from_versioned_lua_acceptance",
+        "literal_string_choices_match_native_callback_observations_without_changing_nul_order",
+        "registered_inspection_pins_context_acceptance_and_unknown_api_boundaries",
+        "model_output_limits_preserve_prior_batches_and_do_not_turn_refusal_into_acceptance",
+        "captured_value_models_follow_native_registration_versions_and_stop_at_unknown_value_effects",
+        "primitive_models_match_all_independent_native_inputs_and_preserve_rejection_state",
+        "native_storage_representation_validator_unknowns_and_conversion_limits_stay_distinct",
+        "primitive_coercion_stays_in_the_restricted_worker_and_refuses_batch_budgets",
+        "registry_dispatch_matches_exact_pinned_handler_observations_without_certifying_values",
+        "traversal_cycles_and_path_budgets_remain_unresolved_and_value_origins_remain_only_evidence",
+        "native_nul_key_aliases_replace_prior_values_and_copy_preserves_their_source_spelling",
+        "actual_graph_reports_registry_collisions_cycles_and_table_budget_without_writing_sources",
+        "scripts/lua_profile_probe.py",
+        "scripts/runtime_path_probe.py",
+        "actual_graph_capture_feeds_ordered_cache_and_deferred_file_loading_without_executing_lua",
+        "actual_graph_records_raw_status_then_captures_the_distinct_normalized_load_target",
+        "actual_graph_keeps_hardlinked_module_load_views_and_cache_keys_distinct",
+        "unknown_inherited_path_provenance_survives_aliases_and_literal_replacement",
+        "actual_metadata_helper_separates_absence_from_escape_denial_and_cycle",
+        "changed_link_or_scope_invalidates_a_pending_negative_observation",
+        "ordered_reference_observations",
+        "value_sources_keep_equal_literals_separate_and_follow_alias_mutation_and_closure_returns",
+        "cached_tables_and_multireturn_preserve_source_selection_without_changing_identity",
+        "expression_evidence_budget_cannot_be_swallowed_by_pcall_and_cycles_stay_bounded",
+        "evidence_paths_distinguish_dotted_keys_from_nested_values_and_bound_shared_expansion",
+        "loader_edges_and_api_calls_share_actual_order_and_document_provenance",
+        "ordered_modules_and_compilation_run_inside_the_restricted_worker",
+        "actual_policy_allows_selected_read_and_denies_other_read_write_network_and_process_creation",
+        "actual_capability_transport_retains_approved_folder_and_refuses_external_targets",
+        "contained_relative_absolute_and_alias_paths_preserve_bytes_and_link_evidence",
+        "unavailable_containment_or_landlock_refuses_folder_capture_without_fallback",
+        "malformed_marker_multiple_and_truncated_descriptors_are_refused",
+        "encoded_retention_budget_refuses_atomically_and_preview_bounds_unicode_and_controls",
+        "context_preserves_unknown_empty_and_byte_paths_and_builder_preserves_templates",
+        "test_review"
+      ],
+      "limits": "source-pinned plans/cache transitions, syntactic dependency sites, isolated selected-file and held-folder capture, typed metadata-only point observations separating absence from blocking uncertainty, bounded temporary GUI snapshots/analysis and cleanup, captured-resolution coordination with per-edge sequential evidence and separate load views, focused graphical files/calls inspection, supplied-context folder/template editor without added read authority, bounded per-value expression evidence and selected-value chains separate from Lua equality/cache identity, modeled storage writes with key insertion/overwrite/delete histories and alias/cell identity, bounded executed branch/loop history with immutable observation prefixes (including unrelated earlier decisions) separate from complete control/future-effect/edit ownership, source-derived registry dispatch with raw-key retention and unresolved collision/cycle findings separate from native value acceptance, explicit compiler/library profiles with four-release reference checks, restricted-worker all-nine-family primary parser models, actual vector constructor/validator flow, sparse-table/undefined-cast unknowns and exact binary64 transport separating native parsing from representable editor values under explicit fixture descriptors and C locale, exact registration/default/constraint flow for 755 standard rows plus device/bootstrap observations, version-specific typed call inspection with explicit unsupported-effect barriers, ordered immutable-byte evaluation under supplied/captured resolution contexts with explicit unknowns and compilation-only validation; frozen graph inputs with model/compiler pins, private save/reopen and shared retention undo; immutable multi-document patch plans with exact byte/context/schema/compiler pins, private reparse/compilation and expected/unaffected modeled-call/load/path/return comparisons, all-nine-family graphical source comparisons with selected-expression/original-literal choices and syntax-local direct vector/gap/gradient component/field editing preserving comments, whitespace, unrelated fields and unchanged native spellings with explicit refusal and explicit original-table selection through reached local/captured-module provenance with shared-use/later-write findings, native-validated typed controls and epoch/model/lifetime guards; private piece-based source revisions with immutable original captures, trusted-client byte generation, guarded keep/save/reopen and shared within-session undo; explicit scalar source/override reconciliation with sequential private plans, native-value equality, reviewed layer removal and atomic within-session undo; full family/external reconciliation and source export remain open; revised sources block override-only export; no complete graphical graph editor, persistent operation history, ownership or write authority; no complete editable graph import, language/native/API codecs, ownership/alias/mount/concurrency certification, wildcard enumeration, editable graph history/reconciliation, general declaration insertion/deletion/alias ownership, effective discovery, isolated preview, apply/recovery or resource/release acceptance"
+    },
     {
       "area": "gesture draft editor",
       "code": [
@@ -82,7 +405,10 @@
         "crates/editor-app/src/workspaces.rs",
         "crates/editor-app/src/selector_forms.rs",
         "data/workspaces.json",
-        "data/workspace-semantics.json"
+        "data/workspace-semantics.json",
+        "data/workspace-argument-semantics.json",
+        "data/workspace-argument-fixtures.json",
+        "data/workspace-object-fixtures.json"
       ],
       "test_references": [
         "every_audited_workspace_field_round_trips_as_an_explicit_override",
@@ -90,9 +416,26 @@
         "test_editor",
         "actual_restricted_worker_projects_workspace_rules_without_running_empty_hooks",
         "workspace_declarations_survive_application_reopen_and_schema_tampering_is_refused",
-        "scripts/workspace_source_probe.py"
+        "scripts/workspace_source_probe.py",
+        "scripts/workspace_argument_probe.py",
+        "scripts/workspace_object_probe.py"
       ],
-      "limits": "15 field controls, addresses/static filter clauses, enabled/unset, layout choices and retained options, source consolidation findings, private persistence and undo; no complete selector/layout/workflow codecs, source editing, live creation/matching, apply/recovery or preview certification"
+      "limits": "15 field controls, addresses/static filter clauses, enabled/unset, layout choices and retained options, source consolidation findings, private persistence and undo; 78 exact native argument-routing and 42 userdata/method observations with explicit inert parser/selector/manager/state/registration dependencies; ordered evaluator still stops at this API; no native primary-field/manager/reload lifetime certificate, complete selector/layout/workflow codecs, source editing, live creation/matching, apply/recovery or preview certification"
+    },
+    {
+      "area": "closed workspace source state",
+      "code": [
+        "crates/editor-core/src/workspace_rule/source_state.rs",
+        "data/workspace-argument-semantics.json",
+        "data/workspace-object-semantics.json"
+      ],
+      "test_references": [
+        "crates/editor-core/src/workspace_rule/source_state/tests.rs",
+        "model_object_methods_match_each_native_reference_scenario",
+        "literal_merge_keeps_shared_rule_identity_and_native_optional_distinctions",
+        "state_library_does_not_silently_enable_an_unmodeled_lua_api"
+      ],
+      "limits": "closed post-inspection literal rule records and separately allocated nonserializable realm-bound wrappers, enabled filtering/mutation and unbound typed methods, uncertainty/byte-option retention, atomic data refusal and encoded/step/wrapper/rule bounds; nine ordinary cases including correlation with 42 native object scenarios; no primary Lua argument/conversion validation, selector/effective/native application or real manager lifetime certificate, source evaluator routing, cross-family effects, graphical source editing/export/persistent history or full audit acceptance"
     },
     {
       "area": "binding/submap draft editor",
@@ -120,30 +463,71 @@
         "crates/editor-core/src/xkb.rs",
         "crates/editor-app/src/devices.rs",
         "crates/editor-app/src/device_forms.rs",
-        "data/devices.json"
+        "data/devices.json",
+        "data/device-additions.json",
+        "data/source-additions.json"
       ],
       "test_references": [
         "every_device_field_round_trips_the_pinned_static_lua_codec",
+        "tablet_tool_additions_round_trip_source_and_private_drafts_without_inserting_unset_fields",
+        "exact_legacy_device_schema_remains_compatible_only_for_its_original_overrides",
         "test_editor",
         "actual_worker_projects_devices_and_rejects_external_keyboard_entities",
         "device_drafts_survive_application_reopen_and_schema_drift_is_rejected"
       ],
-      "limits": "43 fields and name selector, author category hints, linked XKB choices from installed metadata, numeric acceleration/scroll builders, ordered drafts and private persistence; no hardware capability discovery, effective global/default merge, tag-to-bind analysis, keyboard compilation, source editing, live input recovery or activation/preview certificates"
+      "limits": "47 fields (43 original plus four native tablet-tool additions) and name selector, pressure/default and eraser/button forms, exact legacy-subset schema compatibility without inserted overrides, author category hints, linked XKB choices from installed metadata, numeric acceleration/scroll builders, ordered drafts and private persistence; no hardware capability discovery, effective global/default merge, tag-to-bind analysis, keyboard compilation, source editing, live input recovery or activation/preview certificates"
     },
     {
-      "area": "monitor draft editor",
+      "area": "monitor draft and source declaration editor",
       "code": [
         "crates/editor-core/src/monitor.rs",
         "crates/editor-app/src/monitors.rs",
-        "data/monitors.json"
+        "data/monitors.json",
+        "crates/editor-core/src/lua/monitor_inspection.rs",
+        "crates/editor-core/src/lua/replay/monitor_edit.rs",
+        "crates/editor-core/src/lua/replay/monitor_edit/fields.rs",
+        "crates/editor-core/src/lua/replay/monitor_edit/declarations.rs",
+        "crates/editor-app/src/source_declarations.rs",
+        "crates/editor-core/src/lua/replay/monitor_review.rs",
+        "crates/editor-app/src/source_monitors.rs",
+        "crates/editor-app/src/history.rs",
+        "crates/editor-app/src/source_changes.rs",
+        "crates/editor-app/src/source_graph.rs",
+        "data/monitor-source-semantics.json",
+        "data/monitor-source-fixtures.json",
+        "scripts/monitor_source_probe.py"
       ],
       "test_references": [
         "every_audited_monitor_field_has_a_typed_export_and_static_import",
         "test_editor",
         "monitor_drafts_survive_actual_application_reopen_without_replacing_them_with_source",
-        "actual_restricted_worker_projects_monitors_and_keeps_unknown_calls_inert"
+        "actual_restricted_worker_projects_monitors_and_keeps_unknown_calls_inert",
+        "monitor_dispatch_matches_pinned_handler_observations_without_claiming_native_application",
+        "monitor_source_comparison_tracks_cross_file_alias_impacts_and_retains_unrelated_source_bytes",
+        "monitor_output_and_compound_fields_use_exact_coordinates_and_product_validation",
+        "scalar_comparison_after_monitor_keeps_monitor_changes_in_the_review",
+        "monitor_source_inspection_and_comparison_run_in_the_restricted_worker",
+        "field_removal_preserves_all_comments_unrelated_fields_and_separator_variants",
+        "adding_fields_preserves_loaders_array_indices_comments_and_nil_placeholders",
+        "removal_uses_recorded_dynamic_keys_and_latest_assignment_or_rawset_without_resurrecting_values",
+        "latest_nil_write_can_add_a_field_without_being_masked_or_guessing_a_future_write",
+        "monitor_field_presence_edits_cross_the_restricted_worker_with_exact_row_guards",
+        "source_changes::test_monitor_workflow",
+        "monitor_gap_layout_keeps_signed_components_native_spelling_comments_and_unowned_fields",
+        "monitor_original_gap_table_reports_shared_and_later_write_impacts_without_fallback",
+        "monitor_layout_refuses_unowned_shapes_and_keeps_removed_component_effects_visible",
+        "monitor_gap_layout_comparisons_cross_the_worker_with_original_spelling_and_comments",
+        "source_declarations::test_workflow",
+        "source_monitors::test_workflow",
+        "crates/editor-core/tests/monitor_source_review.rs",
+        "monitor_source_draft_review_and_resolution_stay_in_the_restricted_worker",
+        "combined_monitor_graph_inverse_budgets_before_mutation_and_keeps_absence",
+        "crates/editor-core/tests/monitor_declarations.rs",
+        "declaration_sites_and_call_structure_changes_run_in_the_restricted_worker",
+        "removed_declaration_dependencies_remain_captured_and_reopen_with_further_source_edits",
+        "scripts/monitor_source_probe.py --check"
       ],
-      "limits": "22 versioned field controls and output selector, ordered drafts, explicit logical geometry, static Lua import/export and private saved snapshots; no hardware detection, effective rule resolution, source-span mutation/reconciliation, ICC decoding, monitor recovery, live apply or compositor preview certification"
+      "limits": "22 versioned field controls and output selector, ordered drafts, static import/export, private snapshots, source-pinned routing/primary codecs, captured value/presence edits, recorded constructor/assignment/rawset/nil writes, exact numeric and explicit invalid-input repair seeds, bounded multi-patch review, whole-declaration insertion/removal (including first/nested/unobserved sites), zero-result embedded removal, bounded API/loader sequence alignment, retained original dependency evidence and private cross-file revisions, reserved-area layout preservation with primary-value equality, comments/unrelated-field retention and explicit original constructors, explicit source/draft copy/write/insert/observed-sequence choices with independent private rebuild and combined graph/monitor undo, visible provisional monitor observations and scalar override reconciliation across unchanged monitor calls; no native helper/manager/hardware certificate, arbitrary unresolved-source repair, general unsupported-expression trivia recovery, persistent synchronization or general unresolved-declaration/external source reconciliation, ICC decoding, recovery, live apply or rendered preview certification"
     },
     {
       "area": "scalar draft forms",
@@ -155,7 +539,7 @@
         "tests::native_forms_and_draft_workflow",
         "lua::tests::exported_drafts_round_trip_all_types"
       ],
-      "limits": "initial values for 755 forms; not full per-field conformance, runtime activation or accessibility certification"
+      "limits": "initial values for 755 forms; ordinary forms still require native registration constraint/choice integration, including baseline Lua dropping declared constraints; not full per-field conformance, runtime activation or accessibility certification"
     },
     {
       "area": "static Lua and parser isolation",
@@ -191,6 +575,217 @@
         "test_review"
       ],
       "limits": "single Lua root, symlink-chain evidence and reviewed static revision reconciliation; no generated ownership/include graph, multi-file merge, persistent history/checkpoint journal or watched-path certification"
+    },
+    {
+      "area": "repeatable empty-workspace resource observation",
+      "code": [
+        "scripts/resource_probe.py",
+        "scripts/test_resource_probe.py",
+        "data/resource-idle-observation.json"
+      ],
+      "test_references": [
+        "test_observation_includes_helpers_spawned_by_other_threads",
+        "test_stop_cleans_the_owned_group_when_its_original_leader_already_exited",
+        "test_failed_gui_start_cleans_the_private_fixture"
+      ],
+      "limits": "three binary-identified private Xvfb/bus empty-workspace trials below 100 MiB sampled process-tree PSS and under 0.1 percent observed CPU over 60 seconds; short CPU windows cannot pass; no representative source/review/history/worker, physical Wayland/GPU/accessibility, latency, large-import, event/asset/preview or long-session resource certificate"
+    },
+    {
+      "area": "explicit scalar sample input review",
+      "code": [
+        "crates/editor-projection/src/layers.rs",
+        "crates/editor-projection/src/lib.rs",
+        "crates/editor-app/src/preview_layers.rs",
+        "crates/editor-app/src/projection_worker.rs",
+        "crates/editor-app/src/preview_preparation.rs",
+        "crates/editor-app/tests/workspace_graph.rs"
+      ],
+      "test_references": [
+        "explicit_pending_captured_and_unset_choices_preserve_the_entire_input",
+        "incomplete_observations_require_acknowledgement_and_stale_choices_never_fall_back",
+        "absent_unknown_and_rejected_values_are_distinct_and_duplicate_choices_are_refused",
+        "all_nine_selected_source_families_keep_their_modeled_native_representation",
+        "captured_negative_zero_keeps_its_float_and_vector_sign_bits_in_the_sample",
+        "preview_layer_worker_rebuilds_private_module_pieces_and_preserves_deleted_originals",
+        "preview_preparation::test_preparation"
+      ],
+      "limits": "restricted fresh base/private-piece scalar reconstruction with compiler/model/graph/registration pins, explicit pending/captured/unset sample choices, partial-analysis acknowledgement, native representation/sign-bit checks on emitted source values, lazy searchable review with separate pinned default metadata and unchanged draft/source bytes; no complete structured source layers, effective defaults, native manager effects, persistent scene/history/export, assets, actual renderer/capture/input or full audit/security/resource certificate"
+    },
+    {
+      "area": "fresh typed-draft preview projection",
+      "code": [
+        "crates/editor-projection/src/lib.rs",
+        "crates/editor-projection/src/tests.rs",
+        "crates/editor-projection/src/wire.rs",
+        "crates/editor-app/src/projection_worker.rs",
+        "crates/editor-app/src/preview_preparation.rs",
+        "crates/editor-app/tests/preview_projection.rs"
+      ],
+      "test_references": [
+        "opaque_source_hooks_actions_and_asset_paths_never_enter_generated_lua",
+        "every_family_projects_in_order_with_explicit_synthetic_identity_and_fidelity",
+        "every_audited_action_constructor_becomes_an_identified_inert_mock",
+        "stale_mapping_invalid_pins_and_oversized_geometry_never_yield_a_projection",
+        "unmapped_hardware_is_explicit_and_inert_without_host_name_fallback",
+        "projection_budget_refuses_a_large_valid_draft_without_returning_truncated_output",
+        "staged_correlation_refuses_other_inputs_scenarios_profiles_and_changed_content",
+        "worker_collections_refuse_excessive_counts_duplicates_and_hidden_fields",
+        "cancelled_staging_never_reaches_the_launcher",
+        "active_staging_cancellation_and_timeout_reap_the_owned_child",
+        "actual_staging_preserves_inputs_maps_private_hardware_and_keeps_commands_inert",
+        "actual_staging_role_denies_file_network_process_execution_and_closes_inherited_fds",
+        "staging_refuses_unknown_scenarios_and_nonregular_selected_files_without_writes",
+        "direct_staging_role_refuses_unknown_protocol_payload_and_request_overflow",
+        "preview_preparation::test_preparation"
+      ],
+      "limits": "fresh bounded Lua/report from validated typed draft families and explicit bounded synthetic identities, inert action replacement, source/hook/opaque asset exclusion, exact input/model/schema/compiler/scenario fingerprints, native compilation and independent syntax reparse; application-linked one-shot restricted staging with bounded nonblocking I/O/deadline/cancellation/reaping, bounded decoded collections, correlated artifacts and explicit native scenario/mapping/search review; no complete source-layer/default resolution, copied/decoded assets, telemetry/simulated effects, actual scenario clients/renderer/capture/input, combined sandbox or full preview/security certificate"
+    },
+    {
+      "area": "sealed runtime image and explicit private boundary prototype",
+      "code": [
+        "crates/editor-preview/src/image.rs",
+        "crates/editor-preview/src/image/tests.rs",
+        "crates/editor-preview/src/image/probe.rs",
+        "crates/editor-preview/tests/fixtures/runtime_probe.c",
+        "scripts/cgroup_kernel_probe.py",
+        "scripts/build_bwrap_probe.py",
+        "data/preview-ci-runtime-observation.json"
+      ],
+      "test_references": [
+        "frozen_image_survives_origin_mutation_without_retaining_source_offset",
+        "manifest_cannot_supply_authority_paths_links_modes_or_unknown_fields",
+        "digest_size_type_entry_and_parent_collisions_refuse_before_execution",
+        "canonical_identity_binds_all_paths_bytes_permissions_and_entry",
+        "image_budget_and_file_count_are_aggregate_requirements",
+        "failed_multi_file_capture_releases_partial_snapshot_descriptors",
+        "sealed_runtime_executes_only_inside_private_root_and_namespaces"
+      ],
+      "limits": "bounded canonical runtime manifest and explicit live-file capture with exact hashes, offset reads, immutable sealed copies and no host pathname discovery; six ordinary tests plus an opt-in ephemeral CI static-probe experiment requesting private root/proc/namespaces/environment/descriptors and a default-deny probe syscall profile; two exact Ubuntu 22.04 static boundary jobs and two separate Ubuntu 24.04 constructor-refusal/cleanup jobs observed with source/tool/binary/image/log identities; different-kernel pidfs/image observations are not a combined profile; no production launch/cgroup placement, authenticity/dependency/ABI approval, compositor/renderer policy, user-namespace channel mapping, frame/input, lifecycle/flooding or full preview/security certificate"
+    },
+    {
+      "area": "explicit pidfs process-object channel profile",
+      "code": [
+        "crates/editor-preview/src/channel/identity.rs",
+        "crates/editor-preview/src/channel/namespace_tests.rs",
+        "crates/editor-preview/src/channel.rs",
+        "scripts/cgroup_kernel_probe.py",
+        "data/preview-ci-pidfs-observation.json",
+        "data/preview-ci-userns-observation.json"
+      ],
+      "test_references": [
+        "pidfs_profile_and_explicit_anchor_transfer_real_child_frames_and_receipts",
+        "pidfs_auth_refuses_another_live_process_even_with_matching_user_credentials",
+        "identity_profiles_and_plain_or_dead_descriptors_cannot_replace_process_capabilities",
+        "pidfs_process_identity_rejects_thread_scoped_handles",
+        "unexpected_pidfd_records_are_closed_and_inheritance_disables_them",
+        "pidfs_frame_and_receipt_cross_a_private_pid_namespace",
+        "pidfs_frame_and_receipt_cross_mapped_user_and_pid_namespaces"
+      ],
+      "limits": "explicit 64-bit pidfs identity and per-message kernel process descriptors, native live-anchor/profile checks and negative descriptor-allocation failure handling with actual exhaustion/rights closure; ordinary-process, two exact PID-only exchanges and two separate privileged-CI mapped-user/PID/private-proc exchanges pass with recorded source/tool/log hashes and exact numeric translation; no combined runtime/image/syscall/device/network/IPC profile, compositor/input, lifecycle, malicious-peer or full preview/security certificate"
+    },
+    {
+      "area": "private frame channel and process correlation",
+      "code": [
+        "crates/editor-preview/src/channel.rs",
+        "crates/editor-preview/src/channel/tests.rs",
+        "crates/editor-preview/tests/frame_channel.rs"
+      ],
+      "test_references": [
+        "credentials_and_sealed_frames_cross_a_real_child_with_one_inflight_receipt",
+        "inherited_socket_creator_credentials_do_not_authorize_a_different_live_sender",
+        "dead_child_process_pin_refuses_the_channel_and_cannot_be_restored_from_a_pid",
+        "sender_observes_a_dead_pinned_child_and_closes_instead_of_waiting_for_a_receipt",
+        "valid_pixels_are_released_on_explicit_stop_disconnect_or_invalid_next_frame",
+        "every_packet_header_bit_change_is_rejected_without_leaking_a_received_descriptor",
+        "blocked_receipts_prevent_more_frame_reads_and_stop_closes_queued_rights",
+        "unexpected_pidfd_records_are_closed_and_inheritance_disables_them"
+      ],
+      "limits": "unnamed nonblocking sequenced-packet FD transfer with per-message kernel credentials/live process pins, one cooperative in-flight frame/matching receipt, bounded per-call parsing, owned pixel buffers and fatal/explicit stop release, actual child IPC and pipe-EOF descriptor closure checks; no executable/projection attestation, user-namespace credential mapping/full profile proof, hard kernel FD queue quota or malicious-peer resource containment, compositor capture/input, event-loop/crash supervision, whole-lab teardown or full preview/security certificate"
+    },
+    {
+      "area": "sealed raw preview frame boundary",
+      "code": [
+        "crates/editor-preview/src/frame.rs",
+        "crates/editor-preview/tests/sealed_frames.rs"
+      ],
+      "test_references": [
+        "sealed_pixels_are_exact_immutable_and_independent_of_the_descriptor_offset",
+        "wrong_session_generation_sequence_format_stride_and_length_never_replace_valid_pixels",
+        "mutable_descriptors_and_non_regular_objects_are_refused_before_pixel_reads",
+        "retention_bound_keeps_only_two_buffers_and_clear_does_not_allow_replay",
+        "rate_deadline_and_backwards_clock_refusals_do_not_consume_sequence_or_pixels"
+      ],
+      "limits": "sealed raw RGBA memfd construction and bounded offset-based copy, live session/generation/sequence checks, exact headers/lengths, 720p pixel budget, two retained buffers and 15 FPS acceptance; no image decoding or untrusted mapping; no complete capture-broker/profile or hard kernel descriptor-queue containment, capture/format conversion, compositor frames, display/input lifecycle, whole-process memory or full preview/security certificate"
+    },
+    {
+      "area": "opt-in private cgroup kernel fixture",
+      "code": [
+        "crates/editor-preview/src/cgroup/kernel_tests.rs",
+        "scripts/cgroup_kernel_probe.py",
+        "scripts/test_cgroup_kernel_probe.py",
+        ".github/workflows/ci.yml",
+        "data/preview-ci-resource-observation.json"
+      ],
+      "test_references": [
+        "delegated_kernel_limits_enforce_and_teardown_whole_subtrees"
+      ],
+      "limits": "two exact ephemeral CI kernel jobs observed default CPU throttling, leaf memory OOM handling, task refusal and private subtree/provider removal on one Linux kernel profile, with private-only controller setup and privilege-dropped trusted workers using live resource tokens; no developer-host controller modification, production stopped-child/compositor launch, concurrent-race/runtime/profile/crash/flooding or full preview/security certificate"
+    },
+    {
+      "area": "combined resource-gate and runtime-image CI experiment",
+      "code": [
+        "crates/editor-preview/src/image/probe.rs",
+        "crates/editor-preview/src/cgroup/launch.rs",
+        "scripts/cgroup_kernel_probe.py",
+        ".github/workflows/ci.yml",
+        "data/preview-ci-gated-runtime-observation.json"
+      ],
+      "test_references": [
+        "gated_policy_bytes_and_nonexecutable_mode_remain_sealed",
+        "gated_runtime_image_keeps_resource_placement_and_private_boundaries_together"
+      ],
+      "limits": "opt-in trusted static-target role combining stopped resource placement with immutable constructor/policy copies, explicit descriptor remapping, fixed private runtime image/namespace policy and bounded nonblocking diagnostics with explicit kill/reap/removal and diagnostic EOF; ordinary policy byte/mode checks pass; two exact Ubuntu22/Linux6.8 positive target-boundary jobs and two separate Ubuntu24/Linux7.0/6.17 exact constructor-refusal/cleanup jobs with matching checkout trees and actual source/Rust-binary/target/constructor/policy/log identities; no complete constructor/dependency approval, production GUI/runtime, channel/frame/input, compositor/renderer, hostile/crash/orphan/stall lifecycle or full audit certificate"
+    },
+    {
+      "area": "gated constructor creation inside a resource leaf",
+      "code": [
+        "crates/editor-preview/src/cgroup/launch.rs",
+        "crates/editor-preview/src/cgroup.rs",
+        "crates/editor-preview/tests/fixtures/launch_probe.c",
+        "scripts/cgroup_kernel_probe.py",
+        ".github/workflows/ci.yml",
+        "data/preview-ci-launch-observation.json"
+      ],
+      "test_references": [
+        "fixed_child_setup_reaches_the_stop_without_executing_the_entry",
+        "constructor_plan_requires_bounded_arguments_and_a_sealed_executable",
+        "closed_private_gate_reports_an_error_without_sigpipe",
+        "explicit_descriptor_lifetimes_close_with_the_plan_without_ambient_ownership",
+        "gated_constructor_stays_private_until_verified_release_and_cleans_up"
+      ],
+      "limits": "internal clone3 placement at creation with atomically owned pidfd, bounded sealed executable/explicit arguments and inherited descriptors, non-root/no-retained-capability checks, empty environment and fixed pre-exec syscall sequence, stopped membership/limit readback and private release channel, pidfd signals/waits and explicit leaf kill/reap/removal; ordinary setup/bounds/FD/SIGPIPE evidence and two successful fresh ephemeral CI jobs on Linux 7.0/6.17 for actual creation/release/refusal/reap/removal with source/static-probe/log and checkout-tree identities; Rust test binary digest unrecorded; fresh leaves avoid the observed kernel stale-kill-history defect without weakening cleanup; no complete executable/dependency approval, namespace/filesystem/device/network/syscall profile, hostile/crash/orphan/stall lifecycle, actual compositor/render/frame/input or full security/resource/preview certificate"
+    },
+    {
+      "area": "preview resource preparation and backend feasibility",
+      "code": [
+        "crates/editor-preview/src/cgroup.rs",
+        "crates/editor-preview/tests/resource_authority.rs",
+        "crates/editor-preview/tests/backend_reference.rs",
+        "crates/editor-app/tests/preview_delegation.rs",
+        "scripts/preview_backend_probe.py",
+        "data/preview-backend-sources.json",
+        "data/preview-backend-fixtures.json",
+        "data/preview-development-observation.json"
+      ],
+      "test_references": [
+        "plausible_control_files_cannot_turn_a_regular_directory_into_resource_authority",
+        "failed_preparation_keeps_cleanup_failure_and_resource_identity_visible",
+        "substituted_directory_is_not_removed_by_the_observed_identity_guard",
+        "diagnostic_rejects_blocking_non_directory_and_forged_control_inputs_without_writes",
+        "original_backend_observations_distinguish_headless_start_from_null_and_rendering",
+        "scripts/preview_backend_probe.py --check"
+      ],
+      "limits": "live-FD cgroup v2 validation and bounded private leaf preparation/cleanup, no parent controller changes, explicit preparation/cleanup errors, read-only selected delegation diagnostic and 32 original backend-start observations with inert device/allocator adapters; positive default-kernel mechanisms and trusted test self-placement observed separately in ephemeral CI; no production membership/exclusive-provider or concurrent teardown-race certificate, runtime image/private root/proc/syscall/device/IPC boundary, compositor execution, actual software-rendering/frame/input profile, crash supervision or full preview/security acceptance"
     },
     {
       "area": "read-only selected-session inspection",
@@ -300,7 +895,7 @@
       "requirement": "Concrete scalar codecs checked against source",
       "source": "docs/engineering-blueprint.md",
       "source_line": 322,
-      "scope_sha256": "6181786fe998ca87dfe2903f2a6b1cf39e150eea54ef18c80fda4e4b3b2f5c8a",
+      "scope_sha256": "011a375fb50c4d13cd50f2a20be15e8cb77a34d5d10b212950fa05d0ad2a2be2",
       "complete": false,
       "state": "not_proven"
     },
@@ -43831,6 +44426,74 @@
       "complete": false
     }
   ],
+  "additional_source_obligations": [
+    {
+      "id": "native-addition:DEVICE:eraser_button_mode",
+      "engine": "DEVICE",
+      "field": "eraser_button_mode",
+      "requirement": "Complete editor, source/persistence/history, version-correct semantics, observation/preview/apply/recovery and original release/security gates for this source-discovered registration",
+      "versions": [
+        "0.56.2",
+        "audited-main"
+      ],
+      "source": "docs/registration-scope-findings.json",
+      "complete": false,
+      "state": "required_unfinished"
+    },
+    {
+      "id": "native-addition:DEVICE:eraser_button_override",
+      "engine": "DEVICE",
+      "field": "eraser_button_override",
+      "requirement": "Complete editor, source/persistence/history, version-correct semantics, observation/preview/apply/recovery and original release/security gates for this source-discovered registration",
+      "versions": [
+        "0.56.2",
+        "audited-main"
+      ],
+      "source": "docs/registration-scope-findings.json",
+      "complete": false,
+      "state": "required_unfinished"
+    },
+    {
+      "id": "native-addition:DEVICE:pressure_range_max",
+      "engine": "DEVICE",
+      "field": "pressure_range_max",
+      "requirement": "Complete editor, source/persistence/history, version-correct semantics, observation/preview/apply/recovery and original release/security gates for this source-discovered registration",
+      "versions": [
+        "0.56.2",
+        "audited-main"
+      ],
+      "source": "docs/registration-scope-findings.json",
+      "complete": false,
+      "state": "required_unfinished"
+    },
+    {
+      "id": "native-addition:DEVICE:pressure_range_min",
+      "engine": "DEVICE",
+      "field": "pressure_range_min",
+      "requirement": "Complete editor, source/persistence/history, version-correct semantics, observation/preview/apply/recovery and original release/security gates for this source-discovered registration",
+      "versions": [
+        "0.56.2",
+        "audited-main"
+      ],
+      "source": "docs/registration-scope-findings.json",
+      "complete": false,
+      "state": "required_unfinished"
+    },
+    {
+      "id": "native-addition:SOURCE:autogenerated",
+      "engine": "SOURCE",
+      "field": "autogenerated",
+      "requirement": "Complete editor, source/persistence/history, version-correct semantics, observation/preview/apply/recovery and original release/security gates for this source-discovered registration",
+      "versions": [
+        "0.56.2",
+        "audited-main"
+      ],
+      "source": "docs/registration-scope-findings.json",
+      "complete": false,
+      "state": "required_unfinished"
+    }
+  ],
+  "required_contract_and_addition_count": 1458,
   "remaining_verification": [
     "Every per-version field, variant, alias, parser, observation, activation and preview contract",
     "All threat-table fixtures, grammar/event fuzzing, failure/race/crash injection and helper/lab teardown",
@@ -43838,6 +44501,6 @@
     "Independent hardware results for monitor/input recovery, hotplug, DPI, transformations, VRR/HDR and GPUs",
     "Accessibility, localization, source ownership, corrupted-state recovery, packaging, dependencies and signed releases",
     "Complete classification of documentation and adopted ecosystem adapter inventories; upstream registration diffs",
-    "Repeatable memory/CPU/long-session measurements rather than a single idle startup sample"
+    "Representative source/review/history/worker memory/CPU and latency, physical Wayland/GPU/accessibility, import/event/asset/preview and long-session measurements beyond the repeated empty-workspace observations"
   ]
 }

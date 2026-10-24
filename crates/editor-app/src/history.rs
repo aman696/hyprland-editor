@@ -8,7 +8,20 @@ use std::{
 
 const MAX_OPERATIONS: usize = 1000;
 const MAX_BYTES: usize = 8 * 1024 * 1024;
+pub(super) struct SourceInverse {
+    pub document: Arc<LuaDocument>,
+    pub origin: SourceIdentity,
+    document_bytes: usize,
+}
 pub(super) enum Undo {
+    Graph {
+        previous: Option<Arc<super::source_graph::Saved>>,
+        source: Option<SourceInverse>,
+        changes: Vec<(String, Option<Value>)>,
+        monitor_changed: bool,
+        previous_monitors: Option<Vec<hyprland_editor_core::monitor::Rule>>,
+        retained_bytes: usize,
+    },
     Field {
         id: String,
         previous: Option<Value>,
@@ -323,6 +336,17 @@ impl Undo {
                         + changes_bytes(changes)
                         + origin_bytes(origin)
                 }
+                Self::Graph {
+                    changes,
+                    retained_bytes,
+                    source,
+                    ..
+                } => {
+                    *retained_bytes
+                        + changes.capacity() * size_of::<(String, Option<Value>)>()
+                        + changes_bytes(changes)
+                        + source.as_ref().map_or(0, |s| origin_bytes(&s.origin))
+                }
                 Self::Gestures { retained_bytes, .. }
                 | Self::Animations { retained_bytes, .. }
                 | Self::Rules { retained_bytes, .. }
@@ -339,6 +363,51 @@ pub(super) struct History {
     entries: VecDeque<Undo>,
 }
 impl History {
+    #[cfg(test)]
+    pub(super) fn previous_graph(&self) -> Option<Option<String>> {
+        match self.entries.back() {
+            Some(Undo::Graph { previous, .. }) => {
+                Some(previous.as_ref().map(|g| g.fingerprint.clone()))
+            }
+            _ => None,
+        }
+    }
+    pub fn graph(
+        &mut self,
+        previous: Option<Arc<super::source_graph::Saved>>,
+        changes: Vec<(String, Option<Value>)>,
+        source: Option<(Arc<LuaDocument>, SourceIdentity)>,
+    ) -> Result<(), String> {
+        let retained_bytes = previous.as_ref().map_or(0, |g| g.history_cost);
+        self.push(Undo::Graph {
+            previous,
+            source: source.map(|(document, origin)| SourceInverse {
+                document_bytes: document_bytes(&document),
+                document,
+                origin,
+            }),
+            changes,
+            monitor_changed: false,
+            previous_monitors: None,
+            retained_bytes,
+        })
+    }
+    pub fn graph_monitors(
+        &mut self,
+        previous: Option<Arc<super::source_graph::Saved>>,
+        monitors: Option<Vec<hyprland_editor_core::monitor::Rule>>,
+    ) -> Result<(), String> {
+        let retained_bytes = previous.as_ref().map_or(0, |g| g.history_cost)
+            + monitors.as_ref().map_or(0, monitor_bytes);
+        self.push(Undo::Graph {
+            previous,
+            source: None,
+            changes: vec![],
+            monitor_changed: true,
+            previous_monitors: monitors,
+            retained_bytes,
+        })
+    }
     pub fn gestures(
         &mut self,
         previous: hyprland_editor_core::gesture::Draft,
@@ -387,7 +456,34 @@ impl History {
                             document,
                             document_bytes,
                             ..
-                        } if sources.insert(Arc::as_ptr(document) as usize) => *document_bytes,
+                        } if sources.insert((0, Arc::as_ptr(document) as usize)) => *document_bytes,
+                        Undo::Graph {
+                            previous, source, ..
+                        } => {
+                            previous.as_ref().map_or(0, |graph| {
+                                if sources.insert((1, Arc::as_ptr(&graph.bundle.sources) as usize))
+                                {
+                                    graph.shared_cost
+                                } else {
+                                    0
+                                }
+                            }) + previous.as_ref().map_or(0, |graph| {
+                                if sources.insert((
+                                    2,
+                                    Arc::as_ptr(&graph.bundle.graph.private.sources) as usize,
+                                )) {
+                                    graph.private_shared_cost
+                                } else {
+                                    0
+                                }
+                            }) + source.as_ref().map_or(0, |s| {
+                                if sources.insert((0, Arc::as_ptr(&s.document) as usize)) {
+                                    s.document_bytes
+                                } else {
+                                    0
+                                }
+                            })
+                        }
                         _ => 0,
                     }
             })
@@ -398,6 +494,14 @@ impl History {
         let single = entry.bytes()
             + match &entry {
                 Undo::Source { document_bytes, .. } => *document_bytes,
+                Undo::Graph {
+                    previous, source, ..
+                } => {
+                    previous
+                        .as_ref()
+                        .map_or(0, |g| g.shared_cost + g.private_shared_cost)
+                        + source.as_ref().map_or(0, |s| s.document_bytes)
+                }
                 _ => 0,
             };
         if single + 2 * size_of::<Undo>() > MAX_BYTES {
@@ -559,10 +663,22 @@ mod tests {
                 .unwrap();
         }
         assert_eq!(Arc::strong_count(&doc), 4);
+        history
+            .graph(None, vec![], Some((doc.clone(), origin.clone())))
+            .unwrap();
+        assert_eq!(Arc::strong_count(&doc), 5);
         let expected = history.entries.iter().map(Undo::bytes).sum::<usize>()
             + document_bytes(&doc)
             + history.entries.capacity() * size_of::<Undo>();
         assert_eq!(history.bytes(), expected);
+        let Undo::Graph {
+            source: Some(source),
+            ..
+        } = history.pop().unwrap()
+        else {
+            panic!("combined graph/root inverse")
+        };
+        assert!(Arc::ptr_eq(&source.document, &doc));
         let Undo::Source {
             changes, document, ..
         } = history.pop().unwrap()
@@ -593,6 +709,28 @@ mod tests {
         );
         assert!(history.monitors(vec![oversized]).is_err());
         assert!(matches!(history.pop(),Some(Undo::Field {id,..})if id=="kept"));
+    }
+    #[test]
+    fn combined_monitor_graph_inverse_budgets_before_mutation_and_keeps_absence() {
+        let mut history = History::default();
+        history.graph_monitors(None, None).unwrap();
+        assert!(matches!(
+            history.pop(),
+            Some(Undo::Graph {
+                monitor_changed: true,
+                previous_monitors: None,
+                previous: None,
+                ..
+            })
+        ));
+        history.field("kept", None).unwrap();
+        let mut large = hyprland_editor_core::monitor::Rule::new("large");
+        large.fields.insert(
+            "mirror".into(),
+            Value::String(String::with_capacity(MAX_BYTES + 1)),
+        );
+        assert!(history.graph_monitors(None, Some(vec![large])).is_err());
+        assert!(matches!(history.pop(),Some(Undo::Field {id,..}) if id=="kept"));
     }
     #[test]
     fn device_inverse_preserves_order_and_refuses_excess_capacity() {
@@ -648,5 +786,21 @@ mod tests {
             .field("too-large", Some(Value::String("x".repeat(MAX_BYTES))))
             .is_err());
         assert_eq!(history.entries.len(), 1);
+    }
+    #[test]
+    fn graph_and_override_inverse_budget_failure_preserves_existing_history() {
+        let mut history = History::default();
+        history.field("previous", Some(Value::Int(3))).unwrap();
+        assert!(history
+            .graph(
+                None,
+                vec![("large".into(), Some(Value::String("x".repeat(MAX_BYTES))))],
+                None,
+            )
+            .is_err());
+        assert!(
+            matches!(history.pop(),Some(Undo::Field{id,previous:Some(Value::Int(3))}) if id=="previous")
+        );
+        assert!(history.is_empty());
     }
 }

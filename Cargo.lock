@@ -477,6 +477,8 @@ dependencies = [
  "gtk4",
  "hyprland-editor-core",
  "hyprland-editor-discovery",
+ "hyprland-editor-preview",
+ "hyprland-editor-projection",
  "libadwaita",
  "libc",
  "serde",
@@ -507,6 +509,37 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+]
+
+[[package]]
+name = "hyprland-editor-lua55"
+version = "0.12.0"
+dependencies = [
+ "cc",
+ "libc",
+ "pkg-config",
+ "serde",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
+name = "hyprland-editor-preview"
+version = "0.12.0"
+dependencies = [
+ "libc",
+ "serde",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
+name = "hyprland-editor-projection"
+version = "0.12.0"
+dependencies = [
+ "hyprland-editor-core",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

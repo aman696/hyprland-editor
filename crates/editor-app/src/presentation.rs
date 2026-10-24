@@ -134,9 +134,12 @@ pub fn menu_model() -> gtk::gio::Menu {
         Some("win.reconcile-source"),
     );
     inspect.append(Some("Import Diagnostics"), Some("win.diagnostics"));
+    inspect.append(Some("Inspect Source Modules…"), Some("win.source-modules"));
     menu.append_section(None, &inspect);
     let tools = gtk::gio::Menu::new();
+    tools.append(Some("Prepare Preview Draft…"), Some("win.prepare-preview"));
     tools.append(Some("Hyprland Version…"), Some("win.compatibility"));
+    tools.append(Some("Check Optional Compiler…"), Some("win.check-compiler"));
     tools.append(Some("Feature Coverage"), Some("win.coverage"));
     tools.append(Some("About Draft Mode"), Some("win.draft-mode"));
     menu.append_section(None, &tools);

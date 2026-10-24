@@ -1,0 +1,30 @@
+[package]
+name = "hyprland-editor-lua55"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+# This role is built separately. Ordinary GUI/legacy builds require no Lua 5.5.
+[features]
+native55 = []
+
+[[bin]]
+name = "hyprland-editor-lua55"
+path = "src/main.rs"
+required-features = ["native55"]
+
+[[test]]
+name = "worker"
+path = "tests/worker.rs"
+required-features = ["native55"]
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+libc = "0.2"
+sha2 = "0.10"
+
+[build-dependencies]
+cc = "=1.8.0"
+pkg-config = "0.3"
