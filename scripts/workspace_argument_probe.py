@@ -183,7 +183,7 @@ def normalized(value):
     return value
 
 
-def check_observation(name, value, arity):
+def check_observation(name, value, arity, number_text=b'1.250000'):
     assert value['returns'] == [{'type': 'int', 'value': arity}], name
     assert value['object_push_requests'] == arity, name
     assert value['refresh_requests'] == arity, name
@@ -203,7 +203,7 @@ def check_observation(name, value, arity):
         assert len(value['delegated']) == 2 and len(value['errors_hex']) == 1, name
     elif name == 'typed_options':
         assert {bytes.fromhex(k): bytes.fromhex(v) for k, v in rule['layout_options_hex']} == {
-            b'text': b'a', b'yes': b'true', b'no': b'false', b'integer': b'7', b'float': b'1.250000'}, name
+            b'text': b'a', b'yes': b'true', b'no': b'false', b'integer': b'7', b'float': number_text}, name
     elif name == 'options_nul_bytes':
         assert rule['layout_options_hex'] == [[b'key'.hex(), b'value'.hex()]], name
     elif name in {'number_workspace', 'float_workspace', 'nul_workspace'}:

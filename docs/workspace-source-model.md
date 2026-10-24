@@ -2,6 +2,8 @@
 
 Workspace drafts already have graphical forms and static projection. Connecting them to arbitrary captured source additionally requires ordered rule identity, returned userdata and method effects. The current ordered evaluator still stops at `hl.workspace_rule`; the reference checks below do not change that behavior or enable source editing.
 
+The [native compatibility investigation](native-runtime-compatibility.md) verifies that both audited source snapshots request C++26 and search Lua 5.5 aliases followed by generic alternatives; the search is not a strict Lua range. The selected compositor’s actual Lua/compiler profile is not established by the application’s legacy reference assumptions. A separate cross-profile matrix passes against private official Lua 5.5.0/5.5.1 builds, but application worker/evaluator integration remains required. Numeric option conversion must retain its explicit observed standard-library profile.
+
 ## Executed native reference scope
 
 `scripts/workspace_argument_probe.py --check` verifies 78 cases across the two pinned snapshots. It fetches the exact audited handler files, checks their SHA-256 identities and API registration, extracts all fifteen factory descriptors, compares their keys/types with the draft catalogue and compiles the original callback. Field parsers/apply functions, workspace selector, manager, refresher and returned-object push are explicit inert adapters. Their actual behavior is not certified. Temporary source/build files are removed on success or failure; no repository checkout is retained.

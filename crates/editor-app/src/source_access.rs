@@ -1356,6 +1356,14 @@ pub(super) fn test_review(parent: &adw::Window, state: &Shared) {
         .analysis_view
         .test_status()
         .contains("Live desktop values are unverified"));
+    let compatibility = ui.analysis_view.test_compatibility();
+    assert!(
+        compatibility.contains("searches Lua 5.5 candidates")
+            && compatibility
+                .contains(&hyprland_editor_core::lua::replay::compiler_profile().release)
+            && compatibility.contains("unverified"),
+        "{compatibility}"
+    );
     let sources = ui.analysis_view.test_sources();
     assert!(
         sources.contains("Argument 1.general.border_size"),

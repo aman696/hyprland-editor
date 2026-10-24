@@ -14,6 +14,23 @@
   },
   "foundations": [
     {
+      "area": "explicit native build/profile compatibility evidence",
+      "code": [
+        "crates/editor-app/src/native_build.rs",
+        "crates/editor-app/src/source_analysis.rs",
+        "data/native-build-profiles.json",
+        "data/workspace-runtime-fixtures.json"
+      ],
+      "test_references": [
+        "scripts/native_build_probe.py",
+        "scripts/native_selection_probe.py",
+        "scripts/workspace_runtime_probe.py",
+        "scripts/workspace_target_profile_probe.py",
+        "source_access::test_review"
+      ],
+      "limits": "immutable source/blob/version build requests, twelve private CMake alternative-search selections/refusals, actual model-release disclosure, original workspace callback/object cases under four requested Lua/C++ contexts and separate fixed-six/general numeric-text groups, official hash-pinned private Lua 5.5.0/5.5.1 builds with temporary cleanup; no selected-compositor dependency observation, production Lua 5.5 worker/evaluator integration, complete primary parsing/manager lifetime or full feature/security/release acceptance"
+    },
+    {
       "area": "explicit private dependency inputs, archival and reconstruction",
       "code": [
         "crates/editor-core/src/workspace_graph/private.rs",

@@ -27,6 +27,8 @@ pub(super) struct View {
     after_keep: Option<Rc<dyn Fn()>>,
     model: Weak<RefCell<Option<Arc<Analysis>>>>,
     summary: gtk::glib::WeakRef<gtk::Label>,
+    compatibility: gtk::glib::WeakRef<gtk::Expander>,
+    compatibility_text: gtk::glib::WeakRef<gtk::Label>,
     status: gtk::glib::WeakRef<gtk::Label>,
     files: gtk::glib::WeakRef<gtk::DropDown>,
     calls: gtk::glib::WeakRef<gtk::DropDown>,
@@ -83,6 +85,15 @@ pub(super) fn build(
     let summary = label("No analysis yet.");
     summary.set_widget_name("dependency-analysis-summary");
     body.append(&summary);
+    let compatibility_text = label("");
+    compatibility_text.set_widget_name("source-native-compatibility-detail");
+    let compatibility = gtk::Expander::builder()
+        .label("Native validation incomplete")
+        .child(&compatibility_text)
+        .visible(false)
+        .build();
+    compatibility.set_widget_name("source-native-compatibility");
+    body.append(&compatibility);
     let status=label("Only files in allowed folders can be read. Source code is never executed, and drafts and desktop settings stay unchanged.");
     status.set_widget_name("dependency-analysis-status");
     body.append(&status);
@@ -198,6 +209,8 @@ pub(super) fn build(
         after_keep,
         model: Rc::downgrade(model),
         summary: summary.downgrade(),
+        compatibility: compatibility.downgrade(),
+        compatibility_text: compatibility_text.downgrade(),
         status: status.downgrade(),
         files: files.downgrade(),
         calls: calls.downgrade(),
@@ -439,6 +452,12 @@ impl View {
         self.status.upgrade().unwrap().text().into()
     }
     #[cfg(test)]
+    pub(super) fn test_compatibility(&self) -> String {
+        let expander = self.compatibility.upgrade().unwrap();
+        assert!(expander.is_visible());
+        self.compatibility_text.upgrade().unwrap().text().into()
+    }
+    #[cfg(test)]
     pub(super) fn test_sources(&self) -> String {
         self.source_expander.upgrade().unwrap().set_expanded(true);
         let buffer = self.provenance.upgrade().unwrap().buffer();
@@ -475,6 +494,13 @@ impl View {
     }
     pub(super) fn reset(&self, message: &str) {
         self.close_change();
+        if let Some(e) = self.compatibility.upgrade() {
+            e.set_visible(false);
+            e.set_expanded(false);
+        }
+        if let Some(text) = self.compatibility_text.upgrade() {
+            text.set_text("");
+        }
         if let Some(button) = self.overrides.upgrade() {
             button.set_sensitive(false);
         }
@@ -512,9 +538,21 @@ impl View {
     }
     pub(super) fn render(&self) {
         self.close_change();
+        if let Some(e) = self.compatibility.upgrade() {
+            e.set_visible(false);
+        }
         let Some(analysis) = self.model.upgrade().and_then(|m| m.borrow().clone()) else {
             return;
         };
+        if let Some(text) = self.compatibility_text.upgrade() {
+            text.set_text(&super::native_build::note(
+                &analysis.program.version,
+                &analysis.report.compiler_profile.release,
+            ));
+        }
+        if let Some(e) = self.compatibility.upgrade() {
+            e.set_visible(true);
+        }
         if let Some(button) = self.declarations.upgrade() {
             button.set_sensitive(!self.readonly.get() && !analysis.program.documents.is_empty());
         }

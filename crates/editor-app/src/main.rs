@@ -13,6 +13,7 @@ mod graph_migration;
 mod graph_transaction_tests;
 mod history;
 mod monitors;
+mod native_build;
 mod presentation;
 mod preview_layers;
 mod preview_preparation;
