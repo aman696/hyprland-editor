@@ -15,6 +15,7 @@ mod graph_migration;
 #[cfg(test)]
 mod graph_transaction_tests;
 mod history;
+mod legacy_source;
 mod monitors;
 mod native_build;
 mod presentation;
@@ -62,6 +63,7 @@ struct State {
     visible: Vec<Setting>,
     category: Option<String>,
     sources: BTreeMap<String, Arc<hyprland_editor_core::lua::LuaDocument>>,
+    legacy_sources: BTreeMap<String, Arc<legacy_source::Document>>,
     source_origins: BTreeMap<String, SourceIdentity>,
     source_graphs: BTreeMap<String, Arc<source_graph::Saved>>,
     saved_source_graphs: BTreeMap<String, Option<String>>,
@@ -944,6 +946,7 @@ fn initial_state() -> Shared {
         visible: vec![],
         category: None,
         sources: BTreeMap::new(),
+        legacy_sources: BTreeMap::new(),
         source_origins: BTreeMap::new(),
         source_graphs: BTreeMap::new(),
         saved_source_graphs: BTreeMap::new(),
@@ -1850,6 +1853,7 @@ mod tests {
         assert!(minimum <= 350, "Lua export review needs {minimum}px");
         review.destroy();
         workflow::test_source_persistence(&window);
+        workflow::test_legacy_persistence(&window);
         workflow::test_graph_migration(&window);
         compiler_check::test_ui(&window);
         preview_preparation::test_preparation(&window);

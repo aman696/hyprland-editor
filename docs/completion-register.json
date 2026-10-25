@@ -14,6 +14,22 @@
   },
   "foundations": [
     {
+      "area": "retained legacy scalar source workflow",
+      "code": [
+        "crates/editor-app/src/legacy_source.rs",
+        "crates/editor-app/src/workflow.rs",
+        "crates/editor-app/src/text_export.rs"
+      ],
+      "test_references": [
+        "edits_nested_duplicates_inserts_and_removes_without_losing_other_bytes",
+        "every_scalar_kind_roundtrips_and_dynamic_target_is_explicitly_replaced",
+        "refuses_unmodeled_escaping_without_altering_unchanged_lines",
+        "workflow::test_legacy_persistence",
+        "native_forms_and_draft_workflow"
+      ],
+      "limits": "selected-file conservative scalar projection retained in private workspace with captured identity, original-free save/reopen, last-assignment edit, qualified insertion, all-duplicate removal retaining comments and full-copy review/new-file export; Unicode/CRLF and nine scalar kinds, exact scalar reparse before output; no full legacy grammar/escaping, structured-source export, include/variable/command evaluation, relocation, effective-state or runtime/apply certificate"
+    },
+    {
       "area": "save reviewed Lua through the native file chooser",
       "code": [
         "crates/editor-app/src/text_export.rs",

@@ -2,7 +2,6 @@
 use super::{detail, notice, worker, Shared};
 use adw::prelude::*;
 use hyprland_editor_core::{
-    import,
     lua::LuaDocument,
     source::{Reattachment, SourceIdentity},
     storage,
@@ -36,6 +35,7 @@ struct Imported {
     graph: Option<std::sync::Arc<super::source_graph::Saved>>,
     draft: Draft,
     source: Option<LuaDocument>,
+    legacy: Option<super::legacy_source::Document>,
     origin: Option<SourceIdentity>,
     message: String,
     saved_json: bool,
@@ -92,24 +92,33 @@ fn read_import_for_review(
         if workspace.sources.len() > 1 && graph.is_none() {
             return Err("Multi-file workspace reopening needs the source-graph editor; this revision will not silently drop attached files".into());
         }
-        let (source, origin) = if let Some(root) = workspace.root() {
-            if root.language != SourceLanguage::Lua {
-                return Err("Legacy source snapshots need the lossless legacy editor; no source was rebound".into());
+        let (source, legacy, origin) = if let Some(root) = workspace.root() {
+            match root.language {
+                SourceLanguage::Lua => {
+                    let doc = parse_source(
+                        root.content.clone(),
+                        workspace.draft.version.clone(),
+                        &catalogue,
+                    )?;
+                    (Some(doc), None, Some(root.origin.clone()))
+                }
+                SourceLanguage::Legacy => {
+                    if workspace.draft.version != BASELINE || graph.is_some() {
+                        return Err("Legacy source snapshots require the baseline pack and cannot be a Lua source graph.".into());
+                    }
+                    let doc =
+                        super::legacy_source::Document::new(root.content.clone(), &catalogue)?;
+                    (None, Some(doc), Some(root.origin.clone()))
+                }
             }
-            let doc = parse_source(
-                root.content.clone(),
-                workspace.draft.version.clone(),
-                &catalogue,
-            )?;
-            (Some(doc), Some(root.origin.clone()))
         } else {
-            (None, None)
+            (None, None, None)
         };
         let diagnostics = source
             .as_ref()
             .map_or(0, |doc| doc.report.diagnostics.len());
         let saved_json = migration.is_none();
-        return Ok(Imported { migration,graph,draft:workspace.draft,source,origin,saved_json,monitors:workspace.monitors,devices:workspace.devices,bindings:workspace.bindings,workspace_rules:workspace.workspace_rules,rules:workspace.rules,animations:workspace.animations,gestures:workspace.gestures,
+        return Ok(Imported { migration,graph,draft:workspace.draft,source,legacy,origin,saved_json,monitors:workspace.monitors,devices:workspace.devices,bindings:workspace.bindings,workspace_rules:workspace.workspace_rules,rules:workspace.rules,animations:workspace.animations,gestures:workspace.gestures,
             message:format!("{} with {diagnostics} source diagnostics. Source snapshots were reparsed; recorded original paths were not opened. Desktop state is separate.", if saved_json { "Saved draft reopened" } else { "Rebuilt copy loaded; save it as a new private workspace" }) });
     }
     let captured = if path
@@ -121,13 +130,13 @@ fn read_import_for_review(
         storage::read_source(&path)?
     };
     match path.extension().and_then(|s|s.to_str()) {
-        Some("json")=>Draft::from_json(&captured.content,&catalogue).map(|draft|Imported{migration:None,graph:None,draft,source:None,origin:None,monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),message:"Validated value-only draft loaded".into(),saved_json:true}),
-        Some("conf")=>import::legacy(&captured.content,&catalogue).map(|r|Imported{migration:None,graph:None,message:format!("Imported {} literal overrides; {} lines skipped; {} repeated keys. Includes and variables remain unresolved. Active state is separate.",r.draft.values.len(),r.skipped.len(),r.duplicate_keys.len()),draft:r.draft,source:None,origin:None,monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),saved_json:false}),
+        Some("json")=>Draft::from_json(&captured.content,&catalogue).map(|draft|Imported{migration:None,graph:None,draft,source:None,legacy:None,origin:None,monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),message:"Validated value-only draft loaded".into(),saved_json:true}),
+        Some("conf")=>super::legacy_source::Document::new(captured.content,&catalogue).map(|doc|Imported{migration:None,graph:None,message:format!("Retained legacy source and {} literal overrides; {} lines unresolved; {} repeated keys. Includes and variables are not evaluated. Review Source Copy exports scalar edits while preserving other directives.",doc.report.draft.values.len(),doc.report.skipped.len(),doc.report.duplicate_keys.len()),draft:doc.report.draft.clone(),source:None,legacy:Some(doc),origin:Some(captured.identity),monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),saved_json:false}),
         Some("lua")=>{
             let doc=parse_source(captured.content,version,&catalogue)?;
             let mut message=format!("Imported {} scalar declarations, {} monitor rules and {} device rules; {} diagnostics. Effective values are not inferred by executing Lua.",doc.report.draft.values.len(),doc.report.monitors.len(),doc.report.devices.len(),doc.report.diagnostics.len());
             if doc.report.opaque_effects{message.push_str(" Opaque code remains in the source; this is a partial projection.");}
-            Ok(Imported{migration:None,graph:None,draft:doc.report.draft.clone(),monitors:doc.report.monitors.clone(),devices:doc.report.devices.clone(),bindings:doc.report.bindings.clone(),workspace_rules:doc.report.workspace_rules.clone(),rules:doc.report.rules.clone(),animations:doc.report.animations.clone(),gestures:doc.report.gestures.clone(),source:Some(doc),origin:Some(captured.identity),message,saved_json:false})
+            Ok(Imported{migration:None,graph:None,draft:doc.report.draft.clone(),monitors:doc.report.monitors.clone(),devices:doc.report.devices.clone(),bindings:doc.report.bindings.clone(),workspace_rules:doc.report.workspace_rules.clone(),rules:doc.report.rules.clone(),animations:doc.report.animations.clone(),gestures:doc.report.gestures.clone(),source:Some(doc),legacy:None,origin:Some(captured.identity),message,saved_json:false})
         },_=>Err("Select saved .hye workspace, draft JSON, legacy .conf or Lua .lua source".into()),
     }
 }
@@ -157,6 +166,7 @@ pub(super) fn check_workspace(path: PathBuf) -> Result<serde_json::Value, String
         "source_sha256":imported.source.as_ref().map(|s|s.report.source_sha256.as_str()),
         "opaque_effects":imported.source.as_ref().is_some_and(|s|s.report.opaque_effects),
         "source_diagnostics":imported.source.as_ref().map_or(0,|s|s.report.diagnostics.len()),
+        "legacy_source_retained":imported.legacy.is_some(),
         "source_graph_replayed":imported.graph.is_some(),
         "source_graph_documents":imported.graph.as_ref().map_or(0,|g|g.bundle.sources.len()),
         "source_graph_bindings":imported.graph.as_ref().map_or(0,|g|g.bundle.graph.bindings.len()),
@@ -216,6 +226,18 @@ pub(super) fn captured_workspace(s: &super::State) -> Result<Workspace, String> 
             .get(version)
             .ok_or("Reimport the original source before saving its context")?;
         snapshot = snapshot.with_root(doc.source.clone(), origin.clone());
+    } else if let Some(doc) = s.legacy_sources.get(version) {
+        let origin = s
+            .source_origins
+            .get(version)
+            .ok_or("Legacy source identity missing")?;
+        snapshot.root_source = Some("root".into());
+        snapshot.sources.push(workspace::SourceSnapshot {
+            id: "root".into(),
+            language: SourceLanguage::Legacy,
+            content: doc.content.clone(),
+            origin: origin.clone(),
+        });
     }
     Ok(snapshot)
 }
@@ -442,7 +464,18 @@ pub(super) fn connect_source_copy(
     button.connect_clicked(move|button|{
         let Some(window)=win.upgrade()else{return;};let s=state.borrow();
         if s.source_graphs.contains_key(&s.draft.version) {drop(s);if let Err(error)=super::source_analysis::show_saved(&window,&state){notice(&window,"Cannot open source files",&error);}return;}
-        let Some(doc)=s.sources.get(&s.draft.version).cloned()else{drop(s);notice(&window,"Lua source required","Import a Lua source file first. JSON drafts and legacy imports have no Lua source spans to preserve.");return;};
+        if let Some(doc)=s.legacy_sources.get(&s.draft.version).cloned(){
+            let snapshot=match captured_workspace(&s){Ok(snapshot)=>snapshot,Err(error)=>{drop(s);notice(&window,"Cannot prepare legacy copy",&error);return;}};
+            if !snapshot.monitors.is_empty() || !snapshot.devices.is_empty() || !snapshot.bindings.is_empty() || !snapshot.workspace_rules.is_empty() || !snapshot.rules.is_empty() || !snapshot.animations.declarations.is_empty() || !snapshot.gestures.declarations.is_empty() {
+                drop(s);notice(&window,"Structured legacy export pending","This source copy includes scalar edits only. Save the project to keep all structured drafts; exporting those drafts into legacy syntax is not implemented yet.");return;
+            }
+            let catalogue=s.catalogue.clone();let draft=s.draft.clone();let generation=s.generation;drop(s);let state=state.clone();let win=window.downgrade();let button=button.downgrade();if let Some(button)=button.upgrade(){button.set_sensitive(false);}
+            background(move||doc.edited_copy(&draft,&catalogue),move|result|{
+                if let Some(button)=button.upgrade(){button.set_sensitive(true);}let Some(win)=win.upgrade()else{return;};if state.borrow().generation!=generation{notice(&win,"Draft changed","The draft changed while the copy was prepared. Review again to use the current edits.");return;}
+                match result{Ok(source)=>{super::text_export::review_legacy(&win,source);},Err(error)=>notice(&win,"Cannot prepare legacy copy",&error)}
+            });return;
+        }
+        let Some(doc)=s.sources.get(&s.draft.version).cloned()else{drop(s);notice(&window,"Source required","Import a .lua or .conf source file first. Value-only JSON drafts have no original source to preserve.");return;};
         if s.monitors.get(&s.draft.version).map(Vec::as_slice).unwrap_or(&[]) != doc.report.monitors.as_slice() { drop(s);notice(&window,"Monitor source edits pending","Monitor drafts can be saved and reviewed as Lua. Updating their original source spans is not implemented yet; a scalar source copy would omit those edits.");return; }
         if !hyprland_editor_core::device::same_declarations(s.devices.get(&s.draft.version).map(Vec::as_slice).unwrap_or(&[]),&doc.report.devices) {drop(s);notice(&window,"Device source edits pending","Device drafts can be saved and reviewed as Lua. Device source editing is not implemented; a scalar source copy would omit these changes.");return;}
         let bindings=s.bindings.get(&s.draft.version).cloned().unwrap_or_default();if !bindings.same_declarations(&doc.report.bindings,&s.draft.version){drop(s);notice(&window,"Binding source edits pending","Binding drafts can be saved/exported. Original binding source editing is not implemented; a scalar copy would omit your binding edits.");return;}
@@ -502,6 +535,12 @@ fn apply_import(
             .insert(imported.draft.version.clone(), std::sync::Arc::new(doc));
     } else {
         s.sources.remove(&imported.draft.version);
+    }
+    if let Some(doc) = imported.legacy {
+        s.legacy_sources
+            .insert(imported.draft.version.clone(), std::sync::Arc::new(doc));
+    } else {
+        s.legacy_sources.remove(&imported.draft.version);
     }
     if imported.saved_json {
         s.saved.insert(
@@ -576,7 +615,7 @@ pub(super) fn connect_reattach(
     button.connect_clicked(move|button|{
         let Some(win)=win.upgrade()else{return;};
         let (origin,version,generation,catalogue)={
-            let s=state.borrow();let Some(origin)=s.source_origins.get(&s.draft.version).cloned()else {
+            let s=state.borrow();if s.legacy_sources.contains_key(&s.draft.version){notice(&win,"Legacy source verification pending","Saved legacy projects retain their original bytes. Verifying or rebinding an external legacy file is not available yet; import a changed file as a separate project.");return;}let Some(origin)=s.source_origins.get(&s.draft.version).cloned()else {
                 notice(&win,"Source snapshot required","Open a saved source-backed draft or import Lua before verifying its source.");return;
             };(origin,s.draft.version.clone(),s.generation,s.catalogue.clone())
         };
@@ -637,9 +676,16 @@ pub(super) fn connect_diagnostics(
     let win = window.downgrade();
     let state = state.clone();
     button.connect_clicked(move|_|{
-        let Some(win)=win.upgrade()else{return;};let s=state.borrow();let Some(doc)=s.sources.get(&s.draft.version)else{drop(s);notice(&win,"No Lua import report","Import Lua source first to inspect its line diagnostics.");return;};
-        let text=if doc.report.diagnostics.is_empty(){"No unresolved syntax was found in the supported static subset. This is not a runtime validation certificate.".into()}else{doc.report.diagnostics.iter().map(|d|format!("Line {}: {}",d.line,d.message)).collect::<Vec<_>>().join("\n")};
-        drop(s);let dialog=adw::Window::builder().title("Static Lua import diagnostics").transient_for(&win).default_width(760).default_height(500).build();let view=gtk::TextView::builder().editable(false).wrap_mode(gtk::WrapMode::WordChar).left_margin(16).right_margin(16).top_margin(16).bottom_margin(16).build();view.buffer().set_text(&text);dialog.set_content(Some(&gtk::ScrolledWindow::builder().child(&view).build()));dialog.present();
+        let Some(win)=win.upgrade()else{return;};let s=state.borrow();
+        let (title,text)=if let Some(doc)=s.legacy_sources.get(&s.draft.version){
+            let mut text=format!("{} recognized scalar values. Includes, variables and commands were not evaluated. Unresolved lines remain in the saved source.\n",doc.report.draft.values.len());
+            for line in &doc.report.skipped {text.push_str(&format!("\nLine {line}: unresolved directive or value"));}
+            for key in &doc.report.duplicate_keys {text.push_str(&format!("\nRepeated scalar: {key} (last recognized value shown)"));}
+            ("Legacy import diagnostics",text)
+        }else if let Some(doc)=s.sources.get(&s.draft.version){
+            ("Static Lua import diagnostics",if doc.report.diagnostics.is_empty(){"No unresolved syntax was found in the supported static subset. This is not a runtime validation certificate.".into()}else{doc.report.diagnostics.iter().map(|d|format!("Line {}: {}",d.line,d.message)).collect::<Vec<_>>().join("\n")})
+        }else{drop(s);notice(&win,"No import report","Import a .lua or .conf source file to inspect its line diagnostics.");return;};
+        drop(s);let dialog=adw::Window::builder().title(title).transient_for(&win).default_width(760).default_height(500).build();let view=gtk::TextView::builder().editable(false).wrap_mode(gtk::WrapMode::WordChar).left_margin(16).right_margin(16).top_margin(16).bottom_margin(16).build();view.buffer().set_text(&text);dialog.set_content(Some(&gtk::ScrolledWindow::builder().child(&view).build()));dialog.present();
     });
 }
 
@@ -855,6 +901,114 @@ pub(super) fn test_graph_migration(window: &adw::ApplicationWindow) {
 }
 
 #[cfg(test)]
+pub(super) fn test_legacy_persistence(window: &adw::ApplicationWindow) {
+    use hyprland_editor_core::Value;
+    let root = super::test_support::TempDir::new("legacy-project");
+    let original = root.path().join("original.conf");
+    let source = "# retained café\r\nsource = missing.conf\r\nexec = never-run\r\ngeneral {\r\n  border_size = 2 # keep\r\n}\r\n";
+    std::fs::write(&original, source).unwrap();
+    let catalogue = hyprland_editor_core::catalogue();
+    let imported = read_import(original.clone(), catalogue.clone(), BASELINE.into()).unwrap();
+    std::fs::remove_file(&original).unwrap();
+    let state = super::initial_state();
+    let status = gtk::Label::new(None);
+    let version = gtk::DropDown::from_strings(&[BASELINE, "audited-main"]);
+    let selection = gtk::SingleSelection::new(Some(gtk::StringList::new(&[])));
+    let panel = gtk::Box::new(gtk::Orientation::Vertical, 0);
+    apply_import(imported, &state, &status, &version, &selection, &panel);
+    assert!(state.borrow().sources.is_empty());
+    assert_eq!(state.borrow().legacy_sources[BASELINE].content, source);
+    {
+        let mut s = state.borrow_mut();
+        s.remember("general:border_size").unwrap();
+        s.draft
+            .values
+            .insert("general:border_size".into(), Value::Int(6));
+    }
+    let save = gtk::Button::new();
+    connect_save_at(&save, window, &state, &status, Some(root.path().into()));
+    save.emit_clicked();
+    let settle_until = |done: &dyn Fn() -> bool| {
+        let context = gtk::glib::MainContext::default();
+        let start = std::time::Instant::now();
+        while !done() {
+            while context.pending() {
+                context.iteration(false);
+            }
+            assert!(
+                start.elapsed() < Duration::from_secs(8),
+                "Legacy workflow did not finish"
+            );
+            std::thread::sleep(Duration::from_millis(10));
+        }
+    };
+    settle_until(&|| save.is_sensitive());
+    assert!(!state.borrow().dirty());
+    let saved = std::fs::read_dir(root.path().join("hyprland-editor"))
+        .unwrap()
+        .next()
+        .unwrap()
+        .unwrap()
+        .path();
+    let bytes = std::fs::read(&saved).unwrap();
+    let imported = read_import(saved.clone(), catalogue.clone(), BASELINE.into()).unwrap();
+    assert!(imported.saved_json);
+    assert_eq!(imported.legacy.as_ref().unwrap().content, source);
+    apply_import(imported, &state, &status, &version, &selection, &panel);
+    assert!(!state.borrow().dirty());
+    let copy = gtk::Button::new();
+    connect_source_copy(&copy, window, &state);
+    copy.emit_clicked();
+    settle_until(&|| copy.is_sensitive());
+    let review = gtk::Window::list_toplevels()
+        .into_iter()
+        .filter_map(|widget| widget.downcast::<gtk::Window>().ok())
+        .find(|window| window.title().as_deref() == Some("Review edited legacy source copy"))
+        .unwrap();
+    fn descendants(widget: &gtk::Widget) -> Vec<gtk::Widget> {
+        let mut result = vec![widget.clone()];
+        let mut child = widget.first_child();
+        while let Some(widget) = child {
+            result.extend(descendants(&widget));
+            child = widget.next_sibling();
+        }
+        result
+    }
+    let children = descendants(review.upcast_ref());
+    let text = children
+        .iter()
+        .find_map(|widget| widget.downcast_ref::<gtk::TextView>())
+        .unwrap();
+    let buffer = text.buffer();
+    assert_eq!(
+        buffer
+            .text(&buffer.start_iter(), &buffer.end_iter(), false)
+            .as_str(),
+        source.replace("border_size = 2", "border_size = 6")
+    );
+    for label in ["Copy Config", "Save Config File…"] {
+        assert!(children.iter().any(|widget| widget
+            .downcast_ref::<gtk::Button>()
+            .is_some_and(|button| button.label().as_deref() == Some(label))));
+    }
+    let (minimum, _, _, _) = review
+        .child()
+        .unwrap()
+        .measure(gtk::Orientation::Horizontal, -1);
+    assert!(minimum <= 350, "Legacy review needs {minimum}px");
+    review.destroy();
+    assert!(!original.exists());
+    assert_eq!(std::fs::read(&saved).unwrap(), bytes);
+    // A subsequent value-only import cannot keep an unrelated legacy source.
+    let json = root.path().join("values.json");
+    std::fs::write(&json, serde_json::to_vec(&Draft::new(BASELINE)).unwrap()).unwrap();
+    let imported = read_import(json, catalogue, BASELINE.into()).unwrap();
+    apply_import(imported, &state, &status, &version, &selection, &panel);
+    assert!(state.borrow().legacy_sources.is_empty());
+    assert!(state.borrow().source_origins.is_empty());
+}
+
+#[cfg(test)]
 pub(super) fn test_source_persistence(window: &adw::ApplicationWindow) {
     use std::time::{Instant, SystemTime, UNIX_EPOCH};
     let root = std::env::temp_dir().join(format!(
@@ -894,6 +1048,7 @@ pub(super) fn test_source_persistence(window: &adw::ApplicationWindow) {
             graph: None,
             draft,
             source: Some(doc),
+            legacy: None,
             origin: Some(captured.identity.clone()),
             saved_json: false,
             monitors: vec![],

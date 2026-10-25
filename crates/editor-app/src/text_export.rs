@@ -1,4 +1,4 @@
-//! Review an immutable Lua snapshot and save a separate, explicitly chosen copy.
+//! Review an immutable configuration snapshot and save a separate chosen copy.
 use adw::prelude::*;
 use gtk::{gio, glib};
 use std::rc::Rc;
@@ -7,10 +7,10 @@ const MAX_EXPORT_BYTES: usize = 4 * hyprland_editor_core::MAX_DOCUMENT_BYTES;
 
 async fn save_new(file: &gio::File, bytes: Vec<u8>) -> Result<(), String> {
     if !file.is_native() {
-        return Err("Choose a local folder for this Lua copy.".into());
+        return Err("Choose a local folder for this configuration copy.".into());
     }
     if bytes.len() > MAX_EXPORT_BYTES {
-        return Err("This Lua copy exceeds the 4 MiB export limit.".into());
+        return Err("This configuration copy exceeds the 4 MiB export limit.".into());
     }
     // GIO create refuses existing files, including symlinks. An export cannot
     // overwrite the original configuration or an earlier reviewed copy.
@@ -21,7 +21,10 @@ async fn save_new(file: &gio::File, bytes: Vec<u8>) -> Result<(), String> {
             if error.matches(gio::IOErrorEnum::Exists) {
                 "That file already exists. Choose a new filename.".into()
             } else {
-                format!("Could not create the Lua copy: {}", error.message())
+                format!(
+                    "Could not create the configuration copy: {}",
+                    error.message()
+                )
             }
         })?;
     let expected = bytes.len();
@@ -42,6 +45,21 @@ pub(super) fn review(
     description: &str,
     filename: &str,
     text: String,
+) -> adw::Window {
+    review_format(parent, title, description, filename, text, false)
+}
+
+pub(super) fn review_legacy(parent: &impl IsA<gtk::Window>, text: String) -> adw::Window {
+    review_format(parent,"Review edited legacy source copy","Scalar edits are included; other directives and comments are preserved. Includes and variables remain unresolved. Save with a new filename. Structured draft changes are not exported here.","hyprland-edited.conf",text,true)
+}
+
+fn review_format(
+    parent: &impl IsA<gtk::Window>,
+    title: &str,
+    description: &str,
+    filename: &str,
+    text: String,
+    legacy: bool,
 ) -> adw::Window {
     let dialog = adw::Window::builder()
         .title(title)
@@ -72,8 +90,12 @@ pub(super) fn review(
     content.append(&status);
     let actions = gtk::Box::new(gtk::Orientation::Horizontal, 8);
     actions.set_halign(gtk::Align::End);
-    let copy = gtk::Button::with_label("Copy Lua");
-    let save = gtk::Button::with_label("Save Lua File…");
+    let copy = gtk::Button::with_label(if legacy { "Copy Config" } else { "Copy Lua" });
+    let save = gtk::Button::with_label(if legacy {
+        "Save Config File…"
+    } else {
+        "Save Lua File…"
+    });
     save.add_css_class("suggested-action");
     actions.append(&copy);
     actions.append(&save);
@@ -85,7 +107,7 @@ pub(super) fn review(
     copy.connect_clicked(move |_| {
         if let Some(window) = window.upgrade() {
             window.clipboard().set_text(&snapshot);
-            copied.set_text("Reviewed Lua copied to the clipboard.");
+            copied.set_text("Reviewed configuration copied to the clipboard.");
         }
     });
     let window = dialog.downgrade();
@@ -95,13 +117,21 @@ pub(super) fn review(
             return;
         };
         let chooser = gtk::FileDialog::builder()
-            .title("Save Lua Copy")
+            .title(if legacy {
+                "Save Legacy Config Copy"
+            } else {
+                "Save Lua Copy"
+            })
             .initial_name(&filename)
             .accept_label("Save Copy")
             .build();
         let filter = gtk::FileFilter::new();
-        filter.set_name(Some("Lua configuration (*.lua)"));
-        filter.add_pattern("*.lua");
+        filter.set_name(Some(if legacy {
+            "Legacy configuration (*.conf)"
+        } else {
+            "Lua configuration (*.lua)"
+        }));
+        filter.add_pattern(if legacy { "*.conf" } else { "*.lua" });
         let filters = gio::ListStore::new::<gtk::FileFilter>();
         filters.append(&filter);
         chooser.set_filters(Some(&filters));
@@ -140,7 +170,7 @@ pub(super) fn review(
                 button.set_sensitive(false);
             }
             if let Some(status) = status.upgrade() {
-                status.set_text("Saving the reviewed Lua copy…");
+                status.set_text("Saving the reviewed configuration copy…");
             }
             let result = save_new(&file, text.as_bytes().to_vec()).await;
             if let Some(button) = button.upgrade() {
@@ -148,7 +178,10 @@ pub(super) fn review(
             }
             if let Some(status) = status.upgrade() {
                 match result {
-                    Ok(()) => status.set_text(&format!("Lua copy saved to {}", file.parse_name())),
+                    Ok(()) => status.set_text(&format!(
+                        "Configuration copy saved to {}",
+                        file.parse_name()
+                    )),
                     Err(error) => status.set_text(&error),
                 }
             }
