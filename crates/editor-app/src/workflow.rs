@@ -430,41 +430,7 @@ pub(super) fn connect_live(
     });
 }
 fn review_copy(window: &adw::ApplicationWindow, text: String) {
-    let dialog = adw::Window::builder()
-        .title("Review edited Lua source copy")
-        .transient_for(window)
-        .modal(true)
-        .default_width(800)
-        .default_height(620)
-        .build();
-    let b = gtk::Box::new(gtk::Orientation::Vertical, 12);
-    b.set_margin_start(16);
-    b.set_margin_end(16);
-    b.set_margin_top(16);
-    b.set_margin_bottom(16);
-    b.append(&super::label("Only changed literal expressions were replaced. Other statements and comments are preserved as text and have not been executed. Copying does not publish or apply this configuration."));
-    let view = gtk::TextView::builder()
-        .editable(false)
-        .monospace(true)
-        .wrap_mode(gtk::WrapMode::WordChar)
-        .build();
-    view.buffer().set_text(&text);
-    b.append(
-        &gtk::ScrolledWindow::builder()
-            .child(&view)
-            .vexpand(true)
-            .build(),
-    );
-    let copy = gtk::Button::with_label("Copy source to clipboard");
-    b.append(&copy);
-    let win = dialog.downgrade();
-    copy.connect_clicked(move |_| {
-        if let Some(w) = win.upgrade() {
-            w.clipboard().set_text(&text);
-        }
-    });
-    dialog.set_content(Some(&b));
-    dialog.present();
+    super::text_export::review(window,"Review edited Lua source copy","Changed literal expressions are included in this reviewed copy. Other statements and comments are preserved. Save it with a new filename or copy the text.","hyprland-edited.lua",text);
 }
 pub(super) fn connect_source_copy(
     button: &gtk::Button,

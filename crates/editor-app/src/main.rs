@@ -41,6 +41,7 @@ mod source_provenance;
 mod source_reconcile;
 #[cfg(test)]
 mod test_support;
+mod text_export;
 mod worker;
 mod workflow;
 mod workspaces;
@@ -1274,7 +1275,7 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     review.connect_clicked(move |_|{
         let Some(win) = win.upgrade() else { return; };
         let state=s.borrow();let result=state.export_lua();match result{Ok(lua)=>{
-            let dialog=adw::Window::builder().title("Review draft overrides").transient_for(&win).modal(true).default_width(720).default_height(560).build();let b=gtk::Box::new(gtk::Orientation::Vertical,12);b.set_margin_top(16);b.set_margin_bottom(16);b.set_margin_start(16);b.set_margin_end(16);b.append(&label("These are draft overrides, not a diff against the running compositor. Copying does not apply them."));let text=gtk::TextView::builder().editable(false).monospace(true).wrap_mode(gtk::WrapMode::WordChar).build();text.buffer().set_text(&lua);b.append(&gtk::ScrolledWindow::builder().child(&text).vexpand(true).build());let copy=gtk::Button::with_label("Copy reviewed Lua to clipboard");b.append(&copy);let w=dialog.downgrade();copy.connect_clicked(move |_|{if let Some(w)=w.upgrade(){w.clipboard().set_text(&lua);}});dialog.set_content(Some(&b));dialog.present();
+            text_export::review(&win,"Review draft overrides","Review the current draft overrides, then save a separate Lua copy or copy the text. This export contains the reviewed snapshot.","hyprland-overrides.lua",lua);
         },Err(e)=>notice(&win,"Invalid draft",&e)}
     });
     workflow::connect_import(
@@ -1832,6 +1833,21 @@ mod tests {
         assert!(descendants(review.upcast_ref())
             .iter()
             .any(|w| w.is::<gtk::TextView>()));
+        for label in ["Copy Lua", "Save Lua File…"] {
+            assert!(
+                descendants(review.upcast_ref()).iter().any(|widget| {
+                    widget
+                        .downcast_ref::<gtk::Button>()
+                        .is_some_and(|button| button.label().as_deref() == Some(label))
+                }),
+                "Missing export action: {label}"
+            );
+        }
+        let (minimum, _, _, _) = review
+            .child()
+            .unwrap()
+            .measure(gtk::Orientation::Horizontal, -1);
+        assert!(minimum <= 350, "Lua export review needs {minimum}px");
         review.destroy();
         workflow::test_source_persistence(&window);
         workflow::test_graph_migration(&window);
