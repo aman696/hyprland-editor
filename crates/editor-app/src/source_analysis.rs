@@ -45,6 +45,7 @@ pub(super) struct View {
     overrides: gtk::glib::WeakRef<gtk::Button>,
     monitor_review: gtk::glib::WeakRef<gtk::Button>,
     declarations: gtk::glib::WeakRef<gtk::Button>,
+    export_file: gtk::glib::WeakRef<gtk::Button>,
     change_window: Rc<RefCell<Option<gtk::glib::WeakRef<adw::Window>>>>,
 }
 fn short(bytes: &[u8]) -> String {
@@ -115,6 +116,11 @@ pub(super) fn build(
     files.set_widget_name("dependency-analysis-file");
     files.update_property(&[gtk::accessible::Property::Label("Analyzed source snapshot")]);
     files_page.append(&files);
+    let export_file = gtk::Button::with_label("Review / Export This File");
+    export_file.set_widget_name("source-analysis-export-file");
+    export_file.set_halign(gtk::Align::Start);
+    export_file.set_sensitive(false);
+    files_page.append(&export_file);
     let declarations = gtk::Button::with_label("Add / Remove Monitor Declaration");
     declarations.set_widget_name("source-analysis-declarations");
     declarations.set_halign(gtk::Align::Start);
@@ -227,6 +233,7 @@ pub(super) fn build(
         overrides: overrides.downgrade(),
         monitor_review: monitor_review.downgrade(),
         declarations: declarations.downgrade(),
+        export_file: export_file.downgrade(),
         change_window: Rc::new(RefCell::new(None)),
     };
     let v = view.clone();
@@ -241,6 +248,8 @@ pub(super) fn build(
     monitor_review.connect_clicked(move |_| v.monitor_review());
     let v = view.clone();
     declarations.connect_clicked(move |_| v.declarations());
+    let v = view.clone();
+    export_file.connect_clicked(move |_| v.export_file());
     (body, view)
 }
 impl View {
@@ -257,6 +266,30 @@ impl View {
                 button.set_sensitive(false);
             }
         }
+    }
+    fn export_file(&self) {
+        let (Some(analysis), Some(files), Some(button)) = (
+            self.model
+                .upgrade()
+                .and_then(|model| model.borrow().clone()),
+            self.files.upgrade(),
+            self.export_file.upgrade(),
+        ) else {
+            return;
+        };
+        let Some(document) = analysis.program.documents.get(files.selected() as usize) else {
+            return;
+        };
+        let Some(parent) = button.root().and_downcast::<gtk::Window>() else {
+            return;
+        };
+        let location = display_path_bytes(&document.load_name);
+        let filename = location
+            .rsplit('/')
+            .next()
+            .filter(|name| !name.is_empty() && name.ends_with(".lua"))
+            .unwrap_or("hyprland-source-copy.lua");
+        super::text_export::review(&parent,"Review source file copy",&format!("{}\nThis copy includes kept source edits for this file. Separate draft overrides are not merged into it. Save each needed file with a new filename.", short(&document.load_name)),filename,document.source.clone());
     }
     fn monitor_review(&self) {
         if self.readonly.get() {
@@ -494,6 +527,9 @@ impl View {
     }
     pub(super) fn reset(&self, message: &str) {
         self.close_change();
+        if let Some(button) = self.export_file.upgrade() {
+            button.set_sensitive(false);
+        }
         if let Some(e) = self.compatibility.upgrade() {
             e.set_visible(false);
             e.set_expanded(false);
@@ -694,7 +730,11 @@ impl View {
         ) else {
             return;
         };
-        let Some(doc) = analysis.program.documents.get(pick.selected() as usize) else {
+        let selected = analysis.program.documents.get(pick.selected() as usize);
+        if let Some(button) = self.export_file.upgrade() {
+            button.set_sensitive(selected.is_some());
+        }
+        let Some(doc) = selected else {
             view.buffer().set_text("");
             return;
         };

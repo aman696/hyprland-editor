@@ -37,7 +37,7 @@ async fn save_new(file: &gio::File, bytes: Vec<u8>) -> Result<(), String> {
 }
 
 pub(super) fn review(
-    parent: &adw::ApplicationWindow,
+    parent: &impl IsA<gtk::Window>,
     title: &str,
     description: &str,
     filename: &str,

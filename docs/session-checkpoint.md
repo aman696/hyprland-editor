@@ -1,5 +1,8 @@
 # Session checkpoint — 25 October 2026
 
+Retained multi-file projects now expose **Review / Export This File** in the Files tab. **Review Source Copy** opens the retained project instead of refusing it. The exporter uses each full materialized source document, including kept private edits; it never saves inspection headers or a shortened excerpt. The native fixture exports review snapshots for both files after the original capture tree is deleted, and compares their complete bytes with fresh reconstruction. Files remain independent copies; combined source/draft export and project relocation remain unfinished.
+
+
 The review windows now offer **Save Lua File…** as well as clipboard copy. The native chooser saves an immutable reviewed snapshot into a new local file; original/existing files are not overwritten. Supported draft exports and edited single-source copies share the action. App tests cover exact bytes, existing/symlink refusal and oversized output; the private GUI workflow checks both actions and a 350 px minimum content width. Full multi-file source export remains required. See [GUI Lua export](lua-export.md).
 
 

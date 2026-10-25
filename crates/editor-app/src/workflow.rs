@@ -440,8 +440,9 @@ pub(super) fn connect_source_copy(
     let win = window.downgrade();
     let state = state.clone();
     button.connect_clicked(move|button|{
-        let Some(window)=win.upgrade()else{return;};let s=state.borrow();let Some(doc)=s.sources.get(&s.draft.version).cloned()else{drop(s);notice(&window,"Lua source required","Import a Lua source file first. JSON drafts and legacy imports have no Lua source spans to preserve.");return;};
-        if s.source_graphs.contains_key(&s.draft.version) {drop(s);notice(&window,"Graph source editing pending","This workspace retains multiple-file resolution inputs. A single-file copy cannot preserve their ownership and dependencies; save the full private workspace.");return;}
+        let Some(window)=win.upgrade()else{return;};let s=state.borrow();
+        if s.source_graphs.contains_key(&s.draft.version) {drop(s);if let Err(error)=super::source_analysis::show_saved(&window,&state){notice(&window,"Cannot open source files",&error);}return;}
+        let Some(doc)=s.sources.get(&s.draft.version).cloned()else{drop(s);notice(&window,"Lua source required","Import a Lua source file first. JSON drafts and legacy imports have no Lua source spans to preserve.");return;};
         if s.monitors.get(&s.draft.version).map(Vec::as_slice).unwrap_or(&[]) != doc.report.monitors.as_slice() { drop(s);notice(&window,"Monitor source edits pending","Monitor drafts can be saved and reviewed as Lua. Updating their original source spans is not implemented yet; a scalar source copy would omit those edits.");return; }
         if !hyprland_editor_core::device::same_declarations(s.devices.get(&s.draft.version).map(Vec::as_slice).unwrap_or(&[]),&doc.report.devices) {drop(s);notice(&window,"Device source edits pending","Device drafts can be saved and reviewed as Lua. Device source editing is not implemented; a scalar source copy would omit these changes.");return;}
         let bindings=s.bindings.get(&s.draft.version).cloned().unwrap_or_default();if !bindings.same_declarations(&doc.report.bindings,&s.draft.version){drop(s);notice(&window,"Binding source edits pending","Binding drafts can be saved/exported. Original binding source editing is not implemented; a scalar copy would omit your binding edits.");return;}

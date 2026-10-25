@@ -18,13 +18,14 @@
       "code": [
         "crates/editor-app/src/text_export.rs",
         "crates/editor-app/src/main.rs",
-        "crates/editor-app/src/workflow.rs"
+        "crates/editor-app/src/workflow.rs",
+        "crates/editor-app/src/source_analysis.rs"
       ],
       "test_references": [
         "exported_snapshot_preserves_bytes_and_never_overwrites_files_or_symlink_targets",
         "native_forms_and_draft_workflow"
       ],
-      "limits": "immutable reviewed draft/supported single-source copy, native local chooser and asynchronous private new-file creation, exact UTF-8/CRLF bytes, existing-file/symlink refusal, 4 MiB bound and success after close, both review actions and 350 px minimum content width; failed writes can leave a reported partial copy; no full multi-file source export, atomic file transaction, source/draft reconciliation, live apply or whole audit certificate"
+      "limits": "immutable reviewed draft/supported single-source copy or selected full materialized graph file (including private edits), graph Review Source Copy routing to Files and deleted-original byte comparison, native local chooser and asynchronous private new-file creation, exact UTF-8/CRLF bytes, existing-file/symlink refusal, 4 MiB bound and success after close, both review actions and 350 px minimum content width; failed writes can leave a reported partial copy; no full multi-file source export, atomic file transaction, source/draft reconciliation, live apply or whole audit certificate"
     },
     {
       "area": "separate explicit native55 ordered source analysis",

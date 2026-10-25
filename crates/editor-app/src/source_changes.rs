@@ -2452,6 +2452,51 @@ pub(super) fn test_keep_in_draft(parent: &adw::Window, state: &super::Shared) {
     assert!(model.program.documents[0].source.contains("border_size=6"));
     assert!(model.frozen.is_some());
     assert!(!model.report.runtime_verified);
+    // Export each materialized file, including private edits, rather than the
+    // annotated/truncated source preview or the original captured bytes.
+    stack.set_visible_child_name("files");
+    let files = named(parent.upcast_ref(), "dependency-analysis-file")
+        .unwrap()
+        .downcast::<gtk::DropDown>()
+        .unwrap();
+    let export = named(parent.upcast_ref(), "source-analysis-export-file")
+        .unwrap()
+        .downcast::<gtk::Button>()
+        .unwrap();
+    for (index, document) in model.program.documents.iter().enumerate() {
+        files.set_selected(index as u32);
+        assert!(export.is_sensitive());
+        export.emit_clicked();
+        let review = gtk::Window::list_toplevels()
+            .into_iter()
+            .filter_map(|window| window.downcast::<adw::Window>().ok())
+            .find(|window| {
+                window.is_visible() && window.title().as_deref() == Some("Review source file copy")
+            })
+            .unwrap();
+        fn text_view(widget: &gtk::Widget) -> Option<gtk::TextView> {
+            if let Some(view) = widget.downcast_ref::<gtk::TextView>() {
+                return Some(view.clone());
+            }
+            let mut child = widget.first_child();
+            while let Some(widget) = child {
+                if let Some(view) = text_view(&widget) {
+                    return Some(view);
+                }
+                child = widget.next_sibling();
+            }
+            None
+        }
+        let buffer = text_view(review.upcast_ref()).unwrap().buffer();
+        assert_eq!(
+            buffer
+                .text(&buffer.start_iter(), &buffer.end_iter(), true)
+                .as_str(),
+            document.source
+        );
+        review.destroy();
+    }
+    files.set_selected(0);
     if let Ok(path) = std::env::var("HYPRLAND_EDITOR_TEST_CAPTURE") {
         stack.set_visible_child_name("files");
         let start = std::time::Instant::now();
