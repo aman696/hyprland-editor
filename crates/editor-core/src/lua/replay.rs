@@ -33,6 +33,7 @@ use tree_sitter::{Node, Tree};
 #[serde(rename_all = "snake_case")]
 pub enum Profile {
     HyprlandLua54,
+    HyprlandLua55,
     SyntheticEmit,
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -58,13 +59,16 @@ pub struct CompilerProfile {
 pub fn compiler_profile() -> CompilerProfile {
     static PROFILE: std::sync::LazyLock<CompilerProfile> = std::sync::LazyLock::new(|| {
         // SAFETY: original adapter returns only its compile-time header constant.
-        let code = unsafe { hye_lua54_release() };
+        let code = unsafe { hye_native_release() };
         let release = format!("{}.{}.{}", code / 10_000, (code / 100) % 100, code % 100);
         let mut identity = [0u8; 512];
         // SAFETY: original adapter writes at most this buffer's capacity.
-        let length = unsafe { hye_lua54_identity(identity.as_mut_ptr(), identity.len()) };
+        let length = unsafe { hye_native_identity(identity.as_mut_ptr(), identity.len()) };
         let library_identity = String::from_utf8_lossy(&identity[..length]).into_owned();
+        #[cfg(feature = "native54")]
         let source = include_str!("../../../../data/lua-profiles.json");
+        #[cfg(feature = "native55")]
+        let source = include_str!("../../../../data/lua55-profiles.json");
         let matrix: serde_json::Value =
             serde_json::from_str(source).expect("Bundled Lua profile schema");
         let matching = matrix["profiles"]
@@ -366,14 +370,23 @@ struct Parsed<'a> {
     tree: std::result::Result<Tree, String>,
     compile: std::result::Result<(), CompileFailure>,
 }
+fn source_identifier(node: Node<'_>) -> bool {
+    node.kind() == "identifier" || (cfg!(feature = "native55") && node.kind() == "global")
+}
 enum CompileFailure {
     Syntax(Vec<u8>),
     Budget,
 }
 unsafe extern "C" {
-    fn hye_lua54_release() -> u32;
-    fn hye_lua54_identity(output: *mut u8, capacity: usize) -> usize;
-    fn hye_lua54_compile(
+    #[cfg_attr(feature = "native54", link_name = "hye_lua54_release")]
+    #[cfg_attr(feature = "native55", link_name = "hye_lua55_release")]
+    fn hye_native_release() -> u32;
+    #[cfg_attr(feature = "native54", link_name = "hye_lua54_identity")]
+    #[cfg_attr(feature = "native55", link_name = "hye_lua55_identity")]
+    fn hye_native_identity(output: *mut u8, capacity: usize) -> usize;
+    #[cfg_attr(feature = "native54", link_name = "hye_lua54_compile")]
+    #[cfg_attr(feature = "native55", link_name = "hye_lua55_compile")]
+    fn hye_native_compile(
         source: *const u8,
         length: usize,
         name: *const libc::c_char,
@@ -392,7 +405,7 @@ fn compile(document: &Document) -> std::result::Result<(), CompileFailure> {
     // The original adapter writes at most capacity bytes and returns the
     // written count. It retains no pointers and never invokes compiled code.
     let status = unsafe {
-        hye_lua54_compile(
+        hye_native_compile(
             document.source.as_ptr(),
             document.source.len(),
             name.as_ptr(),
@@ -671,7 +684,7 @@ impl<'a> Engine<'a> {
             path_decisions: vec![],
             track_writes: false,
         };
-        e.globals = e.table(program.profile == Profile::HyprlandLua54)?;
+        e.globals = e.table(program.profile != Profile::SyntheticEmit)?;
         e.package = e.table(true)?;
         e.registry = e.table(false)?;
         e.preload = e.table(false)?;
@@ -943,6 +956,16 @@ impl<'a> Engine<'a> {
 }
 
 pub fn validate_program(program: &Program) -> std::result::Result<(), String> {
+    let incompatible = if cfg!(feature = "native55") {
+        program.profile == Profile::HyprlandLua54
+    } else {
+        program.profile == Profile::HyprlandLua55
+    };
+    if incompatible {
+        return Err(
+            "The requested source profile differs from this worker's native Lua family".into(),
+        );
+    }
     if ![BASELINE, AUDITED_MAIN].contains(&program.version.as_str())
         || program.documents.is_empty()
         || program.documents.len() > 32

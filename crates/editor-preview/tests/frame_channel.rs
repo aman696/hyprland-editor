@@ -269,10 +269,29 @@ fn ordinary_files_stream_sockets_and_closed_peers_cannot_become_frame_endpoints(
         )
         .unwrap();
     drop(right);
-    assert_eq!(
-        receiver.try_receive().unwrap_err().kind(),
-        io::ErrorKind::BrokenPipe
-    );
+    // Another test thread can fork while this endpoint exists. Its inherited
+    // CLOEXEC socket remains open until exec finishes, so EOF is asynchronous.
+    // Keep requiring actual disconnect and fatal channel closure, within a bound.
+    let deadline = std::time::Instant::now() + Duration::from_secs(2);
+    let error = loop {
+        let error = receiver.try_receive().unwrap_err();
+        if error.kind() != io::ErrorKind::WouldBlock {
+            break error;
+        }
+        assert!(
+            std::time::Instant::now() < deadline,
+            "Closed peer did not reach EOF"
+        );
+        let mut event = libc::pollfd {
+            fd: receiver.poll_descriptor().unwrap().as_raw_fd(),
+            events: libc::POLLIN,
+            revents: 0,
+        };
+        // SAFETY: the receiver retains this descriptor throughout the poll.
+        let result = unsafe { libc::poll(&mut event, 1, 10) };
+        assert!(result >= 0 || io::Error::last_os_error().kind() == io::ErrorKind::Interrupted);
+    };
+    assert_eq!(error.kind(), io::ErrorKind::BrokenPipe);
     assert!(receiver.poll_descriptor().is_err());
 }
 

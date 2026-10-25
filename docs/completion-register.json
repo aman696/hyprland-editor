@@ -14,6 +14,28 @@
   },
   "foundations": [
     {
+      "area": "separate explicit native55 ordered source analysis",
+      "code": [
+        "crates/editor-core/src/bin/source55.rs",
+        "crates/editor-core/Cargo.toml",
+        "crates/editor-core/build.rs",
+        "crates/editor-core/src/lua/replay.rs",
+        "crates/editor-core/src/lua/replay/eval.rs",
+        "data/lua55-profiles.json",
+        "data/lua55-source-worker-observation.json"
+      ],
+      "test_references": [
+        "scripts/workspace_target_profile_probe.py --source-worker-conformance",
+        "crates/editor-core/tests/source55.rs",
+        "crates/editor-core/tests/ordered_replay.rs",
+        "crates/editor-core/tests/scalar_codec.rs",
+        "crates/editor-core/tests/complex_scalar_codec.rs",
+        "scripts/lua_numeric_probe.py --model-reference",
+        "numeric_writer_migration_preserves_existing_observation_and_refuses_observation_renewal"
+      ],
+      "limits": "separate explicit native55 build with absent/combined family refusal, seeded native compilation and primitive conversions, profile-pinned bounded restricted ordered analysis, contextual global names/scopes and nil error objects, native compilation of loop/const/declaration restrictions, private dependency/provenance reports, ordinary-user/no-capability/environment/FD/syscall/CPU/address-space/wall/wire bounds; global initializers remain unresolved; nineteen reviewed legacy model paths preserve both numeric-aware writer observations and seven prior active/archive private writers; no installed source launcher, GUI profile selection, complete language/API/source export, selected compositor or full security/resource/release certificate"
+    },
+    {
       "area": "native Lua release admission before constructors",
       "code": [
         "crates/editor-core/native/lua_syntax.cpp",
@@ -182,7 +204,8 @@
         "data/migrations/graph-model-resolution.json",
         "data/migrations/graph-model-workspace-state.json",
         "data/migrations/graph-model-compiler-extraction.json",
-        "data/migrations/graph-model-numeric-codegen.json"
+        "data/migrations/graph-model-numeric-codegen.json",
+        "data/migrations/graph-model-native-admission.json"
       ],
       "test_references": [
         "reviewed_transition_pins_exact_monitor_differences_and_refuses_unreviewed_builds",
@@ -191,7 +214,7 @@
         "workflow::test_graph_migration",
         "private_input_model_migration_preserves_active_and_archived_data_with_fresh_reanalysis"
       ],
-      "limits": "eighteen exact reviewed dependency/storage/monitor/merge/private-input/correspondence/resolution/workspace-state/compiler-extraction/numeric-observation/native-admission transitions with bounded held-inode input, unknown-payload refusal, fresh restricted-worker captured-view/dependency/private-piece reanalysis, exact legacy compiler match and reviewed numeric-observation renewal, byte/value preservation, cancel/epoch/unsaved guards and new private save; no original-path reads or restored folder access, general model/schema/profile conversion, persistent history, full source export/reconciliation or full audit certificate"
+      "limits": "nineteen exact reviewed dependency/storage/monitor/merge/private-input/correspondence/resolution/workspace-state/compiler-extraction/numeric-observation/native-admission/separate-source-image transitions with bounded held-inode input, unknown-payload refusal, fresh restricted-worker captured-view/dependency/private-piece reanalysis, exact legacy compiler match and reviewed numeric-observation renewal, byte/value preservation, cancel/epoch/unsaved guards and new private save; no original-path reads or restored folder access, general model/schema/profile conversion, persistent history, full source export/reconciliation or full audit certificate"
     },
     {
       "area": "source dependency capture and ordered evaluation",

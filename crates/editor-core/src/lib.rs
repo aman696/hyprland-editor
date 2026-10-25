@@ -1,4 +1,9 @@
 //! Non-executing, version-scoped editing. This crate has no compositor IPC.
+#[cfg(any(
+    all(feature = "native54", feature = "native55"),
+    not(any(feature = "native54", feature = "native55"))
+))]
+compile_error!("Select exactly one native Lua family; build each worker image independently");
 pub mod action;
 pub mod animation;
 pub mod binding;

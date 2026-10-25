@@ -680,6 +680,7 @@ fn private_input_model_migration_preserves_active_and_archived_data_with_fresh_r
         "a556ebf4459ee6ee9196ca2593faaa48c2d8c4d8b383a7b030c54e1cf951778c",
         "88ba4156fabecf287c34d467b80ba9db8e13a8682afca20af55c106cfc850922",
         "2f9e39f0f1efb1e7be298cfbc50c43ed754f7e3feb68d64d7cb7ed7fbca76128",
+        "09e8ff83ee94a51dcd54a7c7cbabc543d956b4e1c50eb5369b3b56cf34b3b0b9",
     ] {
         for version in [BASELINE, AUDITED_MAIN] {
             for archive in [false, true] {
@@ -714,7 +715,11 @@ fn private_input_model_migration_preserves_active_and_archived_data_with_fresh_r
                         graph.private.apply(&base, &graph.revisions, &plan).unwrap();
                 }
                 snapshot.source_graph.as_mut().unwrap().schema_sha256 = previous.into();
-                if previous != "2f9e39f0f1efb1e7be298cfbc50c43ed754f7e3feb68d64d7cb7ed7fbca76128" {
+                if !matches!(
+                    previous,
+                    "2f9e39f0f1efb1e7be298cfbc50c43ed754f7e3feb68d64d7cb7ed7fbca76128"
+                        | "09e8ff83ee94a51dcd54a7c7cbabc543d956b4e1c50eb5369b3b56cf34b3b0b9"
+                ) {
                     snapshot
                         .source_graph
                         .as_mut()
@@ -1149,6 +1154,7 @@ fn reviewed_graph_migrations_rebuild_deleted_sources_and_private_pieces_without_
             "a556ebf4459ee6ee9196ca2593faaa48c2d8c4d8b383a7b030c54e1cf951778c",
             "88ba4156fabecf287c34d467b80ba9db8e13a8682afca20af55c106cfc850922",
             "2f9e39f0f1efb1e7be298cfbc50c43ed754f7e3feb68d64d7cb7ed7fbca76128",
+            "09e8ff83ee94a51dcd54a7c7cbabc543d956b4e1c50eb5369b3b56cf34b3b0b9",
         ] {
             let root = root();
             let mut snapshot = fixture(&root, version);
@@ -1175,7 +1181,11 @@ fn reviewed_graph_migrations_rebuild_deleted_sources_and_private_pieces_without_
                 hyprland_editor_core::workspace_graph::revisions::apply(&base, &[], &plan).unwrap();
             let mut value = serde_json::to_value(&snapshot).unwrap();
             value["source_graph"]["schema_sha256"] = old.into();
-            if old != "2f9e39f0f1efb1e7be298cfbc50c43ed754f7e3feb68d64d7cb7ed7fbca76128" {
+            if !matches!(
+                old,
+                "2f9e39f0f1efb1e7be298cfbc50c43ed754f7e3feb68d64d7cb7ed7fbca76128"
+                    | "09e8ff83ee94a51dcd54a7c7cbabc543d956b4e1c50eb5369b3b56cf34b3b0b9"
+            ) {
                 value["source_graph"]["compiler"]
                     .as_object_mut()
                     .unwrap()
@@ -1207,7 +1217,11 @@ fn reviewed_graph_migrations_rebuild_deleted_sources_and_private_pieces_without_
             assert_eq!(report["needs_review_and_new_private_save"], true);
             assert_eq!(
                 report["migration"]["compiler_observation_renewed"],
-                old != "2f9e39f0f1efb1e7be298cfbc50c43ed754f7e3feb68d64d7cb7ed7fbca76128"
+                !matches!(
+                    old,
+                    "2f9e39f0f1efb1e7be298cfbc50c43ed754f7e3feb68d64d7cb7ed7fbca76128"
+                        | "09e8ff83ee94a51dcd54a7c7cbabc543d956b4e1c50eb5369b3b56cf34b3b0b9"
+                )
             );
             assert_eq!(report["migration"]["compiler_numeric_mode_known"], true);
             assert_eq!(fs::read(&path).unwrap(), bytes);
@@ -1267,50 +1281,55 @@ fn migration_refuses_unknown_models_profiles_corruption_unreached_inputs_and_hid
 
 #[test]
 fn numeric_writer_migration_preserves_existing_observation_and_refuses_observation_renewal() {
-    for version in [BASELINE, AUDITED_MAIN] {
-        let root = root();
-        let snapshot = fixture(&root, version);
-        let mut original = serde_json::to_value(&snapshot).unwrap();
-        original["source_graph"]["schema_sha256"] =
-            "2f9e39f0f1efb1e7be298cfbc50c43ed754f7e3feb68d64d7cb7ed7fbca76128".into();
-        let path = root.join("numeric-writer.hye");
-        let bytes = serde_json::to_vec(&original).unwrap();
-        fs::write(&path, &bytes).unwrap();
-        let (ok, output) = check_migration(&path);
-        assert!(ok, "{output}");
-        let reply: serde_json::Value = serde_json::from_str(&output).unwrap();
-        assert_eq!(reply["migration"]["compiler_observation_renewed"], false);
-        assert_eq!(fs::read(&path).unwrap(), bytes);
-        for change in 0..5 {
-            let mut forged = original.clone();
-            match change {
-                0 => {
-                    forged["source_graph"]["compiler"]
-                        .as_object_mut()
-                        .unwrap()
-                        .remove("numeric_codegen");
-                }
-                1 => {
-                    forged["source_graph"]["compiler"]["numeric_codegen"] = serde_json::Value::Null
-                }
-                2 => {
-                    forged["source_graph"]["compiler"]["numeric_codegen"]["probe_sha256"] =
-                        "0".repeat(64).into()
-                }
-                3 => {
-                    forged["source_graph"]["compiler"]["numeric_codegen"]["zero_subtraction"] =
-                        serde_json::Value::Null
-                }
-                _ => forged["source_graph"]["compiler"]["release"] = "5.5.1".into(),
-            }
-            let bytes = serde_json::to_vec(&forged).unwrap();
+    for previous in [
+        "2f9e39f0f1efb1e7be298cfbc50c43ed754f7e3feb68d64d7cb7ed7fbca76128",
+        "09e8ff83ee94a51dcd54a7c7cbabc543d956b4e1c50eb5369b3b56cf34b3b0b9",
+    ] {
+        for version in [BASELINE, AUDITED_MAIN] {
+            let root = root();
+            let snapshot = fixture(&root, version);
+            let mut original = serde_json::to_value(&snapshot).unwrap();
+            original["source_graph"]["schema_sha256"] = previous.into();
+            let path = root.join("numeric-writer.hye");
+            let bytes = serde_json::to_vec(&original).unwrap();
             fs::write(&path, &bytes).unwrap();
-            assert!(
-                !check_migration(&path).0,
-                "Accepted numeric writer corruption {change}"
-            );
+            let (ok, output) = check_migration(&path);
+            assert!(ok, "{output}");
+            let reply: serde_json::Value = serde_json::from_str(&output).unwrap();
+            assert_eq!(reply["migration"]["compiler_observation_renewed"], false);
             assert_eq!(fs::read(&path).unwrap(), bytes);
+            for change in 0..5 {
+                let mut forged = original.clone();
+                match change {
+                    0 => {
+                        forged["source_graph"]["compiler"]
+                            .as_object_mut()
+                            .unwrap()
+                            .remove("numeric_codegen");
+                    }
+                    1 => {
+                        forged["source_graph"]["compiler"]["numeric_codegen"] =
+                            serde_json::Value::Null
+                    }
+                    2 => {
+                        forged["source_graph"]["compiler"]["numeric_codegen"]["probe_sha256"] =
+                            "0".repeat(64).into()
+                    }
+                    3 => {
+                        forged["source_graph"]["compiler"]["numeric_codegen"]["zero_subtraction"] =
+                            serde_json::Value::Null
+                    }
+                    _ => forged["source_graph"]["compiler"]["release"] = "5.5.1".into(),
+                }
+                let bytes = serde_json::to_vec(&forged).unwrap();
+                fs::write(&path, &bytes).unwrap();
+                assert!(
+                    !check_migration(&path).0,
+                    "Accepted numeric writer corruption {change}"
+                );
+                assert_eq!(fs::read(&path).unwrap(), bytes);
+            }
+            fs::remove_dir_all(root).unwrap();
         }
-        fs::remove_dir_all(root).unwrap();
     }
 }

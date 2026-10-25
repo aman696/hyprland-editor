@@ -1,5 +1,7 @@
 # Native build and runtime compatibility
 
+The [native55 source-analysis component](lua55-source-worker.md) now implements a separate restricted ordered-analysis process with explicit family/profile checks and partial language semantics. The historical reference stages below retain their original scopes; complete grammar/API integration and GUI source-profile selection remain required.
+
 ## Verified build requests and remaining gap
 
 The two immutable audited Hyprland snapshots request `CMAKE_CXX_STANDARD 26` and search these Lua candidates in order: `lua55`, `lua5.5`, `lua-55`, `lua-5.5`, `lua>=5.5`, `lua<5.6`. Their exact source/version/blob hashes are recorded in [native build profiles](../data/native-build-profiles.json). The source's `CXX_STANDARD_REQUIRED` assignment is metadata; it is not proof that the corresponding effective CMake target property is enforced. A selected compositor's actual compiler, standard library and linked Lua remain unobserved.

@@ -103,6 +103,46 @@ def check_worker(root, release, compiler, static=False, installed=False):
     return result
 
 
+def check_source_worker(root, release, compiler):
+    # Resolve only the selected Lua archive by a unique name; retain ordinary
+    # RE2 metadata without allowing its -L directories to shadow generic -llua.
+    import shutil
+    pc = root / 'source-pc'
+    pc.mkdir()
+    name = 'hye_source_lua_' + release.replace('.', '_')
+    source = root / ('lua-' + release) / 'src'
+    shutil.copyfile(source / 'liblua.a', pc / ('lib' + name + '.a'))
+    (pc / 'lua5.5.pc').write_text(f'Name: Lua\nDescription: private native55 source worker\nVersion: {release}\nCflags: -I{source}\nLibs: -L{pc} -l{name} -lm -ldl\n')
+    env = dict(os.environ, PKG_CONFIG_PATH=str(pc) + (os.pathsep + os.environ['PKG_CONFIG_PATH'] if os.environ.get('PKG_CONFIG_PATH') else ''), CARGO_TARGET_DIR=str(root / 'source-worker-target'), CXX=compiler, RUSTFLAGS=f'-C linker={compiler} -C link-arg=-fuse-ld=bfd')
+    env.pop('CARGO_ENCODED_RUSTFLAGS', None)
+    env.pop('PKG_CONFIG_LIBDIR', None)
+    flags = ['--locked', '-p', 'hyprland-editor-core', '--no-default-features', '--features', 'native55']
+    inputs = [p for p in (ROOT / 'crates/editor-core').rglob('*') if p.is_file()]
+    inputs += [ROOT / p for p in ['Cargo.toml', 'Cargo.lock', 'crates/editor-app/src/process_policy.rs', 'crates/editor-lua55/native/lua55.cpp', 'crates/editor-lua55/native/bridge.inc', 'data/lua55-profiles.json', 'data/lua-numeric-codegen.json', 'data/graph-model.json']]
+    identities = {str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}
+    for invalid in [[], ['--features','native54,native55']]:
+        refusal=subprocess.run(['cargo','check','--locked','-p','hyprland-editor-core','--no-default-features',*invalid],cwd=ROOT,env=env,capture_output=True,text=True,timeout=120)
+        if refusal.returncode==0 or 'Select exactly one native Lua family' not in refusal.stderr:
+            raise RuntimeError('Missing/combined native family did not refuse before native library selection')
+    subprocess.run(['cargo','test',*flags,'--test','source55','--test','ordered_replay','--test','scalar_codec','--test','complex_scalar_codec','--','--test-threads=2'], cwd=ROOT, env=env, check=True, timeout=240)
+    subprocess.run(['cargo','clippy',*flags,'--bin','hyprland-editor-source55','--test','source55','--','-D','warnings'], cwd=ROOT, env=env, check=True, timeout=120)
+    subprocess.run(['cargo','build',*flags,'--release','--bin','hyprland-editor-source55'], cwd=ROOT, env=env, check=True, timeout=240)
+    image = root / 'source-worker-target/release/hyprland-editor-source55'
+    dynamic = subprocess.check_output(['readelf','-d',str(image)],text=True,timeout=10)
+    needed = re.findall(r'Shared library: \[([^\]]+)\]',dynamic)
+    if any(any(part in dep.lower() for part in ['lua','gtk','adwaita']) for dep in needed):
+        raise RuntimeError('Source image unexpectedly depends on a Lua or GUI shared image')
+    wire=json.dumps({'protocol':'hye-lua55-source-1','nonce':[3]*32,'expected_release':release,'operation':{'kind':'profile'}},separators=(',',':')).encode()
+    result=subprocess.run([str(image),'--source-worker'],input=wire,capture_output=True,env={},check=True,timeout=6)
+    reply=json.loads(result.stdout)
+    if len(result.stdout)>16384 or reply['protocol']!='hye-lua55-source-1' or reply['nonce']!=[3]*32 or reply['request_sha256']!=hashlib.sha256(wire).hexdigest() or reply['profile']['release']!=release or reply['outcome']!={'kind':'profile'}:
+        raise RuntimeError('Source image profile/correlation differs')
+    if identities != {str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs}:
+        raise RuntimeError('Source worker inputs changed during verification')
+    print(f'Lua {release}: separate restricted source analysis process, strict lint and release image passed',flush=True)
+    return {'linker':'GNU ld.bfd','source_inputs':identities,'image_sha256':hashlib.sha256(image.read_bytes()).hexdigest(),'shared_dependencies':needed,'profile_reply':reply,'gui_selection_verified':False,'complete_language_verified':False,'installed_launcher_verified':False}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--release', choices=sorted(RELEASES), action='append')
@@ -111,12 +151,13 @@ def main():
     parser.add_argument('--cpp26-standard', choices=['c++26', 'c++2c'], default='c++2c')
     parser.add_argument('--source-conformance', action='store_true')
     parser.add_argument('--worker-conformance', action='store_true')
+    parser.add_argument('--source-worker-conformance', action='store_true')
     parser.add_argument('--static-conformance', action='store_true')
     parser.add_argument('--installed-conformance', action='store_true', help='Run root-owned temporary package fixtures in the disposable CI job; changes no system package')
     parser.add_argument('--worker-only', action='store_true', help='Check only the separate worker after a worker change; do not claim reference-matrix execution')
     args = parser.parse_args()
-    if args.worker_only and (not args.worker_conformance or args.source_conformance):
-        parser.error("--worker-only requires --worker-conformance and cannot claim --source-conformance")
+    if args.worker_only and (not (args.worker_conformance or args.source_worker_conformance) or args.source_conformance):
+        parser.error("--worker-only requires a worker check and cannot claim --source-conformance")
     if args.static_conformance and not args.worker_conformance:
         parser.error('--static-conformance requires --worker-conformance')
     if args.installed_conformance and not args.static_conformance:
@@ -156,6 +197,8 @@ def main():
                 observation['source_reference'] = json.loads(source_observation.read_text())
             if args.worker_conformance:
                 observation['compiler_worker'] = check_worker(root, release, args.compiler, args.static_conformance, args.installed_conformance)
+            if args.source_worker_conformance:
+                observation['source_worker'] = check_source_worker(root, release, args.compiler)
             observations.append(observation)
             print(f'Lua {release}: requested private checks passed; temporary source/builds removed on scope exit', flush=True)
     content = {'format': 'hye-workspace-target-release-observation-1', 'profiles': observations, 'selected_compositor_observed': False}

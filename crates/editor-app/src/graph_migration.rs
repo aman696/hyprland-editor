@@ -49,7 +49,10 @@ const COMPILER_MODEL: &str =
 const NUMERIC_CODEGEN: &str = "2f9e39f0f1efb1e7be298cfbc50c43ed754f7e3feb68d64d7cb7ed7fbca76128";
 const NUMERIC_MODEL: &str =
     include_str!("../../../data/migrations/graph-model-numeric-codegen.json");
-const TO: &str = "09e8ff83ee94a51dcd54a7c7cbabc543d956b4e1c50eb5369b3b56cf34b3b0b9";
+const NATIVE_ADMISSION: &str = "09e8ff83ee94a51dcd54a7c7cbabc543d956b4e1c50eb5369b3b56cf34b3b0b9";
+const ADMISSION_MODEL: &str =
+    include_str!("../../../data/migrations/graph-model-native-admission.json");
+const TO: &str = "4ec820faed65d07698417a29f7738f56f8470e0fc7f9898643c646c291aae5af";
 const OLD: &str = include_str!("../../../data/migrations/graph-model-before-projection.json");
 const FROM_PROJECTION: &str = "046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371";
 const PROJECTION: &str = include_str!("../../../data/migrations/graph-model-projection.json");
@@ -745,8 +748,10 @@ fn before_admission_transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
-fn transition(from: &str) -> Result<(), String> {
-    if lua::source_hash(NUMERIC_MODEL) != NUMERIC_CODEGEN || workspace_graph::schema_sha256() != TO
+fn before_source55_transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(NUMERIC_MODEL) != NUMERIC_CODEGEN
+        || lua::source_hash(ADMISSION_MODEL) != NATIVE_ADMISSION
+        || workspace_graph::schema_sha256() != TO
     {
         return Err(
             "No reviewed native release-admission transition to this model is available".into(),
@@ -757,7 +762,8 @@ fn transition(from: &str) -> Result<(), String> {
     }
     let previous: serde_json::Value =
         serde_json::from_str(NUMERIC_MODEL).map_err(|e| e.to_string())?;
-    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let current: serde_json::Value =
+        serde_json::from_str(ADMISSION_MODEL).map_err(|e| e.to_string())?;
     let old = previous["inputs"]
         .as_object()
         .ok_or("Invalid previous numeric model")?;
@@ -782,6 +788,61 @@ fn transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
+fn transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(ADMISSION_MODEL) != NATIVE_ADMISSION
+        || workspace_graph::schema_sha256() != TO
+    {
+        return Err(
+            "No reviewed separate native55 source transition to this model is available".into(),
+        );
+    }
+    if from != NATIVE_ADMISSION {
+        before_source55_transition(from)?;
+    }
+    let previous: serde_json::Value =
+        serde_json::from_str(ADMISSION_MODEL).map_err(|e| e.to_string())?;
+    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let old = previous["inputs"]
+        .as_object()
+        .ok_or("Invalid native admission model")?;
+    let new = current["inputs"]
+        .as_object()
+        .ok_or("Invalid separate source image model")?;
+    let added = new
+        .keys()
+        .filter(|key| !old.contains_key(*key))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    let changed = old
+        .keys()
+        .filter(|key| new.get(*key) != Some(&old[*key]))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    if old.len() != 80
+        || new.len() != 83
+        || added
+            != [
+                "crates/editor-core/src/bin/source55.rs",
+                "crates/editor-lua55/native/lua55.cpp",
+                "data/lua55-profiles.json",
+            ]
+        || changed
+            != [
+                "crates/editor-core/Cargo.toml",
+                "crates/editor-core/build.rs",
+                "crates/editor-core/src/lib.rs",
+                "crates/editor-core/src/lua.rs",
+                "crates/editor-core/src/lua/replay.rs",
+                "crates/editor-core/src/lua/replay/eval.rs",
+                "crates/editor-core/src/lua/replay/numeric_codegen.rs",
+                "crates/editor-core/src/lua/replay/provenance.rs",
+                "crates/editor-core/src/lua/scalar_codec.rs",
+            ]
+    {
+        return Err("Source image transition differs from the reviewed explicit family selection, adapter aliases, native55 semantics and separately restricted image; legacy profile/data/bytes remain unchanged".into());
+    }
+    Ok(())
+}
 pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, String> {
     if text.len() > MAX_WORKSPACE_BYTES {
         return Err("Saved workspace exceeds 8 MiB".into());
@@ -803,11 +864,13 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != WORKSPACE_STATE
         && previous != COMPILER_EXTRACTION
         && previous != NUMERIC_CODEGEN
+        && previous != NATIVE_ADMISSION
         && raw["source_graph"].get("private").is_some()
     {
         return Err("Previous graph writers had no private input layer; new payloads cannot be introduced during migration".into());
     }
     if previous != NUMERIC_CODEGEN
+        && previous != NATIVE_ADMISSION
         && raw["source_graph"]["compiler"]
             .get("numeric_codegen")
             .is_some()
@@ -827,7 +890,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         .ok_or("Workspace has no saved graph to migrate")?;
     let previous_compiler = graph.compiler.clone();
     let current_compiler = lua::replay::compiler_profile();
-    let compiler_observation_renewed = previous != NUMERIC_CODEGEN;
+    let compiler_observation_renewed = previous != NUMERIC_CODEGEN && previous != NATIVE_ADMISSION;
     let mut expected_compiler = current_compiler.clone();
     if compiler_observation_renewed {
         expected_compiler.numeric_codegen = None;
@@ -931,6 +994,7 @@ mod tests {
         transition(WORKSPACE_STATE).unwrap();
         transition(COMPILER_EXTRACTION).unwrap();
         transition(NUMERIC_CODEGEN).unwrap();
+        transition(NATIVE_ADMISSION).unwrap();
         assert!(transition(&"0".repeat(64)).is_err());
         assert_ne!(FROM, TO);
         assert_eq!(lua::source_hash(CURRENT), TO);

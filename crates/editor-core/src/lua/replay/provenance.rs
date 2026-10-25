@@ -88,6 +88,8 @@ impl Engine<'_> {
             "identifier" | "dot_index_expression" | "bracket_index_expression" => {
                 ExpressionKind::Read
             }
+            #[cfg(feature = "native55")]
+            "global" => ExpressionKind::Read,
             "table_constructor" => ExpressionKind::Table,
             "function_definition" => ExpressionKind::Function,
             "function_call" => ExpressionKind::Call,

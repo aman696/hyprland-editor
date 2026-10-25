@@ -16,7 +16,9 @@ pub struct NumericCodegen {
     pub zero_subtraction: Option<ZeroSubtraction>,
 }
 unsafe extern "C" {
-    fn hye_lua54_subtract_probe(
+    #[cfg_attr(feature = "native54", link_name = "hye_lua54_subtract_probe")]
+    #[cfg_attr(feature = "native55", link_name = "hye_lua55_subtract_probe")]
+    fn hye_native_subtract_probe(
         output: *mut u8,
         capacity: usize,
         written: *mut usize,
@@ -27,7 +29,8 @@ pub(super) fn observe() -> Option<NumericCodegen> {
     let mut written = 0;
     // SAFETY: live bounded buffer. The adapter compiles/dumps a fixed literal
     // probe, never invokes it, retains no pointers and closes its bounded state.
-    let status = unsafe { hye_lua54_subtract_probe(bytes.as_mut_ptr(), bytes.len(), &mut written) };
+    let status =
+        unsafe { hye_native_subtract_probe(bytes.as_mut_ptr(), bytes.len(), &mut written) };
     if status != 0 || written == 0 || written > bytes.len() {
         return None;
     }
@@ -137,6 +140,7 @@ fn descriptor(
             depth + 1,
             visits,
         )?,
+        "global" if cfg!(feature = "native55") => plain(Kind::Register),
         "identifier"
         | "function_call"
         | "function_definition"

@@ -315,10 +315,18 @@ struct Converted {
     coerced_integer: i64,
 }
 unsafe extern "C" {
-    fn hye_lua54_numeric_locale_c() -> libc::c_int;
-    fn hye_lua54_coercions_new() -> *mut libc::c_void;
-    fn hye_lua54_coercions_close(pointer: *mut libc::c_void);
-    fn hye_lua54_convert(
+    #[cfg_attr(feature = "native54", link_name = "hye_lua54_numeric_locale_c")]
+    #[cfg_attr(feature = "native55", link_name = "hye_lua55_numeric_locale_c")]
+    fn hye_native_numeric_locale_c() -> libc::c_int;
+    #[cfg_attr(feature = "native54", link_name = "hye_lua54_coercions_new")]
+    #[cfg_attr(feature = "native55", link_name = "hye_lua55_coercions_new")]
+    fn hye_native_coercions_new() -> *mut libc::c_void;
+    #[cfg_attr(feature = "native54", link_name = "hye_lua54_coercions_close")]
+    #[cfg_attr(feature = "native55", link_name = "hye_lua55_coercions_close")]
+    fn hye_native_coercions_close(pointer: *mut libc::c_void);
+    #[cfg_attr(feature = "native54", link_name = "hye_lua54_convert")]
+    #[cfg_attr(feature = "native55", link_name = "hye_lua55_convert")]
+    fn hye_native_convert(
         pointer: *mut libc::c_void,
         kind: libc::c_int,
         integer: i64,
@@ -340,7 +348,7 @@ impl Drop for Parser {
     fn drop(&mut self) {
         // SAFETY: this uniquely owned pointer came from the matching constructor.
         unsafe {
-            hye_lua54_coercions_close(self.pointer.as_ptr());
+            hye_native_coercions_close(self.pointer.as_ptr());
         }
     }
 }
@@ -353,11 +361,11 @@ impl Parser {
         }
         // SAFETY: queries only the current process's numeric locale, without
         // changing it. Production runs before GUI initialization in a worker.
-        if unsafe { hye_lua54_numeric_locale_c() } != 1 {
+        if unsafe { hye_native_numeric_locale_c() } != 1 {
             return Err("Primitive conversion requires the profiled C numeric locale".into());
         }
         // SAFETY: no input pointers; constructor creates a new independent state.
-        let pointer = NonNull::new(unsafe { hye_lua54_coercions_new() })
+        let pointer = NonNull::new(unsafe { hye_native_coercions_new() })
             .ok_or("Primitive conversion allocation budget exceeded")?;
         Ok(Self {
             pointer,
@@ -380,7 +388,7 @@ impl Parser {
         // The private adapter copies at most text.len() bytes, retains no input,
         // protects allocating C-API operations and clears its stack on return.
         let status = unsafe {
-            hye_lua54_convert(
+            hye_native_convert(
                 self.pointer.as_ptr(),
                 kind,
                 integer,

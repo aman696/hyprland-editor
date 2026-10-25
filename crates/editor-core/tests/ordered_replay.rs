@@ -282,8 +282,12 @@ fn ordered_reference_observations() {
         fixtures["audit_manifest_sha256"],
         source_hash(include_str!("../../../data/source-graph-semantics.json"))
     );
+    #[cfg(feature = "native54")]
     let matrix: Value =
         serde_json::from_str(include_str!("../../../data/lua-profiles.json")).unwrap();
+    #[cfg(feature = "native55")]
+    let matrix: Value =
+        serde_json::from_str(include_str!("../../../data/lua55-profiles.json")).unwrap();
     let profile = compiler_profile();
     assert_eq!(
         matrix["canonical_fixtures_sha256"],
@@ -584,7 +588,11 @@ fn loader_path_repetition_and_uncertain_error_objects_remain_bounded_and_explici
         assert_eq!(r.logged_module_errors,0);
     }
     let mut p = program("if absent_native_global then emit('never') end");
-    p.profile = Profile::HyprlandLua54;
+    p.profile = if cfg!(feature = "native55") {
+        Profile::HyprlandLua55
+    } else {
+        Profile::HyprlandLua54
+    };
     assert!(matches!(
         replay(&p).unwrap().halt,
         Some(Halt::Unresolved { .. })
@@ -649,4 +657,15 @@ fn unsupported_close_and_loadfile_mode_semantics_do_not_produce_later_calls() {
             r.halt
         );
     }
+}
+
+#[cfg(feature = "native54")]
+#[test]
+fn legacy_image_refuses_explicit_native55_programs_before_analysis() {
+    let mut p = program("return 1");
+    p.profile = Profile::HyprlandLua55;
+    assert!(validate_program(&p)
+        .unwrap_err()
+        .contains("native Lua family"));
+    assert!(replay(&p).is_err());
 }

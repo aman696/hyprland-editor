@@ -100,7 +100,10 @@ fn text<'a>(node: Node<'_>, source: &'a str) -> &'a str {
 }
 fn named(node: Node<'_>) -> Vec<Node<'_>> {
     let mut c = node.walk();
-    node.named_children(&mut c)
+    node.children(&mut c)
+        // The Lua grammar exposes contextual `global` expression identifiers
+        // as unnamed terminals. They still occupy a value/argument slot.
+        .filter(|n| n.is_named() || (cfg!(feature = "native55") && n.kind() == "global"))
         .filter(|n| n.kind() != "comment")
         .collect()
 }

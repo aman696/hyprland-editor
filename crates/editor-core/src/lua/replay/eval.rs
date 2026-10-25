@@ -100,7 +100,7 @@ impl<'a> Engine<'a> {
         }
         let mut variadic = false;
         for p in named(params) {
-            if p.kind() == "identifier" {
+            if source_identifier(p) {
                 names.push(self.name(text(p, &self.documents[doc].document.source))?);
             } else if p.kind() == "vararg_expression" {
                 variadic = true;
@@ -208,6 +208,8 @@ impl<'a> Engine<'a> {
                 self.bytes(decoded.as_bytes())?
             }
             "identifier" => self.variable(env, text(node, source))?,
+            #[cfg(feature = "native55")]
+            "global" => self.variable(env, text(node, source))?,
             "parenthesized_expression" => self.one(
                 doc,
                 *named(node)
@@ -247,7 +249,7 @@ impl<'a> Engine<'a> {
                 for (index, field) in fields.iter().copied().enumerate() {
                     let expression = self.required(field, "value")?;
                     let key = if let Some(name) = field.child_by_field_name("name") {
-                        if name.kind() == "identifier"
+                        if source_identifier(name)
                             && !text(field, source).trim_start().starts_with('[')
                         {
                             let v = self.bytes(text(name, source).as_bytes())?;
@@ -708,7 +710,7 @@ impl<'a> Engine<'a> {
     }
     fn place(&mut self, doc: usize, node: Node<'a>, env: &mut Env) -> Result<Address> {
         let source = &self.documents[doc].document.source;
-        if node.kind() == "identifier" {
+        if source_identifier(node) {
             let name = text(node, source);
             if let Some(id) = env.locals.get(name) {
                 return Ok(Address::cell(*id));
@@ -804,6 +806,49 @@ impl<'a> Engine<'a> {
             return self.budget("Statement/block depth exceeds 64");
         }
         let source = &self.documents[doc].document.source;
+        #[cfg(feature = "native55")]
+        if matches!(
+            node.kind(),
+            "variable_declaration" | "implicit_variable_declaration" | "function_declaration"
+        ) && node.child(0).is_some_and(|token| token.kind() == "global")
+        {
+            // The native compiler has already checked declared-name/const
+            // constraints for the whole chunk, including nested closures.
+            // A named global declaration shadows an outer local binding but
+            // leaves the current _ENV slot untouched. Existing closures retain
+            // their captured cells. `global *` changes only compiler defaults.
+            if node.kind() == "implicit_variable_declaration" {
+                return Ok(Flow::Next);
+            }
+            if node.kind() == "variable_declaration" {
+                let children = named(node);
+                if children.iter().any(|n| n.kind() == "assignment_statement") {
+                    return self.unknown(doc, node,
+                        "Global initialization needs verified existing-slot and initializer effects");
+                }
+                let variables = children
+                    .iter()
+                    .find(|n| n.kind() == "variable_list")
+                    .ok_or_else(|| Failure::Budget("Missing global variable list".into()))?;
+                for variable in named(*variables) {
+                    match variable.kind() {
+                        "identifier" | "global" => {
+                            env.locals.remove(text(variable, source));
+                        }
+                        "attribute" => {} // The native compiler checked const restrictions.
+                        _ => {
+                            return self.unknown(doc, node, "Unsupported global declaration field")
+                        }
+                    }
+                }
+                return Ok(Flow::Next);
+            }
+            return self.unknown(
+                doc,
+                node,
+                "Global function initialization needs verified existing-slot effects",
+            );
+        }
         match node.kind() {
             "comment" | "hash_bang_line" | "empty_statement" => {}
             "function_call" => {
@@ -843,7 +888,7 @@ impl<'a> Engine<'a> {
                 let vars = named(vars);
                 let mut places = vec![];
                 if local {
-                    if vars.iter().any(|v| v.kind() != "identifier") {
+                    if vars.iter().any(|v| !source_identifier(*v)) {
                         return self.unknown(
                             doc,
                             node,
@@ -1470,6 +1515,10 @@ impl<'a> Engine<'a> {
                 full.extend(message.iter());
                 value = self.bytes(&full)?;
             }
+        }
+        #[cfg(feature = "native55")]
+        if value.is_nil() {
+            value = self.bytes(b"<no error object>")?;
         }
         Err(Failure::Lua(value))
     }

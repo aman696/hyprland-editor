@@ -74,7 +74,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--check', action='store_true')
     parser.add_argument('--release', action='append')
-    parser.add_argument('--model-reference', action='store_true', help='Build the restricted core reference image against each exact Lua 5.4 library and check modeled returns')
+    parser.add_argument('--model-reference', action='store_true', help='Build the restricted core reference image against each exact selected Lua family/library and check modeled returns')
     args = parser.parse_args()
     releases = {p['release']: p['archive_sha256'] for p in json.loads((ROOT / 'data/lua-profiles.json').read_text())['profiles']}
     releases.update(target.RELEASES)
@@ -113,17 +113,17 @@ def main():
                 if observations[0] != ('0000000000000000' if variant == 'original' else '8000000000000000') or observations[9] != '8000000000000000':
                     raise RuntimeError('Native numeric reference controls differ')
                 results.append({'release': release, 'archive_sha256': archive_sha, 'variant': variant, 'lcode_sha256': hashlib.sha256(file.read_bytes()).hexdigest(), 'probe_sha256': hashlib.sha256(bytes.fromhex(probes[0])).hexdigest(), 'mode': mode, 'observations': observations, 'right_kinds': [v.split(':')[0] for v in right]})
-                if args.model_reference and release.startswith('5.4.'):
+                if args.model_reference:
                     pc = root / ('pc-' + variant)
                     pc.mkdir(exist_ok=True)
                     # A unique archive name prevents an earlier system -L path
                     # (e.g. RE2's) resolving generic -llua to another Lua family.
                     archive_name = 'hye_numeric_lua_' + release.replace('.', '_') + '_' + variant
                     shutil.copyfile(source / 'liblua.a', pc / ('lib' + archive_name + '.a'))
-                    (pc / 'lua5.4.pc').write_text(f'Name: Lua\nDescription: private numeric model reference\nVersion: {release}\nCflags: -I{source}\nLibs: -L{pc} -l{archive_name} -lm -ldl\n')
+                    (pc / ('lua' + release[:3] + '.pc')).write_text(f'Name: Lua\nDescription: private numeric model reference\nVersion: {release}\nCflags: -I{source}\nLibs: -L{pc} -l{archive_name} -lm -ldl\n')
                     env = dict(os.environ, PKG_CONFIG_PATH=str(pc) + (os.pathsep + os.environ['PKG_CONFIG_PATH'] if os.environ.get('PKG_CONFIG_PATH') else ''), CARGO_TARGET_DIR=str(root / 'model-target'))
                     env.pop('PKG_CONFIG_LIBDIR', None)
-                    subprocess.run(['cargo', 'build', '--locked', '-p', 'hyprland-editor-core', '--example', 'numeric_reference'], cwd=ROOT, env=env, check=True, timeout=180)
+                    subprocess.run(['cargo', 'build', '--locked', '-p', 'hyprland-editor-core', '--no-default-features', '--features', 'native55' if release.startswith('5.5.') else 'native54', '--example', 'numeric_reference'], cwd=ROOT, env=env, check=True, timeout=180)
                     model = root / 'model-target/debug/examples/numeric_reference'
                     dependencies = subprocess.check_output(['readelf', '-d', str(model)], text=True, timeout=10)
                     if any('NEEDED' in line and 'liblua' in line.lower() for line in dependencies.splitlines()):
