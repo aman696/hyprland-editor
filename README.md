@@ -14,6 +14,8 @@ A native GTK4/libadwaita workspace for making Hyprland configuration graphical, 
 
 The monitor editor includes an on-demand **Detected Outputs** picker for connector names and reported resolution/refresh modes. Refresh leaves the draft unchanged; explicit match and mode actions use the normal draft/undo path. See [monitor discovery](docs/monitor-discovery.md) for its read-only transport and current limits.
 
+**Detected Devices** similarly fills device name/category controls from a read-only snapshot, with a separate draft match action. Pads/tools and switch observations cannot silently become unrelated override targets. See [device discovery](docs/device-discovery.md).
+
 ![Device draft editor](docs/screenshots/device-drafts.png)
 
 ## Available now

@@ -1,4 +1,8 @@
 //! Session-pinned, bounded, read-only Unix IPC. No arbitrary request string is exposed.
+mod devices;
+pub use devices::{
+    current_session_devices, device_snapshot, Device, DeviceCategory, DeviceSnapshot,
+};
 use hyprland_editor_core::{Setting, Value, AUDITED_MAIN, BASELINE};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -90,6 +94,7 @@ enum Query {
     Version,
     Descriptions,
     Monitors,
+    Devices,
 }
 impl Query {
     fn wire(self) -> &'static [u8] {
@@ -97,6 +102,7 @@ impl Query {
             Self::Version => b"j/version",
             Self::Descriptions => b"j/descriptions",
             Self::Monitors => b"j/monitors all",
+            Self::Devices => b"j/devices",
         }
     }
 }
@@ -672,7 +678,7 @@ mod tests {
         sync::{Arc, Mutex},
         thread,
     };
-    fn fixture() -> (PathBuf, UnixListener) {
+    pub(super) fn fixture() -> (PathBuf, UnixListener) {
         use std::{
             os::unix::fs::DirBuilderExt,
             sync::atomic::{AtomicU64, Ordering},

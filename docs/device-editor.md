@@ -6,6 +6,8 @@ Open **Menu → Edit Devices**. The editor covers 47 writable device fields (43 
 
 Add a rule, expand Device Name and Category, enter a Hyprland device name and choose an optional category hint. Hyprland replaces spaces in device names with hyphens; the source spelling is preserved and its normalized name is reported. Categories explain usual field relevance while keeping all fields visible. They do not establish actual connected-device capabilities. Repeated declarations for the same normalized name stay ordered, reflecting upstream field replacement; this editor does not infer effective state from them.
 
+Alternatively, expand **Detected Devices** and choose **Refresh Devices**. Select a named device to fill the match form, then choose **Update Device Match**. Reported pads/tools and switches remain visible without inventing override names; pointer observations do not identify a physical touchpad subtype. See [device discovery](device-discovery.md) for the fixed read-only transport, interpretation limits and private fixtures.
+
 Choose one field, enable Set This Field and Update Device Draft. Disabling the field and updating removes its override; explicit false, zero and empty values remain distinct from absence. Rules support add, duplicate, reorder, remove and shared bounded undo. Save Draft persists device/scalar/monitor drafts and any source snapshot in the private workspace. Devices have their own catalogue hash covering both the original fields and additions. The exact original schema hash is accepted only for its original field subset, without inserting new overrides or reopening recorded source paths. Unknown hashes and new fields under the old hash are rejected. A new save uses the extended schema; older apps may reject that workspace.
 
 | Area | Current controls |
@@ -31,6 +33,6 @@ Static top-level `hl.device` literal tables and supported pure local expressions
 
 Device source-span updates/insertion/deletion and changed-source reconciliation remain unimplemented. Existing source comparison merges scalar settings and retains monitor/device drafts unchanged; it explains this limitation. Scalar source-copy export is blocked if it would omit a device draft change.
 
-Hardware discovery, real capability records, global/default provenance merging, XKB compilation/visual keymap preview, tag propagation into bind filters, last-input recovery planning, live apply, source codecs and isolated routing tests remain mandatory work in the original blueprint. This milestone does not certify complete device behavior or close the full DEVICE contracts.
+Complete hardware/capability discovery, global/default provenance merging, XKB compilation/visual keymap preview, tag propagation into bind filters, last-input recovery planning, live apply, source codecs and isolated routing tests remain mandatory work in the original blueprint. This milestone does not certify complete device behavior or close the full DEVICE contracts.
 
 Ordinary text controls now preserve the core’s accepted 16 KiB ASCII boundary instead of shortening imported values at 4,096 characters. GUI checks also exercise this boundary and refusal to truncate oversized layout/tag lists. Tag delimiter/backslash fixtures were compared with the installed hyprutils 0.14.2 parser; this is narrow codec evidence, not a device activation certificate.

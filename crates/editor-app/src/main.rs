@@ -6,6 +6,7 @@ mod compiler_check;
 #[allow(dead_code)] // Separate installed role; never selects a saved Lua 5.4 model.
 mod compiler_client;
 mod controls;
+mod detected_devices;
 mod detected_outputs;
 mod device_forms;
 mod devices;
@@ -1871,6 +1872,7 @@ mod tests {
         monitors::test_editor(&window);
         monitors::test_detected_outputs(&window);
         devices::test_editor(&window);
+        devices::test_detected_devices(&window);
         bindings::test_editor(&window);
         workspaces::test_editor(&window);
         rules::test_editor(&window);

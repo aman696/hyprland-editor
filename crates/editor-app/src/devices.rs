@@ -144,6 +144,21 @@ fn show(
     status: &gtk::Label,
     registry: Option<Arc<Registry>>,
 ) -> adw::Window {
+    show_with_devices(
+        window,
+        state,
+        status,
+        registry,
+        Arc::new(hyprland_editor_discovery::current_session_devices),
+    )
+}
+fn show_with_devices(
+    window: &adw::ApplicationWindow,
+    state: &Shared,
+    status: &gtk::Label,
+    registry: Option<Arc<Registry>>,
+    provider: super::detected_devices::Provider,
+) -> adw::Window {
     let win = adw::Window::builder()
         .title("Device Drafts")
         .transient_for(window)
@@ -204,8 +219,10 @@ fn show(
     let expander = gtk::Expander::builder()
         .label("Device Name and Category")
         .build();
+    expander.set_widget_name("device-target-section");
     expander.set_child(Some(&match_panel));
     content.append(&expander);
+    super::detected_devices::append(&match_panel, &win, state, (&name, &kind), provider);
     let load = gtk::Button::with_label("Load Keyboard Choices");
     content.append(&load);
     let registry = Rc::new(RefCell::new(registry));
@@ -419,6 +436,206 @@ if let Some(p)=panel.upgrade(){p.set_sensitive(true);}match result{Ok(r)=>{feedb
     refresh();
     win.present();
     win
+}
+
+#[cfg(test)]
+pub(super) fn test_detected_devices(parent: &adw::ApplicationWindow) {
+    use hyprland_editor_discovery::{Device, DeviceCategory, DeviceSnapshot, SessionIdentity};
+    fn find(widget: &gtk::Widget, name: &str) -> Option<gtk::Widget> {
+        if widget.widget_name() == name {
+            return Some(widget.clone());
+        }
+        if let Some(expander) = widget.downcast_ref::<gtk::Expander>() {
+            if let Some(found) = expander.child().and_then(|child| find(&child, name)) {
+                return Some(found);
+            }
+        }
+        let mut child = widget.first_child();
+        while let Some(widget) = child {
+            if let Some(found) = find(&widget, name) {
+                return Some(found);
+            }
+            child = widget.next_sibling();
+        }
+        None
+    }
+    fn named(window: &adw::Window, name: &str) -> gtk::Widget {
+        find(window.upcast_ref(), name).unwrap_or_else(|| panic!("Widget {name}"))
+    }
+    fn wait(button: &gtk::Button) {
+        let context = gtk::glib::MainContext::default();
+        let start = std::time::Instant::now();
+        while !button.is_sensitive() {
+            while context.pending() {
+                context.iteration(false);
+            }
+            assert!(start.elapsed() < std::time::Duration::from_secs(6));
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+    }
+    let provider: super::detected_devices::Provider = Arc::new(|| {
+        let mut devices = vec![];
+        for (category, name, role, owner_name) in [
+            (DeviceCategory::Keyboard, Some("my-keyboard"), None, None),
+            (
+                DeviceCategory::Tablet,
+                None,
+                Some("tabletPad"),
+                Some("parent-tablet"),
+            ),
+            (DeviceCategory::Switch, Some("Lid Switch"), None, None),
+            (
+                DeviceCategory::Pointer,
+                Some("touchpad-shaped-name"),
+                None,
+                None,
+            ),
+        ] {
+            devices.push(Device {
+                category,
+                name: name.map(str::to_owned),
+                role: role.map(str::to_owned),
+                owner_name: owner_name.map(str::to_owned),
+                layout: None,
+                active_keymap: None,
+            });
+        }
+        Ok(DeviceSnapshot {
+            identity: SessionIdentity {
+                signature: "private-device-fixture".into(),
+                pid: std::process::id(),
+                uid: unsafe { libc::geteuid() },
+                start_ticks: 1,
+                boot_id: "fixture".into(),
+                binary_sha256: "0".repeat(64),
+            },
+            commit: "unmapped-fixture".into(),
+            version: None,
+            sampled_unix_ms: 0,
+            duration_ms: 1,
+            devices,
+            unreported_categories: vec![],
+        })
+    });
+    let state = super::initial_state();
+    state
+        .borrow_mut()
+        .replace_devices(vec![Spec::new("fixture", "old-name")])
+        .unwrap();
+    let status = label("");
+    let window = show_with_devices(parent, &state, &status, None, provider);
+    for name in ["device-target-section", "device-detected-section"] {
+        named(&window, name)
+            .downcast::<gtk::Expander>()
+            .unwrap()
+            .set_expanded(true);
+    }
+    let refresh = named(&window, "device-detect-refresh")
+        .downcast::<gtk::Button>()
+        .unwrap();
+    let picker = named(&window, "device-detected-picker")
+        .downcast::<gtk::DropDown>()
+        .unwrap();
+    let name = named(&window, "device-name")
+        .downcast::<gtk::Entry>()
+        .unwrap();
+    let kind = named(&window, "device-kind")
+        .downcast::<gtk::DropDown>()
+        .unwrap();
+    let generation = state.borrow().generation;
+    refresh.emit_clicked();
+    wait(&refresh);
+    assert_eq!(picker.model().unwrap().n_items(), 5);
+    assert_eq!(picker.selected(), 0);
+    assert_eq!(name.text(), "old-name");
+    assert_eq!(state.borrow().generation, generation);
+    picker.set_selected(1);
+    assert_eq!(name.text(), "my-keyboard");
+    assert_eq!(Kind::ALL[kind.selected() as usize], Kind::Keyboard);
+    assert_eq!(current(&state)[0].name, "old-name");
+    picker.set_selected(2);
+    assert_eq!(
+        name.text(),
+        "my-keyboard",
+        "A parent name cannot become the pad's match"
+    );
+    picker.set_selected(3);
+    assert_eq!(
+        name.text(),
+        "my-keyboard",
+        "A switch is not a device override target"
+    );
+    picker.set_selected(4);
+    assert_eq!(
+        Kind::ALL[kind.selected() as usize],
+        Kind::Pointer,
+        "Do not infer touchpad hardware from its name"
+    );
+    // Exercise the real editor match action, not a simulated state mutation.
+    fn update(widget: &gtk::Widget) -> Option<gtk::Button> {
+        if let Some(button) = widget
+            .downcast_ref::<gtk::Button>()
+            .filter(|button| button.label().as_deref() == Some("Update Device Match"))
+        {
+            return Some(button.clone());
+        }
+        if let Some(expander) = widget.downcast_ref::<gtk::Expander>() {
+            if let Some(found) = expander.child().and_then(|child| update(&child)) {
+                return Some(found);
+            }
+        }
+        let mut child = widget.first_child();
+        while let Some(widget) = child {
+            if let Some(button) = update(&widget) {
+                return Some(button);
+            }
+            child = widget.next_sibling();
+        }
+        None
+    }
+    update(window.upcast_ref()).unwrap().emit_clicked();
+    assert_eq!(current(&state)[0].name, "touchpad-shaped-name");
+    assert_eq!(current(&state)[0].kind, Kind::Pointer);
+    state.borrow_mut().undo_last();
+    assert_eq!(current(&state)[0].name, "old-name");
+    let (minimum, _, _, _) = window
+        .content()
+        .unwrap()
+        .measure(gtk::Orientation::Horizontal, -1);
+    assert!(minimum <= 350, "Detected-device UI needs {minimum}px");
+    refresh.emit_clicked();
+    state.borrow_mut().generation += 1;
+    wait(&refresh);
+    assert_eq!(picker.model().unwrap().n_items(), 1);
+    assert!(named(&window, "device-detected-status")
+        .downcast::<gtk::Label>()
+        .unwrap()
+        .text()
+        .contains("changed"));
+    refresh.emit_clicked();
+    window.destroy();
+    wait(&refresh);
+    assert_eq!(picker.model().unwrap().n_items(), 1);
+    let error_window = show_with_devices(
+        parent,
+        &state,
+        &status,
+        None,
+        Arc::new(|| Err("fixture unavailable".into())),
+    );
+    let refresh = named(&error_window, "device-detect-refresh")
+        .downcast::<gtk::Button>()
+        .unwrap();
+    let generation = state.borrow().generation;
+    refresh.emit_clicked();
+    wait(&refresh);
+    assert_eq!(state.borrow().generation, generation);
+    assert!(named(&error_window, "device-detected-status")
+        .downcast::<gtk::Label>()
+        .unwrap()
+        .text()
+        .contains("fixture unavailable"));
+    error_window.destroy();
 }
 
 #[cfg(test)]

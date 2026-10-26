@@ -14,6 +14,21 @@
   },
   "foundations": [
     {
+      "area": "on-demand device names and reported categories",
+      "code": [
+        "crates/editor-discovery/src/devices.rs",
+        "crates/editor-app/src/detected_devices.rs",
+        "crates/editor-app/src/devices.rs"
+      ],
+      "test_references": [
+        "device_snapshot_uses_fixed_reads_and_never_invents_pad_tool_or_switch_targets",
+        "device_payload_bounds_and_unknown_values_do_not_become_guessed_names",
+        "devices::test_detected_devices",
+        "native_forms_and_draft_workflow"
+      ],
+      "limits": "fixed version/devices read-only requests through pinned bounded IPC, optional typed names/roles/layout context and missing-category counts, explicit form selection followed by real draft match action/undo, duplicate names retained, pad parent identities never substituted and switches observation-only, no subtype inference from pointer names, background stale/closed-window disposal; private transport/GUI fixtures only, malformed upstream JSON refused, no hotplug/multi-session/full capability/effective input discovery, keymap preview/activation, live apply/recovery, representative resources or physical-device certificate"
+    },
+    {
       "area": "on-demand detected output and reported-mode picker",
       "code": [
         "crates/editor-discovery/src/lib.rs",

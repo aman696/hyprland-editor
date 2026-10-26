@@ -1,5 +1,11 @@
 # Session checkpoint — 26 October 2026
 
+## Detected device names
+
+The device editor now offers on-demand **Detected Devices** alongside the existing manual match controls. Named pointer/keyboard/tablet/touch records fill the form without altering the draft; the real Update Device Match action validates/stores the match through ordinary undo. Pads/tools keep their own missing names rather than borrowing parent identities; switches are observations, and pointer names do not guess touchpad capabilities. Missing categories/build mappings remain unknown. Fixed pinned `j/version` + `j/devices` reads retain existing IPC bounds, with 512 records/4 KiB retained strings and explicit malformed JSON refusal. No source-model change, idle polling or live mutation. See [device discovery](device-discovery.md).
+
+Final local checks pass: eight discovery cases (3.57s), full ordinary workspace suite with nine ignores, full private graphical workflow (113.45s), strict workspace/all-target lint (5.86s), optimized GUI (1m41s), fmt/model/register/whitespace. Logs `.dev/detected-device-{discovery-tests,native,workspace-tests,clippy,release}.log`. The native fixture covers the actual match action/undo, no draft mutation from refresh/selection, pads/tools/switches, no subtype guessing, populated 350px layout, stale/closed-window results and unavailable discovery. Controlled fixtures do not establish physical hardware/accessibility/effective-state acceptance. Host desktop/config/hardware/policy remain untouched.
+
 ## Detected output picker
 
 The monitor editor now reads active/inactive connector names and reported resolution/refresh modes on demand through fixed bounded read-only IPC. Explicit prompts prevent GTK's first-row selection from choosing hardware automatically. Separate match/mode actions update only the draft, through validation and undo. The new private graphical fixture covers selection, filtering, wrong-match refusal, undo, stale/closed-window results, unavailable discovery and expanded narrow layout; the full graphical workflow passes in 111.87 seconds. The actual private-socket discovery cases pass, including exact request bytes and malformed/oversized reply refusal. No live compositor connection or physical-display conformance is claimed. See [monitor discovery](monitor-discovery.md).

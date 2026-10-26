@@ -1,5 +1,13 @@
 # Execution plan and acceptance gates
 
+## Detected device names — 26 October 2026
+
+**Edit Devices → Device Name and Category → Detected Devices** adds on-demand names/categories from fixed read-only `j/devices` IPC through the existing pinned transport. An explicit prompt prevents automatic selection; choosing a suitable named record fills the existing form and **Update Device Match** keeps it in the draft with normal undo. Tablet parent names are not substituted for pads/tools, switches remain observation-only, and pointer names cannot infer a touchpad subtype. Missing categories remain unknown; unknown builds stay unmapped and malformed replies produce a visible error. See [device discovery](device-discovery.md) for finite limits and fixture scope. Complete effective input state, hardware capabilities, keymap preview/activation and last-input recovery remain required.
+
+This adds no source-model/saved-format change, idle polling or live mutation. The full 1,458 obligations and 756 documentation candidates remain mandatory; neither discovery increment closes the full hardware/discovery or DEVICE/MONITOR contracts.
+
+Local checks pass: eight discovery tests including actual private Unix sockets; the entire ordinary workspace suite with nine explicit ignores; the full private graphical workflow (113.45 seconds), including the real device match action/undo and populated narrow layout; strict workspace/all-target lint (5.86s); optimized GUI build (1m41s); formatting, unchanged source-model/register and whitespace checks. No physical-device, effective-input, full resource or accessibility certificate follows from controlled fixtures. The preceding published monitor-picker head is `61428fc11b82994dc3dd6950cd5a5bf0470e4698`; its hosted checks are tracked separately from this increment.
+
 ## On-demand monitor discovery — 26 October 2026
 
 **Edit Monitors → Output Match → Detected Outputs** adds connector and reported-mode selection from bounded read-only IPC. Refresh runs in the background and keeps explicit “Choose…” prompts selected. Choosing a connector fills the form; the existing match action and a separate mode action keep values in the draft with normal validation/undo. Closed windows and draft changes during a request discard the result. There is no idle polling or runtime mutation. Unknown builds/fields remain observations, and filtered mode counts are visible. See [monitor discovery](monitor-discovery.md) for protocol, limits and fixture scope. Full hardware/effective-state discovery, live apply/recovery and rendered preview remain required.
