@@ -1931,6 +1931,7 @@ pub(super) fn test_declaration_families(parent: &adw::ApplicationWindow) {
     drop(ui);
     drop(window);
     std::fs::remove_dir_all(&originals).unwrap();
+    super::source_family_editor::test_workflow(parent, &state);
     super::workflow::test_graph_persistence(parent, &state, fixture.path());
     assert_eq!(
         state.borrow().source_graphs[BASELINE].bundle.sources.len(),

@@ -1,5 +1,17 @@
 # Session checkpoint — 27 October 2026
 
+## Graphical editing of captured declarations — 27 October 2026
+
+The Ordered Calls view now offers **Edit / Compare This Declaration** for device, binding, workspace/window/layer rule, curve, animation and gesture calls. It loads the selected declaration into the existing graphical family form using an isolated temporary draft. Compare shows a source patch; Keep stores a private source revision with normal undo and project persistence. Separate whole-family drafts stay separate. Scalar/monitor source controls remain available. See [source declaration editing](source-declaration-editing.md).
+
+Captured computed values can populate these forms without evaluating imported Lua. Edited arguments become explicit values; shared locals and surrounding source remain unchanged, and comments are retained. Typed serialization/reparse and full graph comparison include later captured-loader rebasing and enclosing submap contexts. Repeated sites, consumed native objects, unsupported callbacks and multi-declaration/type changes cannot silently produce a partial edit. General source insertion/removal, submap-container editing, complete dynamic editing and combined multi-file draft export remain required.
+
+The reconstruction model is `92435dde9f49b35a6a607abd548593e2ac944786411da37754ad8f1467568da2`, with 88 inputs and 22 reviewed predecessors. It adds the pure declaration editor and worker routing; saved input formats and compiler profiles remain unchanged. Five numeric-aware previous writers preserve their existing observations. The user's current priority is editing: next work must continue source editing/reconciliation/export before preview or further compiler/ABI/kernel investigations.
+
+Local validation passes the full ordinary workspace suite (nine explicit ignores), four targeted declaration-edit cases across both snapshots, all 25 ordered replay cases, the final private graphical workflow (124.71 seconds), strict workspace/all-target lint and the optimized GUI build (2m28s). The graphical case uses the actual device form, confirms no project change before Keep, compares/keeps the patch, exercises undo and repeats the edit before full original-free project save/reopen. Formatting, catalogue/model/register and whitespace checks pass. Controlled fixtures do not establish complete editing or a release certificate.
+
+The preceding published routing head `5a8630a74f871c92faa3a9c5000ec320b69fb68b` failed its [push workflow](https://github.com/aman696/hyprland-editor/actions/runs/40389317050) because four newly added tests requested Lua54 inside the explicit Lua55 test image. The fixtures now select their compiled family, and the native55 job also includes the new declaration-edit cases. No family guard or test is skipped. New-head hosted results and the private source-image check are tracked separately.
+
 ## Captured declaration routing — 27 October 2026
 
 Captured multi-file analysis now observes all existing graphical declaration families, typed inert dispatcher construction arguments and immediate submap registration callbacks. Later module loads can continue beyond the first structured declaration; the inspector shows accurate family names, source arguments and enclosing submap counts. Binding/gesture input callbacks remain inert, consumed native objects/direct dispatch remain unresolved, and source comparison checks submap scope correspondence. See [declaration routing](declaration-routing.md).

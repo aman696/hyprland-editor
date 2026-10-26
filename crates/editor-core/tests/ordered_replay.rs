@@ -690,7 +690,11 @@ local part=require('part')
 hl.config{general={border_size=input_count+part}}
 "#,
         );
-        p.profile = Profile::HyprlandLua54;
+        p.profile = if cfg!(feature = "native55") {
+            Profile::HyprlandLua55
+        } else {
+            Profile::HyprlandLua54
+        };
         p.version = version.into();
         p.documents
             .push(document("part.lua", "hl.monitor{output='DP-1'};return 2"));
@@ -743,7 +747,11 @@ hl.config{general={border_size=input_count+part}}
 fn immediate_submap_callbacks_keep_nested_scopes_and_cross_file_registration_order() {
     for version in [BASELINE, AUDITED_MAIN] {
         let mut p=program("local n=0;local function register()n=n+1;hl.bind('Q',function()n=99 end);require('part');hl.define_submap('inner',function()n=n+1;hl.bind('W',hl.dsp.no_op())end)end;hl.define_submap('outer','reset',register);hl.config{general={border_size=n}}");
-        p.profile = Profile::HyprlandLua54;
+        p.profile = if cfg!(feature = "native55") {
+            Profile::HyprlandLua55
+        } else {
+            Profile::HyprlandLua54
+        };
         p.version = version.into();
         p.documents
             .push(document("part.lua", "hl.device{name='keyboard'}"));
@@ -789,7 +797,11 @@ fn declaration_objects_and_dispatch_effects_cannot_supply_invented_values() {
         "local action=hl.dsp.no_op();hl.dispatch(action)",
     ] {
         let mut p = program(source);
-        p.profile = Profile::HyprlandLua54;
+        p.profile = if cfg!(feature = "native55") {
+            Profile::HyprlandLua55
+        } else {
+            Profile::HyprlandLua54
+        };
         let report = replay(&p).unwrap();
         assert!(
             matches!(report.halt, Some(Halt::Unresolved { .. })),
@@ -799,7 +811,11 @@ fn declaration_objects_and_dispatch_effects_cannot_supply_invented_values() {
         assert!(!report.events.iter().any(|event| event.api == "hl.config"));
     }
     let mut p = program("local action=hl.dsp.no_op();return type(action),action==action");
-    p.profile = Profile::HyprlandLua54;
+    p.profile = if cfg!(feature = "native55") {
+        Profile::HyprlandLua55
+    } else {
+        Profile::HyprlandLua54
+    };
     let report = replay(&p).unwrap();
     assert!(report.halt.is_none());
     assert_eq!(observed(&report.returns[0]), json!("function"));
@@ -814,7 +830,11 @@ fn submap_errors_and_recursive_callbacks_remain_explicit_incomplete_models() {
         "local function f()hl.define_submap('x',f)end;pcall(f);hl.config{}",
     ] {
         let mut p = program(source);
-        p.profile = Profile::HyprlandLua54;
+        p.profile = if cfg!(feature = "native55") {
+            Profile::HyprlandLua55
+        } else {
+            Profile::HyprlandLua54
+        };
         let report = replay(&p).unwrap();
         assert!(report.halt.is_some(), "{source}");
         assert!(!report.events.iter().any(|event| event.api == "hl.config"));

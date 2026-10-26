@@ -138,8 +138,8 @@ pub(super) fn connect(
         }
     });
 }
-fn show(
-    window: &adw::ApplicationWindow,
+pub(super) fn show(
+    window: &impl IsA<gtk::Window>,
     state: &Shared,
     status: &gtk::Label,
     registry: Option<Arc<Registry>>,
@@ -153,7 +153,7 @@ fn show(
     )
 }
 fn show_with_devices(
-    window: &adw::ApplicationWindow,
+    window: &impl IsA<gtk::Window>,
     state: &Shared,
     status: &gtk::Label,
     registry: Option<Arc<Registry>>,
@@ -245,11 +245,20 @@ fn show_with_devices(
     let review = gtk::Button::with_label("Review Device Lua");
     content.append(&review);
     let save = gtk::Button::with_label("Save Draft");
+    save.set_visible(
+        window
+            .upcast_ref::<gtk::Window>()
+            .is::<adw::ApplicationWindow>(),
+    );
     content.append(&save);
     let parent = window.downgrade();
     save.connect_clicked(move |_| {
         if let Some(parent) = parent.upgrade() {
-            if let Some(a) = parent.lookup_action("save-draft") {
+            if let Some(a) = parent
+                .upcast_ref::<gtk::Window>()
+                .downcast_ref::<adw::ApplicationWindow>()
+                .and_then(|window| window.lookup_action("save-draft"))
+            {
                 a.activate(None);
             }
         }

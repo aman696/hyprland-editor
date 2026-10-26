@@ -136,7 +136,7 @@ pub(super) fn build(
     calls.set_widget_name("dependency-analysis-call");
     calls.update_property(&[gtk::accessible::Property::Label("Calls in modeled order")]);
     calls_page.append(&calls);
-    let compare = gtk::Button::with_label("Compare a Source Change");
+    let compare = gtk::Button::with_label("Edit / Compare This Declaration");
     compare.set_sensitive(false);
     compare.set_widget_name("source-analysis-compare");
     compare.set_halign(gtk::Align::Start);
@@ -452,18 +452,17 @@ impl View {
             return;
         };
         let view = self.clone();
-        let window = super::source_changes::open(
-            &parent,
-            &model,
-            event.order,
-            &state,
-            Rc::new(move || {
-                if let Some(callback) = &view.after_keep {
-                    callback();
-                }
-                view.render();
-            }),
-        );
+        let refresh: Rc<dyn Fn()> = Rc::new(move || {
+            if let Some(callback) = &view.after_keep {
+                callback();
+            }
+            view.render();
+        });
+        let window = if hyprland_editor_core::lua::replay::declaration_edit::supports(&event.api) {
+            super::source_family_editor::open(&parent, &model, event.order, &state, refresh)
+        } else {
+            super::source_changes::open(&parent, &model, event.order, &state, refresh)
+        };
         *self.change_window.borrow_mut() = Some(window.downgrade());
     }
     #[cfg(test)]
@@ -919,7 +918,7 @@ fn comparable(analysis: &Analysis, event: &hyprland_editor_core::lua::replay::Ev
                     .as_ref()
                     .is_some_and(|m| m.batches.iter().any(|b| b.event_order == event.order))
         }
-        _ => false,
+        api => hyprland_editor_core::lua::replay::declaration_edit::supports(api),
     }
 }
 fn monitor_fields(batch: &hyprland_editor_core::lua::monitor_inspection::Batch) -> String {

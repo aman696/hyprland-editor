@@ -124,7 +124,7 @@ def check_source_worker(root, release, compiler):
         refusal=subprocess.run(['cargo','check','--locked','-p','hyprland-editor-core','--no-default-features',*invalid],cwd=ROOT,env=env,capture_output=True,text=True,timeout=120)
         if refusal.returncode==0 or 'Select exactly one native Lua family' not in refusal.stderr:
             raise RuntimeError('Missing/combined native family did not refuse before native library selection')
-    subprocess.run(['cargo','test',*flags,'--test','source55','--test','ordered_replay','--test','scalar_codec','--test','complex_scalar_codec','--','--test-threads=2'], cwd=ROOT, env=env, check=True, timeout=240)
+    subprocess.run(['cargo','test',*flags,'--test','source55','--test','ordered_replay','--test','declaration_edit','--test','scalar_codec','--test','complex_scalar_codec','--','--test-threads=2'], cwd=ROOT, env=env, check=True, timeout=240)
     subprocess.run(['cargo','clippy',*flags,'--bin','hyprland-editor-source55','--test','source55','--','-D','warnings'], cwd=ROOT, env=env, check=True, timeout=120)
     subprocess.run(['cargo','build',*flags,'--release','--bin','hyprland-editor-source55'], cwd=ROOT, env=env, check=True, timeout=240)
     image = root / 'source-worker-target/release/hyprland-editor-source55'

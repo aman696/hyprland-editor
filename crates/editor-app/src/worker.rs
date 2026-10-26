@@ -48,6 +48,15 @@ pub enum Request {
         review: hyprland_editor_core::source_merge::Review,
         choices: std::collections::BTreeMap<usize, hyprland_editor_core::source_merge::Choice>,
     },
+    InspectStructuredDeclaration {
+        program: lua::replay::Program,
+        event_order: usize,
+    },
+    CompareStructuredDeclaration {
+        program: lua::replay::Program,
+        event_order: usize,
+        target: Box<hyprland_editor_core::workspace::Workspace>,
+    },
     CompareScalarSource {
         program: lua::replay::Program,
         change: lua::replay::scalar_edit::Change,
@@ -204,6 +213,17 @@ pub fn entry() {
         // Conversion/replay-only requests do not need another parsed catalogue.
         let c = std::sync::LazyLock::new(catalogue);
         match request {
+            Request::InspectStructuredDeclaration {
+                program,
+                event_order,
+            } => lua::replay::declaration_edit::inspect(&program, event_order, &c)
+                .map(|report| Response::Parsed(Box::new(report))),
+            Request::CompareStructuredDeclaration {
+                program,
+                event_order,
+                target,
+            } => lua::replay::declaration_edit::compare(&program, event_order, &target, &c)
+                .map(|result| Response::ScalarSourceComparison(Box::new(result))),
             Request::InspectMonitorDeclarations { program, document } => {
                 lua::replay::monitor_edit::declarations::inspect(&program, &document)
                     .map(Response::MonitorDeclarationSites)

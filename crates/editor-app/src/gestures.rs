@@ -781,7 +781,11 @@ pub(super) fn connect(
         }
     });
 }
-fn show(parent: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) -> adw::Window {
+pub(super) fn show(
+    parent: &impl IsA<gtk::Window>,
+    state: &Shared,
+    status: &gtk::Label,
+) -> adw::Window {
     let win = adw::Window::builder()
         .title("Gestures")
         .transient_for(parent)

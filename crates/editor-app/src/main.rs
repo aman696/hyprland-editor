@@ -36,6 +36,7 @@ mod source_changes;
 mod source_compound_forms;
 mod source_context;
 mod source_declarations;
+mod source_family_editor;
 mod source_graph;
 mod source_modules;
 mod source_monitors;

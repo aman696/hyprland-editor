@@ -1,5 +1,6 @@
 //! Ordered evaluation of an immutable source bundle under an explicit, non-executing model.
 //! Module resolutions are supplied observations, never filesystem permissions or path guesses.
+pub mod declaration_edit;
 pub mod edits;
 mod eval;
 pub mod monitor_edit;
