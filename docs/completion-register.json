@@ -14,6 +14,22 @@
   },
   "foundations": [
     {
+      "area": "named complete workspace copies",
+      "code": [
+        "crates/editor-app/src/project_save.rs",
+        "crates/editor-app/src/workflow.rs",
+        "crates/editor-app/src/text_export.rs",
+        "crates/editor-app/src/presentation.rs"
+      ],
+      "test_references": [
+        "saved_revision_does_not_clear_edits_made_during_a_project_save",
+        "named_project_accepts_the_workspace_limit_and_refuses_wrong_names_or_replacement",
+        "project_save::test_named_copy",
+        "native_forms_and_draft_workflow"
+      ],
+      "limits": "native Save Project As menu/shortcut, selected-version complete workspace capture, background validation/serialization, asynchronous private new-local-hye output with 8 MiB limit, current/late generation accounting shared with state-folder backups; callback-driven private GUI byte/reopen checks for Lua, legacy and multi-file/private revisions; no automated OS chooser interaction, overwrite/update-in-place, configuration relocation/publication, live apply or full audit certificate"
+    },
+    {
       "area": "retained legacy scalar source workflow",
       "code": [
         "crates/editor-app/src/legacy_source.rs",

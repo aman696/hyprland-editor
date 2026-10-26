@@ -22,6 +22,7 @@ mod presentation;
 mod preview_layers;
 mod preview_preparation;
 mod process_policy;
+mod project_save;
 mod projection_worker;
 mod reconciliation;
 mod rule_forms;
@@ -983,6 +984,10 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
         .tooltip_text("Import Configuration (Ctrl+O)")
         .build();
     let save = gtk::Button::with_label("Save Draft");
+    save.set_tooltip_text(Some(
+        "Save a new backup in the editor's state folder (Ctrl+S)",
+    ));
+    let save_as = gtk::Button::with_label("Save Project As…");
     let review = gtk::Button::with_label("Review Draft");
     review.set_tooltip_text(Some("Review and Export Draft (Ctrl+Return)"));
     let review_child = gtk::Box::new(gtk::Orientation::Horizontal, 6);
@@ -1273,6 +1278,7 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
         summary(&s, &st);
     });
     workflow::connect_save(&save, &window, &state, &status);
+    project_save::connect(&save_as, &window, &state, &status);
     let s = state.clone();
     let win = window.downgrade();
     review.connect_clicked(move |_|{
@@ -1315,6 +1321,7 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     for (name, button) in [
         ("import", &open),
         ("save-draft", &save),
+        ("save-project-as", &save_as),
         ("review", &review),
         ("undo", &undo),
         ("coverage", &coverage),
@@ -1342,6 +1349,7 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     compiler_check::connect(&window, &state);
     app.set_accels_for_action("win.import", &["<Primary>o"]);
     app.set_accels_for_action("win.save-draft", &["<Primary>s"]);
+    app.set_accels_for_action("win.save-project-as", &["<Primary><Shift>s"]);
     app.set_accels_for_action("win.undo", &["<Primary>z"]);
     app.set_accels_for_action("win.review", &["<Primary>Return"]);
     let focus = gtk::gio::SimpleAction::new("search", None);

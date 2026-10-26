@@ -251,34 +251,38 @@ fn connect_save_at(
     let win = window.downgrade();
     let state = state.clone();
     let status = status.clone();
-    button.connect_clicked(move|button| {
-        let Some(win)=win.upgrade() else{return;};
-        let (generation,catalogue,workspace)={
-            let s=state.borrow();let snapshot=match captured_workspace(&s) { Ok(snapshot)=>snapshot,Err(error)=>{notice(&win,"Source identity missing",&error);return;} };
-            (s.generation,s.catalogue.clone(),snapshot)
+    button.connect_clicked(move |button| {
+        let Some(win) = win.upgrade() else {return;};
+        let pending = match super::project_save::Snapshot::capture(&state.borrow()) {
+            Ok(snapshot) => snapshot,
+            Err(error) => {notice(&win,"Source identity missing",&error);return;}
         };
-        let saved_gestures=workspace.gestures.clone();let saved_animations=workspace.animations.clone();let saved_rules=workspace.rules.clone();let saved_workspaces=workspace.workspace_rules.clone();let saved_bindings=workspace.bindings.clone();let saved_devices=workspace.devices.clone();let saved_monitors=workspace.monitors.clone();let saved_values=workspace.draft.values.clone();let saved_version=workspace.draft.version.clone();
-        let saved_origin=workspace.root().map(|root|root.origin.clone());
-        let saved_graph=state.borrow().source_graphs.get(&saved_version).map(|g|g.fingerprint.clone());
-        let root=root.clone();
-        button.set_sensitive(false);status.set_text("Saving a private draft and source snapshot…");
-        let button=button.downgrade();let state=state.clone();let status=status.clone();let win=win.downgrade();
-        background(move||{
-            let root=root.ok_or("Cannot find a user state directory")?;
-            if !root.is_absolute(){return Err("State directory must be absolute".into());}
-            std::fs::create_dir_all(&root).map_err(|e|e.to_string())?;
-            workspace::save(&root,&workspace,&catalogue)
-        },move|result|{
-            if let Some(button)=button.upgrade(){button.set_sensitive(true);}
-            let Some(win)=win.upgrade()else{return;};
+        let catalogue = state.borrow().catalogue.clone();
+        let root = root.clone();
+        button.set_sensitive(false);
+        status.set_text("Saving a private draft and source snapshot…");
+        let button = button.downgrade();
+        let state = state.clone();
+        let status = status.clone();
+        let win = win.downgrade();
+        background(move || {
+            let root = root.ok_or("Cannot find a user state directory")?;
+            if !root.is_absolute() {return Err("State directory must be absolute".into());}
+            std::fs::create_dir_all(&root).map_err(|error| error.to_string())?;
+            let path = workspace::save(&root,&pending.workspace,&catalogue)?;
+            Ok((path,pending))
+        },move |result| {
+            if let Some(button) = button.upgrade() {button.set_sensitive(true);}
+            let Some(win) = win.upgrade() else {return;};
             match result {
-                Ok(path)=>{
-                    let mut s=state.borrow_mut();
-                    if s.generation==generation {
-                        s.saved.insert(saved_version.clone(),saved_values);s.saved_monitors.insert(saved_version.clone(),saved_monitors);s.saved_devices.insert(saved_version.clone(),saved_devices);s.saved_bindings.insert(saved_version.clone(),saved_bindings);s.saved_rules.insert(saved_version.clone(),saved_rules);s.saved_animations.insert(saved_version.clone(),saved_animations);s.saved_gestures.insert(saved_version.clone(),saved_gestures);s.saved_workspace_rules.insert(saved_version.clone(),saved_workspaces);s.saved_source_origins.insert(saved_version.clone(),saved_origin);s.saved_source_graphs.insert(saved_version,saved_graph);
-                        drop(s);status.set_text(&format!("Private draft and source snapshot saved: {}",path.display()));
-                    } else {drop(s);status.set_text(&format!("An earlier draft revision was saved to {}. Current edits remain unsaved.",path.display()));}
-                },Err(e)=>{super::summary(&state,&status);notice(&win,"Could not save draft",&e);}
+                Ok((path,pending)) => {
+                    if pending.mark_saved(&state) {
+                        status.set_text(&format!("Private draft and source snapshot saved: {}",path.display()));
+                    } else {
+                        status.set_text(&format!("An earlier draft revision was saved to {}. Current edits remain unsaved.",path.display()));
+                    }
+                }
+                Err(error) => {super::summary(&state,&status);notice(&win,"Could not save draft",&error);}
             }
         });
     });
@@ -957,6 +961,7 @@ pub(super) fn test_legacy_persistence(window: &adw::ApplicationWindow) {
     apply_import(imported, &state, &status, &version, &selection, &panel);
     assert!(!state.borrow().dirty());
     let copy = gtk::Button::new();
+    super::project_save::test_named_copy(window, &state);
     connect_source_copy(&copy, window, &state);
     copy.emit_clicked();
     settle_until(&|| copy.is_sensitive());
@@ -1131,6 +1136,7 @@ pub(super) fn test_source_persistence(window: &adw::ApplicationWindow) {
         saved.draft.values["general:border_size"],
         hyprland_editor_core::Value::Int(5)
     );
+    super::project_save::test_named_copy(window, &state);
     {
         let mut s = state.borrow_mut();
         s.source_origins.get_mut(BASELINE).unwrap().inode += 1;
@@ -1259,4 +1265,5 @@ pub(super) fn test_graph_persistence(
         .keep_graph_revision(graph, draft, document, origin, generation)
         .unwrap();
     assert!(!state.borrow().dirty());
+    super::project_save::test_named_copy(window, state);
 }

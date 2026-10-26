@@ -116,6 +116,7 @@ pub fn menu_model() -> gtk::gio::Menu {
     let files = gtk::gio::Menu::new();
     files.append(Some("Import Configuration…"), Some("win.import"));
     files.append(Some("Save Draft"), Some("win.save-draft"));
+    files.append(Some("Save Project As…"), Some("win.save-project-as"));
     files.append(Some("Undo"), Some("win.undo"));
     files.append(Some("Edit Monitors…"), Some("win.monitors"));
     files.append(Some("Edit Devices…"), Some("win.devices"));
