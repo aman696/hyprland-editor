@@ -101,13 +101,6 @@ fn repeated_consumed_and_changed_family_inputs_cannot_open_partial_forms() {
             &catalogue()
         )
         .is_err());
-        assert!(declaration_edit::compare(
-            &p,
-            0,
-            &target("hl.device{name='mouse'};hl.device{name='other'}", version),
-            &catalogue()
-        )
-        .is_err());
     }
 }
 
@@ -184,5 +177,135 @@ fn captured_computed_values_populate_forms_without_changing_shared_locals() {
         assert!(result.review.revisions[0]
             .content
             .ends_with("hl.config{input={sensitivity=gain}}"));
+    }
+}
+
+#[test]
+fn source_family_forms_duplicate_remove_and_change_submap_contents() {
+    for version in [BASELINE, AUDITED_MAIN] {
+        for (source,expanded) in [
+            ("hl.device{name='one'}","hl.device{name='one'};hl.device{name='two'}"),
+            ("hl.bind('Q',hl.dsp.no_op())","hl.bind('Q',hl.dsp.no_op());hl.bind('W',hl.dsp.no_op())"),
+            ("hl.workspace_rule{workspace='1'}","hl.workspace_rule{workspace='1'};hl.workspace_rule{workspace='2'}"),
+            ("hl.window_rule{match={class='one'},float=true}","hl.window_rule{match={class='one'},float=true};hl.layer_rule{match={namespace='panel'},blur=true}"),
+            ("hl.animation{leaf='windows',enabled=false}","hl.curve('ease',{type='bezier',points={{0.1,0.2},{0.8,0.9}}});hl.animation{leaf='windows',enabled=false}"),
+            ("hl.gesture{fingers=3,direction='left',action='workspace'}","hl.gesture{fingers=3,direction='left',action='workspace'};hl.gesture{fingers=4,direction='right',action='workspace'}"),
+            ("hl.define_submap('demo',function()hl.bind('Q',hl.dsp.no_op())end)","hl.define_submap('renamed',function()hl.bind('W',hl.dsp.no_op());hl.bind('E',hl.dsp.no_op())end)"),
+        ] {
+            let p=program(&format!("-- header\n{source};hl.config{{general={{border_size=2}}}}"),version);
+            let form=declaration_edit::inspect(&p,0,&catalogue()).unwrap_or_else(|e|panic!("{source}: {e}"));assert!(!form.opaque_effects);
+            for desired in [expanded,""] {
+                let result=declaration_edit::compare(&p,0,&target(desired,version),&catalogue()).unwrap_or_else(|e|panic!("{source} => {desired}: {e}"));
+                assert!(result.review.modeled_observations_match,"{source} => {desired}: {:?}",result.review.differences);
+                assert!(result.review.structural_calls_matched>0);
+                assert!(result.review.revisions[0].content.starts_with("-- header\n"));
+                assert!(result.review.revisions[0].content.ends_with(";hl.config{general={border_size=2}}"));
+            }
+        }
+    }
+}
+#[test]
+fn source_family_insertion_uses_statement_boundaries_and_preserves_module_returns() {
+    use declaration_edit::Anchor;
+    for version in [BASELINE, AUDITED_MAIN] {
+        let p = program("-- kept\r\nreturn 2", version);
+        for (api, source) in [
+            ("hl.device", "hl.device{name='mouse'}"),
+            ("hl.bind", "hl.bind('Q',hl.dsp.no_op())"),
+            (
+                "hl.define_submap",
+                "hl.define_submap('demo',function()hl.bind('Q',hl.dsp.no_op())end)",
+            ),
+            ("hl.workspace_rule", "hl.workspace_rule{workspace='1'}"),
+            (
+                "hl.window_rule",
+                "hl.window_rule{match={class='one'},float=true}",
+            ),
+            ("hl.animation", "hl.animation{leaf='windows',enabled=false}"),
+        ] {
+            let result = declaration_edit::insert(
+                &p,
+                "main.lua",
+                &Anchor::End,
+                api,
+                &target(source, version),
+                &catalogue(),
+            )
+            .unwrap_or_else(|e| panic!("{api}: {e}"));
+            assert!(
+                result.review.modeled_observations_match,
+                "{api}: {:?}",
+                result.review.differences
+            );
+            assert!(result.review.revisions[0]
+                .content
+                .starts_with("-- kept\r\n"));
+            assert!(result.review.revisions[0].content.ends_with("return 2"));
+            assert!(declaration_edit::insert(
+                &p,
+                "main.lua",
+                &Anchor::After { span: 9..17 },
+                api,
+                &target(source, version),
+                &catalogue()
+            )
+            .is_err());
+        }
+    }
+}
+
+#[test]
+fn replacement_insertions_require_the_exact_removed_site_and_submaps_cannot_drop_other_families() {
+    use replay::edits::{self, StructuralCall};
+    for version in [BASELINE, AUDITED_MAIN] {
+        let p = program("hl.device{-- comment\n name='mouse'}", version);
+        let result = declaration_edit::compare(
+            &p,
+            0,
+            &target("hl.device{name='mouse'};hl.device{name='other'}", version),
+            &catalogue(),
+        )
+        .unwrap();
+        assert!(result.review.revisions[0].content.contains("-- comment"));
+        let mut forged = result.plan.clone();
+        forged
+            .structural_calls
+            .retain(|call| !matches!(call, StructuralCall::RemoveSite { .. }));
+        assert!(edits::review(&p, &forged).is_err());
+        let p=program("hl.define_submap('demo',function()hl.device{name='mouse'};hl.bind('Q',hl.dsp.no_op())end)",version);
+        assert!(declaration_edit::inspect(&p, 0, &catalogue()).is_err());
+        let p = program("if false then hl.config{} end;return 2", version);
+        let result = declaration_edit::insert(
+            &p,
+            "main.lua",
+            &declaration_edit::Anchor::Beginning,
+            "hl.bind",
+            &target("hl.bind('Q',hl.dsp.no_op())", version),
+            &catalogue(),
+        )
+        .unwrap();
+        assert!(result.review.modeled_observations_match);
+    }
+}
+
+#[test]
+fn replacement_coordinates_keep_original_and_new_call_sites_in_separate_domains() {
+    for version in [BASELINE, AUDITED_MAIN] {
+        let original = "hl.device({ name = \"one\" })";
+        for offset in 0..12 {
+            let p = program(&format!("{}{original}", " ".repeat(offset)), version);
+            let result = declaration_edit::compare(
+                &p,
+                0,
+                &target("hl.device{name='one'};hl.device{name='two'}", version),
+                &catalogue(),
+            )
+            .unwrap();
+            assert!(
+                result.review.modeled_observations_match,
+                "offset {offset}: {:?}",
+                result.review.differences
+            );
+        }
     }
 }

@@ -28,6 +28,7 @@ pub(super) fn validate(plan: &EditPlan, nodes: &mut usize) -> Result<(), String>
         return Err("Too many requested structural calls".into());
     }
     let (mut insertions, mut removals) = (BTreeSet::new(), BTreeSet::new());
+    let mut removed_sites = BTreeSet::new();
     for call in &plan.structural_calls {
         let (api, arguments): (&String, &[Observed]) = match call {
             StructuralCall::Insert {
@@ -42,7 +43,13 @@ pub(super) fn validate(plan: &EditPlan, nodes: &mut usize) -> Result<(), String>
                     .iter()
                     .find(|e| e.document == *document && e.span == *edit_span)
                     .ok_or("Inserted call has no corresponding source edit")?;
-                if !edit_span.is_empty()
+                let replaces_site = plan.structural_calls.iter().any(|call| {
+                    matches!(
+                        call, StructuralCall::RemoveSite { document: removed_document, span, .. }
+                        if removed_document == document && span == edit_span
+                    )
+                });
+                if (!edit_span.is_empty() && !replaces_site)
                     || call_span.is_empty()
                     || edit.replacement.get(call_span.clone()).is_none()
                     || !insertions.insert((
@@ -62,7 +69,7 @@ pub(super) fn validate(plan: &EditPlan, nodes: &mut usize) -> Result<(), String>
                 api,
             } => {
                 if span.is_empty()
-                    || !insertions.insert((document, span.start, span.start, span.end))
+                    || !removed_sites.insert((document, span.start, span.end))
                     || !plan.edits.iter().any(|e| {
                         e.document == *document
                             && e.span.start <= span.start

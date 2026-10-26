@@ -1,17 +1,20 @@
 //! Graphical whole-argument edits for one reached structured declaration.
 //! Original bytes and other graph observations remain independently compared.
+mod structure;
 use super::{edits, replay, scalar_edit, Event, Program};
 use crate::{
     lua::{self, named, syntax_tree, text, LuaReport},
     workspace::Workspace,
     Setting,
 };
+pub use structure::{insert, Anchor};
 
 pub fn supports(api: &str) -> bool {
     matches!(
         api,
         "hl.device"
             | "hl.bind"
+            | "hl.define_submap"
             | "hl.workspace_rule"
             | "hl.window_rule"
             | "hl.layer_rule"
@@ -24,7 +27,7 @@ fn canonical(workspace: &Workspace, api: &str) -> Result<String, String> {
     let version = &workspace.draft.version;
     match api {
         "hl.device" => crate::device::export_lua(&workspace.devices, version),
-        "hl.bind" => workspace.bindings.export_lua(version),
+        "hl.bind" | "hl.define_submap" => workspace.bindings.export_lua(version),
         "hl.workspace_rule" => {
             crate::workspace_rule::export_lua(&workspace.workspace_rules, version)
         }
@@ -33,6 +36,74 @@ fn canonical(workspace: &Workspace, api: &str) -> Result<String, String> {
         "hl.gesture" => workspace.gestures.export_lua(version),
         _ => Err("This declaration uses another source editor".into()),
     }
+}
+fn same_family(api: &str, other: &str) -> bool {
+    match api {
+        "hl.bind" | "hl.define_submap" => matches!(other, "hl.bind" | "hl.define_submap"),
+        "hl.window_rule" | "hl.layer_rule" => matches!(other, "hl.window_rule" | "hl.layer_rule"),
+        "hl.curve" | "hl.animation" => matches!(other, "hl.curve" | "hl.animation"),
+        _ => api == other,
+    }
+}
+fn only_family(target: &Workspace, api: &str) -> Result<(), String> {
+    let others = [
+        (!target.devices.is_empty(), "hl.device"),
+        (!target.bindings.is_empty(), "hl.bind"),
+        (!target.workspace_rules.is_empty(), "hl.workspace_rule"),
+        (!target.rules.is_empty(), "hl.window_rule"),
+        (!target.animations.declarations.is_empty(), "hl.animation"),
+        (!target.gestures.is_empty(), "hl.gesture"),
+    ];
+    if !target.draft.values.is_empty()
+        || !target.monitors.is_empty()
+        || others
+            .iter()
+            .any(|(present, other)| *present && !same_family(api, other))
+    {
+        return Err("This editor can change one feature family at a time. Other declarations must remain in their own source editor.".into());
+    }
+    Ok(())
+}
+fn validate_target(
+    program: &Program,
+    target: &Workspace,
+    catalogue: &[Setting],
+) -> Result<(), String> {
+    target.validate(catalogue)?;
+    if target.draft.version != program.version
+        || target.source_graph.is_some()
+        || !target.sources.is_empty()
+    {
+        return Err("Declaration edits need an isolated draft for this source version".into());
+    }
+    Ok(())
+}
+fn validate_rendered(
+    rendered: &str,
+    target: &Workspace,
+    api: &str,
+    catalogue: &[Setting],
+) -> Result<(), String> {
+    only_family(target, api)?;
+    let tree = syntax_tree(rendered)?;
+    if named(tree.root_node()).iter().any(|call| {
+        call.kind() != "function_call"
+            || call
+                .child_by_field_name("name")
+                .is_none_or(|name| !same_family(api, text(name, rendered)))
+    }) {
+        return Err("The serializer produced another declaration family".into());
+    }
+    let checked = lua::parse(rendered, &target.draft.version, catalogue)?;
+    if checked.opaque_effects
+        || !checked.diagnostics.is_empty()
+        || canonical(&workspace(checked), api)? != rendered
+    {
+        return Err(
+            "The graphical declarations do not round-trip through their source codec".into(),
+        );
+    }
+    Ok(())
 }
 fn workspace(report: LuaReport) -> Workspace {
     Workspace::new(report.draft)
@@ -128,15 +199,18 @@ fn selected(program: &Program, event: &Event, catalogue: &[Setting]) -> Result<L
     let rendered = canonical(&workspace(report.clone()), &event.api)?;
     let tree = syntax_tree(&rendered)?;
     let calls = named(tree.root_node());
-    if calls.len() != 1
-        || calls[0]
-            .child_by_field_name("name")
-            .is_none_or(|name| text(name, &rendered) != event.api)
+    if calls.is_empty()
+        || calls.iter().any(|call| {
+            call.child_by_field_name("name")
+                .is_none_or(|name| !same_family(&event.api, text(name, &rendered)))
+        })
     {
         return Err(
-            "This source declaration cannot be represented as one graphical declaration".into(),
+            "This source declaration cannot be represented by the graphical family editor".into(),
         );
     }
+    let snapshot = workspace(report.clone());
+    only_family(&snapshot, &event.api)?;
     Ok(report)
 }
 pub fn inspect(
@@ -153,13 +227,7 @@ pub fn compare(
     target: &Workspace,
     catalogue: &[Setting],
 ) -> Result<scalar_edit::Comparison, String> {
-    target.validate(catalogue)?;
-    if target.draft.version != program.version
-        || target.source_graph.is_some()
-        || !target.sources.is_empty()
-    {
-        return Err("Declaration edits need an isolated draft for this source version".into());
-    }
+    validate_target(program, target, catalogue)?;
     let before = replay(program)?;
     let original = event(&before, order)?;
     let old = selected(program, original, catalogue)?;
@@ -167,25 +235,17 @@ pub fn compare(
     if rendered == canonical(&workspace(old), &original.api)? {
         return Err("Change a field in the graphical editor before comparing".into());
     }
+    validate_rendered(&rendered, target, &original.api, catalogue)?;
     let rendered_tree = syntax_tree(&rendered)?;
     let calls = named(rendered_tree.root_node());
     if calls.len() != 1
-        || calls[0].kind() != "function_call"
         || calls[0]
             .child_by_field_name("name")
             .is_none_or(|name| text(name, &rendered) != original.api)
+        || original.api == "hl.define_submap"
     {
-        return Err("Keep one declaration of the same type in this editor. Add/remove operations use the family draft workflow.".into());
-    }
-    // Independently reparse the serializer result before it can select source bytes.
-    let checked = lua::parse(&rendered, &program.version, catalogue)?;
-    if checked.opaque_effects
-        || !checked.diagnostics.is_empty()
-        || canonical(&workspace(checked), &original.api)? != rendered
-    {
-        return Err(
-            "The graphical declaration does not round-trip through its source codec".into(),
-        );
+        let original = original.clone();
+        return structure::replace(program, before, &original, &rendered);
     }
     let doc = program
         .documents

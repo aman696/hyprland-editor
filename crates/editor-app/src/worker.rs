@@ -52,6 +52,12 @@ pub enum Request {
         program: lua::replay::Program,
         event_order: usize,
     },
+    InsertStructuredDeclarations {
+        program: lua::replay::Program,
+        document: String,
+        api: String,
+        target: Box<hyprland_editor_core::workspace::Workspace>,
+    },
     CompareStructuredDeclaration {
         program: lua::replay::Program,
         event_order: usize,
@@ -213,6 +219,20 @@ pub fn entry() {
         // Conversion/replay-only requests do not need another parsed catalogue.
         let c = std::sync::LazyLock::new(catalogue);
         match request {
+            Request::InsertStructuredDeclarations {
+                program,
+                document,
+                api,
+                target,
+            } => lua::replay::declaration_edit::insert(
+                &program,
+                &document,
+                &lua::replay::declaration_edit::Anchor::End,
+                &api,
+                &target,
+                &c,
+            )
+            .map(|result| Response::ScalarSourceComparison(Box::new(result))),
             Request::InspectStructuredDeclaration {
                 program,
                 event_order,

@@ -46,6 +46,7 @@ pub(super) struct View {
     monitor_review: gtk::glib::WeakRef<gtk::Button>,
     declarations: gtk::glib::WeakRef<gtk::Button>,
     export_file: gtk::glib::WeakRef<gtk::Button>,
+    add_family: gtk::glib::WeakRef<gtk::Button>,
     change_window: Rc<RefCell<Option<gtk::glib::WeakRef<adw::Window>>>>,
 }
 fn short(bytes: &[u8]) -> String {
@@ -126,6 +127,11 @@ pub(super) fn build(
     declarations.set_halign(gtk::Align::Start);
     declarations.set_sensitive(false);
     files_page.append(&declarations);
+    let add_family = gtk::Button::with_label("Add a Declaration…");
+    add_family.set_widget_name("source-analysis-add-family");
+    add_family.set_halign(gtk::Align::Start);
+    add_family.set_sensitive(false);
+    files_page.append(&add_family);
     let (area, source) = text_area("dependency-analysis-source");
     files_page.append(&area);
     tabs.add_titled(&files_page, Some("files"), "Files");
@@ -234,6 +240,7 @@ pub(super) fn build(
         monitor_review: monitor_review.downgrade(),
         declarations: declarations.downgrade(),
         export_file: export_file.downgrade(),
+        add_family: add_family.downgrade(),
         change_window: Rc::new(RefCell::new(None)),
     };
     let v = view.clone();
@@ -250,6 +257,8 @@ pub(super) fn build(
     declarations.connect_clicked(move |_| v.declarations());
     let v = view.clone();
     export_file.connect_clicked(move |_| v.export_file());
+    let v = view.clone();
+    add_family.connect_clicked(move |_| v.add_family());
     (body, view)
 }
 impl View {
@@ -260,6 +269,7 @@ impl View {
             &self.overrides,
             &self.monitor_review,
             &self.declarations,
+            &self.add_family,
         ] {
             if let Some(button) = weak.upgrade() {
                 button.set_visible(false);
@@ -313,6 +323,43 @@ impl View {
         let window = super::source_monitors::open(
             &parent,
             &model,
+            &state,
+            Rc::new(move || {
+                if let Some(callback) = &view.after_keep {
+                    callback();
+                }
+                view.render();
+            }),
+        );
+        *self.change_window.borrow_mut() = Some(window.downgrade());
+    }
+    fn add_family(&self) {
+        if self.readonly.get() {
+            return;
+        }
+        let (Some(model), Some(state), Some(button), Some(files)) = (
+            self.model.upgrade(),
+            self.state.upgrade(),
+            self.add_family.upgrade(),
+            self.files.upgrade(),
+        ) else {
+            return;
+        };
+        let Some(analysis) = model.borrow().clone() else {
+            return;
+        };
+        let Some(doc) = analysis.program.documents.get(files.selected() as usize) else {
+            return;
+        };
+        let Some(parent) = button.root().and_downcast::<gtk::Window>() else {
+            return;
+        };
+        self.close_change();
+        let view = self.clone();
+        let window = super::source_family_editor::add(
+            &parent,
+            &model,
+            doc.id.clone(),
             &state,
             Rc::new(move || {
                 if let Some(callback) = &view.after_keep {
@@ -466,6 +513,17 @@ impl View {
         *self.change_window.borrow_mut() = Some(window.downgrade());
     }
     #[cfg(test)]
+    pub(super) fn test_add_family(&self) -> adw::Window {
+        self.tabs.upgrade().unwrap().set_visible_child_name("files");
+        self.add_family.upgrade().unwrap().emit_clicked();
+        self.change_window
+            .borrow()
+            .as_ref()
+            .unwrap()
+            .upgrade()
+            .unwrap()
+    }
+    #[cfg(test)]
     pub(super) fn test_raw(&self) -> String {
         let expander = self.raw_expander.upgrade().unwrap();
         assert!(!expander.is_expanded());
@@ -527,6 +585,9 @@ impl View {
     pub(super) fn reset(&self, message: &str) {
         self.close_change();
         if let Some(button) = self.export_file.upgrade() {
+            button.set_sensitive(false);
+        }
+        if let Some(button) = self.add_family.upgrade() {
             button.set_sensitive(false);
         }
         if let Some(e) = self.compatibility.upgrade() {
@@ -724,6 +785,9 @@ impl View {
         let selected = analysis.program.documents.get(pick.selected() as usize);
         if let Some(button) = self.export_file.upgrade() {
             button.set_sensitive(selected.is_some());
+        }
+        if let Some(button) = self.add_family.upgrade() {
+            button.set_sensitive(!self.readonly.get() && selected.is_some());
         }
         let Some(doc) = selected else {
             view.buffer().set_text("");
