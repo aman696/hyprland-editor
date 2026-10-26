@@ -12,7 +12,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Native dependencies
-        run: sudo apt-get update && sudo apt-get install -y libgtk-4-dev libadwaita-1-dev libxkbcommon-dev libre2-dev liblua5.4-dev pkg-config cmake xvfb dbus-daemon
+        run: sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update && sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 install -y libgtk-4-dev libadwaita-1-dev libxkbcommon-dev libre2-dev liblua5.4-dev pkg-config cmake xvfb dbus-daemon
       - name: Pinned toolchain
         run: rustup toolchain install 1.90.0 --profile minimal --component rustfmt --component clippy
       - run: cargo fmt --all --check
@@ -60,7 +60,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Native core dependencies
-        run: sudo apt-get update && sudo apt-get install -y libgtk-4-dev libadwaita-1-dev libxkbcommon-dev libre2-dev liblua5.4-dev pkg-config g++ binutils
+        run: sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update && sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 install -y libgtk-4-dev libadwaita-1-dev libxkbcommon-dev libre2-dev liblua5.4-dev pkg-config g++ binutils
       - name: Pinned toolchain
         run: rustup toolchain install 1.90.0 --profile minimal
       - name: Test the full core/application workspace with GNU archive resolution
@@ -81,7 +81,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install private reference build dependencies
-        run: sudo apt-get update && sudo apt-get install -y g++ make pkg-config libre2-dev libxkbcommon-dev
+        run: sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update && sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 install -y g++ make pkg-config libre2-dev libxkbcommon-dev
       - name: Pinned reference toolchain
         run: rustup toolchain install 1.90.0 --profile minimal
       - name: Check official and narrowly patched compiler observations against restricted model
@@ -99,7 +99,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install fixture compiler and legacy comparison headers
-        run: sudo apt-get update && sudo apt-get install -y g++-15 make pkg-config cmake liblua5.4-dev libgtk-4-dev libadwaita-1-dev libxkbcommon-dev libre2-dev
+        run: sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update && sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 install -y g++-15 make pkg-config cmake liblua5.4-dev libgtk-4-dev libadwaita-1-dev libxkbcommon-dev libre2-dev
       - name: Pinned worker toolchain
         run: rustup toolchain install 1.90.0 --profile minimal --component clippy
       - name: Verify immutable source build requests
@@ -125,7 +125,7 @@ jobs:
         run: rustup toolchain install 1.90.0 --profile minimal
       - name: Install namespace constructor and compile trusted static boundary probe
         run: |
-          sudo apt-get update && sudo apt-get install -y bubblewrap
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update && sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 install -y bubblewrap
           cc -std=c11 -O2 -Wall -Wextra -Werror -static -o "$RUNNER_TEMP/hye-runtime-probe" crates/editor-preview/tests/fixtures/runtime_probe.c
           cc -std=c11 -O2 -Wall -Wextra -Werror -static -o "$RUNNER_TEMP/hye-launch-probe" crates/editor-preview/tests/fixtures/launch_probe.c
           test -z "$(readelf -l "$RUNNER_TEMP/hye-runtime-probe" | sed -n '/INTERP/p')"
@@ -184,7 +184,7 @@ jobs:
           persist-credentials: false
       - name: Build reviewed constructor and trusted static fixture
         run: |
-          sudo apt-get update && sudo apt-get install -y meson ninja-build libcap-dev
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update && sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 install -y meson ninja-build libcap-dev
           python3 -I -S scripts/build_bwrap_probe.py --output "$RUNNER_TEMP/hye-bwrap"
           cc -std=c11 -O2 -Wall -Wextra -Werror -static -o "$RUNNER_TEMP/hye-runtime-probe" crates/editor-preview/tests/fixtures/runtime_probe.c
           test -z "$(readelf -l "$RUNNER_TEMP/hye-runtime-probe" | sed -n '/INTERP/p')"

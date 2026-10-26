@@ -1,4 +1,12 @@
-# Session checkpoint — 26 October 2026
+# Session checkpoint — 27 October 2026
+
+## Captured declaration routing — 27 October 2026
+
+Captured multi-file analysis now observes all existing graphical declaration families, typed inert dispatcher construction arguments and immediate submap registration callbacks. Later module loads can continue beyond the first structured declaration; the inspector shows accurate family names, source arguments and enclosing submap counts. Binding/gesture input callbacks remain inert, consumed native objects/direct dispatch remain unresolved, and source comparison checks submap scope correspondence. See [declaration routing](declaration-routing.md).
+
+Local validation passes the full ordinary workspace suite (nine explicit ignores), the full private graphical workflow (119.34 seconds), final strict workspace/all-target lint (2.81 seconds), and all 15 workspace-graph integration cases (12.44 seconds), including the migration disclosure. The optimized GUI build passes (2m07s, followed by a current-tree no-change confirmation); formatting, catalogue/action/scalar/source-model/register consistency and whitespace checks pass. The three-file GUI fixture includes all families and a nested module, deletes originals, then saves/reopens retained sources. The reconstruction model has 87 inputs and 21 reviewed predecessors; existing numeric observations remain preserved. Full multi-file draft reconciliation/export, actual preview, live apply/recovery and all original acceptance obligations remain unfinished.
+
+The preceding published device head `3d4b089edb63c3ea8e6046420a5d347b7bbf95ed` passed its complete [PR workflow](https://github.com/aman696/hyprland-editor/actions/runs/40347465975). Its separate [push workflow](https://github.com/aman696/hyprland-editor/actions/runs/40347447850) was cancelled when GNU job dependency installation stalled at the 15-minute job limit; the other nine jobs passed. No compiler assertion ran in the cancelled dependency step. CI dependency commands now use bounded HTTP/HTTPS waits and retries; package lists and acceptance checks remain intact. New-head hosted results must be observed separately.
 
 ## Detected device names
 

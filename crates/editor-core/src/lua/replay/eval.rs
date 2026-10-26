@@ -477,6 +477,14 @@ impl<'a> Engine<'a> {
             );
         }
         if op == "==" || op == "~=" {
+            if matches!((&left.kind,&right.kind),(Kind::Dispatcher(a),Kind::Dispatcher(b)) if a != b)
+            {
+                return self.unknown(
+                    doc,
+                    node,
+                    "Equality of separately constructed native dispatcher closures is unresolved",
+                );
+            }
             let same = match (&left, &right) {
                 (
                     Value {
@@ -1161,7 +1169,7 @@ impl<'a> Engine<'a> {
         }
         Ok(Flow::Next)
     }
-    fn invoke(
+    pub(super) fn invoke(
         &mut self,
         doc: usize,
         node: Node<'a>,
@@ -1226,28 +1234,21 @@ impl<'a> Engine<'a> {
                 kind: Kind::Native(Native::Observe(api)),
                 ..
             } => {
-                if self.events.len() >= 2048 {
-                    return self.budget("Replay call observation limit exceeded");
-                }
-                self.output = self.output.saturating_add(1024);
-                let observed_args = if api == "emit" {
-                    &args[..args.len().min(1)]
-                } else {
-                    &args
-                };
-                let (arguments, argument_sources) = self.observed_sources(observed_args)?;
-                self.events.push(Event {
-                    order: self.order,
-                    document: self.documents[doc].document.id.clone(),
-                    span: node.byte_range(),
-                    api: api.into(),
-                    arguments,
-                    argument_sources,
-                    path_prefix: self.path_decisions.len(),
-                });
-                self.order += 1;
+                self.record_api(doc, node, api, &args)?;
                 Ok(vec![])
             }
+            Value {
+                kind: Kind::Native(Native::Declaration(api, object)),
+                ..
+            } => self.declaration(doc, node, api, object, args),
+            Value {
+                kind: Kind::Native(Native::DefineSubmap),
+                ..
+            } => self.define_submap(doc, node, args),
+            Value {
+                kind: Kind::Native(Native::DispatcherConstructor(name)),
+                ..
+            } => self.dispatcher_constructor(doc, node, name, args),
             Value {
                 kind: Kind::Native(Native::Require(safe)),
                 ..
@@ -1329,6 +1330,10 @@ impl<'a> Engine<'a> {
                         kind: Kind::Table(_),
                         ..
                     } => "table",
+                    Value {
+                        kind: Kind::Dispatcher(_),
+                        ..
+                    } => "function",
                     Value {
                         kind: Kind::Closure(_),
                         ..

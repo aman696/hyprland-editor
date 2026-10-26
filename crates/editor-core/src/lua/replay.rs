@@ -10,6 +10,7 @@ pub use numeric_codegen::{NumericCodegen, ZeroSubtraction};
 pub mod override_review;
 mod path_sources;
 mod provenance;
+mod registration_calls;
 pub mod scalar_edit;
 mod storage_sources;
 use super::{named, source_hash, syntax_tree, text};
@@ -169,6 +170,11 @@ pub enum Observed {
     Bytes(Vec<u8>),
     Table(Vec<(Observed, Observed)>),
     Function(String),
+    Dispatcher {
+        identity: usize,
+        constructor: String,
+        arguments: Vec<Observed>,
+    },
     Cycle(usize),
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -231,6 +237,10 @@ pub struct Report {
     pub version: String,
     pub profile: Profile,
     pub events: Vec<Event>,
+    /// Declaration callback intervals in the shared API/loader order. No input
+    /// binding or gesture callback is invoked by this source model.
+    #[serde(default)]
+    pub registration_scopes: Vec<RegistrationScope>,
     pub expression_sources: Vec<ExpressionSource>,
     #[serde(default)]
     pub storage_writes: Vec<WriteSource>,
@@ -241,6 +251,15 @@ pub struct Report {
     pub halt: Option<Halt>,
     pub logged_module_errors: usize,
     pub runtime_verified: bool,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RegistrationScope {
+    pub declaration_order: usize,
+    /// Exclusive end in the shared API/loader sequence, not an array index.
+    pub end_order: usize,
+    pub completed: bool,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -256,6 +275,7 @@ enum Kind {
     Table(usize),
     Closure(usize),
     Native(Native),
+    Dispatcher(usize),
     Unknown(&'static str),
 }
 #[derive(Clone, Debug)]
@@ -285,6 +305,9 @@ enum Native {
     Dofile,
     Loadfile,
     Observe(&'static str),
+    Declaration(&'static str, bool),
+    DefineSubmap,
+    DispatcherConstructor(String),
     Error,
     Pcall,
     Type,
@@ -444,12 +467,14 @@ struct Engine<'a> {
     tables: Vec<Table>,
     cells: Vec<Value>,
     closures: Vec<Closure<'a>>,
+    dispatchers: Vec<(String, Vec<Observed>)>,
     globals: usize,
     package: usize,
     registry: usize,
     preload: usize,
     searchers: usize,
     events: Vec<Event>,
+    registration_scopes: Vec<RegistrationScope>,
     loads: Vec<LoadEvent>,
     order: usize,
     logged: usize,
@@ -663,12 +688,14 @@ impl<'a> Engine<'a> {
             tables: vec![],
             cells: vec![],
             closures: vec![],
+            dispatchers: vec![],
             globals: usize::MAX,
             package: usize::MAX,
             registry: usize::MAX,
             preload: usize::MAX,
             searchers: usize::MAX,
             events: vec![],
+            registration_scopes: vec![],
             loads: vec![],
             order: 0,
             logged: 0,
@@ -777,6 +804,50 @@ impl<'a> Engine<'a> {
             b"monitor",
             Value::from(Kind::Native(Native::Observe("hl.monitor"))),
         )?;
+        for (name, api, object) in [
+            (b"device".as_slice(), "hl.device", false),
+            (b"bind", "hl.bind", true),
+            (b"workspace_rule", "hl.workspace_rule", true),
+            (b"window_rule", "hl.window_rule", true),
+            (b"layer_rule", "hl.layer_rule", true),
+            (b"curve", "hl.curve", false),
+            (b"animation", "hl.animation", false),
+            (b"gesture", "hl.gesture", false),
+        ] {
+            e.field_set(
+                hl,
+                name,
+                Value::from(Kind::Native(Native::Declaration(api, object))),
+            )?;
+        }
+        e.field_set(
+            hl,
+            b"define_submap",
+            Value::from(Kind::Native(Native::DefineSubmap)),
+        )?;
+        let dsp = e.table(true)?;
+        for definition in crate::action::catalogue(&program.version) {
+            let parts = definition.name.split('.').collect::<Vec<_>>();
+            let mut owner = dsp;
+            for part in &parts[..parts.len() - 1] {
+                owner = match e.field(owner, part.as_bytes()).kind {
+                    Kind::Table(table) => table,
+                    _ => {
+                        let table = e.table(true)?;
+                        e.field_set(owner, part.as_bytes(), Value::from(Kind::Table(table)))?;
+                        table
+                    }
+                };
+            }
+            e.field_set(
+                owner,
+                parts.last().unwrap().as_bytes(),
+                Value::from(Kind::Native(Native::DispatcherConstructor(
+                    definition.name.clone(),
+                ))),
+            )?;
+        }
+        e.field_set(hl, b"dsp", Value::from(Kind::Table(dsp)))?;
         e.field_set(e.globals, b"hl", Value::from(Kind::Table(hl)))?;
         if program.profile == Profile::SyntheticEmit {
             let fixture = e.bytes(b"<root>")?;
@@ -938,6 +1009,27 @@ impl<'a> Engine<'a> {
                 kind: Kind::Native(n),
                 ..
             } => Observed::Function(format!("{n:?}")),
+            Value {
+                kind: Kind::Dispatcher(id),
+                ..
+            } => {
+                let (constructor, args) = &self.dispatchers[*id];
+                *cost = cost.saturating_add(
+                    serde_json::to_vec(args)
+                        .map_err(|_| {
+                            Failure::Budget("Dispatcher payload size is unavailable".into())
+                        })?
+                        .len(),
+                );
+                if *cost > 2 * MAX_DOCUMENT_BYTES {
+                    return self.budget("Dispatcher observation exceeds its output budget");
+                }
+                Observed::Dispatcher {
+                    identity: *id,
+                    constructor: constructor.clone(),
+                    arguments: args.clone(),
+                }
+            }
             Value {
                 kind: Kind::Unknown(reason),
                 ..
@@ -1136,6 +1228,7 @@ pub fn replay(program: &Program) -> std::result::Result<Report, String> {
         version: program.version.clone(),
         profile: program.profile.clone(),
         events: engine.events,
+        registration_scopes: engine.registration_scopes,
         expression_sources: engine.expression_sources,
         storage_writes: engine.storage_writes,
         path_decisions: engine.path_decisions,

@@ -18,7 +18,7 @@ fn signature(value: &Observed) -> (&'static str, String) {
         Observed::Float(v) => ("float", format!("{:016x}", v.to_bits())),
         Observed::Bytes(v) => ("string", hex(v)),
         Observed::Table(_) | Observed::Cycle(_) => ("table", String::new()),
-        Observed::Function(_) => ("function", String::new()),
+        Observed::Function(_) | Observed::Dispatcher { .. } => ("function", String::new()),
     }
 }
 #[test]

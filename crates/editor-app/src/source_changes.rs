@@ -1294,6 +1294,9 @@ fn describe(analysis: &Analysis, result: &Comparison) -> Result<String, String> 
                 DifferenceKind::AddedCall => "An additional declaration runs",
                 DifferenceKind::Loader => "A module load changed",
                 DifferenceKind::PathHistory => "Branch or loop behavior changed",
+                DifferenceKind::RegistrationScope => {
+                    "A declaration's submap registration context changed"
+                }
                 DifferenceKind::ReturnValues => "A returned value changed",
                 DifferenceKind::LoggedModuleErrors => "Module error handling changed",
                 DifferenceKind::IncompleteModel => {

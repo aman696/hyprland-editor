@@ -56,7 +56,10 @@ const WORKSPACE_COPY_FROM: &str =
     "4ec820faed65d07698417a29f7738f56f8470e0fc7f9898643c646c291aae5af";
 const SOURCE_MODEL: &str =
     include_str!("../../../data/migrations/graph-model-before-workspace-copy.json");
-const TO: &str = "25888d9809cc642d8cc9d6980c5cd1f321576863d2f9660e36736b810a402814";
+const REGISTRATION_FROM: &str = "25888d9809cc642d8cc9d6980c5cd1f321576863d2f9660e36736b810a402814";
+const REGISTRATION_MODEL: &str =
+    include_str!("../../../data/migrations/graph-model-before-registration-calls.json");
+const TO: &str = "d569b9b70d887873926112bf736e8b481d21e93ff0fe9df8d390865b7ec4ff3f";
 const OLD: &str = include_str!("../../../data/migrations/graph-model-before-projection.json");
 const FROM_PROJECTION: &str = "046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371";
 const PROJECTION: &str = include_str!("../../../data/migrations/graph-model-projection.json");
@@ -848,7 +851,7 @@ fn before_workspace_copy_transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
-fn transition(from: &str) -> Result<(), String> {
+fn before_registration_calls_transition(from: &str) -> Result<(), String> {
     if lua::source_hash(SOURCE_MODEL) != WORKSPACE_COPY_FROM
         || workspace_graph::schema_sha256() != TO
     {
@@ -862,7 +865,7 @@ fn transition(from: &str) -> Result<(), String> {
     let previous: serde_json::Value =
         serde_json::from_str(SOURCE_MODEL).map_err(|error| error.to_string())?;
     let current: serde_json::Value =
-        serde_json::from_str(CURRENT).map_err(|error| error.to_string())?;
+        serde_json::from_str(REGISTRATION_MODEL).map_err(|error| error.to_string())?;
     let old = previous["inputs"]
         .as_object()
         .ok_or("Invalid preceding source model")?;
@@ -894,6 +897,58 @@ fn transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
+fn transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(REGISTRATION_MODEL) != REGISTRATION_FROM
+        || workspace_graph::schema_sha256() != TO
+    {
+        return Err(
+            "No reviewed declaration-routing transition to this exact model is available".into(),
+        );
+    }
+    if from != REGISTRATION_FROM {
+        before_registration_calls_transition(from)?;
+    }
+    let previous: serde_json::Value =
+        serde_json::from_str(REGISTRATION_MODEL).map_err(|error| error.to_string())?;
+    let current: serde_json::Value =
+        serde_json::from_str(CURRENT).map_err(|error| error.to_string())?;
+    let old = previous["inputs"]
+        .as_object()
+        .ok_or("Invalid preceding declaration model")?;
+    let new = current["inputs"]
+        .as_object()
+        .ok_or("Invalid declaration-routing model")?;
+    let added = new
+        .keys()
+        .filter(|key| !old.contains_key(*key))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    let changed = old
+        .keys()
+        .filter(|key| new.get(*key) != Some(&old[*key]))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    if old.len() != 84
+        || new.len() != 87
+        || added
+            != [
+                "crates/editor-core/src/lua/replay/registration_calls.rs",
+                "data/actions.json",
+                "data/bindings.json",
+            ]
+        || changed
+            != [
+                "crates/editor-core/src/lua/replay.rs",
+                "crates/editor-core/src/lua/replay/edits.rs",
+                "crates/editor-core/src/lua/replay/edits/structure.rs",
+                "crates/editor-core/src/lua/replay/eval.rs",
+                "crates/editor-core/src/workspace_rule/source_state/tests.rs",
+            ]
+    {
+        return Err("Declaration routing differs from the reviewed family observations, inert constructor payloads and submap scope comparison; compiler profiles and saved input formats must remain unchanged".into());
+    }
+    Ok(())
+}
 pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, String> {
     if text.len() > MAX_WORKSPACE_BYTES {
         return Err("Saved workspace exceeds 8 MiB".into());
@@ -917,6 +972,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != NUMERIC_CODEGEN
         && previous != NATIVE_ADMISSION
         && previous != WORKSPACE_COPY_FROM
+        && previous != REGISTRATION_FROM
         && raw["source_graph"].get("private").is_some()
     {
         return Err("Previous graph writers had no private input layer; new payloads cannot be introduced during migration".into());
@@ -924,6 +980,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
     if previous != NUMERIC_CODEGEN
         && previous != NATIVE_ADMISSION
         && previous != WORKSPACE_COPY_FROM
+        && previous != REGISTRATION_FROM
         && raw["source_graph"]["compiler"]
             .get("numeric_codegen")
             .is_some()
@@ -945,7 +1002,8 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
     let current_compiler = lua::replay::compiler_profile();
     let compiler_observation_renewed = previous != NUMERIC_CODEGEN
         && previous != NATIVE_ADMISSION
-        && previous != WORKSPACE_COPY_FROM;
+        && previous != WORKSPACE_COPY_FROM
+        && previous != REGISTRATION_FROM;
     let mut expected_compiler = current_compiler.clone();
     if compiler_observation_renewed {
         expected_compiler.numeric_codegen = None;
@@ -992,6 +1050,11 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         lua::replay::Halt::LuaError {..} => "Rebuilt analysis encountered a modeled Lua error.".into(),
         lua::replay::Halt::Budget {..} => "Rebuilt analysis reached a resource limit.".into(),
     }));
+    let declaration_note = "Reanalysis now observes additional declaration families and immediate submap registration callbacks. Input callbacks and dispatchers are not executed. Newly reached dependencies may need explicit capture; saved folder access is not restored.";
+    summary.reanalysis_note = Some(match summary.reanalysis_note.take() {
+        Some(note) => format!("{note} {declaration_note}"),
+        None => declaration_note.into(),
+    });
     let saved = Arc::new(super::source_graph::Saved::new(
         bundle,
         &workspace.draft.version,
@@ -1051,6 +1114,7 @@ mod tests {
         transition(NUMERIC_CODEGEN).unwrap();
         transition(NATIVE_ADMISSION).unwrap();
         transition(WORKSPACE_COPY_FROM).unwrap();
+        transition(REGISTRATION_FROM).unwrap();
         assert!(transition(&"0".repeat(64)).is_err());
         assert_ne!(FROM, TO);
         assert_eq!(lua::source_hash(CURRENT), TO);

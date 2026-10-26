@@ -353,3 +353,100 @@ fn changed_computed_loader_context_does_not_reuse_a_different_modules_resolution
         .unwrap_err()
         .contains("not reached"));
 }
+
+#[test]
+fn submap_membership_changes_are_reported_and_unchanged_scopes_allow_edits_and_insertions() {
+    for version in [BASELINE, AUDITED_MAIN] {
+        let mut p = program("hl.define_submap('x',function()emit(2)end);emit(3)");
+        p.version = version.into();
+        let plan = prepare(
+            &p,
+            vec![edit(&p, "root", "2", "4")],
+            vec![expected(1, Observed::Int(2), Observed::Int(4))],
+        )
+        .unwrap();
+        let reviewed = review(&p, &plan).unwrap();
+        assert!(
+            reviewed.modeled_observations_match,
+            "{:?}",
+            reviewed.differences
+        );
+        let start = p.documents[0].source.find("emit(2)").unwrap();
+        let patch = SourceEdit {
+            document: "root".into(),
+            base_sha256: p.documents[0].sha256.clone(),
+            span: start..start,
+            old_bytes_sha256: source_hash(""),
+            replacement: "emit(9);".into(),
+            semantic_targets: vec!["fixture.scope".into()],
+        };
+        let mut plan = prepare(&p, vec![patch], vec![]).unwrap();
+        plan.structural_calls.push(StructuralCall::Insert {
+            document: "root".into(),
+            edit_span: start..start,
+            call_span: 0..7,
+            api: "emit".into(),
+            arguments: vec![Observed::Int(9)],
+        });
+        let reviewed = review(&p, &plan).unwrap();
+        assert!(
+            reviewed.modeled_observations_match,
+            "{:?}",
+            reviewed.differences
+        );
+        let mut p = program("hl.define_submap('x',function()emit(2)end);emit(3)");
+        p.version = version.into();
+        let end = p.documents[0].source.len();
+        let mut patches = vec![
+            edit(&p, "root", "end);", ""),
+            SourceEdit {
+                document: "root".into(),
+                base_sha256: p.documents[0].sha256.clone(),
+                span: end..end,
+                old_bytes_sha256: source_hash(""),
+                replacement: ";end)".into(),
+                semantic_targets: vec!["fixture.scope".into()],
+            },
+        ];
+        patches.sort_by_key(|patch| patch.span.start);
+        let plan = prepare(&p, patches, vec![]).unwrap();
+        let reviewed = review(&p, &plan).unwrap();
+        assert!(!reviewed.modeled_observations_match);
+        assert!(
+            reviewed
+                .differences
+                .iter()
+                .any(|difference| difference.kind == DifferenceKind::RegistrationScope),
+            "{:?}",
+            reviewed.differences
+        );
+    }
+}
+
+#[test]
+fn captured_dispatcher_arguments_preserve_zero_sign_and_are_compared_recursively() {
+    let mut p = program(
+        "local point={x=-0.0,y=1};local a=hl.dsp.cursor.move(point);point.x=9;hl.bind('Q',a)",
+    );
+    p.profile = Profile::HyprlandLua54;
+    let report = replay(&p).unwrap();
+    assert!(report.halt.is_none(), "{:?}", report.halt);
+    let Observed::Dispatcher { arguments, .. } = &report.events[0].arguments[1] else {
+        panic!("Missing constructor")
+    };
+    let Observed::Table(rows) = &arguments[0] else {
+        panic!("Missing table")
+    };
+    let x = rows
+        .iter()
+        .find(|(key, _)| *key == Observed::Bytes(b"x".to_vec()))
+        .unwrap();
+    assert!(matches!(&x.1,Observed::Float(value) if value.to_bits()==(-0.0f64).to_bits()));
+    let plan = prepare(&p, vec![edit(&p, "root", "-0.0", "0.0")], vec![]).unwrap();
+    let reviewed = review(&p, &plan).unwrap();
+    assert!(!reviewed.modeled_observations_match);
+    assert!(reviewed
+        .differences
+        .iter()
+        .any(|difference| difference.kind == DifferenceKind::Arguments));
+}

@@ -157,6 +157,40 @@ fn difference(kind: DifferenceKind, before: Option<&Event>, after: Option<&Event
         after_arguments: after.map(|e| e.arguments.clone()),
     }
 }
+
+pub(super) fn same_scope_context(
+    plan: &EditPlan,
+    before: &Report,
+    after: &Report,
+    old_order: usize,
+    new_order: usize,
+) -> bool {
+    fn enclosing(report: &Report, order: usize) -> Vec<(&Event, bool)> {
+        report
+            .registration_scopes
+            .iter()
+            .filter(|scope| scope.declaration_order < order && order < scope.end_order)
+            .filter_map(|scope| {
+                report
+                    .events
+                    .binary_search_by_key(&scope.declaration_order, |event| event.order)
+                    .ok()
+                    .map(|index| (&report.events[index], scope.completed))
+            })
+            .collect()
+    }
+    let old = enclosing(before, old_order);
+    let new = enclosing(after, new_order);
+    old.len() == new.len()
+        && old
+            .iter()
+            .zip(new)
+            .all(|((a, completed), (b, next_completed))| {
+                *completed == next_completed
+                    && same_site(plan, a, b)
+                    && same_arguments(&a.arguments, &b.arguments)
+            })
+}
 pub(super) fn compare(
     plan: &EditPlan,
     proposed: &Program,
@@ -278,6 +312,9 @@ pub(super) fn compare(
     let paired_old = pairs.iter().map(|(a, _)| *a).collect::<BTreeSet<_>>();
     let paired_new = pairs.iter().map(|(_, b)| *b).collect::<BTreeSet<_>>();
     for &(i, j) in &pairs {
+        if !same_scope_context(plan, before, after, old[i].order(), new[j].order()) {
+            differences.push(difference(DifferenceKind::RegistrationScope, None, None));
+        }
         match (old[i], new[j]) {
             (Step::Call(a), Step::Call(b)) => {
                 let expected = plan.expected_calls.iter().find(|e| e.order == a.order);

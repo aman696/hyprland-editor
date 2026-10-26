@@ -31,7 +31,7 @@ fn observed(value: &Observed) -> Value {
         Observed::Int(v) => json!(v),
         Observed::Float(v) => json!(v),
         Observed::Bytes(v) => json!(String::from_utf8(v.clone()).expect("UTF-8 fixture")),
-        Observed::Function(_) => json!("function"),
+        Observed::Function(_) | Observed::Dispatcher { .. } => json!("function"),
         Observed::Cycle(_) => json!("<cycle>"),
         Observed::Table(rows) => {
             if !rows.is_empty()
@@ -668,4 +668,159 @@ fn legacy_image_refuses_explicit_native55_programs_before_analysis() {
         .unwrap_err()
         .contains("native Lua family"));
     assert!(replay(&p).is_err());
+}
+
+#[test]
+fn graphical_declaration_families_keep_module_loading_and_input_callbacks_inert() {
+    for version in [BASELINE, AUDITED_MAIN] {
+        let mut p = program(
+            r#"
+local input_count=0
+local action=hl.dsp.no_op()
+hl.device{name='mouse',sensitivity=0.2}
+hl.bind('Q',action)
+hl.bind('W',function()input_count=input_count+1;os.execute('must-not-run')end)
+hl.workspace_rule{workspace='1'}
+hl.window_rule{match={class='term'},float=true}
+hl.layer_rule{match={namespace='panel'},blur=true}
+hl.curve('ease',{type='bezier',points={{0.1,0.2},{0.8,0.9}}})
+hl.animation{leaf='windows',enabled=true,speed=1,bezier='ease'}
+hl.gesture{fingers=3,direction='left',action={start=function()input_count=input_count+1;os.execute('must-not-run')end}}
+local part=require('part')
+hl.config{general={border_size=input_count+part}}
+"#,
+        );
+        p.profile = Profile::HyprlandLua54;
+        p.version = version.into();
+        p.documents
+            .push(document("part.lua", "hl.monitor{output='DP-1'};return 2"));
+        let partial = replay(&p).unwrap();
+        let Some(Halt::NeedsResolution { request }) = partial.halt else {
+            panic!("{:?}", partial.halt)
+        };
+        p.bindings.push(Binding {
+            request,
+            resolution: Resolution::Loaded {
+                document: "part.lua".into(),
+                loader_data: vec![],
+            },
+        });
+        let report = replay(&p).unwrap();
+        assert!(report.halt.is_none(), "{:?}", report.halt);
+        assert_eq!(
+            report
+                .events
+                .iter()
+                .map(|event| event.api.as_str())
+                .collect::<Vec<_>>(),
+            vec![
+                "hl.device",
+                "hl.bind",
+                "hl.bind",
+                "hl.workspace_rule",
+                "hl.window_rule",
+                "hl.layer_rule",
+                "hl.curve",
+                "hl.animation",
+                "hl.gesture",
+                "hl.monitor",
+                "hl.config"
+            ]
+        );
+        assert!(
+            matches!(&report.events[1].arguments[1],Observed::Dispatcher{constructor,arguments,..} if constructor=="no_op"&&arguments.is_empty())
+        );
+        assert_eq!(
+            observed(&report.events.last().unwrap().arguments[0]),
+            json!({"general":{"border_size":2}})
+        );
+        assert_eq!(report.loads.len(), 1);
+        assert!(!report.runtime_verified);
+    }
+}
+
+#[test]
+fn immediate_submap_callbacks_keep_nested_scopes_and_cross_file_registration_order() {
+    for version in [BASELINE, AUDITED_MAIN] {
+        let mut p=program("local n=0;local function register()n=n+1;hl.bind('Q',function()n=99 end);require('part');hl.define_submap('inner',function()n=n+1;hl.bind('W',hl.dsp.no_op())end)end;hl.define_submap('outer','reset',register);hl.config{general={border_size=n}}");
+        p.profile = Profile::HyprlandLua54;
+        p.version = version.into();
+        p.documents
+            .push(document("part.lua", "hl.device{name='keyboard'}"));
+        let Some(Halt::NeedsResolution { request }) = replay(&p).unwrap().halt else {
+            panic!("Missing callback module")
+        };
+        p.bindings.push(Binding {
+            request,
+            resolution: Resolution::Loaded {
+                document: "part.lua".into(),
+                loader_data: vec![],
+            },
+        });
+        let report = replay(&p).unwrap();
+        assert!(report.halt.is_none(), "{:?}", report.halt);
+        assert_eq!(
+            observed(&report.events.last().unwrap().arguments[0]),
+            json!({"general":{"border_size":2}})
+        );
+        assert_eq!(report.registration_scopes.len(), 2);
+        let outer = &report.registration_scopes[0];
+        let inner = &report.registration_scopes[1];
+        assert!(outer.completed && inner.completed);
+        assert!(
+            outer.declaration_order < report.loads[0].order
+                && report.loads[0].order < outer.end_order
+        );
+        assert!(
+            outer.declaration_order < inner.declaration_order && inner.end_order <= outer.end_order
+        );
+        assert!(outer.end_order <= report.events.last().unwrap().order);
+    }
+}
+
+#[test]
+fn declaration_objects_and_dispatch_effects_cannot_supply_invented_values() {
+    for source in [
+        "local bind=hl.bind('Q',function()end);hl.config{}",
+        "return hl.window_rule{match={class='term'},float=true}",
+        "hl.config{general={border_size=select('#',hl.workspace_rule{workspace='1'})}}",
+        "local action=hl.dsp.no_op();action();hl.config{}",
+        "return hl.dsp.no_op()==hl.dsp.no_op()",
+        "local action=hl.dsp.no_op();hl.dispatch(action)",
+    ] {
+        let mut p = program(source);
+        p.profile = Profile::HyprlandLua54;
+        let report = replay(&p).unwrap();
+        assert!(
+            matches!(report.halt, Some(Halt::Unresolved { .. })),
+            "{source}: {:?}",
+            report.halt
+        );
+        assert!(!report.events.iter().any(|event| event.api == "hl.config"));
+    }
+    let mut p = program("local action=hl.dsp.no_op();return type(action),action==action");
+    p.profile = Profile::HyprlandLua54;
+    let report = replay(&p).unwrap();
+    assert!(report.halt.is_none());
+    assert_eq!(observed(&report.returns[0]), json!("function"));
+    assert_eq!(report.returns[1], Observed::Bool(true));
+}
+
+#[test]
+fn submap_errors_and_recursive_callbacks_remain_explicit_incomplete_models() {
+    for source in [
+        "hl.define_submap('x',function()error('bad')end);hl.config{}",
+        "hl.define_submap('x',42);hl.config{}",
+        "local function f()hl.define_submap('x',f)end;pcall(f);hl.config{}",
+    ] {
+        let mut p = program(source);
+        p.profile = Profile::HyprlandLua54;
+        let report = replay(&p).unwrap();
+        assert!(report.halt.is_some(), "{source}");
+        assert!(!report.events.iter().any(|event| event.api == "hl.config"));
+        assert!(report
+            .registration_scopes
+            .iter()
+            .all(|scope| !scope.completed));
+    }
 }

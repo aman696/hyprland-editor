@@ -1805,6 +1805,140 @@ pub(super) fn test_retained_graph(parent: &adw::ApplicationWindow) {
 }
 
 #[cfg(test)]
+pub(super) fn test_declaration_families(parent: &adw::ApplicationWindow) {
+    use hyprland_editor_core::BASELINE;
+    fn wait(test: impl Fn() -> bool) {
+        let start = std::time::Instant::now();
+        let context = gtk::glib::MainContext::default();
+        while !test() {
+            while context.pending() {
+                context.iteration(false);
+            }
+            assert!(start.elapsed() < std::time::Duration::from_secs(12));
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+    }
+    let fixture = super::test_support::TempDir::new("he-family-graph");
+    let originals = fixture.path().join("originals");
+    std::fs::create_dir(&originals).unwrap();
+    let main = originals.join("main.lua");
+    let source="hl.config{general={border_size=2}};hl.device{name='mouse'};hl.bind('Q',hl.dsp.no_op());hl.define_submap('demo',function()require('part')end);require('after')";
+    std::fs::write(&main, source).unwrap();
+    std::fs::write(originals.join("part.lua"),"hl.workspace_rule{workspace='1'};hl.window_rule{match={class='term'},float=true};hl.layer_rule{match={namespace='panel'},blur=true};hl.curve('ease',{type='bezier',points={{0.1,0.2},{0.8,0.9}}});hl.animation{leaf='windows',enabled=true,speed=1,bezier='ease'};hl.gesture{fingers=3,direction='left',action={start=function()os.execute('never')end}}").unwrap();
+    std::fs::write(
+        originals.join("after.lua"),
+        "hl.monitor{output='DP-1'};hl.config{general={border_size=4}}",
+    )
+    .unwrap();
+    let captured = super::capture_worker::read_selected(&main).unwrap();
+    let state = super::initial_state();
+    let doc = workflow::parse_source(captured.content, BASELINE.into(), &state.borrow().catalogue)
+        .unwrap();
+    state
+        .borrow_mut()
+        .sources
+        .insert(BASELINE.into(), Arc::new(doc));
+    state
+        .borrow_mut()
+        .source_origins
+        .insert(BASELINE.into(), captured.identity);
+    let (window, ui) = show(
+        parent,
+        &state,
+        BASELINE.into(),
+        hyprland_editor_core::lua::source_hash(source),
+    );
+    ui.approve(originals.clone());
+    wait(|| {
+        ui.session
+            .upgrade()
+            .is_some_and(|session| !session.borrow().pending)
+    });
+    ui.capture(main);
+    wait(|| {
+        ui.session
+            .upgrade()
+            .is_some_and(|session| !session.borrow().pending)
+    });
+    ui.analyze();
+    wait(|| {
+        ui.session
+            .upgrade()
+            .is_some_and(|session| !session.borrow().pending)
+    });
+    let analysis = ui
+        .session
+        .upgrade()
+        .unwrap()
+        .borrow()
+        .analysis
+        .borrow()
+        .clone()
+        .unwrap();
+    assert!(analysis.report.halt.is_none(), "{:?}", analysis.report.halt);
+    assert_eq!(analysis.captures.len(), 3);
+    assert_eq!(analysis.report.registration_scopes.len(), 1);
+    assert!(analysis.report.registration_scopes[0].completed);
+    for api in [
+        "hl.config",
+        "hl.monitor",
+        "hl.device",
+        "hl.bind",
+        "hl.define_submap",
+        "hl.workspace_rule",
+        "hl.window_rule",
+        "hl.layer_rule",
+        "hl.curve",
+        "hl.animation",
+        "hl.gesture",
+    ] {
+        let event = analysis
+            .report
+            .events
+            .iter()
+            .find(|event| event.api == api)
+            .unwrap();
+        let text = ui.analysis_view.test_call(event.order as u32);
+        if !matches!(api, "hl.config" | "hl.monitor") {
+            assert!(
+                text.contains("Captured declaration arguments"),
+                "{api}: {text}"
+            );
+        }
+        if api == "hl.bind" {
+            assert!(
+                text.contains("hl.dsp.no_op()") && text.contains("not invoked"),
+                "{text}"
+            );
+        }
+        if api == "hl.gesture" {
+            assert!(text.contains("Inside 1 immediate submap"), "{text}");
+        }
+    }
+    ui.keep.upgrade().unwrap().emit_clicked();
+    wait(|| {
+        ui.session
+            .upgrade()
+            .is_some_and(|session| !session.borrow().pending)
+    });
+    assert_eq!(
+        state.borrow().source_graphs[BASELINE].bundle.sources.len(),
+        3
+    );
+    let (minimum, _, _, _) = window.measure(gtk::Orientation::Horizontal, -1);
+    assert!(minimum <= 350, "Family graph UI needs {minimum}px");
+    window.close();
+    drop(ui);
+    drop(window);
+    std::fs::remove_dir_all(&originals).unwrap();
+    super::workflow::test_graph_persistence(parent, &state, fixture.path());
+    assert_eq!(
+        state.borrow().source_graphs[BASELINE].bundle.sources.len(),
+        3
+    );
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
     #[test]

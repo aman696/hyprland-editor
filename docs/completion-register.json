@@ -14,6 +14,25 @@
   },
   "foundations": [
     {
+      "area": "captured multi-file declaration routing and submap inspection",
+      "code": [
+        "crates/editor-core/src/lua/replay/registration_calls.rs",
+        "crates/editor-core/src/lua/replay/edits/structure.rs",
+        "crates/editor-app/src/source_analysis.rs",
+        "crates/editor-app/src/source_access.rs",
+        "crates/editor-app/src/graph_migration.rs"
+      ],
+      "test_references": [
+        "graphical_declaration_families_keep_module_loading_and_input_callbacks_inert",
+        "immediate_submap_callbacks_keep_nested_scopes_and_cross_file_registration_order",
+        "declaration_objects_and_dispatch_effects_cannot_supply_invented_values",
+        "submap_errors_and_recursive_callbacks_remain_explicit_incomplete_models",
+        "source_access::test_declaration_families",
+        "native_forms_and_draft_workflow"
+      ],
+      "limits": "all existing declaration-family argument observations through captured modules, inert typed dispatcher construction snapshots, immediate submap AST callbacks and scope-aware retained-call/loader comparison, bounded three-file original-free GUI save/reopen; 87-input model/21 reviewed predecessors preserve numeric observations; no native acceptance/object methods/direct dispatch, complete dynamic language or source ownership, all-family multi-file reconciliation/combined export, effective state, actual compositor preview, live apply/recovery or full security/resource/release certificate"
+    },
+    {
       "area": "on-demand device names and reported categories",
       "code": [
         "crates/editor-discovery/src/devices.rs",

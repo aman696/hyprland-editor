@@ -692,15 +692,7 @@ impl View {
                 (
                     e.order,
                     Call::Api(i),
-                    format!(
-                        "{} · {}",
-                        e.order + 1,
-                        if e.api == "hl.monitor" {
-                            "Monitor declaration"
-                        } else {
-                            "Settings declaration"
-                        }
-                    ),
+                    format!("{} · {}", e.order + 1, declaration_name(&e.api)),
                 )
             })
             .chain(analysis.report.loads.iter().enumerate().map(|(i, e)| {
@@ -835,6 +827,26 @@ impl View {
                     } else {
                         body.push_str("Monitor field inspection unavailable.\n\n");
                     }
+                } else {
+                    body.push_str("Captured declaration arguments and their source evidence are available in Value Sources. Native field acceptance, object methods and source/draft reconciliation for this family remain unverified. Binding and gesture input callbacks are not invoked.\n\n");
+                    let scopes = analysis
+                        .report
+                        .registration_scopes
+                        .iter()
+                        .filter(|scope| {
+                            scope.declaration_order < e.order && e.order < scope.end_order
+                        })
+                        .count();
+                    if scopes > 0 {
+                        body.push_str(&format!(
+                            "Inside {scopes} immediate submap registration callback(s).\n\n"
+                        ));
+                    }
+                    for (index, argument) in e.arguments.iter().take(16).enumerate() {
+                        body.push_str(&format!("Argument {}: ", index + 1));
+                        value(&mut body, argument, 0);
+                        body.push('\n');
+                    }
                 }
                 (e.document.as_str(), e.span.clone(), body)
             }
@@ -876,6 +888,22 @@ impl View {
             })
             .unwrap_or_else(|| document.into());
         view.buffer().set_text(&format!("{location}\n\n{body}"));
+    }
+}
+fn declaration_name(api: &str) -> &str {
+    match api {
+        "hl.config" => "Settings declaration",
+        "hl.monitor" => "Monitor declaration",
+        "hl.device" => "Device declaration",
+        "hl.bind" => "Binding declaration",
+        "hl.define_submap" => "Submap declaration",
+        "hl.workspace_rule" => "Workspace rule",
+        "hl.window_rule" => "Window rule",
+        "hl.layer_rule" => "Layer rule",
+        "hl.curve" => "Animation curve",
+        "hl.animation" => "Animation declaration",
+        "hl.gesture" => "Gesture declaration",
+        _ => api,
     }
 }
 fn comparable(analysis: &Analysis, event: &hyprland_editor_core::lua::replay::Event) -> bool {
@@ -1105,6 +1133,19 @@ pub(super) fn value(out: &mut String, input: &Observed, depth: usize) {
             }
         }
         Observed::Function(_) => out.push_str("function"),
+        Observed::Dispatcher {
+            constructor,
+            arguments,
+            ..
+        } => {
+            out.push_str("hl.dsp.");
+            out.push_str(&constructor.chars().take(256).collect::<String>());
+            out.push('(');
+            for argument in arguments {
+                value(out, argument, depth + 1);
+            }
+            out.push_str(") — not invoked");
+        }
         Observed::Cycle(_) => out.push_str("shared or cyclic table"),
     }
 }

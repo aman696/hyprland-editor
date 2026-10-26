@@ -1880,6 +1880,7 @@ mod tests {
         gestures::test_editor(&window);
         source_modules::test_view(&window);
         source_access::test_retained_graph(&window);
+        source_access::test_declaration_families(&window);
         graph_transaction_tests::test_private_graph_ui(&window);
         source_pending::test_workflow(&window);
         graph_transaction_tests::test_external_merge_ui(&window);

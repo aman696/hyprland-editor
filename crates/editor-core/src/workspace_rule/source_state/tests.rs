@@ -551,10 +551,11 @@ fn every_factory_accepts_post_parse_storage_shape_without_draft_policy_bounds() 
 }
 
 #[test]
-fn state_library_does_not_silently_enable_an_unmodeled_lua_api() {
+fn rule_object_effects_remain_unmodeled_after_argument_observation() {
     use crate::lua::replay::{self, Document, Halt, Profile, Program};
     for version in [BASELINE, AUDITED_MAIN] {
-        let source = "hl.workspace_rule{workspace='1'};hl.config{general={border_size=7}}";
+        let source =
+            "local rule=hl.workspace_rule{workspace='1'};hl.config{general={border_size=7}}";
         let program = Program {
             version: version.into(),
             profile: Profile::HyprlandLua54,
@@ -572,7 +573,8 @@ fn state_library_does_not_silently_enable_an_unmodeled_lua_api() {
         };
         let report = replay::replay(&program).unwrap();
         assert!(matches!(report.halt, Some(Halt::Unresolved { .. })));
-        assert!(report.events.is_empty());
+        assert_eq!(report.events.len(), 1);
+        assert_eq!(report.events[0].api, "hl.workspace_rule");
         assert!(report.returns.is_empty());
         assert!(!report.runtime_verified);
     }

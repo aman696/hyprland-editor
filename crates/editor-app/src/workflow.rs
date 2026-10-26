@@ -1298,6 +1298,7 @@ pub(super) fn test_graph_persistence(
     root: &std::path::Path,
 ) {
     let version = state.borrow().draft.version.clone();
+    let expected_sources = state.borrow().source_graphs[&version].bundle.sources.len();
     let saved_files = || {
         std::fs::read_dir(root.join("hyprland-editor"))
             .into_iter()
@@ -1344,7 +1345,7 @@ pub(super) fn test_graph_persistence(
     let document = std::sync::Arc::new(imported.source.unwrap());
     let origin = imported.origin.unwrap();
     let graph = imported.graph.unwrap();
-    assert_eq!(graph.bundle.sources.len(), 2);
+    assert_eq!(graph.bundle.sources.len(), expected_sources);
     assert_eq!(
         graph.fingerprint,
         state.borrow().source_graphs[&version].fingerprint

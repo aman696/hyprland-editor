@@ -60,6 +60,7 @@ pub enum DifferenceKind {
     AddedCall,
     Loader,
     PathHistory,
+    RegistrationScope,
     ReturnValues,
     LoggedModuleErrors,
     IncompleteModel,
@@ -248,6 +249,19 @@ fn validate_value(value: &Observed, depth: usize, nodes: &mut usize) -> Result<(
             validate_value(value, depth + 1, nodes)?;
         }
     }
+    if let Observed::Dispatcher {
+        identity,
+        constructor,
+        arguments,
+    } = value
+    {
+        if *identity >= 2048 || constructor.len() > 256 || arguments.len() > 1 {
+            return Err("Invalid dispatcher observation".into());
+        }
+        for argument in arguments {
+            validate_value(argument, depth + 1, nodes)?;
+        }
+    }
     Ok(())
 }
 fn edits_for<'a>(plan: &'a EditPlan, doc: &'a str) -> impl Iterator<Item = &'a SourceEdit> {
@@ -323,6 +337,18 @@ pub(crate) fn removed_loader(plan: &EditPlan, request: &Request) -> bool {
 pub(super) fn same_value(a: &Observed, b: &Observed) -> bool {
     match (a, b) {
         (Observed::Float(a), Observed::Float(b)) => a.to_bits() == b.to_bits(),
+        (
+            Observed::Dispatcher {
+                identity: a,
+                constructor: ac,
+                arguments: aa,
+            },
+            Observed::Dispatcher {
+                identity: b,
+                constructor: bc,
+                arguments: ba,
+            },
+        ) => a == b && ac == bc && same_arguments(aa, ba),
         (Observed::Table(a), Observed::Table(b)) => {
             a.len() == b.len()
                 && a.iter()
@@ -393,6 +419,9 @@ fn compare(
         if !same_site(plan, event, next) {
             add(DifferenceKind::CallSiteOrApi, Some(event.order));
         }
+        if !structure::same_scope_context(plan, before, after, event.order, next.order) {
+            add(DifferenceKind::RegistrationScope, Some(event.order));
+        }
         let expected = plan.expected_calls.iter().find(|e| e.order == event.order);
         if same_arguments(
             &next.arguments,
@@ -416,6 +445,7 @@ fn compare(
             .is_some_and(|next| {
                 rebase_request(proposed, plan, &load.request).is_ok_and(|r| r == next.request)
                     && same_load(&load.outcome, &next.outcome)
+                    && structure::same_scope_context(plan, before, after, load.order, next.order)
             });
         if !equal {
             add(DifferenceKind::Loader, Some(load.order));
