@@ -1861,6 +1861,7 @@ mod tests {
         assert!(minimum <= 350, "Lua export review needs {minimum}px");
         review.destroy();
         workflow::test_source_persistence(&window);
+        workflow::test_combined_source_copy(&window);
         workflow::test_legacy_persistence(&window);
         workflow::test_graph_migration(&window);
         compiler_check::test_ui(&window);

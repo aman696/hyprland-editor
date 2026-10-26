@@ -456,7 +456,7 @@ pub(super) fn connect_live(
     });
 }
 fn review_copy(window: &adw::ApplicationWindow, text: String) {
-    super::text_export::review(window,"Review edited Lua source copy","Changed literal expressions are included in this reviewed copy. Other statements and comments are preserved. Save it with a new filename or copy the text.","hyprland-edited.lua",text);
+    super::text_export::review(window,"Review edited Lua source copy","Scalar and structured draft edits are included. Changed declarations are rebuilt in their source slots; extra declarations follow the last slot for their family, or are added at the end. Review ordering before using this copy. Other statements and comments are preserved.","hyprland-edited.lua",text);
 }
 pub(super) fn connect_source_copy(
     button: &gtk::Button,
@@ -479,16 +479,10 @@ pub(super) fn connect_source_copy(
                 match result{Ok(source)=>{super::text_export::review_legacy(&win,source);},Err(error)=>notice(&win,"Cannot prepare legacy copy",&error)}
             });return;
         }
-        let Some(doc)=s.sources.get(&s.draft.version).cloned()else{drop(s);notice(&window,"Source required","Import a .lua or .conf source file first. Value-only JSON drafts have no original source to preserve.");return;};
-        if s.monitors.get(&s.draft.version).map(Vec::as_slice).unwrap_or(&[]) != doc.report.monitors.as_slice() { drop(s);notice(&window,"Monitor source edits pending","Monitor drafts can be saved and reviewed as Lua. Updating their original source spans is not implemented yet; a scalar source copy would omit those edits.");return; }
-        if !hyprland_editor_core::device::same_declarations(s.devices.get(&s.draft.version).map(Vec::as_slice).unwrap_or(&[]),&doc.report.devices) {drop(s);notice(&window,"Device source edits pending","Device drafts can be saved and reviewed as Lua. Device source editing is not implemented; a scalar source copy would omit these changes.");return;}
-        let bindings=s.bindings.get(&s.draft.version).cloned().unwrap_or_default();if !bindings.same_declarations(&doc.report.bindings,&s.draft.version){drop(s);notice(&window,"Binding source edits pending","Binding drafts can be saved/exported. Original binding source editing is not implemented; a scalar copy would omit your binding edits.");return;}
-        if !s.gestures.get(&s.draft.version).cloned().unwrap_or_default().same_declarations(&doc.report.gestures,&s.draft.version) {drop(s);notice(&window,"Gesture source edits pending","Gesture source editing is not implemented; a scalar copy would omit those edits. Save or export the gesture draft instead.");return;}
-        if !s.animations.get(&s.draft.version).cloned().unwrap_or_default().same_declarations(&doc.report.animations) {drop(s);notice(&window,"Animation source edits pending","Animation source editing is not implemented; a scalar copy would omit those edits. Save or export the animation draft instead.");return;}
-        if !hyprland_editor_core::rule::same_declarations(s.rules.get(&s.draft.version).map(Vec::as_slice).unwrap_or(&[]),&doc.report.rules){drop(s);notice(&window,"Rule source edits pending","Window/layer rule source editing is not implemented; a scalar copy would omit those edits.");return;}
-        if !hyprland_editor_core::workspace_rule::same_declarations(s.workspace_rules.get(&s.draft.version).map(Vec::as_slice).unwrap_or(&[]),&doc.report.workspace_rules){drop(s);notice(&window,"Workspace source edits pending","Workspace drafts can be saved/exported. Workspace source editing is not implemented; a scalar copy would omit those edits.");return;}
-        let draft=s.draft.clone();let generation=s.generation;drop(s);let state=state.clone();let win=window.downgrade();let button=button.downgrade();if let Some(button)=button.upgrade(){button.set_sensitive(false);}
-        background(move||worker::run(worker::Request::Copy{source:doc.source.clone(),report:Box::new(doc.report.clone()),draft}),move|result|{
+        if !s.sources.contains_key(&s.draft.version){drop(s);notice(&window,"Source required","Import a .lua or .conf source file first. Value-only JSON drafts have no original source to preserve.");return;}
+        let workspace=match captured_workspace(&s){Ok(workspace)=>workspace,Err(error)=>{drop(s);notice(&window,"Cannot prepare source copy",&error);return;}};
+        let generation=s.generation;drop(s);let state=state.clone();let win=window.downgrade();let button=button.downgrade();if let Some(button)=button.upgrade(){button.set_sensitive(false);}
+        background(move||worker::run(worker::Request::CopyWorkspace{workspace:Box::new(workspace)}),move|result|{
             if let Some(button)=button.upgrade(){button.set_sensitive(true);}let Some(win)=win.upgrade()else{return;};if state.borrow().generation!=generation{notice(&win,"Draft changed","The draft changed while the source copy was prepared. Review again to use the current edits.");return;}
             match result{Ok(worker::Response::Copy(source))=>review_copy(&win,source),Ok(_)=>notice(&win,"Invalid parser response","The worker did not return a source copy."),Err(e)=>notice(&win,"Cannot prepare source copy",&e)}
         });
@@ -902,6 +896,125 @@ pub(super) fn test_graph_migration(window: &adw::ApplicationWindow) {
         saved.source_graph.unwrap().schema_sha256,
         workspace_graph::schema_sha256()
     );
+}
+
+#[cfg(test)]
+pub(super) fn test_combined_source_copy(window: &adw::ApplicationWindow) {
+    let root = super::test_support::TempDir::new("combined-source-copy");
+    let path = root.path().join("original.lua");
+    let original = "-- retained source\nhl.config{general={border_size=2,gaps_in=3}}\n";
+    std::fs::write(&path, original).unwrap();
+    let catalogue = hyprland_editor_core::catalogue();
+    let imported = read_import(path.clone(), catalogue.clone(), BASELINE.into()).unwrap();
+    std::fs::remove_file(&path).unwrap();
+    let state = super::initial_state();
+    let status = gtk::Label::new(None);
+    let version = gtk::DropDown::from_strings(&[BASELINE, "audited-main"]);
+    let selection = gtk::SingleSelection::new(Some(gtk::StringList::new(&[])));
+    let panel = gtk::Box::new(gtk::Orientation::Vertical, 0);
+    apply_import(imported, &state, &status, &version, &selection, &panel);
+    let desired = "hl.config{general={border_size=5},decoration={rounding=7}}\nhl.monitor{output='DP-1'}\nhl.device{name='mouse',sensitivity=0.2}\nhl.bind('Q',hl.dsp.no_op())\nhl.workspace_rule{workspace='1'}\nhl.window_rule{match={class='term'},float=true}\nhl.layer_rule{match={namespace='panel'},blur=true}\nhl.animation{leaf='windows',enabled=false}\nhl.gesture{fingers=3,direction='left',action={start=function()hl.dispatch(hl.dsp.no_op())end,finish=function()end}}";
+    let target = parse_source(desired.into(), BASELINE.into(), &catalogue)
+        .unwrap()
+        .report;
+    assert!(target.diagnostics.is_empty());
+    {
+        let mut s = state.borrow_mut();
+        s.replace_monitors(target.monitors.clone()).unwrap();
+        s.replace_devices(target.devices.clone()).unwrap();
+        s.replace_bindings(target.bindings.clone()).unwrap();
+        s.replace_workspaces(target.workspace_rules.clone())
+            .unwrap();
+        s.replace_rules(target.rules.clone()).unwrap();
+        s.replace_animations(target.animations.clone()).unwrap();
+        s.replace_gestures(target.gestures.clone()).unwrap();
+        s.remember("general:gaps_in").unwrap();
+        s.draft.values.remove("general:gaps_in");
+        for (key, value) in &target.draft.values {
+            s.remember(key).unwrap();
+            s.draft.values.insert(key.clone(), value.clone());
+        }
+    }
+    // Save/reopen before invoking the real graphical action and restricted worker.
+    let saved = root.path().join("project.hye");
+    std::fs::write(
+        &saved,
+        captured_workspace(&state.borrow())
+            .unwrap()
+            .to_json(&catalogue)
+            .unwrap(),
+    )
+    .unwrap();
+    let imported = read_import(saved, catalogue.clone(), BASELINE.into()).unwrap();
+    apply_import(imported, &state, &status, &version, &selection, &panel);
+    let button = gtk::Button::new();
+    connect_source_copy(&button, window, &state);
+    button.emit_clicked();
+    let context = gtk::glib::MainContext::default();
+    let started = std::time::Instant::now();
+    while !button.is_sensitive() {
+        while context.pending() {
+            context.iteration(false);
+        }
+        assert!(started.elapsed() < Duration::from_secs(8));
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    let review = gtk::Window::list_toplevels()
+        .into_iter()
+        .filter_map(|widget| widget.downcast::<gtk::Window>().ok())
+        .find(|window| window.title().as_deref() == Some("Review edited Lua source copy"))
+        .expect("Combined source review");
+    fn find_text(widget: &gtk::Widget) -> Option<gtk::TextView> {
+        if let Some(view) = widget.downcast_ref::<gtk::TextView>() {
+            return Some(view.clone());
+        }
+        let mut child = widget.first_child();
+        while let Some(widget) = child {
+            if let Some(view) = find_text(&widget) {
+                return Some(view);
+            }
+            child = widget.next_sibling();
+        }
+        None
+    }
+    let buffer = find_text(review.upcast_ref()).unwrap().buffer();
+    let copy = buffer.text(&buffer.start_iter(), &buffer.end_iter(), false);
+    assert!(copy.contains("-- retained source"));
+    let actual = parse_source(copy.to_string(), BASELINE.into(), &catalogue)
+        .unwrap()
+        .report;
+    assert_eq!(actual.draft.values, target.draft.values);
+    assert_eq!(
+        hyprland_editor_core::monitor::export_lua(&actual.monitors, BASELINE).unwrap(),
+        hyprland_editor_core::monitor::export_lua(&target.monitors, BASELINE).unwrap()
+    );
+    assert!(hyprland_editor_core::device::same_declarations(
+        &actual.devices,
+        &target.devices
+    ));
+    assert!(actual
+        .bindings
+        .same_declarations(&target.bindings, BASELINE));
+    assert!(hyprland_editor_core::workspace_rule::same_declarations(
+        &actual.workspace_rules,
+        &target.workspace_rules
+    ));
+    assert!(hyprland_editor_core::rule::same_declarations(
+        &actual.rules,
+        &target.rules
+    ));
+    assert!(actual.animations.same_declarations(&target.animations));
+    assert!(actual
+        .gestures
+        .same_declarations(&target.gestures, BASELINE));
+    assert_eq!(state.borrow().sources[BASELINE].source, original);
+    assert!(!path.exists());
+    let (minimum, _, _, _) = review
+        .child()
+        .unwrap()
+        .measure(gtk::Orientation::Horizontal, -1);
+    assert!(minimum <= 350, "Combined source review needs {minimum}px");
+    review.destroy();
 }
 
 #[cfg(test)]

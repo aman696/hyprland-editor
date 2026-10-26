@@ -24,6 +24,9 @@ pub enum Request {
         report: Box<LuaReport>,
         draft: Draft,
     },
+    CopyWorkspace {
+        workspace: Box<hyprland_editor_core::workspace::Workspace>,
+    },
     InspectDependencies {
         source: String,
         version: String,
@@ -351,6 +354,9 @@ pub fn entry() {
             } => LuaDocument::from_report(source, *report, &c)?
                 .edited_copy(&draft, &c)
                 .map(Response::Copy),
+            Request::CopyWorkspace { workspace } => {
+                lua::workspace_copy::prepare(&workspace, &c).map(Response::Copy)
+            }
             Request::CheckRegex(sample) => {
                 hyprland_editor_core::regex::check(&sample).map(Response::RegexMatch)
             }

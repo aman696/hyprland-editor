@@ -7,3 +7,5 @@ The saved bytes are the snapshot shown in the review window. Export creates a ne
 Saving a Lua copy does not mark the private `.hye` workspace as saved. Use **Save Draft** to retain the editing session. Export does not request a compositor reload.
 
 Each source-file export is an independent copy. Import statements, relative/absolute paths and separate value overrides are not rewritten or combined automatically. This action exports the existing supported draft, single-source result or a selected materialized project file. Full multi-file source export, unresolved source changes and complete source/draft reconciliation remain in progress; their existing blockers remain visible.
+
+Single Lua source review now combines scalar and structured draft changes. See [combined source copy](combined-source-copy.md) for supported placement, reconstruction checks and remaining dynamic/multi-file limits.

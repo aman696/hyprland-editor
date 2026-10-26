@@ -5,7 +5,7 @@ use crate::{
     Value,
 };
 use serde::{Deserialize, Serialize};
-pub(super) mod layout;
+pub(in crate::lua) mod layout;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Selection {

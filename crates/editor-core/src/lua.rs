@@ -6,6 +6,7 @@ pub mod monitor_inspection;
 pub mod registration;
 pub mod replay;
 pub mod scalar_codec;
+pub mod workspace_copy;
 use crate::{parse_color, Draft, Setting, Value, AUDITED_MAIN, BASELINE, MAX_DOCUMENT_BYTES};
 pub use dependencies::{
     inspect as inspect_dependencies, Barrier as DependencyBarrier,

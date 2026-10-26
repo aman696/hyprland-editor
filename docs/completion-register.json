@@ -14,6 +14,26 @@
   },
   "foundations": [
     {
+      "area": "combined single-source graphical draft copy",
+      "code": [
+        "crates/editor-core/src/lua/workspace_copy.rs",
+        "crates/editor-app/src/worker.rs",
+        "crates/editor-app/src/workflow.rs",
+        "data/migrations/graph-model-before-workspace-copy.json"
+      ],
+      "test_references": [
+        "all_graphical_families_and_scalar_edits_roundtrip_together_without_original_files",
+        "unchanged_copies_are_byte_exact_and_all_families_can_be_added_or_removed",
+        "declaration_counts_order_submaps_and_do_scopes_are_preserved_in_the_result",
+        "unresolved_source_and_overlapping_nested_families_cannot_silently_lose_drafts",
+        "scalar_presence_duplicate_removal_and_computed_values_preserve_comments_and_other_fields",
+        "workflow::test_combined_source_copy",
+        "reviewed_graph_migrations_rebuild_deleted_sources_and_private_pieces_without_writing",
+        "numeric_writer_migration_preserves_existing_observation_and_refuses_observation_renewal"
+      ],
+      "limits": "single retained Lua source plus scalar and seven structured families, fresh restricted parsing/spans, comment-preserving canonical reconstruction in existing family slots, addition/removal/count/order and whole-output all-family reparse comparison, scalar insertion/all-duplicate removal/computed expression replacement, original-free saved project GUI review; twenty exact reviewed predecessors preserve all three existing numeric observations; no full dynamic or nested/shared source support, arbitrary cross-family runtime equivalence, multi-file relocation/combined publication, effective discovery, compositor preview or live apply certificate"
+    },
+    {
       "area": "named complete workspace copies",
       "code": [
         "crates/editor-app/src/project_save.rs",

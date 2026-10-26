@@ -52,7 +52,11 @@ const NUMERIC_MODEL: &str =
 const NATIVE_ADMISSION: &str = "09e8ff83ee94a51dcd54a7c7cbabc543d956b4e1c50eb5369b3b56cf34b3b0b9";
 const ADMISSION_MODEL: &str =
     include_str!("../../../data/migrations/graph-model-native-admission.json");
-const TO: &str = "4ec820faed65d07698417a29f7738f56f8470e0fc7f9898643c646c291aae5af";
+const WORKSPACE_COPY_FROM: &str =
+    "4ec820faed65d07698417a29f7738f56f8470e0fc7f9898643c646c291aae5af";
+const SOURCE_MODEL: &str =
+    include_str!("../../../data/migrations/graph-model-before-workspace-copy.json");
+const TO: &str = "25888d9809cc642d8cc9d6980c5cd1f321576863d2f9660e36736b810a402814";
 const OLD: &str = include_str!("../../../data/migrations/graph-model-before-projection.json");
 const FROM_PROJECTION: &str = "046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371";
 const PROJECTION: &str = include_str!("../../../data/migrations/graph-model-projection.json");
@@ -788,7 +792,7 @@ fn before_source55_transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
-fn transition(from: &str) -> Result<(), String> {
+fn before_workspace_copy_transition(from: &str) -> Result<(), String> {
     if lua::source_hash(ADMISSION_MODEL) != NATIVE_ADMISSION
         || workspace_graph::schema_sha256() != TO
     {
@@ -801,7 +805,8 @@ fn transition(from: &str) -> Result<(), String> {
     }
     let previous: serde_json::Value =
         serde_json::from_str(ADMISSION_MODEL).map_err(|e| e.to_string())?;
-    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let current: serde_json::Value =
+        serde_json::from_str(SOURCE_MODEL).map_err(|e| e.to_string())?;
     let old = previous["inputs"]
         .as_object()
         .ok_or("Invalid native admission model")?;
@@ -843,6 +848,52 @@ fn transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
+fn transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(SOURCE_MODEL) != WORKSPACE_COPY_FROM
+        || workspace_graph::schema_sha256() != TO
+    {
+        return Err(
+            "No reviewed workspace-copy transition to this exact model is available".into(),
+        );
+    }
+    if from != WORKSPACE_COPY_FROM {
+        before_workspace_copy_transition(from)?;
+    }
+    let previous: serde_json::Value =
+        serde_json::from_str(SOURCE_MODEL).map_err(|error| error.to_string())?;
+    let current: serde_json::Value =
+        serde_json::from_str(CURRENT).map_err(|error| error.to_string())?;
+    let old = previous["inputs"]
+        .as_object()
+        .ok_or("Invalid preceding source model")?;
+    let new = current["inputs"]
+        .as_object()
+        .ok_or("Invalid workspace-copy model")?;
+    let added = new
+        .keys()
+        .filter(|key| !old.contains_key(*key))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    let changed = old
+        .keys()
+        .filter(|key| new.get(*key) != Some(&old[*key]))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    if old.len() != 83
+        || new.len() != 84
+        || added != ["crates/editor-core/src/lua/workspace_copy.rs"]
+        || changed
+            != [
+                "crates/editor-app/src/worker.rs",
+                "crates/editor-core/src/lua.rs",
+                "crates/editor-core/src/lua/replay/scalar_edit.rs",
+                "crates/editor-core/src/lua/replay/scalar_edit/layout.rs",
+            ]
+    {
+        return Err("Workspace-copy transition differs from the reviewed single-source draft reconstruction, worker request and internal trivia-helper visibility; saved bytes, compiler profiles and replay semantics must remain unchanged".into());
+    }
+    Ok(())
+}
 pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, String> {
     if text.len() > MAX_WORKSPACE_BYTES {
         return Err("Saved workspace exceeds 8 MiB".into());
@@ -865,12 +916,14 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != COMPILER_EXTRACTION
         && previous != NUMERIC_CODEGEN
         && previous != NATIVE_ADMISSION
+        && previous != WORKSPACE_COPY_FROM
         && raw["source_graph"].get("private").is_some()
     {
         return Err("Previous graph writers had no private input layer; new payloads cannot be introduced during migration".into());
     }
     if previous != NUMERIC_CODEGEN
         && previous != NATIVE_ADMISSION
+        && previous != WORKSPACE_COPY_FROM
         && raw["source_graph"]["compiler"]
             .get("numeric_codegen")
             .is_some()
@@ -890,7 +943,9 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         .ok_or("Workspace has no saved graph to migrate")?;
     let previous_compiler = graph.compiler.clone();
     let current_compiler = lua::replay::compiler_profile();
-    let compiler_observation_renewed = previous != NUMERIC_CODEGEN && previous != NATIVE_ADMISSION;
+    let compiler_observation_renewed = previous != NUMERIC_CODEGEN
+        && previous != NATIVE_ADMISSION
+        && previous != WORKSPACE_COPY_FROM;
     let mut expected_compiler = current_compiler.clone();
     if compiler_observation_renewed {
         expected_compiler.numeric_codegen = None;
@@ -995,6 +1050,7 @@ mod tests {
         transition(COMPILER_EXTRACTION).unwrap();
         transition(NUMERIC_CODEGEN).unwrap();
         transition(NATIVE_ADMISSION).unwrap();
+        transition(WORKSPACE_COPY_FROM).unwrap();
         assert!(transition(&"0".repeat(64)).is_err());
         assert_ne!(FROM, TO);
         assert_eq!(lua::source_hash(CURRENT), TO);

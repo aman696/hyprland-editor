@@ -86,7 +86,7 @@ fn key(field: Node<'_>, source: &str, array: &mut i64) -> Result<Key, String> {
 }
 // Remove syntax tokens only. Comments and whitespace survive even inside a
 // removed field or replaced expression. Quoted '--' is a string token, not a comment.
-pub(in crate::lua::replay) fn erase_tokens(node: Node<'_>, source: &str) -> Result<String, String> {
+pub(in crate::lua) fn erase_tokens(node: Node<'_>, source: &str) -> Result<String, String> {
     let mut pending = vec![node];
     let mut tokens = vec![];
     let mut visited = 0;
