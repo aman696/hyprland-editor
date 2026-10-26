@@ -48,6 +48,31 @@ pub struct Snapshot {
     pub values: BTreeMap<String, Observation>,
     pub unknown_settings: usize,
 }
+/// Read-only output observations. Missing fields stay unknown rather than defaults.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Monitor {
+    pub name: String,
+    pub description: Option<String>,
+    pub width: Option<u32>,
+    pub height: Option<u32>,
+    #[serde(rename = "refreshRate")]
+    pub refresh_rate: Option<f64>,
+    pub x: Option<i32>,
+    pub y: Option<i32>,
+    pub scale: Option<f64>,
+    pub disabled: Option<bool>,
+    #[serde(rename = "availableModes")]
+    pub available_modes: Option<Vec<String>>,
+}
+#[derive(Clone, Debug, Serialize)]
+pub struct MonitorSnapshot {
+    pub identity: SessionIdentity,
+    pub commit: String,
+    pub version: Option<String>,
+    pub sampled_unix_ms: u128,
+    pub duration_ms: u128,
+    pub monitors: Vec<Monitor>,
+}
 #[derive(Deserialize)]
 struct VersionReply {
     commit: String,
@@ -64,12 +89,14 @@ struct DescriptionReply {
 enum Query {
     Version,
     Descriptions,
+    Monitors,
 }
 impl Query {
     fn wire(self) -> &'static [u8] {
         match self {
             Self::Version => b"j/version",
             Self::Descriptions => b"j/descriptions",
+            Self::Monitors => b"j/monitors all",
         }
     }
 }
@@ -565,6 +592,78 @@ pub fn current_session_snapshot(catalogue: &[Setting]) -> Result<Snapshot, Strin
     snapshot(&runtime, &signature, catalogue)
 }
 
+fn parse_monitors(bytes: &[u8]) -> Result<Vec<Monitor>, String> {
+    if bytes.len() > MAX_REPLY {
+        return Err("Monitor response exceeds 2 MiB".into());
+    }
+    let monitors: Vec<Monitor> =
+        serde_json::from_slice(bytes).map_err(|_| "Compositor returned malformed monitor JSON")?;
+    if monitors.len() > 256 {
+        return Err("More than 256 output observations were returned".into());
+    }
+    let mut names = BTreeSet::new();
+    for monitor in &monitors {
+        if monitor.name.is_empty()
+            || monitor.name.len() > 4096
+            || monitor.name.chars().any(char::is_control)
+            || !names.insert(monitor.name.as_str())
+            || monitor
+                .description
+                .as_ref()
+                .is_some_and(|text| text.len() > 4096)
+            || monitor
+                .refresh_rate
+                .is_some_and(|value| !value.is_finite() || value < 0.)
+            || monitor
+                .scale
+                .is_some_and(|value| !value.is_finite() || value < 0.)
+            || monitor.available_modes.as_ref().is_some_and(|modes| {
+                modes.len() > 512
+                    || modes
+                        .iter()
+                        .any(|mode| mode.len() > 128 || mode.chars().any(char::is_control))
+            })
+        {
+            return Err("Invalid, duplicate or oversized output observation".into());
+        }
+    }
+    Ok(monitors)
+}
+
+pub fn monitor_snapshot(runtime: &Path, signature: &str) -> Result<MonitorSnapshot, String> {
+    let start = Instant::now();
+    let session = ReadSession::attach(runtime, signature)?;
+    let version: VersionReply = serde_json::from_slice(&session.request(Query::Version)?)
+        .map_err(|_| "Compositor returned malformed version JSON")?;
+    let pack = match version.commit.as_str() {
+        BASE_COMMIT => Some(BASELINE.into()),
+        MAIN_COMMIT => Some(AUDITED_MAIN.into()),
+        _ => None,
+    };
+    let monitors = parse_monitors(&session.request(Query::Monitors)?)?;
+    session.recheck()?;
+    Ok(MonitorSnapshot {
+        identity: session.identity,
+        commit: version.commit,
+        version: pack,
+        sampled_unix_ms: SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_err(|error| error.to_string())?
+            .as_millis(),
+        duration_ms: start.elapsed().as_millis(),
+        monitors,
+    })
+}
+
+pub fn current_session_monitors() -> Result<MonitorSnapshot, String> {
+    let runtime = std::env::var_os("XDG_RUNTIME_DIR")
+        .map(PathBuf::from)
+        .ok_or("No user runtime directory; start the editor inside your Hyprland session")?;
+    let signature = std::env::var("HYPRLAND_INSTANCE_SIGNATURE")
+        .map_err(|_| "No selected Hyprland session in this environment")?;
+    monitor_snapshot(&runtime, &signature)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -640,6 +739,67 @@ mod tests {
         assert_eq!(snap.values["general:col.active_border"].current, None);
         assert_eq!(snap.identity.pid, std::process::id());
         fs::remove_dir_all(root).unwrap();
+    }
+    #[test]
+    fn output_snapshot_uses_only_fixed_queries_and_keeps_missing_values_unknown() {
+        let (root, listener) = fixture();
+        let requests = Arc::new(Mutex::new(vec![]));
+        let observed = requests.clone();
+        let server = thread::spawn(move || {
+            for _ in 0..2 {
+                let (mut stream, _) = listener.accept().unwrap();
+                let mut bytes = [0; 64];
+                let count = stream.read(&mut bytes).unwrap();
+                let request = String::from_utf8(bytes[..count].to_vec()).unwrap();
+                observed.lock().unwrap().push(request.clone());
+                let reply = match request.as_str() {
+                    "j/version" => br#"{"commit":"unmapped-build"}"#.as_slice(),
+                    "j/monitors all" => br#"[{"name":"DP-1","width":2560,"height":1440,"refreshRate":143.97,"x":-2560,"y":0,"scale":1.25,"disabled":false,"availableModes":["2560x1440@143.97Hz"],"unmappedField":true},{"name":"HDMI-A-1","disabled":true}]"#.as_slice(),
+                    _ => panic!("Unexpected request: {request}"),
+                };
+                stream.write_all(reply).unwrap();
+            }
+        });
+        let snapshot = monitor_snapshot(&root, "test").unwrap();
+        server.join().unwrap();
+        assert_eq!(
+            *requests.lock().unwrap(),
+            vec!["j/version", "j/monitors all"]
+        );
+        assert!(snapshot.version.is_none());
+        assert_eq!(snapshot.monitors[0].x, Some(-2560));
+        assert_eq!(snapshot.monitors[0].disabled, Some(false));
+        assert_eq!(snapshot.monitors[1].disabled, Some(true));
+        assert!(snapshot.monitors[1].width.is_none());
+        assert!(snapshot.monitors[1].available_modes.is_none());
+        assert_eq!(snapshot.identity.pid, std::process::id());
+        fs::remove_dir_all(root).unwrap();
+    }
+    #[test]
+    fn output_payload_rejects_ambiguous_invalid_and_oversized_records() {
+        for bytes in [
+            b"null".as_slice(),
+            br#"[{"name":"DP-1"},{"name":"DP-1"}]"#,
+            br#"[{"name":"DP-1","name":"DP-2"}]"#,
+            br#"[{"name":"bad\nname"}]"#,
+            br#"[{"name":"DP-1","width":-1}]"#,
+            br#"[{"name":"DP-1","scale":-1}]"#,
+        ] {
+            assert!(parse_monitors(bytes).is_err(), "{bytes:?}");
+        }
+        let too_many = serde_json::to_vec(
+            &(0..257)
+                .map(|index| serde_json::json!({"name":format!("HEADLESS-{index}")}))
+                .collect::<Vec<_>>(),
+        )
+        .unwrap();
+        assert!(parse_monitors(&too_many).is_err());
+        let many_modes = serde_json::to_vec(
+            &serde_json::json!([{"name":"DP-1","availableModes":vec!["1x1@60Hz";513]}]),
+        )
+        .unwrap();
+        assert!(parse_monitors(&many_modes).is_err());
+        assert!(parse_monitors(&vec![b' '; MAX_REPLY + 1]).is_err());
     }
     #[test]
     fn rejects_path_injection_symlinks_and_replaced_session() {

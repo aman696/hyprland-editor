@@ -626,6 +626,19 @@ pub(super) fn connect(
     });
 }
 fn show(window: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) -> adw::Window {
+    show_with_outputs(
+        window,
+        state,
+        status,
+        std::sync::Arc::new(hyprland_editor_discovery::current_session_monitors),
+    )
+}
+fn show_with_outputs(
+    window: &adw::ApplicationWindow,
+    state: &Shared,
+    status: &gtk::Label,
+    provider: super::detected_outputs::Provider,
+) -> adw::Window {
     let dialog = adw::Window::builder()
         .title("Monitor Drafts")
         .transient_for(window)
@@ -685,6 +698,7 @@ fn show(window: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
     let target_save = gtk::Button::with_label("Update Output Match");
     target.append(&target_save);
     let target_details = gtk::Expander::builder().label("Output Match").build();
+    target_details.set_widget_name("monitor-target-section");
     target_details.set_child(Some(&target));
     content.append(&target_details);
     let fields = monitor::catalogue(&state.borrow().draft.version);
@@ -883,14 +897,16 @@ fn show(window: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
     let feedback_c = feedback.clone();
     let selected_c = selected.clone();
     let refresh_c = refresh.clone();
+    let target_type_c = target_type.clone();
+    let target_name_c = target_name.clone();
     target_save.connect_clicked(move |_| {
         let mut rules = current(&state_c);
         let Some(rule) = rules.get_mut(selected_c.selected() as usize) else {
             return;
         };
-        rule.output = match target_type.selected() {
-            1 => Output::Connector(target_name.text().into()),
-            2 => Output::Description(target_name.text().into()),
+        rule.output = match target_type_c.selected() {
+            1 => Output::Connector(target_name_c.text().into()),
+            2 => Output::Description(target_name_c.text().into()),
             _ => Output::Fallback,
         };
         if commit(&state_c, rules, &status_c, &feedback_c) {
@@ -1068,8 +1084,226 @@ fn show(window: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
     });
     canvas.add_controller(drag);
     refresh();
+    let observed_state = state.clone();
+    let observed_selected = selected.clone();
+    let observed_status = status.clone();
+    let observed_feedback = feedback.clone();
+    let observed_refresh = refresh.clone();
+    let observed_version = state.borrow().draft.version.clone();
+    super::detected_outputs::append(
+        &target,
+        &dialog,
+        state,
+        (&target_type, &target_name),
+        provider,
+        move |connector, mode| {
+            if observed_state.borrow().draft.version != observed_version {
+                return Err("The selected version changed. Reopen the monitor editor before editing this draft.".into());
+            }
+            let mut rules = current(&observed_state);
+            let Some(rule) = rules.get_mut(observed_selected.selected() as usize) else {
+                return Err("Add a monitor rule, then choose its output match first.".into());
+            };
+            if rule.output != Output::Connector(connector.into()) {
+                return Err(format!("Update this rule's output match to {connector} before using its reported mode."));
+            }
+            rule.fields
+                .insert("mode".into(), Value::String(mode.into()));
+            if commit(&observed_state, rules, &observed_status, &observed_feedback) {
+                observed_refresh();
+                Ok(())
+            } else {
+                Err(observed_feedback.text().to_string())
+            }
+        },
+    );
     dialog.present();
     dialog
+}
+
+#[cfg(test)]
+pub(super) fn test_detected_outputs(parent: &adw::ApplicationWindow) {
+    use hyprland_editor_discovery::{MonitorSnapshot, SessionIdentity};
+    fn named(widget: &gtk::Widget, name: &str) -> gtk::Widget {
+        fn find(widget: &gtk::Widget, name: &str) -> Option<gtk::Widget> {
+            if widget.widget_name() == name {
+                return Some(widget.clone());
+            }
+            if let Some(expander) = widget.downcast_ref::<gtk::Expander>() {
+                if let Some(found) = expander.child().and_then(|child| find(&child, name)) {
+                    return Some(found);
+                }
+            }
+            let mut child = widget.first_child();
+            while let Some(widget) = child {
+                if let Some(found) = find(&widget, name) {
+                    return Some(found);
+                }
+                child = widget.next_sibling();
+            }
+            None
+        }
+        find(widget, name).unwrap_or_else(|| panic!("Widget {name}"))
+    }
+    fn click(window: &adw::Window, name: &str) {
+        named(window.upcast_ref(), name)
+            .downcast::<gtk::Button>()
+            .unwrap()
+            .emit_clicked();
+    }
+    fn wait(button: &gtk::Button) {
+        let context = gtk::glib::MainContext::default();
+        let started = std::time::Instant::now();
+        while !button.is_sensitive() {
+            while context.pending() {
+                context.iteration(false);
+            }
+            assert!(started.elapsed() < std::time::Duration::from_secs(6));
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+    }
+    let provider: super::detected_outputs::Provider = std::sync::Arc::new(|| {
+        Ok(MonitorSnapshot {
+        identity: SessionIdentity {signature:"private-ui-fixture".into(),pid:std::process::id(),uid:unsafe{libc::geteuid()},start_ticks:1,boot_id:"fixture".into(),binary_sha256:"0".repeat(64)},
+        commit:"unmapped-fixture".into(),version:None,sampled_unix_ms:0,duration_ms:1,
+        monitors:serde_json::from_str(r#"[{"name":"DP-1","description":"Fixture display","width":2560,"height":1440,"refreshRate":143.97,"disabled":false,"availableModes":["2560x1440@143.97Hz","2560x1440@143.97Hz","unmodeled-format","1920x1080@60.00Hz"]},{"name":"HDMI-A-1","disabled":true}]"#).unwrap(),
+    })
+    });
+    let state = super::initial_state();
+    state
+        .borrow_mut()
+        .replace_monitors(vec![Rule::new("detected-test")])
+        .unwrap();
+    let status = label("");
+    let window = show_with_outputs(parent, &state, &status, provider);
+    for name in ["monitor-target-section", "monitor-detected-section"] {
+        named(window.upcast_ref(), name)
+            .downcast::<gtk::Expander>()
+            .unwrap()
+            .set_expanded(true);
+    }
+    let refresh = named(window.upcast_ref(), "monitor-detect-refresh")
+        .downcast::<gtk::Button>()
+        .unwrap();
+    let generation = state.borrow().generation;
+    click(&window, "monitor-detect-refresh");
+    wait(&refresh);
+    assert_eq!(state.borrow().generation, generation);
+    assert_eq!(current(&state)[0].output, Output::Fallback);
+    let outputs = named(window.upcast_ref(), "monitor-detected-output")
+        .downcast::<gtk::DropDown>()
+        .unwrap();
+    assert_eq!(outputs.model().unwrap().n_items(), 3);
+    assert_eq!(outputs.selected(), 0, "Refresh keeps the prompt selected");
+    let target_kind = named(window.upcast_ref(), "monitor-target-kind")
+        .downcast::<gtk::DropDown>()
+        .unwrap();
+    let target_name = named(window.upcast_ref(), "monitor-target")
+        .downcast::<gtk::Entry>()
+        .unwrap();
+    assert!(target_name.text().is_empty());
+    assert_eq!(target_kind.selected(), 0);
+    outputs.set_selected(1);
+    assert_eq!(target_name.text(), "DP-1");
+    assert_eq!(target_kind.selected(), 1);
+    assert_eq!(current(&state)[0].output, Output::Fallback);
+    let modes = named(window.upcast_ref(), "monitor-detected-mode")
+        .downcast::<gtk::DropDown>()
+        .unwrap();
+    assert_eq!(modes.model().unwrap().n_items(), 3);
+    assert_eq!(
+        modes.selected(),
+        0,
+        "Reported modes require explicit selection"
+    );
+    modes.set_selected(1);
+    click(&window, "monitor-use-detected-mode");
+    assert_eq!(
+        state.borrow().generation,
+        generation,
+        "An unmatched output cannot receive its reported mode"
+    );
+    // The existing update action is deliberately required before keeping a mode.
+    fn button_with_label(widget: &gtk::Widget, label: &str) -> Option<gtk::Button> {
+        if let Some(button) = widget
+            .downcast_ref::<gtk::Button>()
+            .filter(|button| button.label().as_deref() == Some(label))
+        {
+            return Some(button.clone());
+        }
+        if let Some(expander) = widget.downcast_ref::<gtk::Expander>() {
+            if let Some(found) = expander
+                .child()
+                .and_then(|child| button_with_label(&child, label))
+            {
+                return Some(found);
+            }
+        }
+        let mut child = widget.first_child();
+        while let Some(widget) = child {
+            if let Some(button) = button_with_label(&widget, label) {
+                return Some(button);
+            }
+            child = widget.next_sibling();
+        }
+        None
+    }
+    button_with_label(window.upcast_ref(), "Update Output Match")
+        .unwrap()
+        .emit_clicked();
+    assert_eq!(current(&state)[0].output, Output::Connector("DP-1".into()));
+    click(&window, "monitor-use-detected-mode");
+    assert_eq!(
+        current(&state)[0].fields["mode"],
+        Value::String("2560x1440@143.97".into())
+    );
+    state.borrow_mut().undo_last();
+    assert!(!current(&state)[0].fields.contains_key("mode"));
+    click(&window, "monitor-detect-refresh");
+    state.borrow_mut().generation += 1;
+    wait(&refresh);
+    assert_eq!(outputs.model().unwrap().n_items(), 1);
+    assert!(named(window.upcast_ref(), "monitor-detected-status")
+        .downcast::<gtk::Label>()
+        .unwrap()
+        .text()
+        .contains("changed"));
+    let (minimum, _, _, _) = window
+        .content()
+        .unwrap()
+        .measure(gtk::Orientation::Horizontal, -1);
+    assert!(minimum <= 350, "Detected-output UI needs {minimum}px");
+    click(&window, "monitor-detect-refresh");
+    window.destroy();
+    wait(&refresh);
+    let context = gtk::glib::MainContext::default();
+    while context.pending() {
+        context.iteration(false);
+    }
+    assert_eq!(
+        outputs.model().unwrap().n_items(),
+        1,
+        "Closed windows cannot receive discovery results"
+    );
+    let error_window = show_with_outputs(
+        parent,
+        &state,
+        &status,
+        std::sync::Arc::new(|| Err("fixture unavailable".into())),
+    );
+    let refresh = named(error_window.upcast_ref(), "monitor-detect-refresh")
+        .downcast::<gtk::Button>()
+        .unwrap();
+    let generation = state.borrow().generation;
+    click(&error_window, "monitor-detect-refresh");
+    wait(&refresh);
+    assert_eq!(state.borrow().generation, generation);
+    assert!(named(error_window.upcast_ref(), "monitor-detected-status")
+        .downcast::<gtk::Label>()
+        .unwrap()
+        .text()
+        .contains("fixture unavailable"));
+    error_window.destroy();
 }
 
 #[cfg(test)]

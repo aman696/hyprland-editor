@@ -14,6 +14,21 @@
   },
   "foundations": [
     {
+      "area": "on-demand detected output and reported-mode picker",
+      "code": [
+        "crates/editor-discovery/src/lib.rs",
+        "crates/editor-app/src/detected_outputs.rs",
+        "crates/editor-app/src/monitors.rs"
+      ],
+      "test_references": [
+        "output_snapshot_uses_only_fixed_queries_and_keeps_missing_values_unknown",
+        "output_payload_rejects_ambiguous_invalid_and_oversized_records",
+        "monitors::test_detected_outputs",
+        "native_forms_and_draft_workflow"
+      ],
+      "limits": "fixed read-only version/monitors-all requests through pinned bounded IPC, optional typed output observations, explicit connector match and validated reported-mode draft/undo actions, unknown commit/missing fields retained, duplicate/unmodeled modes filtered with counts, background on-demand refresh and stale/closed-window disposal; private fake-socket and graphical fixtures only, no polling/service, real hardware conformance, multi-session/effective-state discovery, full hardware inspector, live apply/recovery, measured whole-app resource budget or compositor preview certificate"
+    },
+    {
       "area": "combined single-source graphical draft copy",
       "code": [
         "crates/editor-core/src/lua/workspace_copy.rs",

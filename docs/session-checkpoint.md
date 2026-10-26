@@ -1,4 +1,14 @@
-# Session checkpoint — 25 October 2026
+# Session checkpoint — 26 October 2026
+
+## Detected output picker
+
+The monitor editor now reads active/inactive connector names and reported resolution/refresh modes on demand through fixed bounded read-only IPC. Explicit prompts prevent GTK's first-row selection from choosing hardware automatically. Separate match/mode actions update only the draft, through validation and undo. The new private graphical fixture covers selection, filtering, wrong-match refusal, undo, stale/closed-window results, unavailable discovery and expanded narrow layout; the full graphical workflow passes in 111.87 seconds. The actual private-socket discovery cases pass, including exact request bytes and malformed/oversized reply refusal. No live compositor connection or physical-display conformance is claimed. See [monitor discovery](monitor-discovery.md).
+
+The 84-input source model and twenty reviewed predecessors are unchanged. Both complete workflows passed for preceding `12206492223572058778beb0dd03286ae78faa5b` ([push](https://github.com/aman696/hyprland-editor/actions/runs/40283185909), [PR](https://github.com/aman696/hyprland-editor/actions/runs/40283193227)). Current-head hosted results must be observed after publication. PR #8 remains open/draft; no merge or full acceptance is implied. Full source/discovery/export, actual isolated rendering/input, live apply/recovery, representative hardware/resources/accessibility, packaging and all 1,458 obligations/756 documentation candidates remain required. The user's priority remains a usable whole product before deeper compiler/ABI/kernel reinforcement.
+
+Final local checks pass: full ordinary workspace suite with nine explicit ignores, strict workspace/all-target lint (2.88s), optimized GUI build (1m35s), formatting, model/register consistency and whitespace. Logs: `.dev/detected-output-workspace-tests.log`, `.dev/detected-output-native.log`, `.dev/detected-output-clippy.log`, `.dev/detected-output-release.log`. No live compositor/hardware/policy was modified. Private accessibility/service warnings do not certify those integrations.
+
+## Earlier source and workspace checkpoint
 
 **Review Source Copy** now combines a single Lua file with scalar and all seven structured editor drafts. It supports scalar insertion/removal/computed-expression replacement, reconstructs changed declaration slots, preserves comments, and reparses every family before displaying the complete copy. Unresolved or overlapping source cannot silently lose draft changes. Multi-file relocation/combined export remains unfinished. See [combined source copy](combined-source-copy.md).
 
