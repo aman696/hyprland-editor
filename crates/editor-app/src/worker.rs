@@ -48,6 +48,16 @@ pub enum Request {
         review: hyprland_editor_core::source_merge::Review,
         choices: std::collections::BTreeMap<usize, hyprland_editor_core::source_merge::Choice>,
     },
+    InspectSubmapHeader {
+        program: lua::replay::Program,
+        event_order: usize,
+    },
+    CompareSubmapHeader {
+        program: lua::replay::Program,
+        event_order: usize,
+        name: String,
+        reset: Option<String>,
+    },
     InspectStructuredDeclaration {
         program: lua::replay::Program,
         event_order: usize,
@@ -148,6 +158,7 @@ pub enum Request {
 #[serde(deny_unknown_fields)]
 pub enum Response {
     Parsed(Box<LuaReport>),
+    SubmapHeader(lua::replay::declaration_edit::submap::Header),
     Dependencies(lua::DependencyInventory),
     Replayed(Box<lua::replay::Report>),
     SourceEditReview(Box<lua::replay::edits::EditReview>),
@@ -219,6 +230,18 @@ pub fn entry() {
         // Conversion/replay-only requests do not need another parsed catalogue.
         let c = std::sync::LazyLock::new(catalogue);
         match request {
+            Request::InspectSubmapHeader {
+                program,
+                event_order,
+            } => lua::replay::declaration_edit::submap::inspect(&program, event_order)
+                .map(Response::SubmapHeader),
+            Request::CompareSubmapHeader {
+                program,
+                event_order,
+                name,
+                reset,
+            } => lua::replay::declaration_edit::submap::compare(&program, event_order, name, reset)
+                .map(|result| Response::ScalarSourceComparison(Box::new(result))),
             Request::InsertStructuredDeclarations {
                 program,
                 document,

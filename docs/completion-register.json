@@ -14,6 +14,25 @@
   },
   "foundations": [
     {
+      "area": "callback-preserving graphical submap name and reset editing",
+      "code": [
+        "crates/editor-core/src/lua/replay/declaration_edit/submap.rs",
+        "crates/editor-core/src/lua/replay/edits.rs",
+        "crates/editor-app/src/source_submap_header.rs",
+        "crates/editor-app/src/source_analysis.rs",
+        "crates/editor-app/src/worker.rs"
+      ],
+      "test_references": [
+        "header_edits_keep_callbacks_module_loads_comments_and_mixed_declarations",
+        "named_callbacks_reset_removal_and_repeated_sites_retain_their_source",
+        "invalid_unchanged_and_expanded_headers_are_refused_and_unknown_callbacks_stay_partial",
+        "empty_captured_names_can_be_repaired_without_rebuilding_the_callback",
+        "source_submap_header::test_workflow",
+        "native_forms_and_draft_workflow"
+      ],
+      "limits": "default focused submap name/reset form, callback expression and remaining source retained byte-for-byte, literal/named/module-loading/mixed callback support with captured header strings, repeated-site scope disclosure, reset presence and empty-name repair, full graph comparison and loader rebasing with precise scope findings, private comparison/undo/original-free persistence; 90-input model/24 predecessors retain numeric observations; existing name references preserved, no general callback/body/expanded-argument/ownership or automatic reference-renaming certificate, all-family reconciliation/combined export, actual preview/live apply or full audit acceptance"
+    },
+    {
       "area": "graphical source insertion, duplication, removal and static submap editing",
       "code": [
         "crates/editor-core/src/lua/replay/declaration_edit/structure.rs",

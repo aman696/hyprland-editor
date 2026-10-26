@@ -65,7 +65,10 @@ const DECLARATION_MODEL: &str =
 const STRUCTURE_FROM: &str = "92435dde9f49b35a6a607abd548593e2ac944786411da37754ad8f1467568da2";
 const STRUCTURE_MODEL: &str =
     include_str!("../../../data/migrations/graph-model-before-source-structure.json");
-const TO: &str = "a89500f370d5687e920ba3140ab3307352764036084dbc0646a49450d32a4bf7";
+const HEADER_FROM: &str = "a89500f370d5687e920ba3140ab3307352764036084dbc0646a49450d32a4bf7";
+const HEADER_MODEL: &str =
+    include_str!("../../../data/migrations/graph-model-before-submap-header.json");
+const TO: &str = "155fa2b02986568d01d1caa025c6ca9920f241aed2c8c789b0d94b50a5ed2d1c";
 const OLD: &str = include_str!("../../../data/migrations/graph-model-before-projection.json");
 const FROM_PROJECTION: &str = "046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371";
 const PROJECTION: &str = include_str!("../../../data/migrations/graph-model-projection.json");
@@ -1000,8 +1003,10 @@ fn before_source_structure_transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
-fn transition(from: &str) -> Result<(), String> {
-    if lua::source_hash(STRUCTURE_MODEL) != STRUCTURE_FROM || lua::source_hash(CURRENT) != TO {
+fn before_submap_header_transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(STRUCTURE_MODEL) != STRUCTURE_FROM
+        || lua::source_hash(HEADER_MODEL) != HEADER_FROM
+    {
         return Err(
             "No reviewed source-structure transition to this exact model is available".into(),
         );
@@ -1011,7 +1016,8 @@ fn transition(from: &str) -> Result<(), String> {
     }
     let previous: serde_json::Value =
         serde_json::from_str(STRUCTURE_MODEL).map_err(|e| e.to_string())?;
-    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let current: serde_json::Value =
+        serde_json::from_str(HEADER_MODEL).map_err(|e| e.to_string())?;
     let old = previous["inputs"]
         .as_object()
         .ok_or("Invalid preceding source-structure model")?;
@@ -1042,6 +1048,46 @@ fn transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
+fn transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(HEADER_MODEL) != HEADER_FROM || lua::source_hash(CURRENT) != TO {
+        return Err("No reviewed submap-header transition to this exact model is available".into());
+    }
+    if from != HEADER_FROM {
+        before_submap_header_transition(from)?;
+    }
+    let previous: serde_json::Value =
+        serde_json::from_str(HEADER_MODEL).map_err(|e| e.to_string())?;
+    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let old = previous["inputs"]
+        .as_object()
+        .ok_or("Invalid preceding header model")?;
+    let new = current["inputs"]
+        .as_object()
+        .ok_or("Invalid submap header model")?;
+    let added = new
+        .keys()
+        .filter(|key| !old.contains_key(*key))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    let changed = old
+        .keys()
+        .filter(|key| new.get(*key) != Some(&old[*key]))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    if old.len() != 89
+        || new.len() != 90
+        || added != ["crates/editor-core/src/lua/replay/declaration_edit/submap.rs"]
+        || changed
+            != [
+                "crates/editor-app/src/worker.rs",
+                "crates/editor-core/src/lua/replay/declaration_edit.rs",
+                "crates/editor-core/src/lua/replay/edits.rs",
+            ]
+    {
+        return Err("Submap header differs from the reviewed callback-preserving prefix editor and precise scope findings; saved inputs/compiler profiles must remain unchanged".into());
+    }
+    Ok(())
+}
 pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, String> {
     if text.len() > MAX_WORKSPACE_BYTES {
         return Err("Saved workspace exceeds 8 MiB".into());
@@ -1068,6 +1114,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != REGISTRATION_FROM
         && previous != DECLARATION_FROM
         && previous != STRUCTURE_FROM
+        && previous != HEADER_FROM
         && raw["source_graph"].get("private").is_some()
     {
         return Err("Previous graph writers had no private input layer; new payloads cannot be introduced during migration".into());
@@ -1078,6 +1125,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != REGISTRATION_FROM
         && previous != DECLARATION_FROM
         && previous != STRUCTURE_FROM
+        && previous != HEADER_FROM
         && raw["source_graph"]["compiler"]
             .get("numeric_codegen")
             .is_some()
@@ -1102,7 +1150,8 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != WORKSPACE_COPY_FROM
         && previous != REGISTRATION_FROM
         && previous != DECLARATION_FROM
-        && previous != STRUCTURE_FROM;
+        && previous != STRUCTURE_FROM
+        && previous != HEADER_FROM;
     let mut expected_compiler = current_compiler.clone();
     if compiler_observation_renewed {
         expected_compiler.numeric_codegen = None;
@@ -1216,6 +1265,7 @@ mod tests {
         transition(REGISTRATION_FROM).unwrap();
         transition(DECLARATION_FROM).unwrap();
         transition(STRUCTURE_FROM).unwrap();
+        transition(HEADER_FROM).unwrap();
         assert!(transition(&"0".repeat(64)).is_err());
         assert_ne!(FROM, TO);
         assert_eq!(lua::source_hash(CURRENT), TO);

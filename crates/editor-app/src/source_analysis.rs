@@ -47,6 +47,7 @@ pub(super) struct View {
     declarations: gtk::glib::WeakRef<gtk::Button>,
     export_file: gtk::glib::WeakRef<gtk::Button>,
     add_family: gtk::glib::WeakRef<gtk::Button>,
+    submap_contents: gtk::glib::WeakRef<gtk::Button>,
     change_window: Rc<RefCell<Option<gtk::glib::WeakRef<adw::Window>>>>,
 }
 fn short(bytes: &[u8]) -> String {
@@ -147,6 +148,12 @@ pub(super) fn build(
     compare.set_widget_name("source-analysis-compare");
     compare.set_halign(gtk::Align::Start);
     calls_page.append(&compare);
+    let submap_contents = gtk::Button::with_label("Edit Submap Contents…");
+    submap_contents.set_widget_name("source-analysis-submap-contents");
+    submap_contents.set_halign(gtk::Align::Start);
+    submap_contents.set_visible(false);
+    submap_contents.set_sensitive(false);
+    calls_page.append(&submap_contents);
     let (area, detail) = text_area("dependency-analysis-call-details");
     calls_page.append(&area);
     let detail_area = area.downgrade();
@@ -241,6 +248,7 @@ pub(super) fn build(
         declarations: declarations.downgrade(),
         export_file: export_file.downgrade(),
         add_family: add_family.downgrade(),
+        submap_contents: submap_contents.downgrade(),
         change_window: Rc::new(RefCell::new(None)),
     };
     let v = view.clone();
@@ -259,6 +267,8 @@ pub(super) fn build(
     export_file.connect_clicked(move |_| v.export_file());
     let v = view.clone();
     add_family.connect_clicked(move |_| v.add_family());
+    let v = view.clone();
+    submap_contents.connect_clicked(move |_| v.submap_contents());
     (body, view)
 }
 impl View {
@@ -270,6 +280,7 @@ impl View {
             &self.monitor_review,
             &self.declarations,
             &self.add_family,
+            &self.submap_contents,
         ] {
             if let Some(button) = weak.upgrade() {
                 button.set_visible(false);
@@ -459,6 +470,48 @@ impl View {
             window.close();
         }
     }
+    fn submap_contents(&self) {
+        if self.readonly.get() {
+            return;
+        }
+        let (Some(model), Some(state), Some(pick), Some(button)) = (
+            self.model.upgrade(),
+            self.state.upgrade(),
+            self.calls.upgrade(),
+            self.submap_contents.upgrade(),
+        ) else {
+            return;
+        };
+        let Some(Call::Api(index)) = self.order.borrow().get(pick.selected() as usize).copied()
+        else {
+            return;
+        };
+        let Some(analysis) = model.borrow().clone() else {
+            return;
+        };
+        let event = &analysis.report.events[index];
+        if event.api != "hl.define_submap" {
+            return;
+        }
+        let Some(parent) = button.root().and_downcast::<gtk::Window>() else {
+            return;
+        };
+        self.close_change();
+        let view = self.clone();
+        let window = super::source_family_editor::open(
+            &parent,
+            &model,
+            event.order,
+            &state,
+            Rc::new(move || {
+                if let Some(callback) = &view.after_keep {
+                    callback();
+                }
+                view.render();
+            }),
+        );
+        *self.change_window.borrow_mut() = Some(window.downgrade());
+    }
     fn compare(&self) {
         if self.readonly.get() {
             return;
@@ -505,12 +558,27 @@ impl View {
             }
             view.render();
         });
-        let window = if hyprland_editor_core::lua::replay::declaration_edit::supports(&event.api) {
+        let window = if event.api == "hl.define_submap" {
+            super::source_submap_header::open(&parent, &model, event.order, &state, refresh)
+        } else if hyprland_editor_core::lua::replay::declaration_edit::supports(&event.api) {
             super::source_family_editor::open(&parent, &model, event.order, &state, refresh)
         } else {
             super::source_changes::open(&parent, &model, event.order, &state, refresh)
         };
         *self.change_window.borrow_mut() = Some(window.downgrade());
+    }
+    #[cfg(test)]
+    pub(super) fn test_submap_header(&self) -> adw::Window {
+        let button = self.compare.upgrade().unwrap();
+        assert!(button.is_visible() && button.is_sensitive());
+        assert_eq!(button.label().as_deref(), Some("Edit Submap Name / Reset…"));
+        button.emit_clicked();
+        self.change_window
+            .borrow()
+            .as_ref()
+            .unwrap()
+            .upgrade()
+            .unwrap()
     }
     #[cfg(test)]
     pub(super) fn test_add_family(&self) -> adw::Window {
@@ -589,6 +657,10 @@ impl View {
         }
         if let Some(button) = self.add_family.upgrade() {
             button.set_sensitive(false);
+        }
+        if let Some(button) = self.submap_contents.upgrade() {
+            button.set_sensitive(false);
+            button.set_visible(false);
         }
         if let Some(e) = self.compatibility.upgrade() {
             e.set_visible(false);
@@ -809,6 +881,11 @@ impl View {
     }
     fn call(&self) {
         self.close_change();
+        if let Some(button) = self.submap_contents.upgrade() {
+            button.set_visible(false);
+            button.set_sensitive(false);
+        }
+
         let (Some(analysis), Some(pick), Some(view)) = (
             self.model.upgrade().and_then(|m| m.borrow().clone()),
             self.calls.upgrade(),
@@ -843,6 +920,43 @@ impl View {
                         _ => false,
                     },
             );
+        }
+        let selected_submap = match row {
+            Call::Api(i) if analysis.report.events[i].api == "hl.define_submap" => {
+                Some(&analysis.report.events[i])
+            }
+            _ => None,
+        };
+        if let Some(button) = self.compare.upgrade() {
+            button.set_label(if selected_submap.is_some() {
+                "Edit Submap Name / Reset…"
+            } else {
+                "Edit / Compare This Declaration"
+            });
+        }
+        if let Some(button) = self.submap_contents.upgrade() {
+            let enabled = !self.readonly.get() && selected_submap.is_some();
+            let editable = selected_submap.is_some_and(|event| {
+                analysis
+                    .report
+                    .registration_scopes
+                    .iter()
+                    .find(|scope| scope.declaration_order == event.order)
+                    .is_some_and(|scope| {
+                        scope.completed
+                            && !analysis.report.loads.iter().any(|load| {
+                                event.order < load.order && load.order < scope.end_order
+                            })
+                            && !analysis.report.events.iter().any(|child| {
+                                event.order < child.order
+                                    && child.order < scope.end_order
+                                    && !matches!(child.api.as_str(), "hl.bind" | "hl.define_submap")
+                            })
+                    })
+            });
+            button.set_visible(enabled);
+            button.set_sensitive(enabled && editable);
+            button.set_tooltip_text(Some(if editable{"Edit representable bindings and nested submaps as a group"}else{"This submap has module loads, mixed declarations or incomplete analysis. Use Name / Reset, or edit individual child declarations."}));
         }
         for weak in [&self.raw_expander, &self.source_expander] {
             if let Some(e) = weak.upgrade() {

@@ -1,6 +1,7 @@
 //! Graphical whole-argument edits for one reached structured declaration.
 //! Original bytes and other graph observations remain independently compared.
 mod structure;
+pub mod submap;
 use super::{edits, replay, scalar_edit, Event, Program};
 use crate::{
     lua::{self, named, syntax_tree, text, LuaReport},

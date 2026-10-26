@@ -685,6 +685,7 @@ fn private_input_model_migration_preserves_active_and_archived_data_with_fresh_r
         "25888d9809cc642d8cc9d6980c5cd1f321576863d2f9660e36736b810a402814",
         "d569b9b70d887873926112bf736e8b481d21e93ff0fe9df8d390865b7ec4ff3f",
         "92435dde9f49b35a6a607abd548593e2ac944786411da37754ad8f1467568da2",
+        "a89500f370d5687e920ba3140ab3307352764036084dbc0646a49450d32a4bf7",
     ] {
         for version in [BASELINE, AUDITED_MAIN] {
             for archive in [false, true] {
@@ -727,6 +728,7 @@ fn private_input_model_migration_preserves_active_and_archived_data_with_fresh_r
                         | "25888d9809cc642d8cc9d6980c5cd1f321576863d2f9660e36736b810a402814"
                         | "d569b9b70d887873926112bf736e8b481d21e93ff0fe9df8d390865b7ec4ff3f"
                         | "92435dde9f49b35a6a607abd548593e2ac944786411da37754ad8f1467568da2"
+                        | "a89500f370d5687e920ba3140ab3307352764036084dbc0646a49450d32a4bf7"
                 ) {
                     snapshot
                         .source_graph
@@ -1167,6 +1169,7 @@ fn reviewed_graph_migrations_rebuild_deleted_sources_and_private_pieces_without_
             "25888d9809cc642d8cc9d6980c5cd1f321576863d2f9660e36736b810a402814",
             "d569b9b70d887873926112bf736e8b481d21e93ff0fe9df8d390865b7ec4ff3f",
             "92435dde9f49b35a6a607abd548593e2ac944786411da37754ad8f1467568da2",
+            "a89500f370d5687e920ba3140ab3307352764036084dbc0646a49450d32a4bf7",
         ] {
             let root = root();
             let mut snapshot = fixture(&root, version);
@@ -1201,6 +1204,7 @@ fn reviewed_graph_migrations_rebuild_deleted_sources_and_private_pieces_without_
                     | "25888d9809cc642d8cc9d6980c5cd1f321576863d2f9660e36736b810a402814"
                     | "d569b9b70d887873926112bf736e8b481d21e93ff0fe9df8d390865b7ec4ff3f"
                     | "92435dde9f49b35a6a607abd548593e2ac944786411da37754ad8f1467568da2"
+                    | "a89500f370d5687e920ba3140ab3307352764036084dbc0646a49450d32a4bf7"
             ) {
                 value["source_graph"]["compiler"]
                     .as_object_mut()
@@ -1241,6 +1245,7 @@ fn reviewed_graph_migrations_rebuild_deleted_sources_and_private_pieces_without_
                         | "25888d9809cc642d8cc9d6980c5cd1f321576863d2f9660e36736b810a402814"
                         | "d569b9b70d887873926112bf736e8b481d21e93ff0fe9df8d390865b7ec4ff3f"
                         | "92435dde9f49b35a6a607abd548593e2ac944786411da37754ad8f1467568da2"
+                        | "a89500f370d5687e920ba3140ab3307352764036084dbc0646a49450d32a4bf7"
                 )
             );
             assert_eq!(report["migration"]["compiler_numeric_mode_known"], true);
@@ -1308,6 +1313,7 @@ fn numeric_writer_migration_preserves_existing_observation_and_refuses_observati
         "25888d9809cc642d8cc9d6980c5cd1f321576863d2f9660e36736b810a402814",
         "d569b9b70d887873926112bf736e8b481d21e93ff0fe9df8d390865b7ec4ff3f",
         "92435dde9f49b35a6a607abd548593e2ac944786411da37754ad8f1467568da2",
+        "a89500f370d5687e920ba3140ab3307352764036084dbc0646a49450d32a4bf7",
     ] {
         for version in [BASELINE, AUDITED_MAIN] {
             let root = root();

@@ -44,6 +44,7 @@ mod source_overrides;
 mod source_pending;
 mod source_provenance;
 mod source_reconcile;
+mod source_submap_header;
 #[cfg(test)]
 mod test_support;
 mod text_export;

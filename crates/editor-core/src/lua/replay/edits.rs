@@ -438,6 +438,11 @@ fn compare(
         }
     }
     for load in &before.loads {
+        if let Some(next) = after.loads.iter().find(|l| l.order == load.order) {
+            if !structure::same_scope_context(plan, before, after, load.order, next.order) {
+                add(DifferenceKind::RegistrationScope, Some(load.order));
+            }
+        }
         let equal = after
             .loads
             .iter()
@@ -445,7 +450,6 @@ fn compare(
             .is_some_and(|next| {
                 rebase_request(proposed, plan, &load.request).is_ok_and(|r| r == next.request)
                     && same_load(&load.outcome, &next.outcome)
-                    && structure::same_scope_context(plan, before, after, load.order, next.order)
             });
         if !equal {
             add(DifferenceKind::Loader, Some(load.order));
