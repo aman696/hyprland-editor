@@ -10,6 +10,7 @@ mod observed_float;
 pub use numeric_codegen::{NumericCodegen, ZeroSubtraction};
 pub mod override_review;
 mod path_sources;
+pub mod project_copy;
 mod provenance;
 mod registration_calls;
 pub mod scalar_edit;

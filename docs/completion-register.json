@@ -14,6 +14,27 @@
   },
   "foundations": [
     {
+      "area": "combined graphical drafts and private multi-file source copies",
+      "code": [
+        "crates/editor-core/src/lua/replay/project_copy.rs",
+        "crates/editor-app/src/project_copy.rs",
+        "crates/editor-app/src/project_export.rs",
+        "crates/editor-app/src/worker.rs",
+        "crates/editor-app/src/workflow.rs"
+      ],
+      "test_references": [
+        "all_eight_draft_groups_combine_with_multifile_calls_and_module_returns",
+        "keep_retains_private_bytes_and_append_does_not_remove_source_calls",
+        "replace_empty_is_explicit_and_adjacent_replacement_insertion_is_valid",
+        "replacement_refuses_partial_consumed_and_cross_group_or_loader_containers",
+        "folder_copy_preserves_tree_bytes_and_refuses_existing_targets",
+        "malformed_bundle_cannot_publish_any_files",
+        "project_copy::test_workflow",
+        "native_forms_and_draft_workflow"
+      ],
+      "limits": "explicit keep/append/replace-reached choices for all eight groups, private-input materialization without original reads, multi-file structural review and loader rebasing, complete file inspection and new-only private directory export with layout/hash/path checks, comment/module-return retention and generation stability; 91-input model/25 predecessors preserve compiler observations; unreached code and original path/asset strings remain, partial/consumed/mixed/module-loading replacement refusals, no verified relocation, complete dynamic editing, live apply, actual preview, resource/security or full audit acceptance"
+    },
+    {
       "area": "callback-preserving graphical submap name and reset editing",
       "code": [
         "crates/editor-core/src/lua/replay/declaration_edit/submap.rs",

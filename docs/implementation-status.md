@@ -1,5 +1,15 @@
 # Execution plan and acceptance gates
 
+## Combined multi-file graphical editing — 30 October 2026
+
+**Review Source Copy** now opens a combined review for captured multi-file projects. All eight groups offer explicit keep-source, append-draft or replace-reached choices. Current private source bytes are retained as the baseline; the reviewed result includes complete files and exports their relative tree into a new private folder. Existing paths are never overwritten. Replacement refuses incomplete capture, consumed calls and containers that would remove retained groups or module loads. Comments and module returns survive. See [combined project copies](combined-project-copy.md).
+
+The 91-input model is `23fad9114a3b6d77f521fc74a4dde06594f69bc8eb4ca4d580d5b51b16bb05d6`, with 25 reviewed predecessors. Captured inputs and compiler observations are unchanged. Current scope is bounded static editing/export: unreached code, original path strings and uncaptured assets remain. Verified relocation, complete dynamic/legacy editing, actual preview, guarded live apply/recovery and every full audit obligation remain unfinished. The user's editing-first priority continues.
+
+Local validation passes: 541 ordinary workspace tests (nine explicit ignores), four core multi-file cases across both snapshots, two folder-output cases, final private graphical workflow (128.77 seconds), strict workspace/all-target lint (3.13 seconds), optimized GUI build (1m36s), and both official Lua55.0/.1 private source-image test/lint/release checks. Source-model/register/catalogue/action/scalar/format/whitespace consistency checks pass. The graphical review has draft counts, collapsed details, bounded filename display and visible additional-change counts; its actual compact rendering was inspected and captured in the guide. Temporary reference source/build trees were removed. These finite fixtures do not certify full editing, physical behavior, resources, accessibility, security or release acceptance.
+
+The preceding published head `26154cd84a7e87fe0694c03c64d24207f9d3fbec` hosted [push](https://github.com/aman696/hyprland-editor/actions/runs/40398771882) and [PR](https://github.com/aman696/hyprland-editor/actions/runs/40398779685) runs both ended cancelled. This was verified by read-only queries on 30 October; neither is being reported as a passing workflow. This increment needs its own exact-head hosted results.
+
 ## Complex submap name/reset editing — 27 October 2026
 
 Selecting a submap now offers **Edit Submap Name / Reset…** as its primary action. The focused form changes those values while retaining the callback expression and all following source bytes, including module loads, mixed declarations and named callbacks. Repeated source lines disclose their reach count. Reset can be added/removed and empty captured names repaired. Existing references to a renamed submap remain unchanged and may need separate shortcut edits. Full contents editing remains a separate action for representable static bindings and is disabled for known module-loading, mixed or incomplete scopes. See [source declaration editing](source-declaration-editing.md).

@@ -27,6 +27,10 @@ pub enum Request {
     CopyWorkspace {
         workspace: Box<hyprland_editor_core::workspace::Workspace>,
     },
+    CopyProject {
+        workspace: Box<hyprland_editor_core::workspace::Workspace>,
+        modes: [lua::replay::project_copy::Mode; 8],
+    },
     InspectDependencies {
         source: String,
         version: String,
@@ -157,6 +161,7 @@ pub enum Request {
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub enum Response {
+    ProjectCopy(Box<lua::replay::project_copy::Prepared>),
     Parsed(Box<LuaReport>),
     SubmapHeader(lua::replay::declaration_edit::submap::Header),
     Dependencies(lua::DependencyInventory),
@@ -419,6 +424,10 @@ pub fn entry() {
                 .map(Response::Copy),
             Request::CopyWorkspace { workspace } => {
                 lua::workspace_copy::prepare(&workspace, &c).map(Response::Copy)
+            }
+            Request::CopyProject { workspace, modes } => {
+                lua::replay::project_copy::prepare_workspace(&workspace, modes, &c)
+                    .map(|copy| Response::ProjectCopy(Box::new(copy)))
             }
             Request::CheckRegex(sample) => {
                 hyprland_editor_core::regex::check(&sample).map(Response::RegexMatch)

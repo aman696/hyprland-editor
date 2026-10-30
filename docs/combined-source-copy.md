@@ -1,4 +1,4 @@
-# Combined single-file source review
+# Combined source review
 
 For an imported single Lua file, **Review Source Copy** now includes scalar edits and changes from the monitor, device, binding/submap, workspace-rule, window/layer-rule, animation/curve and gesture editors. Review the complete generated copy, then use **Save Lua File…** to save it under a new name. Captured originals remain unchanged. Reopening a `.hye` project preserves this workflow even after the original file is deleted.
 
@@ -10,7 +10,7 @@ The restricted worker reconstructs its own source report and syntax spans from t
 
 Structured rewriting and scalar insertion/removal require a fully recognized static file. Unresolved includes, commands, bindings, diagnostics and overlapping nested/shared declarations can prevent a complete copy. In that case the operation reports why it cannot produce the copy; the `.hye` project still retains all source and draft edits. Existing source and restricted-worker size/time/complexity bounds apply, including the 1 MiB final source limit. Saving an edited source copy does not update the captured source or clear the project's draft changes.
 
-Retained **multi-file** projects still open their Files view and export full materialized files individually. A combined relocated project with its separate value/structured overrides is not implemented by this single-file operation. Full dynamic Lua support, effective-state verification, isolated compositor preview and guarded live apply remain separate unfinished requirements.
+Retained **multi-file** projects use the [combined project-copy review](combined-project-copy.md): explicit keep/append/replace choices combine all eight draft groups with current private source bytes, then export the full tree to a new folder. Verified relocation of original path strings and uncaptured assets remains unfinished. Full dynamic Lua support, effective-state verification, isolated compositor preview and guarded live apply remain separate unfinished requirements.
 
 Validation covers all seven structured families together with scalar edits in both audited snapshots; unchanged CRLF bytes; family insertion/removal; interleaved source slots; declaration counts, do-blocks and submaps; duplicate scalar removal and computed expressions; comments and unresolved/overlapping refusal. The private graphical fixture imports a source, deletes its original, edits all families and scalar presence, saves/reopens a project, invokes **Review Source Copy**, and independently reparses every family from the reviewed text. Existing save/export/undo flows run alongside it.
 

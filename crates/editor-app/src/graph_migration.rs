@@ -68,7 +68,10 @@ const STRUCTURE_MODEL: &str =
 const HEADER_FROM: &str = "a89500f370d5687e920ba3140ab3307352764036084dbc0646a49450d32a4bf7";
 const HEADER_MODEL: &str =
     include_str!("../../../data/migrations/graph-model-before-submap-header.json");
-const TO: &str = "155fa2b02986568d01d1caa025c6ca9920f241aed2c8c789b0d94b50a5ed2d1c";
+const PROJECT_COPY_FROM: &str = "155fa2b02986568d01d1caa025c6ca9920f241aed2c8c789b0d94b50a5ed2d1c";
+const PROJECT_COPY_MODEL: &str =
+    include_str!("../../../data/migrations/graph-model-before-project-copy.json");
+const TO: &str = "23fad9114a3b6d77f521fc74a4dde06594f69bc8eb4ca4d580d5b51b16bb05d6";
 const OLD: &str = include_str!("../../../data/migrations/graph-model-before-projection.json");
 const FROM_PROJECTION: &str = "046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371";
 const PROJECTION: &str = include_str!("../../../data/migrations/graph-model-projection.json");
@@ -1048,8 +1051,10 @@ fn before_submap_header_transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
-fn transition(from: &str) -> Result<(), String> {
-    if lua::source_hash(HEADER_MODEL) != HEADER_FROM || lua::source_hash(CURRENT) != TO {
+fn before_project_copy_transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(HEADER_MODEL) != HEADER_FROM
+        || lua::source_hash(PROJECT_COPY_MODEL) != PROJECT_COPY_FROM
+    {
         return Err("No reviewed submap-header transition to this exact model is available".into());
     }
     if from != HEADER_FROM {
@@ -1057,7 +1062,8 @@ fn transition(from: &str) -> Result<(), String> {
     }
     let previous: serde_json::Value =
         serde_json::from_str(HEADER_MODEL).map_err(|e| e.to_string())?;
-    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let current: serde_json::Value =
+        serde_json::from_str(PROJECT_COPY_MODEL).map_err(|e| e.to_string())?;
     let old = previous["inputs"]
         .as_object()
         .ok_or("Invalid preceding header model")?;
@@ -1088,6 +1094,46 @@ fn transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
+fn transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(PROJECT_COPY_MODEL) != PROJECT_COPY_FROM || lua::source_hash(CURRENT) != TO
+    {
+        return Err("No reviewed combined-copy transition to this exact model is available".into());
+    }
+    if from != PROJECT_COPY_FROM {
+        before_project_copy_transition(from)?;
+    }
+    let previous: serde_json::Value =
+        serde_json::from_str(PROJECT_COPY_MODEL).map_err(|e| e.to_string())?;
+    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let old = previous["inputs"]
+        .as_object()
+        .ok_or("Invalid preceding combined-copy model")?;
+    let new = current["inputs"]
+        .as_object()
+        .ok_or("Invalid combined-copy model")?;
+    let added = new
+        .keys()
+        .filter(|key| !old.contains_key(*key))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    let changed = old
+        .keys()
+        .filter(|key| new.get(*key) != Some(&old[*key]))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    if old.len() != 90
+        || new.len() != 91
+        || added != ["crates/editor-core/src/lua/replay/project_copy.rs"]
+        || changed
+            != [
+                "crates/editor-app/src/worker.rs",
+                "crates/editor-core/src/lua/replay.rs",
+            ]
+    {
+        return Err("Combined copy differs from the reviewed explicit family choices and immutable multi-file review; saved inputs and compiler profiles must remain unchanged".into());
+    }
+    Ok(())
+}
 pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, String> {
     if text.len() > MAX_WORKSPACE_BYTES {
         return Err("Saved workspace exceeds 8 MiB".into());
@@ -1115,6 +1161,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != DECLARATION_FROM
         && previous != STRUCTURE_FROM
         && previous != HEADER_FROM
+        && previous != PROJECT_COPY_FROM
         && raw["source_graph"].get("private").is_some()
     {
         return Err("Previous graph writers had no private input layer; new payloads cannot be introduced during migration".into());
@@ -1126,6 +1173,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != DECLARATION_FROM
         && previous != STRUCTURE_FROM
         && previous != HEADER_FROM
+        && previous != PROJECT_COPY_FROM
         && raw["source_graph"]["compiler"]
             .get("numeric_codegen")
             .is_some()
@@ -1151,7 +1199,8 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != REGISTRATION_FROM
         && previous != DECLARATION_FROM
         && previous != STRUCTURE_FROM
-        && previous != HEADER_FROM;
+        && previous != HEADER_FROM
+        && previous != PROJECT_COPY_FROM;
     let mut expected_compiler = current_compiler.clone();
     if compiler_observation_renewed {
         expected_compiler.numeric_codegen = None;
@@ -1266,6 +1315,7 @@ mod tests {
         transition(DECLARATION_FROM).unwrap();
         transition(STRUCTURE_FROM).unwrap();
         transition(HEADER_FROM).unwrap();
+        transition(PROJECT_COPY_FROM).unwrap();
         assert!(transition(&"0".repeat(64)).is_err());
         assert_ne!(FROM, TO);
         assert_eq!(lua::source_hash(CURRENT), TO);

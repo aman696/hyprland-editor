@@ -20,6 +20,7 @@ The monitor editor includes an on-demand **Detected Outputs** picker for connect
 
 ## Available now
 
+- Combine all eight graphical draft groups with captured multi-file source edits. Review explicit keep, append or replace choices, inspect each complete file, and save the reviewed tree into a new private folder. See [combined project copies](docs/combined-project-copy.md); verified path/asset relocation remains unfinished.
 - Browse by category and search readable names or original setting keys for every audited scalar: 353 for **0.56.2**, 402 for **audited-main**, an exact development commit. Switch snapshots without losing their separate in-memory drafts.
 - Adaptive sidebar navigation, focused value cards, expandable technical details, a main menu and keyboard shortcuts. The layout follows the [GNOME HIG](https://developer.gnome.org/hig/principles.html); see the [UI design rules](docs/ui-design.md).
 - Graphical switches, number controls, text fields, color pickers, gradient stops, coordinates, four-sided gaps and font weights.

@@ -467,7 +467,7 @@ pub(super) fn connect_source_copy(
     let state = state.clone();
     button.connect_clicked(move|button|{
         let Some(window)=win.upgrade()else{return;};let s=state.borrow();
-        if s.source_graphs.contains_key(&s.draft.version) {drop(s);if let Err(error)=super::source_analysis::show_saved(&window,&state){notice(&window,"Cannot open source files",&error);}return;}
+        if s.source_graphs.contains_key(&s.draft.version) {drop(s);super::project_copy::show(&window,&state);return;}
         if let Some(doc)=s.legacy_sources.get(&s.draft.version).cloned(){
             let snapshot=match captured_workspace(&s){Ok(snapshot)=>snapshot,Err(error)=>{drop(s);notice(&window,"Cannot prepare legacy copy",&error);return;}};
             if !snapshot.monitors.is_empty() || !snapshot.devices.is_empty() || !snapshot.bindings.is_empty() || !snapshot.workspace_rules.is_empty() || !snapshot.rules.is_empty() || !snapshot.animations.declarations.is_empty() || !snapshot.gestures.declarations.is_empty() {
