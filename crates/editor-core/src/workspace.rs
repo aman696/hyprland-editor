@@ -78,6 +78,10 @@ pub struct Workspace {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub session_schema_sha256: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy_session_origin_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy_session_schema_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub gesture_schema_sha256: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub animation_schema_sha256: Option<String>,
@@ -108,6 +112,8 @@ impl Workspace {
             gestures: Default::default(),
             session: Default::default(),
             session_schema_sha256: None,
+            legacy_session_origin_sha256: None,
+            legacy_session_schema_sha256: None,
             gesture_schema_sha256: None,
             animation_schema_sha256: None,
             rule_schema_sha256: None,
@@ -129,17 +135,34 @@ impl Workspace {
         if self.format != WORKSPACE_FORMAT || self.sources.len() > MAX_SOURCE_DOCUMENTS {
             return Err("Unsupported workspace format or source count".into());
         }
+        if let Some(hash) = &self.legacy_session_origin_sha256 {
+            if self
+                .root()
+                .is_none_or(|r| r.language != SourceLanguage::Legacy || r.origin.sha256 != *hash)
+                || self.source_graph.is_some()
+                || self.draft.version != crate::BASELINE
+                || self.legacy_session_schema_sha256.as_deref()
+                    != Some(&crate::legacy_session::schema_hash())
+            {
+                return Err(
+                    "Legacy session projection marker does not match its captured root".into(),
+                );
+            }
+        }
+        if self.legacy_session_schema_sha256.is_some()
+            && self.legacy_session_origin_sha256.is_none()
+        {
+            return Err("Legacy session schema has no captured source marker".into());
+        }
         self.draft.validate(catalogue)?;
         self.animations.validate(&self.draft.version)?;
         self.gestures.validate(&self.draft.version)?;
         self.session.validate(&self.draft.version)?;
-        let session_hash = crate::session::schema_hash();
-        if (!self.session.is_empty()
-            && self.session_schema_sha256.as_deref() != Some(&session_hash))
+        if (!self.session.is_empty() && self.session_schema_sha256.is_none())
             || self
                 .session_schema_sha256
                 .as_ref()
-                .is_some_and(|h| *h != session_hash)
+                .is_some_and(|pin| !crate::session::accepts_schema(pin, &self.session))
         {
             return Err("Session schema differs from the pinned environment, command and permission handlers".into());
         }

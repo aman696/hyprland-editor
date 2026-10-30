@@ -63,18 +63,19 @@ fn read_import_for_review(
 ) -> Result<Imported, String> {
     if path.extension().is_some_and(|extension| extension == "hye") {
         let (text, _) = storage::read_bounded(&path, workspace::MAX_WORKSPACE_BYTES)?;
-        let (workspace, migration, prepared_graph) = match Workspace::from_json(&text, &catalogue) {
-            Ok(workspace) => (workspace, None, None),
-            Err(error) if !allow_migration => return Err(error),
-            Err(_) => {
-                let prepared = super::graph_migration::prepare(&text, &catalogue)?;
-                (
-                    prepared.workspace,
-                    Some(prepared.summary),
-                    Some(prepared.graph),
-                )
-            }
-        };
+        let (mut workspace, migration, prepared_graph) =
+            match Workspace::from_json(&text, &catalogue) {
+                Ok(workspace) => (workspace, None, None),
+                Err(error) if !allow_migration => return Err(error),
+                Err(_) => {
+                    let prepared = super::graph_migration::prepare(&text, &catalogue)?;
+                    (
+                        prepared.workspace,
+                        Some(prepared.summary),
+                        Some(prepared.graph),
+                    )
+                }
+            };
         let graph = if let Some(graph) = prepared_graph {
             Some(graph)
         } else if let Some(graph) = &workspace.source_graph {
@@ -118,9 +119,19 @@ fn read_import_for_review(
         let diagnostics = source
             .as_ref()
             .map_or(0, |doc| doc.report.diagnostics.len());
-        let saved_json = migration.is_none();
+        let mut legacy_projection_changed = false;
+        if let Some(doc) = &legacy {
+            if workspace.legacy_session_origin_sha256.is_none() {
+                let mut entries = doc.session.draft.entries.clone();
+                entries.append(&mut workspace.session.entries);
+                workspace.session = hyprland_editor_core::session::Draft { entries };
+                workspace.session.validate(&workspace.draft.version)?;
+                legacy_projection_changed = true;
+            }
+        }
+        let saved_json = migration.is_none() && !legacy_projection_changed;
         return Ok(Imported { migration,graph,draft:workspace.draft,source,legacy,origin,saved_json,monitors:workspace.monitors,devices:workspace.devices,bindings:workspace.bindings,workspace_rules:workspace.workspace_rules,rules:workspace.rules,animations:workspace.animations,gestures:workspace.gestures,session:workspace.session,
-            message:format!("{} with {diagnostics} source diagnostics. Source snapshots were reparsed; recorded original paths were not opened. Desktop state is separate.", if saved_json { "Saved draft reopened" } else { "Rebuilt copy loaded; save it as a new private workspace" }) });
+            message:format!("{} with {diagnostics} source diagnostics. Source snapshots were reparsed; recorded original paths were not opened. Desktop state is separate.", if saved_json { "Saved draft reopened" } else if legacy_projection_changed {"Legacy session view rebuilt from retained source; older separate session drafts appended for review. Save a new project copy"} else { "Rebuilt copy loaded; save it as a new private workspace" }) });
     }
     let captured = if path
         .extension()
@@ -132,7 +143,7 @@ fn read_import_for_review(
     };
     match path.extension().and_then(|s|s.to_str()) {
         Some("json")=>Draft::from_json(&captured.content,&catalogue).map(|draft|Imported{migration:None,graph:None,draft,source:None,legacy:None,origin:None,monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),session:Default::default(),message:"Validated value-only draft loaded".into(),saved_json:true}),
-        Some("conf")=>super::legacy_source::Document::new(captured.content,&catalogue).map(|doc|Imported{migration:None,graph:None,message:format!("Retained legacy source and {} literal overrides; {} lines unresolved; {} repeated keys. Includes and variables are not evaluated. Review Source Copy exports scalar edits while preserving other directives.",doc.report.draft.values.len(),doc.report.skipped.len(),doc.report.duplicate_keys.len()),draft:doc.report.draft.clone(),source:None,legacy:Some(doc),origin:Some(captured.identity),monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),session:Default::default(),saved_json:false}),
+        Some("conf")=>super::legacy_source::Document::new(captured.content,&catalogue).map(|doc|Imported{migration:None,graph:None,message:format!("Retained {} scalar overrides and {} session entries; {} lines unresolved; {} repeated keys. Includes and variables are not evaluated. Review Source Copy includes supported scalar and session edits.",doc.report.draft.values.len(),doc.session.draft.entries.len(),doc.report.skipped.len(),doc.report.duplicate_keys.len()),draft:doc.report.draft.clone(),session:doc.session.draft.clone(),source:None,legacy:Some(doc),origin:Some(captured.identity),monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),saved_json:false}),
         Some("lua")=>{
             let doc=parse_source(captured.content,version,&catalogue)?;
             let mut message=format!("Imported {} scalar declarations, {} monitor rules and {} device rules; {} diagnostics. Effective values are not inferred by executing Lua.",doc.report.draft.values.len(),doc.report.monitors.len(),doc.report.devices.len(),doc.report.diagnostics.len());
@@ -233,6 +244,10 @@ pub(super) fn captured_workspace(s: &super::State) -> Result<Workspace, String> 
             .source_origins
             .get(version)
             .ok_or("Legacy source identity missing")?;
+        snapshot.legacy_session_origin_sha256 =
+            Some(hyprland_editor_core::lua::source_hash(&doc.content));
+        snapshot.legacy_session_schema_sha256 =
+            Some(hyprland_editor_core::legacy_session::schema_hash());
         snapshot.root_source = Some("root".into());
         snapshot.sources.push(workspace::SourceSnapshot {
             id: "root".into(),
@@ -472,11 +487,11 @@ pub(super) fn connect_source_copy(
         if s.source_graphs.contains_key(&s.draft.version) {drop(s);super::project_copy::show(&window,&state);return;}
         if let Some(doc)=s.legacy_sources.get(&s.draft.version).cloned(){
             let snapshot=match captured_workspace(&s){Ok(snapshot)=>snapshot,Err(error)=>{drop(s);notice(&window,"Cannot prepare legacy copy",&error);return;}};
-            if !snapshot.monitors.is_empty() || !snapshot.devices.is_empty() || !snapshot.bindings.is_empty() || !snapshot.workspace_rules.is_empty() || !snapshot.rules.is_empty() || !snapshot.animations.declarations.is_empty() || !snapshot.gestures.declarations.is_empty() || !snapshot.session.is_empty() {
-                drop(s);notice(&window,"Structured legacy export pending","This source copy includes scalar edits only. Save the project to keep all structured drafts; exporting those drafts into legacy syntax is not implemented yet.");return;
+            if !snapshot.monitors.is_empty() || !snapshot.devices.is_empty() || !snapshot.bindings.is_empty() || !snapshot.workspace_rules.is_empty() || !snapshot.rules.is_empty() || !snapshot.animations.declarations.is_empty() || !snapshot.gestures.declarations.is_empty() {
+                drop(s);notice(&window,"Structured legacy export pending","This source copy includes supported scalar and session edits. Other structured draft groups need their legacy codecs; save the project to retain them.");return;
             }
-            let catalogue=s.catalogue.clone();let draft=s.draft.clone();let generation=s.generation;drop(s);let state=state.clone();let win=window.downgrade();let button=button.downgrade();if let Some(button)=button.upgrade(){button.set_sensitive(false);}
-            background(move||doc.edited_copy(&draft,&catalogue),move|result|{
+            let draft=s.draft.clone();let session=snapshot.session;let generation=s.generation;drop(s);let state=state.clone();let win=window.downgrade();let button=button.downgrade();if let Some(button)=button.upgrade(){button.set_sensitive(false);}
+            background(move||doc.edited_with_session(&draft,&session),move|result|{
                 if let Some(button)=button.upgrade(){button.set_sensitive(true);}let Some(win)=win.upgrade()else{return;};if state.borrow().generation!=generation{notice(&win,"Draft changed","The draft changed while the copy was prepared. Review again to use the current edits.");return;}
                 match result{Ok(source)=>{super::text_export::review_legacy(&win,source);},Err(error)=>notice(&win,"Cannot prepare legacy copy",&error)}
             });return;
@@ -1389,4 +1404,172 @@ pub(super) fn test_graph_persistence(
         .unwrap();
     assert!(!state.borrow().dirty());
     super::project_save::test_named_copy(window, state);
+}
+
+#[cfg(test)]
+pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
+    use hyprland_editor_core::{
+        legacy_session,
+        session::{Draft as Session, Entry, Trigger},
+        Value,
+    };
+    fn widgets(root: &gtk::Widget) -> Vec<gtk::Widget> {
+        let mut out = vec![root.clone()];
+        let mut child = root.first_child();
+        while let Some(w) = child {
+            out.extend(widgets(&w));
+            child = w.next_sibling();
+        }
+        out
+    }
+    fn named<
+        T: gtk::glib::object::IsA<gtk::Widget>
+            + gtk::glib::object::IsA<gtk::glib::Object>
+            + Clone
+            + gtk::prelude::StaticType,
+    >(
+        root: &gtk::Widget,
+        name: &str,
+    ) -> T {
+        widgets(root)
+            .into_iter()
+            .find(|w| w.widget_name() == name)
+            .unwrap()
+            .downcast()
+            .ok()
+            .unwrap()
+    }
+    fn button(root: &gtk::Widget, name: &str) -> gtk::Button {
+        widgets(root)
+            .into_iter()
+            .filter_map(|w| w.downcast::<gtk::Button>().ok())
+            .find(|b| b.label().as_deref() == Some(name))
+            .unwrap()
+    }
+    fn wait(test: impl Fn() -> bool) {
+        let start = std::time::Instant::now();
+        while !test() {
+            let context = gtk::glib::MainContext::default();
+            while context.pending() {
+                context.iteration(false);
+            }
+            assert!(start.elapsed() < Duration::from_secs(12));
+            std::thread::sleep(Duration::from_millis(10));
+        }
+    }
+    let root = super::test_support::TempDir::new("legacy-session-ui");
+    let original = root.path().join("original.conf");
+    let marker = root.path().join("never-run");
+    let source=format!("# retained café\r\nenv = GTK_THEME,Nord # environment\r\nexec-once = touch {} # startup\r\npermission = ^/usr/bin/application$,screencopy,ask # policy\r\ngeneral:border_size = 2\r\nexec = $unresolved\r\nsource = missing.conf\r\n",marker.display());
+    std::fs::write(&original, &source).unwrap();
+    let catalogue = hyprland_editor_core::catalogue();
+    let imported = read_import(original.clone(), catalogue.clone(), BASELINE.into()).unwrap();
+    assert_eq!(imported.session.entries.len(), 3);
+    std::fs::remove_file(&original).unwrap();
+    let state = super::initial_state();
+    let status = gtk::Label::new(None);
+    let version = gtk::DropDown::from_strings(&[BASELINE, hyprland_editor_core::AUDITED_MAIN]);
+    let selection = gtk::SingleSelection::new(Some(gtk::StringList::new(&[])));
+    let panel = gtk::Box::new(gtk::Orientation::Vertical, 0);
+    apply_import(imported, &state, &status, &version, &selection, &panel);
+    let window = super::session_editor::show(parent, &state, &status);
+    let choice: gtk::DropDown = named(window.upcast_ref(), "session-entries");
+    let value: gtk::TextView = named(window.upcast_ref(), "session-env-value");
+    value.buffer().set_text("New##theme,{{literal}}");
+    let flag: gtk::DropDown = named(window.upcast_ref(), "session-env-dbus");
+    flag.set_selected(2);
+    let epoch = state.borrow().generation;
+    button(window.upcast_ref(), "Update Entry").emit_clicked();
+    wait(|| state.borrow().generation != epoch);
+    choice.set_selected(1);
+    let command: gtk::Entry = named(window.upcast_ref(), "session-command");
+    command.set_text("new startup application");
+    let mode: gtk::DropDown = named(window.upcast_ref(), "session-command-legacy-mode");
+    assert_eq!(mode.selected(), 0);
+    mode.set_selected(1);
+    let epoch = state.borrow().generation;
+    button(window.upcast_ref(), "Update Entry").emit_clicked();
+    wait(|| state.borrow().generation != epoch);
+    window.destroy();
+    {
+        let mut s = state.borrow_mut();
+        s.remember("general:border_size").unwrap();
+        s.draft
+            .values
+            .insert("general:border_size".into(), Value::Int(5));
+    }
+    let expected = state.borrow().session[BASELINE].clone();
+    let snapshot = captured_workspace(&state.borrow()).unwrap();
+    assert!(snapshot.legacy_session_origin_sha256.is_some());
+    assert!(snapshot.legacy_session_schema_sha256.is_some());
+    let saved = root.path().join("current.hye");
+    std::fs::write(&saved, snapshot.to_json(&catalogue).unwrap()).unwrap();
+    let imported = read_import(saved, catalogue.clone(), BASELINE.into()).unwrap();
+    assert_eq!(imported.session, expected);
+    assert!(imported.saved_json);
+    let copy = gtk::Button::new();
+    connect_source_copy(&copy, parent, &state);
+    copy.emit_clicked();
+    wait(|| copy.is_sensitive());
+    let review = gtk::Window::list_toplevels()
+        .into_iter()
+        .filter_map(|w| w.downcast::<gtk::Window>().ok())
+        .find(|w| w.title().as_deref() == Some("Review edited legacy source copy"))
+        .unwrap();
+    let view = widgets(review.upcast_ref())
+        .into_iter()
+        .find_map(|w| w.downcast::<gtk::TextView>().ok())
+        .unwrap();
+    let buffer = view.buffer();
+    let output = buffer.text(&buffer.start_iter(), &buffer.end_iter(), false);
+    assert!(output.contains("execr-once = new startup application"));
+    assert!(output.contains("border_size = 5"));
+    assert!(output.contains("# startup\r\n"));
+    assert!(output.contains("exec = $unresolved\r\n"));
+    assert!(output.contains("source = missing.conf\r\n"));
+    assert_eq!(legacy_session::inspect(&output).unwrap().draft, expected);
+    review.destroy();
+    // A recorded empty target is intentional removal and must not be reimported.
+    state
+        .borrow_mut()
+        .replace_session(Session::default())
+        .unwrap();
+    let empty = root.path().join("empty.hye");
+    std::fs::write(
+        &empty,
+        captured_workspace(&state.borrow())
+            .unwrap()
+            .to_json(&catalogue)
+            .unwrap(),
+    )
+    .unwrap();
+    let reopened = read_import(empty, catalogue.clone(), BASELINE.into()).unwrap();
+    assert!(reopened.session.is_empty());
+    assert!(reopened.saved_json);
+    // Older projects had separate session drafts, so retain source entries and
+    // append those older drafts for explicit review rather than replacing them.
+    let mut old = snapshot;
+    old.legacy_session_origin_sha256 = None;
+    old.legacy_session_schema_sha256 = None;
+    old.session = Session {
+        entries: vec![Entry::Command {
+            command: "previous separate draft".into(),
+            trigger: Trigger::Start,
+        }],
+    };
+    old.session_schema_sha256 = Some(hyprland_editor_core::lua::source_hash(include_str!(
+        "../../../data/session-v1.json"
+    )));
+    let old_path = root.path().join("older.hye");
+    let old_bytes = old.to_json(&catalogue).unwrap();
+    std::fs::write(&old_path, &old_bytes).unwrap();
+    let reopened = read_import(old_path.clone(), catalogue, BASELINE.into()).unwrap();
+    assert_eq!(reopened.session.entries.len(), 4);
+    assert!(!reopened.saved_json);
+    assert!(
+        matches!(&reopened.session.entries[3],Entry::Command{command,..}if command=="previous separate draft")
+    );
+    assert_eq!(std::fs::read(old_path).unwrap(), old_bytes);
+    assert!(!original.exists());
+    assert!(!marker.exists());
 }

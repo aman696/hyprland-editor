@@ -104,6 +104,11 @@ pub enum Entry {
         command: String,
         trigger: Trigger,
     },
+    LegacyCommand {
+        command: String,
+        trigger: Trigger,
+        raw: bool,
+    },
     Permission {
         binary: String,
         permission: PermissionType,
@@ -131,6 +136,18 @@ impl Entry {
                 }
             }
             Self::Command { command, .. } => string(command, false)?,
+            Self::LegacyCommand {
+                command,
+                trigger,
+                raw,
+            } => {
+                string(command, false)?;
+                if *trigger == Trigger::Reloaded || (*trigger == Trigger::Shutdown && *raw) {
+                    return Err(
+                        "Legacy syntax has no reload-only or raw-shutdown command directive".into(),
+                    );
+                }
+            }
             Self::Permission { binary, .. } => string(binary, false)?,
         }
         Ok(())
@@ -138,7 +155,10 @@ impl Entry {
     pub fn label(&self) -> String {
         match self {
             Self::Environment { name, .. } => format!("Environment · {name}"),
-            Self::Command { command, trigger } => format!(
+            Self::Command { command, trigger }
+            | Self::LegacyCommand {
+                command, trigger, ..
+            } => format!(
                 "{} · {}",
                 trigger.label(),
                 command.chars().take(60).collect::<String>()
@@ -171,6 +191,7 @@ impl Entry {
                     call
                 }
             }
+            Self::LegacyCommand{..}=>return Err("Legacy launch modes need Review Source Copy for .conf output; automatic Lua conversion is unavailable".into()),
             Self::Permission {
                 binary,
                 permission,
@@ -203,7 +224,15 @@ impl Draft {
         let mut total = 0usize;
         for entry in &self.entries {
             entry.validate()?;
-            total = total.saturating_add(entry.export_lua()?.len() + 1);
+            let bytes = if matches!(entry, Entry::LegacyCommand { .. }) {
+                if version != BASELINE {
+                    return Err("Legacy command modes require the baseline version".into());
+                }
+                serde_json::to_vec(entry).map_err(|e| e.to_string())?.len()
+            } else {
+                entry.export_lua()?.len()
+            };
+            total = total.saturating_add(bytes + 1);
         }
         if total > MAX_DOCUMENT_BYTES {
             return Err("Session declarations exceed 1 MiB".into());
@@ -223,4 +252,15 @@ impl Draft {
 
 pub fn schema_hash() -> String {
     crate::lua::source_hash(include_str!("../../../data/session.json"))
+}
+
+/// The additive v2 schema retains v1 intent, but an older pin cannot introduce
+/// command variants that its writer could never have produced.
+pub fn accepts_schema(pin: &str, draft: &Draft) -> bool {
+    pin == schema_hash()
+        || (pin == crate::lua::source_hash(include_str!("../../../data/session-v1.json"))
+            && !draft
+                .entries
+                .iter()
+                .any(|e| matches!(e, Entry::LegacyCommand { .. })))
 }

@@ -60,7 +60,7 @@ fn permission_input(pattern: &str) -> (u32, String) {
     (4, pattern.into())
 }
 type GetEntry = Box<dyn Fn() -> Result<Entry, String>>;
-fn form(panel: &gtk::Box, entry: &Entry) -> GetEntry {
+fn form(panel: &gtk::Box, entry: &Entry, legacy: bool) -> GetEntry {
     match entry {
         Entry::Environment { name, value, dbus } => {
             let name = field(panel, "Variable name", name, "session-env-name");
@@ -105,7 +105,15 @@ fn form(panel: &gtk::Box, entry: &Entry) -> GetEntry {
                 })
             })
         }
-        Entry::Command { command, trigger } => {
+        Entry::Command { command, trigger }
+        | Entry::LegacyCommand {
+            command, trigger, ..
+        } => {
+            let legacy = legacy || matches!(entry, Entry::LegacyCommand { .. });
+            let raw = match entry {
+                Entry::LegacyCommand { raw, .. } => *raw,
+                _ => true,
+            };
             let command = field(panel, "Command", command, "session-command");
             let trigger = select(
                 panel,
@@ -114,11 +122,27 @@ fn form(panel: &gtk::Box, entry: &Entry) -> GetEntry {
                 Trigger::ALL.iter().position(|v| v == trigger).unwrap() as u32,
                 "session-command-trigger",
             );
-            panel.append(&label("Commands are stored and exported without running them. Each configuration load can include startup and reload; choose Session starts for a startup-only hook. An application already launched cannot be undone by restoring a configuration."));
+            let mode = legacy.then(|| {
+                select(
+                    panel,
+                    "Legacy launch mode",
+                    &["Parse inline launch rules", "Raw command"],
+                    u32::from(raw),
+                    "session-command-legacy-mode",
+                )
+            });
+            panel.append(&label(if legacy{"Legacy launches keep their raw/inline-rule mode. Reload-only and raw shutdown have no matching directive. Commands are staged without execution."}else{"Commands are stored and exported without running them. Choose Session starts for a startup-only hook. Actual application effects cannot be undone by restoring a configuration."}));
             Box::new(move || {
-                Ok(Entry::Command {
-                    command: command.text().into(),
-                    trigger: Trigger::ALL[trigger.selected() as usize],
+                let command = command.text().into();
+                let trigger = Trigger::ALL[trigger.selected() as usize];
+                Ok(if let Some(mode) = &mode {
+                    Entry::LegacyCommand {
+                        command,
+                        trigger,
+                        raw: mode.selected() == 1,
+                    }
+                } else {
+                    Entry::Command { command, trigger }
                 })
             })
         }
@@ -207,7 +231,11 @@ fn render(
         panel.append(&label("Add an entry to begin."));
         return;
     };
-    let getter = form(panel, entry);
+    let legacy = {
+        let s = state.borrow();
+        s.legacy_sources.contains_key(&s.draft.version)
+    };
+    let getter = form(panel, entry, legacy);
     let update = gtk::Button::with_label("Update Entry");
     update.add_css_class("suggested-action");
     panel.append(&update);
@@ -230,7 +258,7 @@ fn render(
                 return;
             }
         };
-        let source = proposed.export_lua().unwrap();
+        let entry_request = proposed.clone();
         let epoch = state.borrow().generation;
         let version = state.borrow().draft.version.clone();
         button.set_sensitive(false);
@@ -245,7 +273,12 @@ fn render(
         let feedback = feedback.clone();
         let button = button.downgrade();
         workflow::background(
-            move || worker::run(worker::Request::Parse { source, version }),
+            move || {
+                worker::run(worker::Request::ValidateSessionEntry {
+                    entry: entry_request,
+                    version,
+                })
+            },
             move |result| {
                 if let Some(button) = button.upgrade() {
                     button.set_sensitive(true);
@@ -271,11 +304,7 @@ fn render(
                     return;
                 }
                 match result {
-                    Ok(worker::Response::Parsed(report))
-                        if !report.opaque_effects
-                            && report.diagnostics.is_empty()
-                            && report.session.entries == [proposed.clone()] =>
-                    {
+                    Ok(worker::Response::SessionEntry(entry)) if entry == proposed => {
                         let mut draft = current(&state);
                         let Some(entry) = draft.entries.get_mut(index) else {
                             feedback
@@ -294,19 +323,6 @@ fn render(
                         refresh(
                             &window, &state, &selection, &panel, &status, &feedback, index,
                         );
-                    }
-                    Ok(worker::Response::Parsed(report)) => {
-                        let messages = report
-                            .diagnostics
-                            .iter()
-                            .map(|d| d.message.as_str())
-                            .collect::<Vec<_>>()
-                            .join("\n");
-                        feedback.set_text(if messages.is_empty() {
-                            "Validation did not reproduce the requested entry."
-                        } else {
-                            &messages
-                        });
                     }
                     Ok(_) => feedback.set_text("Unexpected validation response."),
                     Err(error) => feedback.set_text(&error),
@@ -464,10 +480,21 @@ pub(super) fn show(
                             value: String::new(),
                             dbus: None,
                         },
-                        2 => Entry::Command {
-                            command: "application".into(),
-                            trigger: Trigger::Start,
-                        },
+                        2 => {
+                            let s = state.borrow();
+                            if s.legacy_sources.contains_key(&s.draft.version) {
+                                Entry::LegacyCommand {
+                                    command: "application".into(),
+                                    trigger: Trigger::Start,
+                                    raw: false,
+                                }
+                            } else {
+                                Entry::Command {
+                                    command: "application".into(),
+                                    trigger: Trigger::Start,
+                                }
+                            }
+                        }
                         3 => Entry::Permission {
                             binary: "^/usr/bin/application$".into(),
                             permission: PermissionType::Screencopy,

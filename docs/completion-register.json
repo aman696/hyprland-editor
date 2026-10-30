@@ -14,6 +14,32 @@
   },
   "foundations": [
     {
+      "area": "graphical legacy environment launch and permission editing with combined scalar source copies",
+      "code": [
+        "crates/editor-core/src/legacy.rs",
+        "crates/editor-core/src/legacy_session.rs",
+        "crates/editor-core/src/import.rs",
+        "crates/editor-core/src/session.rs",
+        "crates/editor-core/src/workspace.rs",
+        "crates/editor-app/src/legacy_source.rs",
+        "crates/editor-app/src/session_editor.rs",
+        "crates/editor-app/src/worker.rs",
+        "crates/editor-app/src/workflow.rs",
+        "data/legacy-session.json",
+        "data/session-v1.json"
+      ],
+      "test_references": [
+        "all_legacy_session_directives_preserve_order_raw_modes_and_unchanged_bytes",
+        "scalar_and_session_edits_insert_duplicate_reorder_remove_and_reparse_together",
+        "pinned_hash_and_escape_rules_match_golden_boundaries_and_keep_literal_values",
+        "unknown_expansion_scopes_continuations_and_conditionals_are_retained_without_execution",
+        "schema_v1_projects_remain_readable_but_cannot_claim_new_launch_modes",
+        "workflow::test_legacy_session_editing",
+        "native_forms_and_draft_workflow"
+      ],
+      "limits": "bounded selected-file baseline projection for eight session directives; ordered raw versus inline-rule launch modes; literal hash/backslash/brace/permission comma encoding; restricted parsing and reviewed combined scalar/session copies retaining unknown source and comments; original-free private persistence, intentional empty-target markers and previous separate-draft retention; V1 session schema compatibility and 98-input model/27 predecessors; no execution, environment lookup, policy activation, full lexer/conditional/continuation/include resolution, other legacy structured family codecs, dynamic workflow programming, effective state, actual preview, live apply/recovery or full audit/resource/security acceptance"
+    },
+    {
       "area": "graphical environment startup command and permission drafts with inert source integration",
       "code": [
         "crates/editor-core/src/session.rs",
@@ -204,6 +230,7 @@
     {
       "area": "retained legacy scalar source workflow",
       "code": [
+        "crates/editor-core/src/legacy.rs",
         "crates/editor-app/src/legacy_source.rs",
         "crates/editor-app/src/workflow.rs",
         "crates/editor-app/src/text_export.rs"

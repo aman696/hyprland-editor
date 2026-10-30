@@ -10,6 +10,8 @@ pub mod binding;
 pub mod device;
 pub mod gesture;
 pub mod import;
+pub mod legacy;
+pub mod legacy_session;
 pub mod lua;
 pub mod module_cache;
 pub mod module_path;

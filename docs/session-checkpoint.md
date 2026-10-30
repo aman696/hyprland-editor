@@ -1,4 +1,16 @@
-# Session checkpoint — 30 October 2026
+# Session checkpoint — 31 October 2026
+
+## Legacy graphical session editing — 31 October 2026
+
+Imported baseline `.conf` files now populate **Environment and Startup…** with supported environment variables, commands and permission rules. The existing ordered forms, literal matching, undo and private project save/reopen apply to this source format. A launch-mode control preserves raw versus inline-rule commands; unsupported reload-only/raw-shutdown combinations are rejected. **Review Source Copy** combines scalar and session edits while retaining comments, CRLF/Unicode and unrecognized source. No commands, environment updates or policy changes run during editing. See [legacy source editing](legacy-source-editor.md).
+
+The bounded codec handles `env`, `envd`, all five supported exec directives and permission arguments, including literal hash/backslash/brace encoding and representable escaped commas. Source projection refuses expansion, conditionals, continuations and nested session directives rather than inventing their values. Other structured legacy families still need codecs. Saved projects retain intentional empty session targets; older projects rebuild source entries and append older separate session drafts for review. V1 session-schema compatibility does not grant the new legacy command variant an old identity.
+
+The exact 98-input model is `20d18eebb55dd38f923df91cb3a6ece921049b8f47f29df3f05baadf000c1d5b`, with 27 reviewed predecessors. Five upstream content hashes pin the baseline legacy handlers, hyprlang lexer and hyprutils splitters. Captured inputs and compiler observations stay unchanged. No downloaded source repository is retained.
+
+Local validation: 552 ordinary workspace cases pass with nine explicit ignores. Five new legacy cases cover directive order/raw mode, combined scalar/session changes, hash/escape golden boundaries, inert unresolved source and schema compatibility. The final private graphical workflow passes in 125.10s, including actual form updates, source-copy review after original deletion, save/reopen, intentional removal and older-project retention. Strict all-target lint passes in 11.84s. Formatting, catalogue/action/scalar/model/register consistency and whitespace checks pass. The optimized GUI build passes in 2m20s. Both official private Lua 5.5.0/.1 source-profile suites also pass their source tests, strict lint and release checks; temporary sources/builds were removed. These are finite fixtures, not complete native, resource or security certification.
+
+Published predecessor `55652752768a2307ba314a4fcceec385342af46a` completed both hosted workflows successfully: [push](https://github.com/aman696/hyprland-editor/actions/runs/41102473145) and [PR](https://github.com/aman696/hyprland-editor/actions/runs/41102480125). This increment's checks must be observed at its own published head. Full graphical coverage, effective-state discovery, isolated compositor preview, live apply/recovery and all 1,458 obligations/756 documentation candidates remain required. The user's priority is editing first; this is a usable increment, not a full-project completion claim.
 
 ## Environment, startup and permission editing — 30 October 2026
 

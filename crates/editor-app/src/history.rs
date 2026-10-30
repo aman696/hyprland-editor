@@ -303,7 +303,9 @@ fn session_bytes(draft: &hyprland_editor_core::session::Draft) -> usize {
             .iter()
             .map(|e| match e {
                 Entry::Environment { name, value, .. } => name.capacity() + value.capacity(),
-                Entry::Command { command, .. } => command.capacity(),
+                Entry::Command { command, .. } | Entry::LegacyCommand { command, .. } => {
+                    command.capacity()
+                }
                 Entry::Permission { binary, .. } => binary.capacity(),
             })
             .sum::<usize>()

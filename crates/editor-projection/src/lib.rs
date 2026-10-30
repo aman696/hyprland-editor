@@ -428,7 +428,8 @@ pub fn compile(workspace: &Workspace, scenario: &Scenario) -> Result<Projection,
             editor_core::session::Entry::Environment { .. } => {
                 "Host environment and activation-service changes are excluded"
             }
-            editor_core::session::Entry::Command { .. } => {
+            editor_core::session::Entry::Command { .. }
+            | editor_core::session::Entry::LegacyCommand { .. } => {
                 "External session commands are excluded and never executed"
             }
             editor_core::session::Entry::Permission { .. } => {

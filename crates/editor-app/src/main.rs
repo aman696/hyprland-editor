@@ -1918,6 +1918,7 @@ mod tests {
         workflow::test_source_persistence(&window);
         workflow::test_combined_source_copy(&window);
         workflow::test_legacy_persistence(&window);
+        workflow::test_legacy_session_editing(&window);
         workflow::test_graph_migration(&window);
         compiler_check::test_ui(&window);
         preview_preparation::test_preparation(&window);

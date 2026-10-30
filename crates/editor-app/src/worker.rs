@@ -24,6 +24,18 @@ pub enum Request {
         report: Box<LuaReport>,
         draft: Draft,
     },
+    ParseLegacy {
+        source: String,
+    },
+    CopyLegacy {
+        source: String,
+        draft: Draft,
+        session: hyprland_editor_core::session::Draft,
+    },
+    ValidateSessionEntry {
+        entry: hyprland_editor_core::session::Entry,
+        version: String,
+    },
     CopyWorkspace {
         workspace: Box<hyprland_editor_core::workspace::Workspace>,
     },
@@ -161,6 +173,8 @@ pub enum Request {
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub enum Response {
+    LegacyParsed(Box<hyprland_editor_core::legacy::Report>),
+    SessionEntry(hyprland_editor_core::session::Entry),
     ProjectCopy(Box<lua::replay::project_copy::Prepared>),
     Parsed(Box<LuaReport>),
     SubmapHeader(lua::replay::declaration_edit::submap::Header),
@@ -422,6 +436,45 @@ pub fn entry() {
             } => LuaDocument::from_report(source, *report, &c)?
                 .edited_copy(&draft, &c)
                 .map(Response::Copy),
+            Request::ParseLegacy { source } => {
+                hyprland_editor_core::legacy::Document::new(source, &c)
+                    .map(|doc| Response::LegacyParsed(Box::new(doc.into_report())))
+            }
+            Request::CopyLegacy {
+                source,
+                draft,
+                session,
+            } => hyprland_editor_core::legacy::Document::new(source, &c)?
+                .edited_with_session(&draft, &session, &c)
+                .map(Response::Copy),
+            Request::ValidateSessionEntry { entry, version } => {
+                hyprland_editor_core::session::Draft {
+                    entries: vec![entry.clone()],
+                }
+                .validate(&version)?;
+                if let hyprland_editor_core::session::Entry::Permission { binary, .. } = &entry {
+                    hyprland_editor_core::regex::check(&hyprland_editor_core::regex::Sample {
+                        pattern: binary.clone(),
+                        text: String::new(),
+                        negated: false,
+                    })?;
+                }
+                if !matches!(
+                    entry,
+                    hyprland_editor_core::session::Entry::LegacyCommand { .. }
+                ) {
+                    let parsed = lua::parse(&entry.export_lua()?, &version, &c)?;
+                    if parsed.opaque_effects
+                        || !parsed.diagnostics.is_empty()
+                        || parsed.session.entries != [entry.clone()]
+                    {
+                        return Err(
+                            "The entry did not round-trip through its typed source codec".into(),
+                        );
+                    }
+                }
+                Ok(Response::SessionEntry(entry))
+            }
             Request::CopyWorkspace { workspace } => {
                 lua::workspace_copy::prepare(&workspace, &c).map(Response::Copy)
             }
