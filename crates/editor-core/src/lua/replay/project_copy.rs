@@ -23,9 +23,10 @@ pub enum Family {
     Rules,
     Animations,
     Gestures,
+    Session,
 }
 impl Family {
-    pub const ALL: [Self; 8] = [
+    pub const ALL: [Self; 9] = [
         Self::Settings,
         Self::Monitors,
         Self::Devices,
@@ -34,6 +35,7 @@ impl Family {
         Self::Rules,
         Self::Animations,
         Self::Gestures,
+        Self::Session,
     ];
     pub fn label(self) -> &'static str {
         match self {
@@ -45,6 +47,7 @@ impl Family {
             Self::Rules => "Window and layer rules",
             Self::Animations => "Curves and animations",
             Self::Gestures => "Gestures",
+            Self::Session => "Environment, commands and permissions",
         }
     }
     fn of(api: &str) -> Option<Self> {
@@ -57,6 +60,7 @@ impl Family {
             "hl.window_rule" | "hl.layer_rule" => Self::Rules,
             "hl.curve" | "hl.animation" => Self::Animations,
             "hl.gesture" => Self::Gestures,
+            "hl.env" | "hl.exec_cmd" | "hl.permission" | "hl.on" => Self::Session,
             _ => return None,
         })
     }
@@ -83,6 +87,7 @@ impl Family {
             Self::Rules => crate::rule::export_lua(&w.rules, version),
             Self::Animations => w.animations.export_lua(version),
             Self::Gestures => w.gestures.export_lua(version),
+            Self::Session => w.session.export_lua(version),
         }
     }
 }
@@ -99,7 +104,7 @@ pub struct File {
 #[serde(deny_unknown_fields)]
 pub struct Prepared {
     pub root: String,
-    pub modes: [Mode; 8],
+    pub modes: [Mode; 9],
     pub files: Vec<File>,
     pub removed_sites: usize,
     pub inserted_sites: usize,
@@ -124,7 +129,7 @@ fn patch(doc: &Document, span: Range<usize>, replacement: String) -> edits::Sour
 
 pub fn prepare_workspace(
     workspace: &Workspace,
-    modes: [Mode; 8],
+    modes: [Mode; 9],
     catalogue: &[Setting],
 ) -> Result<Prepared, String> {
     workspace.validate(catalogue)?;
@@ -149,7 +154,7 @@ pub fn prepare_workspace(
 pub fn prepare(
     program: &Program,
     workspace: &Workspace,
-    modes: [Mode; 8],
+    modes: [Mode; 9],
     catalogue: &[Setting],
 ) -> Result<Prepared, String> {
     workspace.validate(catalogue)?;
@@ -162,6 +167,24 @@ pub fn prepare(
     };
     if before.halt.is_some() && modes.contains(&Mode::ReplaceReached) {
         return Err("Replace needs a complete captured replay. Resolve missing inputs first, or keep/append this group.".into());
+    }
+    if modes[8] == Mode::ReplaceReached {
+        for event in before
+            .events
+            .iter()
+            .filter(|e| Family::of(&e.api) == Some(Family::Session))
+        {
+            let supported = super::declaration_edit::inspect_with_before(
+                program,
+                &before,
+                event.order,
+                catalogue,
+            )
+            .is_ok_and(|r| r.session.entries.len() == 1);
+            if !supported {
+                return Err("This session group contains a declaration or event callback that the graphical startup editor cannot represent. Keep/append the group, or edit supported declarations separately.".into());
+            }
+        }
     }
     let mut patches = vec![];
     let mut intentions = vec![];

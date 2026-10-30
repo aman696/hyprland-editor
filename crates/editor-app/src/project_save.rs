@@ -50,6 +50,9 @@ impl Snapshot {
         state
             .saved_gestures
             .insert(version.clone(), workspace.gestures);
+        state
+            .saved_session
+            .insert(version.clone(), workspace.session);
         state.saved_source_origins.insert(version.clone(), origin);
         state.saved_source_graphs.insert(version, self.graph);
         true

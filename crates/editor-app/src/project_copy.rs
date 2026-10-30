@@ -55,6 +55,7 @@ pub(super) fn show(parent: &adw::ApplicationWindow, state: &Shared) -> adw::Wind
             s.rules.get(v).map_or(0, Vec::len),
             s.animations.get(v).map_or(0, |d| d.declarations.len()),
             s.gestures.get(v).map_or(0, |d| d.declarations.len()),
+            s.session.get(v).map_or(0, |d| d.entries.len()),
         ]
     };
     for (index, family) in Family::ALL.into_iter().enumerate() {
@@ -430,7 +431,7 @@ pub(super) fn test_workflow(parent: &adw::ApplicationWindow, source_state: &Shar
         .filter_map(|w| w.downcast::<gtk::DropDown>().ok())
         .filter(|w| w.widget_name().starts_with("project-copy-mode-"))
         .collect::<Vec<_>>();
-    assert_eq!(choices.len(), 8);
+    assert_eq!(choices.len(), 9);
     assert!(choices.iter().all(|c| c.selected() == 0));
     let review = button(&window, "Review Combined Copy");
     review.emit_clicked();
@@ -475,7 +476,7 @@ pub(super) fn test_workflow(parent: &adw::ApplicationWindow, source_state: &Shar
     );
     let worker::Response::ProjectCopy(copy) = worker::run(worker::Request::CopyProject {
         workspace: Box::new(workspace),
-        modes: [Mode::Append; 8],
+        modes: [Mode::Append; 9],
     })
     .unwrap() else {
         panic!("wrong response")

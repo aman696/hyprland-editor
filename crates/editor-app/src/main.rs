@@ -32,6 +32,7 @@ mod reconciliation;
 mod rule_forms;
 mod rules;
 mod selector_forms;
+mod session_editor;
 mod source_access;
 mod source_analysis;
 mod source_changes;
@@ -86,6 +87,8 @@ struct State {
     saved_bindings: BTreeMap<String, hyprland_editor_core::binding::Draft>,
     gestures: BTreeMap<String, hyprland_editor_core::gesture::Draft>,
     saved_gestures: BTreeMap<String, hyprland_editor_core::gesture::Draft>,
+    session: BTreeMap<String, hyprland_editor_core::session::Draft>,
+    saved_session: BTreeMap<String, hyprland_editor_core::session::Draft>,
     animations: BTreeMap<String, hyprland_editor_core::animation::Draft>,
     saved_animations: BTreeMap<String, hyprland_editor_core::animation::Draft>,
     rules: BTreeMap<String, Vec<hyprland_editor_core::rule::Rule>>,
@@ -146,6 +149,16 @@ impl State {
                     .saved_gestures
                     .get(version)
                     .map(|g| g.declarations.as_slice())
+                    .unwrap_or(&[])
+            || self
+                .session
+                .get(version)
+                .map(|d| d.entries.as_slice())
+                .unwrap_or(&[])
+                != self
+                    .saved_session
+                    .get(version)
+                    .map(|d| d.entries.as_slice())
                     .unwrap_or(&[])
             || bindings_changed
             || self
@@ -427,6 +440,9 @@ impl State {
                 self.sources.insert(version.clone(), document);
                 self.source_origins.insert(version, origin);
             }
+            history::Undo::Session { previous, .. } => {
+                self.session.insert(self.draft.version.clone(), previous);
+            }
             history::Undo::Gestures { previous, .. } => {
                 self.gestures.insert(self.draft.version.clone(), previous);
             }
@@ -498,7 +514,28 @@ impl State {
         if let Some(gestures) = self.gestures.get(&self.draft.version) {
             text.push_str(&gestures.export_lua(&self.draft.version)?);
         }
+        if let Some(session) = self.session.get(&self.draft.version) {
+            text.push_str(&session.export_lua(&self.draft.version)?);
+        }
         Ok(text)
+    }
+    fn replace_session(
+        &mut self,
+        session: hyprland_editor_core::session::Draft,
+    ) -> Result<(), String> {
+        session.validate(&self.draft.version)?;
+        let before = self
+            .session
+            .get(&self.draft.version)
+            .cloned()
+            .unwrap_or_default();
+        if before == session {
+            return Ok(());
+        }
+        self.undo.session(before)?;
+        self.session.insert(self.draft.version.clone(), session);
+        self.generation += 1;
+        Ok(())
     }
     fn replace_gestures(
         &mut self,
@@ -646,7 +683,7 @@ fn label(text: &str) -> gtk::Label {
 fn summary(state: &Shared, status: &gtk::Label) {
     let s = state.borrow();
     status.set_text(&format!(
-        "{} {} in draft{}{}{}{}{}{}{}{} · {}",
+        "{} {} in draft{}{}{}{}{}{}{}{}{} · {}",
         s.draft.values.len(),
         if s.draft.values.len() == 1 {
             "setting"
@@ -689,6 +726,13 @@ fn summary(state: &Shared, status: &gtk::Label) {
             .map_or(String::new(), |g| format!(
                 " · {} gesture declarations",
                 g.declarations.len()
+            )),
+        s.session
+            .get(&s.draft.version)
+            .filter(|d| !d.is_empty())
+            .map_or(String::new(), |d| format!(
+                " · {} session entries",
+                d.entries.len()
             )),
         s.source_graphs
             .get(&s.draft.version)
@@ -969,6 +1013,8 @@ fn initial_state() -> Shared {
         saved_bindings: BTreeMap::new(),
         gestures: BTreeMap::new(),
         saved_gestures: BTreeMap::new(),
+        session: BTreeMap::new(),
+        saved_session: BTreeMap::new(),
         animations: BTreeMap::new(),
         saved_animations: BTreeMap::new(),
         rules: BTreeMap::new(),
@@ -1307,6 +1353,8 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     let reconcile = gtk::Button::with_label("Compare Changed Source");
     let binding_editor = gtk::Button::with_label("Edit Bindings");
     bindings::connect(&binding_editor, &window, &state, &status);
+    let session_editor = gtk::Button::with_label("Environment and Startup");
+    session_editor::connect(&session_editor, &window, &state, &status);
     let gesture_editor = gtk::Button::with_label("Gestures");
     gestures::connect(&gesture_editor, &window, &state, &status);
     let animation_editor = gtk::Button::with_label("Animations");
@@ -1345,6 +1393,7 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
         ("rules", &rule_editor),
         ("animations", &animation_editor),
         ("gestures", &gesture_editor),
+        ("session", &session_editor),
     ] {
         presentation::bridge(&window, name, button);
     }
@@ -1882,6 +1931,7 @@ mod tests {
         rules::test_editor(&window);
         animations::test_editor(&window);
         gestures::test_editor(&window);
+        session_editor::test_editor(&window);
         source_modules::test_view(&window);
         source_access::test_retained_graph(&window);
         source_access::test_declaration_families(&window);

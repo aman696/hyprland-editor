@@ -73,6 +73,10 @@ pub struct Workspace {
     pub animations: crate::animation::Draft,
     #[serde(default, skip_serializing_if = "crate::gesture::Draft::is_empty")]
     pub gestures: crate::gesture::Draft,
+    #[serde(default, skip_serializing_if = "crate::session::Draft::is_empty")]
+    pub session: crate::session::Draft,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub session_schema_sha256: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub gesture_schema_sha256: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -102,6 +106,8 @@ impl Workspace {
             rules: vec![],
             animations: Default::default(),
             gestures: Default::default(),
+            session: Default::default(),
+            session_schema_sha256: None,
             gesture_schema_sha256: None,
             animation_schema_sha256: None,
             rule_schema_sha256: None,
@@ -126,6 +132,17 @@ impl Workspace {
         self.draft.validate(catalogue)?;
         self.animations.validate(&self.draft.version)?;
         self.gestures.validate(&self.draft.version)?;
+        self.session.validate(&self.draft.version)?;
+        let session_hash = crate::session::schema_hash();
+        if (!self.session.is_empty()
+            && self.session_schema_sha256.as_deref() != Some(&session_hash))
+            || self
+                .session_schema_sha256
+                .as_ref()
+                .is_some_and(|h| *h != session_hash)
+        {
+            return Err("Session schema differs from the pinned environment, command and permission handlers".into());
+        }
         let gesture_hash = crate::gesture::schema_hash();
         if (!self.gestures.is_empty()
             && self.gesture_schema_sha256.as_deref() != Some(&gesture_hash))
@@ -265,6 +282,11 @@ impl Workspace {
         self.root_source
             .as_deref()
             .and_then(|id| self.sources.iter().find(|s| s.id == id))
+    }
+    pub fn with_session(mut self, session: crate::session::Draft) -> Self {
+        self.session_schema_sha256 = (!session.is_empty()).then(crate::session::schema_hash);
+        self.session = session;
+        self
     }
     pub fn with_gestures(mut self, gestures: crate::gesture::Draft) -> Self {
         self.gesture_schema_sha256 = (!gestures.is_empty()).then(crate::gesture::schema_hash);

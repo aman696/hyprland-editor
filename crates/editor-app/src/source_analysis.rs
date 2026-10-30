@@ -1080,6 +1080,10 @@ fn declaration_name(api: &str) -> &str {
         "hl.curve" => "Animation curve",
         "hl.animation" => "Animation declaration",
         "hl.gesture" => "Gesture declaration",
+        "hl.env" => "Environment declaration",
+        "hl.permission" => "Permission declaration (session startup)",
+        "hl.exec_cmd" => "Command declaration (not executed)",
+        "hl.on" => "Event subscription (callback not executed)",
         _ => api,
     }
 }

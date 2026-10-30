@@ -22,6 +22,10 @@ pub fn supports(api: &str) -> bool {
             | "hl.curve"
             | "hl.animation"
             | "hl.gesture"
+            | "hl.env"
+            | "hl.exec_cmd"
+            | "hl.permission"
+            | "hl.on"
     )
 }
 fn canonical(workspace: &Workspace, api: &str) -> Result<String, String> {
@@ -35,11 +39,17 @@ fn canonical(workspace: &Workspace, api: &str) -> Result<String, String> {
         "hl.window_rule" | "hl.layer_rule" => crate::rule::export_lua(&workspace.rules, version),
         "hl.curve" | "hl.animation" => workspace.animations.export_lua(version),
         "hl.gesture" => workspace.gestures.export_lua(version),
+        "hl.env" | "hl.exec_cmd" | "hl.permission" | "hl.on" => {
+            workspace.session.export_lua(version)
+        }
         _ => Err("This declaration uses another source editor".into()),
     }
 }
 fn same_family(api: &str, other: &str) -> bool {
     match api {
+        "hl.env" | "hl.exec_cmd" | "hl.permission" | "hl.on" => {
+            matches!(other, "hl.env" | "hl.exec_cmd" | "hl.permission" | "hl.on")
+        }
         "hl.bind" | "hl.define_submap" => matches!(other, "hl.bind" | "hl.define_submap"),
         "hl.window_rule" | "hl.layer_rule" => matches!(other, "hl.window_rule" | "hl.layer_rule"),
         "hl.curve" | "hl.animation" => matches!(other, "hl.curve" | "hl.animation"),
@@ -54,6 +64,7 @@ fn only_family(target: &Workspace, api: &str) -> Result<(), String> {
         (!target.rules.is_empty(), "hl.window_rule"),
         (!target.animations.declarations.is_empty(), "hl.animation"),
         (!target.gestures.is_empty(), "hl.gesture"),
+        (!target.session.is_empty(), "hl.env"),
     ];
     if !target.draft.values.is_empty()
         || !target.monitors.is_empty()
@@ -115,6 +126,7 @@ fn workspace(report: LuaReport) -> Workspace {
         .with_rules(report.rules)
         .with_animations(report.animations)
         .with_gestures(report.gestures)
+        .with_session(report.session)
 }
 fn event(report: &super::Report, order: usize) -> Result<&Event, String> {
     let event = report
@@ -220,7 +232,17 @@ pub fn inspect(
     catalogue: &[Setting],
 ) -> Result<LuaReport, String> {
     let report = replay(program)?;
-    selected(program, event(&report, order)?, catalogue)
+    inspect_with_before(program, &report, order, catalogue)
+}
+// Internal callers must hold a report freshly replayed from this exact program.
+// This avoids rebuilding the complete graph for every session declaration.
+pub(super) fn inspect_with_before(
+    program: &Program,
+    report: &super::Report,
+    order: usize,
+    catalogue: &[Setting],
+) -> Result<LuaReport, String> {
+    selected(program, event(report, order)?, catalogue)
 }
 pub fn compare(
     program: &Program,

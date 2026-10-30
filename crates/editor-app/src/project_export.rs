@@ -179,7 +179,7 @@ mod tests {
     fn copy() -> Prepared {
         Prepared {
             root: "root".into(),
-            modes: [Mode::Keep; 8],
+            modes: [Mode::Keep; 9],
             files: [
                 ("root", "/config/main.lua", "require('parts.appearance')"),
                 (

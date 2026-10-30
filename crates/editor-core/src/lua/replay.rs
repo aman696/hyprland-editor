@@ -815,6 +815,10 @@ impl<'a> Engine<'a> {
             (b"curve", "hl.curve", false),
             (b"animation", "hl.animation", false),
             (b"gesture", "hl.gesture", false),
+            (b"env", "hl.env", false),
+            (b"permission", "hl.permission", false),
+            (b"exec_cmd", "hl.exec_cmd", false),
+            (b"on", "hl.on", true),
         ] {
             e.field_set(
                 hl,

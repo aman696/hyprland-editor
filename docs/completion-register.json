@@ -14,6 +14,32 @@
   },
   "foundations": [
     {
+      "area": "graphical environment startup command and permission drafts with inert source integration",
+      "code": [
+        "crates/editor-core/src/session.rs",
+        "crates/editor-core/src/lua/session.rs",
+        "crates/editor-core/src/lua/replay/declaration_edit.rs",
+        "crates/editor-core/src/lua/replay/project_copy.rs",
+        "crates/editor-app/src/session_editor.rs",
+        "crates/editor-app/src/history.rs",
+        "crates/editor-app/src/project_save.rs",
+        "crates/editor-projection/src/lib.rs",
+        "data/session.json"
+      ],
+      "test_references": [
+        "session_variants_roundtrip_with_order_optional_false_empty_values_and_schema_pins",
+        "import_and_replay_do_not_change_environment_or_run_commands_and_keep_callbacks_inert",
+        "source_forms_edit_each_session_variant_in_a_module_and_combined_copy_includes_the_group",
+        "unsupported_session_shapes_and_unsafe_names_remain_unresolved_instead_of_partial_edits",
+        "combined_session_replacement_cannot_silently_drop_unrepresented_event_callbacks",
+        "all_nine_draft_groups_combine_with_multifile_calls_and_module_returns",
+        "session_commands_environment_and_permission_payloads_are_omitted_and_reported_without_disclosure",
+        "session_editor::test_editor",
+        "native_forms_and_draft_workflow"
+      ],
+      "limits": "ordered environment/direct command/single-command lifecycle/permission controls, empty/optional-false retention, literal regex builders and preserved invalid input, restricted validation, inert capture/registration observations, existing source form reuse and ninth combined-copy group, source comment/return/loader preservation, private schema-pinned save/reopen/undo and redacted preview omissions; 94-input model/26 predecessors preserve compiler observations; no arbitrary or multi-command callbacks, dynamic environment, command launch-rule tables, full visual workflow programming, activation-service/runtime enforcement, live installation/recovery, actual preview or full audit/security acceptance"
+    },
+    {
       "area": "combined graphical drafts and private multi-file source copies",
       "code": [
         "crates/editor-core/src/lua/replay/project_copy.rs",
@@ -23,7 +49,7 @@
         "crates/editor-app/src/workflow.rs"
       ],
       "test_references": [
-        "all_eight_draft_groups_combine_with_multifile_calls_and_module_returns",
+        "all_nine_draft_groups_combine_with_multifile_calls_and_module_returns",
         "keep_retains_private_bytes_and_append_does_not_remove_source_calls",
         "replace_empty_is_explicit_and_adjacent_replacement_insertion_is_valid",
         "replacement_refuses_partial_consumed_and_cross_group_or_loader_containers",

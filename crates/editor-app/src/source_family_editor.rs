@@ -51,6 +51,21 @@ const TEMPLATES: &[(&str, &str, &str)] = &[
         "hl.gesture",
         "hl.gesture{fingers=3,direction='left',action='workspace'}",
     ),
+    (
+        "Environment variable",
+        "hl.env",
+        "hl.env('NEW_VARIABLE','')",
+    ),
+    (
+        "Startup command",
+        "hl.on",
+        "hl.on('hyprland.start',function()hl.exec_cmd('application')end)",
+    ),
+    (
+        "Permission rule",
+        "hl.permission",
+        "hl.permission{binary='^/usr/bin/application$',type='screencopy',mode='ask'}",
+    ),
 ];
 pub(super) fn open(
     parent: &gtk::Window,
@@ -265,13 +280,15 @@ fn editor(
                                     s.rules.clear();
                                     s.animations.clear();
                                     s.gestures.clear();
+                                    s.session.clear();
                                     s.devices.insert(version.clone(), report.devices);
                                     s.bindings.insert(version.clone(), report.bindings);
                                     s.workspace_rules
                                         .insert(version.clone(), report.workspace_rules);
                                     s.rules.insert(version.clone(), report.rules);
                                     s.animations.insert(version.clone(), report.animations);
-                                    s.gestures.insert(version, report.gestures);
+                                    s.gestures.insert(version.clone(), report.gestures);
+                                    s.session.insert(version, report.session);
                                     drop(s);
                                     loaded.set(true);
                                     if let Some(edit) = edit.upgrade() {
@@ -332,6 +349,9 @@ fn editor(
                         super::animations::show(&parent, &sandbox, &feedback)
                     }
                     Some("hl.gesture") => super::gestures::show(&parent, &sandbox, &feedback),
+                    Some("hl.env" | "hl.exec_cmd" | "hl.permission" | "hl.on") => {
+                        super::session_editor::show(&parent, &sandbox, &feedback)
+                    }
                     _ => return,
                 };
                 child.set_title(Some("Edit captured declarations"));

@@ -29,7 +29,7 @@ pub enum Request {
     },
     CopyProject {
         workspace: Box<hyprland_editor_core::workspace::Workspace>,
-        modes: [lua::replay::project_copy::Mode; 8],
+        modes: [lua::replay::project_copy::Mode; 9],
     },
     InspectDependencies {
         source: String,

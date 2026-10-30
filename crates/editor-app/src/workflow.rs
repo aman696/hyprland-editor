@@ -46,6 +46,7 @@ struct Imported {
     rules: Vec<hyprland_editor_core::rule::Rule>,
     animations: hyprland_editor_core::animation::Draft,
     gestures: hyprland_editor_core::gesture::Draft,
+    session: hyprland_editor_core::session::Draft,
 }
 fn read_import(
     path: PathBuf,
@@ -118,7 +119,7 @@ fn read_import_for_review(
             .as_ref()
             .map_or(0, |doc| doc.report.diagnostics.len());
         let saved_json = migration.is_none();
-        return Ok(Imported { migration,graph,draft:workspace.draft,source,legacy,origin,saved_json,monitors:workspace.monitors,devices:workspace.devices,bindings:workspace.bindings,workspace_rules:workspace.workspace_rules,rules:workspace.rules,animations:workspace.animations,gestures:workspace.gestures,
+        return Ok(Imported { migration,graph,draft:workspace.draft,source,legacy,origin,saved_json,monitors:workspace.monitors,devices:workspace.devices,bindings:workspace.bindings,workspace_rules:workspace.workspace_rules,rules:workspace.rules,animations:workspace.animations,gestures:workspace.gestures,session:workspace.session,
             message:format!("{} with {diagnostics} source diagnostics. Source snapshots were reparsed; recorded original paths were not opened. Desktop state is separate.", if saved_json { "Saved draft reopened" } else { "Rebuilt copy loaded; save it as a new private workspace" }) });
     }
     let captured = if path
@@ -130,13 +131,13 @@ fn read_import_for_review(
         storage::read_source(&path)?
     };
     match path.extension().and_then(|s|s.to_str()) {
-        Some("json")=>Draft::from_json(&captured.content,&catalogue).map(|draft|Imported{migration:None,graph:None,draft,source:None,legacy:None,origin:None,monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),message:"Validated value-only draft loaded".into(),saved_json:true}),
-        Some("conf")=>super::legacy_source::Document::new(captured.content,&catalogue).map(|doc|Imported{migration:None,graph:None,message:format!("Retained legacy source and {} literal overrides; {} lines unresolved; {} repeated keys. Includes and variables are not evaluated. Review Source Copy exports scalar edits while preserving other directives.",doc.report.draft.values.len(),doc.report.skipped.len(),doc.report.duplicate_keys.len()),draft:doc.report.draft.clone(),source:None,legacy:Some(doc),origin:Some(captured.identity),monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),saved_json:false}),
+        Some("json")=>Draft::from_json(&captured.content,&catalogue).map(|draft|Imported{migration:None,graph:None,draft,source:None,legacy:None,origin:None,monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),session:Default::default(),message:"Validated value-only draft loaded".into(),saved_json:true}),
+        Some("conf")=>super::legacy_source::Document::new(captured.content,&catalogue).map(|doc|Imported{migration:None,graph:None,message:format!("Retained legacy source and {} literal overrides; {} lines unresolved; {} repeated keys. Includes and variables are not evaluated. Review Source Copy exports scalar edits while preserving other directives.",doc.report.draft.values.len(),doc.report.skipped.len(),doc.report.duplicate_keys.len()),draft:doc.report.draft.clone(),source:None,legacy:Some(doc),origin:Some(captured.identity),monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),session:Default::default(),saved_json:false}),
         Some("lua")=>{
             let doc=parse_source(captured.content,version,&catalogue)?;
             let mut message=format!("Imported {} scalar declarations, {} monitor rules and {} device rules; {} diagnostics. Effective values are not inferred by executing Lua.",doc.report.draft.values.len(),doc.report.monitors.len(),doc.report.devices.len(),doc.report.diagnostics.len());
             if doc.report.opaque_effects{message.push_str(" Opaque code remains in the source; this is a partial projection.");}
-            Ok(Imported{migration:None,graph:None,draft:doc.report.draft.clone(),monitors:doc.report.monitors.clone(),devices:doc.report.devices.clone(),bindings:doc.report.bindings.clone(),workspace_rules:doc.report.workspace_rules.clone(),rules:doc.report.rules.clone(),animations:doc.report.animations.clone(),gestures:doc.report.gestures.clone(),source:Some(doc),legacy:None,origin:Some(captured.identity),message,saved_json:false})
+            Ok(Imported{migration:None,graph:None,draft:doc.report.draft.clone(),monitors:doc.report.monitors.clone(),devices:doc.report.devices.clone(),bindings:doc.report.bindings.clone(),workspace_rules:doc.report.workspace_rules.clone(),rules:doc.report.rules.clone(),animations:doc.report.animations.clone(),gestures:doc.report.gestures.clone(),session:doc.report.session.clone(),source:Some(doc),legacy:None,origin:Some(captured.identity),message,saved_json:false})
         },_=>Err("Select saved .hye workspace, draft JSON, legacy .conf or Lua .lua source".into()),
     }
 }
@@ -162,7 +163,7 @@ pub(super) fn check_workspace(path: PathBuf) -> Result<serde_json::Value, String
     let imported = read_import(path, hyprland_editor_core::catalogue(), BASELINE.into())?;
     Ok(
         serde_json::json!({"scope":"draft-and-static-source-only", "version":imported.draft.version,
-        "draft_values":imported.draft.values.len(),"monitor_rules":imported.monitors.len(),"device_rules":imported.devices.len(),"binding_rules":imported.bindings.binds.len(),"workspace_rules":imported.workspace_rules.len(),"match_effect_rules":imported.rules.len(),"animation_declarations":imported.animations.declarations.len(),"gesture_declarations":imported.gestures.declarations.len(), "source_reparsed":imported.source.is_some(),
+        "draft_values":imported.draft.values.len(),"monitor_rules":imported.monitors.len(),"device_rules":imported.devices.len(),"binding_rules":imported.bindings.binds.len(),"workspace_rules":imported.workspace_rules.len(),"match_effect_rules":imported.rules.len(),"animation_declarations":imported.animations.declarations.len(),"gesture_declarations":imported.gestures.declarations.len(),"session_declarations":imported.session.entries.len(), "source_reparsed":imported.source.is_some(),
         "source_sha256":imported.source.as_ref().map(|s|s.report.source_sha256.as_str()),
         "opaque_effects":imported.source.as_ref().is_some_and(|s|s.report.opaque_effects),
         "source_diagnostics":imported.source.as_ref().map_or(0,|s|s.report.diagnostics.len()),
@@ -217,7 +218,8 @@ pub(super) fn captured_workspace(s: &super::State) -> Result<Workspace, String> 
         .with_workspace_rules(s.workspace_rules.get(version).cloned().unwrap_or_default())
         .with_rules(s.rules.get(version).cloned().unwrap_or_default())
         .with_animations(s.animations.get(version).cloned().unwrap_or_default())
-        .with_gestures(s.gestures.get(version).cloned().unwrap_or_default());
+        .with_gestures(s.gestures.get(version).cloned().unwrap_or_default())
+        .with_session(s.session.get(version).cloned().unwrap_or_default());
     if let Some(graph) = s.source_graphs.get(version) {
         snapshot = snapshot.with_graph(&graph.bundle);
     } else if let Some(doc) = s.sources.get(version) {
@@ -470,7 +472,7 @@ pub(super) fn connect_source_copy(
         if s.source_graphs.contains_key(&s.draft.version) {drop(s);super::project_copy::show(&window,&state);return;}
         if let Some(doc)=s.legacy_sources.get(&s.draft.version).cloned(){
             let snapshot=match captured_workspace(&s){Ok(snapshot)=>snapshot,Err(error)=>{drop(s);notice(&window,"Cannot prepare legacy copy",&error);return;}};
-            if !snapshot.monitors.is_empty() || !snapshot.devices.is_empty() || !snapshot.bindings.is_empty() || !snapshot.workspace_rules.is_empty() || !snapshot.rules.is_empty() || !snapshot.animations.declarations.is_empty() || !snapshot.gestures.declarations.is_empty() {
+            if !snapshot.monitors.is_empty() || !snapshot.devices.is_empty() || !snapshot.bindings.is_empty() || !snapshot.workspace_rules.is_empty() || !snapshot.rules.is_empty() || !snapshot.animations.declarations.is_empty() || !snapshot.gestures.declarations.is_empty() || !snapshot.session.is_empty() {
                 drop(s);notice(&window,"Structured legacy export pending","This source copy includes scalar edits only. Save the project to keep all structured drafts; exporting those drafts into legacy syntax is not implemented yet.");return;
             }
             let catalogue=s.catalogue.clone();let draft=s.draft.clone();let generation=s.generation;drop(s);let state=state.clone();let win=window.downgrade();let button=button.downgrade();if let Some(button)=button.upgrade(){button.set_sensitive(false);}
@@ -590,6 +592,12 @@ fn apply_import(
     }
     s.gestures
         .insert(imported.draft.version.clone(), imported.gestures);
+    if imported.saved_json {
+        s.saved_session
+            .insert(imported.draft.version.clone(), imported.session.clone());
+    }
+    s.session
+        .insert(imported.draft.version.clone(), imported.session);
     s.draft = imported.draft;
     s.undo.clear();
     s.generation += 1;
@@ -1176,6 +1184,7 @@ pub(super) fn test_source_persistence(window: &adw::ApplicationWindow) {
             rules: vec![],
             animations: Default::default(),
             gestures: Default::default(),
+            session: Default::default(),
             message: "Fixture imported".into(),
         },
         &state,

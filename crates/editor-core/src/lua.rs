@@ -6,6 +6,7 @@ pub mod monitor_inspection;
 pub mod registration;
 pub mod replay;
 pub mod scalar_codec;
+mod session;
 pub mod workspace_copy;
 use crate::{parse_color, Draft, Setting, Value, AUDITED_MAIN, BASELINE, MAX_DOCUMENT_BYTES};
 pub use dependencies::{
@@ -57,6 +58,8 @@ pub struct LuaReport {
     pub animations: crate::animation::Draft,
     #[serde(default)]
     pub gestures: crate::gesture::Draft,
+    #[serde(default)]
+    pub session: crate::session::Draft,
     pub declarations: Vec<Declaration>,
     pub diagnostics: Vec<Diagnostic>,
     pub opaque_effects: bool,
@@ -1744,6 +1747,11 @@ impl Projection<'_> {
                     self.device(node)?;
                 } else if text(name, self.source) == "hl.monitor" && self.api_available {
                     self.monitor(node)?;
+                } else if ["hl.env", "hl.permission", "hl.exec_cmd", "hl.on"]
+                    .contains(&text(name, self.source))
+                    && self.api_available
+                {
+                    self.session_declaration(node)?;
                 } else if text(name, self.source) == "hl.config" && self.api_available {
                     let args = node
                         .child_by_field_name("arguments")
@@ -1848,6 +1856,7 @@ pub fn parse(source: &str, version: &str, catalogue: &[Setting]) -> Result<LuaRe
             rules: vec![],
             animations: Default::default(),
             gestures: Default::default(),
+            session: Default::default(),
             declarations: vec![],
             diagnostics: vec![],
             opaque_effects: false,

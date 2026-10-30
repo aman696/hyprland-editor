@@ -17,6 +17,10 @@ fn families(report: &LuaReport) -> Result<Vec<Family>, String> {
     let version = &report.draft.version;
     Ok(vec![
         Family {
+            names: &["hl.env", "hl.exec_cmd", "hl.on", "hl.permission"],
+            canonical: report.session.export_lua(version)?,
+        },
+        Family {
             names: &["hl.monitor"],
             canonical: crate::monitor::export_lua(&report.monitors, version)?,
         },
@@ -250,6 +254,7 @@ pub fn prepare(workspace: &Workspace, catalogue: &[Setting]) -> Result<String, S
     target.rules = workspace.rules.clone();
     target.animations = workspace.animations.clone();
     target.gestures = workspace.gestures.clone();
+    target.session = workspace.session.clone();
     let after = families(&target)?;
     let structured_changed = before
         .iter()
@@ -363,6 +368,7 @@ mod tests {
             .with_rules(parsed.rules)
             .with_animations(parsed.animations)
             .with_gestures(parsed.gestures)
+            .with_session(parsed.session)
     }
 
     const SOURCE: &str = "-- café header\nhl.monitor{ -- keep monitor comment\n output='DP-1'}\nhl.config{general={border_size=2}}\nhl.device{name='test mouse',sensitivity=0.1}\nhl.bind('Q',hl.dsp.no_op())\nhl.workspace_rule{workspace='1'}\nhl.window_rule{match={class='term'},float=true}\nhl.layer_rule{match={namespace='panel'},blur=true}\nhl.curve('ease',{type='bezier',points={{0.1,0.2},{0.8,0.9}}})\nhl.animation{leaf='windows',enabled=true,speed=1,bezier='ease'}\nhl.gesture{fingers=3,direction='left',action={start=function()hl.dispatch(hl.dsp.no_op())end,finish=function()end}}\n-- kept footer\n";

@@ -236,7 +236,7 @@ fn every_family_projects_in_order_with_explicit_synthetic_identity_and_fidelity(
         let first = projection.lua().find("hl.curve(").unwrap();
         let second = projection.lua().find("hl.animation(").unwrap();
         assert!(first < second);
-        assert_eq!(projection.report().schema_pins.len(), 11);
+        assert_eq!(projection.report().schema_pins.len(), 12);
         assert_eq!(
             projection.identity(),
             compile(&workspace, &scenario).unwrap().identity()
@@ -343,4 +343,57 @@ fn projection_budget_refuses_a_large_valid_draft_without_returning_truncated_out
     assert!(compile(&workspace, &Scenario::default())
         .unwrap_err()
         .contains("entry budget"));
+}
+
+#[test]
+fn session_commands_environment_and_permission_payloads_are_omitted_and_reported_without_disclosure(
+) {
+    use editor_core::session::{Draft as Session, Entry, PermissionMode, PermissionType, Trigger};
+    for version in [BASELINE, AUDITED_MAIN] {
+        let workspace = workspace(version).with_session(Session {
+            entries: vec![
+                Entry::Environment {
+                    name: "PRIVATE_SECRET_NAME".into(),
+                    value: "PRIVATE_SECRET_VALUE".into(),
+                    dbus: Some(true),
+                },
+                Entry::Command {
+                    command: "PRIVATE_COMMAND_VALUE".into(),
+                    trigger: Trigger::Start,
+                },
+                Entry::Permission {
+                    binary: "PRIVATE_BINARY_PATTERN".into(),
+                    permission: PermissionType::Plugin,
+                    mode: PermissionMode::Allow,
+                },
+            ],
+        });
+        let projection = compile(&workspace, &Scenario::default()).unwrap();
+        let encoded = format!(
+            "{}{}",
+            projection.lua(),
+            serde_json::to_string(projection.report()).unwrap()
+        );
+        for private in [
+            "PRIVATE_SECRET_NAME",
+            "PRIVATE_SECRET_VALUE",
+            "PRIVATE_COMMAND_VALUE",
+            "PRIVATE_BINARY_PATTERN",
+        ] {
+            assert!(!encoded.contains(private));
+        }
+        assert_eq!(
+            projection
+                .report
+                .entries
+                .iter()
+                .filter(|e| e.subject.starts_with("session/")
+                    && e.fidelity == Fidelity::OmittedUntrusted)
+                .count(),
+            3
+        );
+        assert!(!projection.lua.contains("hl.env"));
+        assert!(!projection.lua.contains("hl.exec_cmd"));
+        assert!(!projection.lua.contains("hl.permission"));
+    }
 }

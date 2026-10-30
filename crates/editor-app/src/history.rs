@@ -32,6 +32,10 @@ pub(super) enum Undo {
         origin: SourceIdentity,
         document_bytes: usize,
     },
+    Session {
+        previous: hyprland_editor_core::session::Draft,
+        retained_bytes: usize,
+    },
     Gestures {
         previous: hyprland_editor_core::gesture::Draft,
         retained_bytes: usize,
@@ -291,6 +295,19 @@ fn bindings_bytes(b: &hyprland_editor_core::binding::Draft) -> usize {
         + b.submaps.capacity() * size_of::<hyprland_editor_core::binding::Submap>()
         + b.submaps.iter().map(submap_bytes).sum::<usize>()
 }
+fn session_bytes(draft: &hyprland_editor_core::session::Draft) -> usize {
+    use hyprland_editor_core::session::Entry;
+    draft.entries.capacity() * size_of::<Entry>()
+        + draft
+            .entries
+            .iter()
+            .map(|e| match e {
+                Entry::Environment { name, value, .. } => name.capacity() + value.capacity(),
+                Entry::Command { command, .. } => command.capacity(),
+                Entry::Permission { binary, .. } => binary.capacity(),
+            })
+            .sum::<usize>()
+}
 fn document_bytes(doc: &LuaDocument) -> usize {
     let r = &doc.report;
     // Include Arc headers and conservative slack for partly filled B-tree nodes.
@@ -304,6 +321,7 @@ fn document_bytes(doc: &LuaDocument) -> usize {
         + rule_bytes(&r.rules)
         + animation_bytes(&r.animations)
         + gesture_bytes(&r.gestures)
+        + session_bytes(&r.session)
         + r.source_sha256.capacity()
         + r.draft.version.capacity()
         + r.draft
@@ -347,7 +365,8 @@ impl Undo {
                         + changes_bytes(changes)
                         + source.as_ref().map_or(0, |s| origin_bytes(&s.origin))
                 }
-                Self::Gestures { retained_bytes, .. }
+                Self::Session { retained_bytes, .. }
+                | Self::Gestures { retained_bytes, .. }
                 | Self::Animations { retained_bytes, .. }
                 | Self::Rules { retained_bytes, .. }
                 | Self::Bindings { retained_bytes, .. }
@@ -405,6 +424,16 @@ impl History {
             changes: vec![],
             monitor_changed: true,
             previous_monitors: monitors,
+            retained_bytes,
+        })
+    }
+    pub fn session(
+        &mut self,
+        previous: hyprland_editor_core::session::Draft,
+    ) -> Result<(), String> {
+        let retained_bytes = session_bytes(&previous);
+        self.push(Undo::Session {
+            previous,
             retained_bytes,
         })
     }
