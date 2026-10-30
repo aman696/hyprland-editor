@@ -24,6 +24,12 @@ impl Document {
         if parsed.monitors.schema_sha256 != legacy_monitor::schema_hash()
             || parsed.monitors.source_sha256 != parsed.source_sha256
             || parsed.monitors.sites.len() != parsed.monitors.rules.len()
+            || parsed
+                .monitors
+                .sites
+                .iter()
+                .chain(&parsed.session.sites)
+                .any(|site| content.get(site.statement.clone()).is_none())
             || parsed.session.schema_sha256 != legacy_session::schema_hash()
             || parsed.source_sha256 != hyprland_editor_core::lua::source_hash(&content)
             || parsed.session.source_sha256 != parsed.source_sha256
@@ -36,9 +42,26 @@ impl Document {
         parsed.session.draft.validate(BASELINE)?;
         hyprland_editor_core::monitor::validate(&parsed.monitors.rules, BASELINE)?;
         let mut report = parsed.scalar;
+        let session_lines: std::collections::BTreeSet<_> =
+            parsed.session.sites.iter().map(|site| site.line).collect();
+        let monitor_lines: Vec<_> = parsed
+            .monitors
+            .sites
+            .iter()
+            .map(|site| {
+                (
+                    site.line,
+                    site.line
+                        + content[site.statement.clone()]
+                            .bytes()
+                            .filter(|b| *b == b'\n')
+                            .count(),
+                )
+            })
+            .collect();
         report.skipped.retain(|line| {
-            !parsed.session.sites.iter().any(|site| site.line == *line)
-                && !parsed.monitors.sites.iter().any(|site| site.line == *line)
+            let index = monitor_lines.partition_point(|(start, _)| start <= line);
+            !session_lines.contains(line) && (index == 0 || *line > monitor_lines[index - 1].1)
         });
         Ok(Self {
             content,

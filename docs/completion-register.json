@@ -14,6 +14,31 @@
   },
   "foundations": [
     {
+      "area": "graphical monitorv2 block editing with retained field syntax and older project review",
+      "code": [
+        "crates/editor-core/src/legacy_monitor/blocks.rs",
+        "crates/editor-core/src/legacy_monitor.rs",
+        "crates/editor-core/src/monitor.rs",
+        "crates/editor-core/src/workspace.rs",
+        "crates/editor-app/src/legacy_source.rs",
+        "crates/editor-app/src/monitors.rs",
+        "crates/editor-app/src/workflow.rs",
+        "data/legacy-monitors.json",
+        "data/legacy-monitors-v1.json"
+      ],
+      "test_references": [
+        "monitor_blocks_populate_hdr_luminance_transfer_and_reserved_controls_without_losing_text",
+        "block_add_duplicate_remove_reorder_and_operation_conversion_retain_comments",
+        "repeated_output_blocks_keep_separate_partial_declarations_and_duplicate_fields",
+        "unsupported_blocks_stay_unresolved_and_do_not_absorb_following_valid_blocks",
+        "block_codec_combines_with_scalar_session_edits_and_preserves_previous_schema_acceptance",
+        "legacy_monitor_operations_never_become_implicitly_converted_preview_commands",
+        "workflow::test_legacy_session_editing",
+        "native_forms_and_draft_workflow"
+      ],
+      "limits": "flat literal monitorv2 blocks with explicit output and all 22 audited monitor field names through shared forms, HDR/wide-color/luminance/transfer controls, empty ICC retention, reserved-side mapping, comment-preserving individual field update/insert/remove, duplicate-field last assignment/all-removal, ordered duplicate/reorder/operation conversion with retained comments, signed-zero changes, unresolved block retention, bounded scanners and precomputed source line ranges; frozen V1 monitor-codec compatibility, new block recognition without restoring intentionally removed classic targets, current empty targets remain empty; 103-input model/29 predecessors preserve captured inputs and compiler observations; no full special-category/native effective merge/ordering/default evaluation, dynamic/qualified/nested/conditional/continued block syntax, includes/asset relocation, real hardware/isolated preview/live apply/recovery or full audit/resource/security acceptance"
+    },
+    {
       "area": "graphical classic legacy monitor operations and combined source copies",
       "code": [
         "crates/editor-core/src/legacy_monitor.rs",

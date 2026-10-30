@@ -14,7 +14,7 @@ fn legacy_monitor_operations_keep_their_distinct_intentions_and_source_bytes() {
             .iter()
             .map(|r| r.legacy_operation.unwrap())
             .collect::<Vec<_>>(),
-        Op::ALL
+        Op::ALL[..4]
     );
     assert_eq!(report.rules[0].fields.len(), 11);
     assert_eq!(

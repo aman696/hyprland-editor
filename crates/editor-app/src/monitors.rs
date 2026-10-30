@@ -720,7 +720,7 @@ fn show_with_outputs(
     let operation_save = gtk::Button::with_label("Change Monitor Operation");
     operation_save.set_widget_name("monitor-legacy-operation-save");
     operation_box.append(&operation_save);
-    let operation_details=gtk::Expander::builder().label("About Monitor Operations").child(&label("Changing operation keeps compatible fields. Undo restores the previous draft. Transform and reserved-space updates affect an existing matching rule; defining a monitor rule replaces its configuration.")).build();
+    let operation_details=gtk::Expander::builder().label("About Monitor Operations").child(&label("Changing operation keeps compatible fields. Undo restores the previous draft. Transform and reserved-space updates affect an existing matching rule; defining a monitor rule replaces its configuration. Monitor blocks are processed after classic rules, and repeated output blocks can combine fields. This list shows source declarations.")).build();
     operation_box.append(&operation_details);
     operation_box.set_visible(legacy);
     content.append(&operation_box);
@@ -838,7 +838,13 @@ fn show_with_outputs(
                 .iter()
                 .filter(|field| chosen_operation.is_none_or(|op| op.accepts(&field.lua_key)))
                 .collect();
-            canvas.set_visible(chosen_operation.is_none_or(|op| op == LegacyOperation::Replace));
+            canvas.set_visible(chosen_operation.is_none_or(|op| {
+                op == LegacyOperation::Replace
+                    || (op == LegacyOperation::Block
+                        && rules
+                            .get(index)
+                            .is_some_and(|rule| rule.logical_size().is_some()))
+            }));
             property.set_visible(eligible.len() > 1);
             let field_names: Vec<_> = eligible
                 .iter()
@@ -996,7 +1002,7 @@ fn show_with_outputs(
                 LegacyOperation::Disable=>{rule.fields.insert("disabled".into(),Value::Bool(true));}
                 LegacyOperation::Transform=>{rule.fields.entry("transform".into()).or_insert(Value::Int(0));}
                 LegacyOperation::Reserved=>{if !rule.fields.contains_key("reserved_area"){rule.fields.entry("reserved".into()).or_insert(Value::CssGap([0;4]));}}
-                LegacyOperation::Replace=>{}
+                LegacyOperation::Replace | LegacyOperation::Block=>{}
             }
             if commit(&state,rules,&status,&feedback) {refresh();feedback.set_text("Monitor operation updated. Incompatible fields were removed; Undo restores the previous draft.");}
         });

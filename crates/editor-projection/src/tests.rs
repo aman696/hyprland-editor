@@ -400,7 +400,7 @@ fn session_commands_environment_and_permission_payloads_are_omitted_and_reported
 #[test]
 fn legacy_monitor_operations_never_become_implicitly_converted_preview_commands() {
     use editor_core::{legacy_monitor, workspace::SourceLanguage};
-    let source = "monitor = PRIVATE_OUTPUT,transform,1\n";
+    let source = "monitor = PRIVATE_OUTPUT,transform,1\nmonitorv2 {\n output = PRIVATE_OUTPUT_BLOCK\n supports_hdr = 1\n}\n";
     let hash = editor_core::lua::source_hash(source);
     let identity = SourceIdentity {
         selected_path: b"/private/config.conf".to_vec(),

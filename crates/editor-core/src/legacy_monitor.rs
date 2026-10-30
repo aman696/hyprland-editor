@@ -7,6 +7,7 @@ use crate::{
     Value, BASELINE, MAX_DOCUMENT_BYTES,
 };
 use serde::{Deserialize, Serialize};
+mod blocks;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Report {
@@ -122,6 +123,32 @@ pub fn inspect(content: &str) -> Result<Report, String> {
             }
         }
     })?;
+    blocks::scan(content, |block| {
+        let parsed = if report.rules.len() < monitor::MAX_RULES {
+            blocks::parse(&block, report.rules.len()).ok()
+        } else {
+            None
+        };
+        if let Some(rule) = parsed {
+            report.rules.push(rule);
+            report.sites.push(block.site);
+        } else {
+            report.unresolved_count += 1;
+            if report.unresolved.len() < 4096 {
+                report.unresolved.push(block.site.line);
+            }
+        }
+    })?;
+    let mut combined: Vec<_> = std::mem::take(&mut report.sites)
+        .into_iter()
+        .zip(std::mem::take(&mut report.rules))
+        .collect();
+    combined.sort_by_key(|(site, _)| site.statement.start);
+    for (index, (site, mut rule)) in combined.into_iter().enumerate() {
+        rule.id = format!("legacy-monitor-{index}");
+        report.sites.push(site);
+        report.rules.push(rule);
+    }
     Ok(report)
 }
 fn argument(value: &str) -> Result<String, String> {
@@ -140,6 +167,9 @@ pub fn encode(rule: &Rule) -> Result<String, String> {
     let operation = rule
         .legacy_operation
         .ok_or("Choose an explicit legacy monitor operation before source export")?;
+    if operation == Op::Block {
+        return blocks::encode(rule);
+    }
     let mut args = vec![rule.output.text()];
     match operation {
         Op::Disable => args.push("disable".into()),
@@ -163,6 +193,7 @@ pub fn encode(rule: &Rule) -> Result<String, String> {
                 args.push(value.to_string());
             }
         }
+        Op::Block => unreachable!("block handled before classic arguments"),
         Op::Replace => {
             for (key, default) in [
                 ("mode", "preferred"),
@@ -211,13 +242,38 @@ pub fn export(rules: &[Rule]) -> Result<String, String> {
 pub fn edited_copy(content: &str, target: &[Rule]) -> Result<String, String> {
     monitor::validate(target, BASELINE)?;
     let before = inspect(content)?;
-    if before.rules == target {
+    if serde_json::to_vec(&before.rules).map_err(|e| e.to_string())?
+        == serde_json::to_vec(target).map_err(|e| e.to_string())?
+    {
         return Ok(content.into());
     }
-    let mut output = content.to_owned();
+    let mut blocks_by_start = std::collections::BTreeMap::new();
+    blocks::scan(content, |block| {
+        blocks_by_start.insert(block.site.statement.start, block);
+    })?;
+    let mut patches = vec![];
     for (index, site) in before.sites.iter().enumerate().rev() {
-        if target.get(index) == before.rules.get(index) {
+        if target
+            .get(index)
+            .and_then(|rule| serde_json::to_vec(rule).ok())
+            == before
+                .rules
+                .get(index)
+                .and_then(|rule| serde_json::to_vec(rule).ok())
+        {
             continue;
+        }
+        let block = blocks_by_start.get(&site.statement.start);
+        if let (Some(block), Some(target)) = (block, target.get(index)) {
+            if target.legacy_operation == Some(Op::Block) {
+                patches.extend(blocks::patches(
+                    content,
+                    block,
+                    &before.rules[index],
+                    target,
+                )?);
+                continue;
+            }
         }
         let text = target
             .get(index)
@@ -235,7 +291,20 @@ pub fn edited_copy(content: &str, target: &[Rule]) -> Result<String, String> {
             })
             .transpose()?
             .unwrap_or_default();
-        output.replace_range(site.statement.clone(), &text);
+        let text = if block.is_some() {
+            format!(
+                "{text}\n{}",
+                blocks::comments(content, site.statement.clone())
+            )
+        } else {
+            text
+        };
+        patches.push((site.statement.clone(), text));
+    }
+    patches.sort_by_key(|(span, _)| span.start);
+    let mut output = content.to_owned();
+    for (span, text) in patches.into_iter().rev() {
+        output.replace_range(span, &text);
     }
     let newline = if content.contains("\r\n") {
         "\r\n"
@@ -265,4 +334,12 @@ pub fn edited_copy(content: &str, target: &[Rule]) -> Result<String, String> {
 }
 pub fn schema_hash() -> String {
     source_hash(include_str!("../../../data/legacy-monitors.json"))
+}
+
+pub fn accepts_schema(pin: &str, rules: &[Rule]) -> bool {
+    pin == schema_hash()
+        || (pin == source_hash(include_str!("../../../data/legacy-monitors-v1.json"))
+            && rules
+                .iter()
+                .all(|rule| rule.legacy_operation != Some(Op::Block)))
 }

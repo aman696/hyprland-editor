@@ -56,13 +56,15 @@ pub enum LegacyOperation {
     Disable,
     Transform,
     Reserved,
+    Block,
 }
 impl LegacyOperation {
-    pub const ALL: [Self; 4] = [
+    pub const ALL: [Self; 5] = [
         Self::Replace,
         Self::Disable,
         Self::Transform,
         Self::Reserved,
+        Self::Block,
     ];
     pub fn label(self) -> &'static str {
         match self {
@@ -70,6 +72,7 @@ impl LegacyOperation {
             Self::Disable => "Disable output",
             Self::Transform => "Update transform only",
             Self::Reserved => "Update reserved space only",
+            Self::Block => "Monitor block (HDR and all fields)",
         }
     }
     pub fn accepts(self, key: &str) -> bool {
@@ -91,6 +94,7 @@ impl LegacyOperation {
             Self::Disable => key == "disabled",
             Self::Transform => key == "transform",
             Self::Reserved => matches!(key, "reserved" | "reserved_area"),
+            Self::Block => true,
         }
     }
 }
@@ -150,6 +154,10 @@ impl Rule {
             return Err("Invalid monitor draft identity".into());
         }
         self.output.validate()?;
+        if self.legacy_operation == Some(LegacyOperation::Block) && self.output == Output::Fallback
+        {
+            return Err("Choose an explicit output name for a monitor block".into());
+        }
         if let Some(operation) = self.legacy_operation {
             if version != BASELINE || self.fields.keys().any(|key| !operation.accepts(key)) {
                 return Err(
@@ -206,7 +214,10 @@ impl Rule {
                     "sdr_eotf" if !TRANSFER.contains(&text.as_str()) => {
                         return Err("Transfer function is outside the audited choices".into())
                     }
-                    "icc" if text.is_empty() => {
+                    "icc"
+                        if text.is_empty()
+                            && self.legacy_operation != Some(LegacyOperation::Block) =>
+                    {
                         return Err("Choose an ICC path or remove the ICC field".into())
                     }
                     _ => {}

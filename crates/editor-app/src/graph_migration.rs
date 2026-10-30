@@ -82,7 +82,10 @@ const LEGACY_MONITOR_FROM: &str =
     "20d18eebb55dd38f923df91cb3a6ece921049b8f47f29df3f05baadf000c1d5b";
 const LEGACY_MONITOR_MODEL: &str =
     include_str!("../../../data/migrations/graph-model-before-legacy-monitors.json");
-const TO: &str = "52dc7bbcc9e42d993c2fc4108a3a5bb422f42e7f3c8fd29862d45c644fc85116";
+const MONITOR_BLOCK_FROM: &str = "52dc7bbcc9e42d993c2fc4108a3a5bb422f42e7f3c8fd29862d45c644fc85116";
+const MONITOR_BLOCK_MODEL: &str =
+    include_str!("../../../data/migrations/graph-model-before-monitor-blocks.json");
+const TO: &str = "ad42a1275314d45ee6c23651bc66b585e808cd7a24448192e76d481e51e1cca4";
 const OLD: &str = include_str!("../../../data/migrations/graph-model-before-projection.json");
 const FROM_PROJECTION: &str = "046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371";
 const PROJECTION: &str = include_str!("../../../data/migrations/graph-model-projection.json");
@@ -1256,9 +1259,9 @@ fn before_legacy_monitor_transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
-fn transition(from: &str) -> Result<(), String> {
+fn before_monitor_block_transition(from: &str) -> Result<(), String> {
     if lua::source_hash(LEGACY_MONITOR_MODEL) != LEGACY_MONITOR_FROM
-        || lua::source_hash(CURRENT) != TO
+        || lua::source_hash(MONITOR_BLOCK_MODEL) != MONITOR_BLOCK_FROM
     {
         return Err(
             "No reviewed legacy-monitor transition to this exact model is available".into(),
@@ -1269,7 +1272,8 @@ fn transition(from: &str) -> Result<(), String> {
     }
     let previous: serde_json::Value =
         serde_json::from_str(LEGACY_MONITOR_MODEL).map_err(|e| e.to_string())?;
-    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let current: serde_json::Value =
+        serde_json::from_str(MONITOR_BLOCK_MODEL).map_err(|e| e.to_string())?;
     let old = previous["inputs"]
         .as_object()
         .ok_or("Invalid preceding monitor model")?;
@@ -1308,6 +1312,53 @@ fn transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
+fn transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(MONITOR_BLOCK_MODEL) != MONITOR_BLOCK_FROM
+        || lua::source_hash(CURRENT) != TO
+    {
+        return Err("No reviewed monitor-block transition to this exact model is available".into());
+    }
+    if from != MONITOR_BLOCK_FROM {
+        before_monitor_block_transition(from)?;
+    }
+    let previous: serde_json::Value =
+        serde_json::from_str(MONITOR_BLOCK_MODEL).map_err(|e| e.to_string())?;
+    let current: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let old = previous["inputs"]
+        .as_object()
+        .ok_or("Invalid preceding monitor model")?;
+    let new = current["inputs"]
+        .as_object()
+        .ok_or("Invalid block monitor model")?;
+    let added = new
+        .keys()
+        .filter(|key| !old.contains_key(*key))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    let changed = old
+        .keys()
+        .filter(|key| new.get(*key) != Some(&old[*key]))
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    if old.len() != 101
+        || new.len() != 103
+        || added
+            != [
+                "crates/editor-core/src/legacy_monitor/blocks.rs",
+                "data/legacy-monitors-v1.json",
+            ]
+        || changed
+            != [
+                "crates/editor-core/src/legacy_monitor.rs",
+                "crates/editor-core/src/monitor.rs",
+                "crates/editor-core/src/workspace.rs",
+                "data/legacy-monitors.json",
+            ]
+    {
+        return Err("Monitor block editing differs from its reviewed source codec, additive operation and schema compatibility; captured inputs and compiler observations must remain unchanged".into());
+    }
+    Ok(())
+}
 pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, String> {
     if text.len() > MAX_WORKSPACE_BYTES {
         return Err("Saved workspace exceeds 8 MiB".into());
@@ -1339,6 +1390,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != SESSION_FROM
         && previous != LEGACY_SESSION_FROM
         && previous != LEGACY_MONITOR_FROM
+        && previous != MONITOR_BLOCK_FROM
         && raw["source_graph"].get("private").is_some()
     {
         return Err("Previous graph writers had no private input layer; new payloads cannot be introduced during migration".into());
@@ -1354,6 +1406,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != SESSION_FROM
         && previous != LEGACY_SESSION_FROM
         && previous != LEGACY_MONITOR_FROM
+        && previous != MONITOR_BLOCK_FROM
         && raw["source_graph"]["compiler"]
             .get("numeric_codegen")
             .is_some()
@@ -1383,7 +1436,8 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != PROJECT_COPY_FROM
         && previous != SESSION_FROM
         && previous != LEGACY_SESSION_FROM
-        && previous != LEGACY_MONITOR_FROM;
+        && previous != LEGACY_MONITOR_FROM
+        && previous != MONITOR_BLOCK_FROM;
     let mut expected_compiler = current_compiler.clone();
     if compiler_observation_renewed {
         expected_compiler.numeric_codegen = None;
@@ -1502,6 +1556,7 @@ mod tests {
         transition(SESSION_FROM).unwrap();
         transition(LEGACY_SESSION_FROM).unwrap();
         transition(LEGACY_MONITOR_FROM).unwrap();
+        transition(MONITOR_BLOCK_FROM).unwrap();
         assert!(transition(&"0".repeat(64)).is_err());
         assert_ne!(FROM, TO);
         assert_eq!(lua::source_hash(CURRENT), TO);

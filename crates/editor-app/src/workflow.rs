@@ -135,6 +135,34 @@ fn read_import_for_review(
                 workspace.monitors = rebuilt;
                 legacy_projection_changed = true;
             }
+            if workspace.legacy_monitor_origin_sha256.is_some()
+                && workspace.legacy_monitor_schema_sha256.as_deref()
+                    != Some(&hyprland_editor_core::legacy_monitor::schema_hash())
+            {
+                let mut added: Vec<_> = doc
+                    .monitors
+                    .rules
+                    .iter()
+                    .filter(|rule| {
+                        rule.legacy_operation
+                            == Some(hyprland_editor_core::monitor::LegacyOperation::Block)
+                    })
+                    .cloned()
+                    .collect();
+                for (index, rule) in added.iter_mut().enumerate() {
+                    let mut serial = index;
+                    while workspace.monitors.iter().any(|old| old.id == rule.id) {
+                        rule.id = format!("rebuilt-block-{serial}");
+                        serial += 1;
+                    }
+                }
+                workspace.monitors.extend(added);
+                hyprland_editor_core::monitor::validate(
+                    &workspace.monitors,
+                    &workspace.draft.version,
+                )?;
+                legacy_projection_changed = true;
+            }
             if workspace.legacy_session_origin_sha256.is_none() {
                 let mut entries = doc.session.draft.entries.clone();
                 entries.append(&mut workspace.session.entries);
@@ -1478,12 +1506,12 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     let root = super::test_support::TempDir::new("legacy-session-ui");
     let original = root.path().join("original.conf");
     let marker = root.path().join("never-run");
-    let source=format!("# retained café\r\nenv = GTK_THEME,Nord # environment\r\nexec-once = touch {} # startup\r\npermission = ^/usr/bin/application$,screencopy,ask # policy\r\ngeneral:border_size = 2\r\nmonitor = DP-1,2560x1440@144,0x0,1 # display\r\nmonitor = HDMI-A-1,disable\r\nmonitor = DP-1,transform,1 # rotation\r\nmonitor = DP-1,addreserved,10,20,30,40 # reserved\r\nexec = $unresolved\r\nsource = missing.conf\r\n",marker.display());
+    let source=format!("# retained café\r\nenv = GTK_THEME,Nord # environment\r\nexec-once = touch {} # startup\r\npermission = ^/usr/bin/application$,screencopy,ask # policy\r\ngeneral:border_size = 2\r\nmonitor = DP-1,2560x1440@144,0x0,1 # display\r\nmonitor = HDMI-A-1,disable\r\nmonitor = DP-1,transform,1 # rotation\r\nmonitor = DP-1,addreserved,10,20,30,40 # reserved\r\nmonitorv2 {{ # HDR block\r\n output = DP-2\r\n supports_hdr = 1 # keep HDR\r\n max_luminance = 1000 # luminance\r\n}} # close HDR\r\nexec = $unresolved\r\nsource = missing.conf\r\n",marker.display());
     std::fs::write(&original, &source).unwrap();
     let catalogue = hyprland_editor_core::catalogue();
     let imported = read_import(original.clone(), catalogue.clone(), BASELINE.into()).unwrap();
     assert_eq!(imported.session.entries.len(), 3);
-    assert_eq!(imported.monitors.len(), 4);
+    assert_eq!(imported.monitors.len(), 5);
     let worker::Response::LegacyParsed(parsed) = worker::run(worker::Request::ParseLegacy {
         source: source.clone(),
     })
@@ -1581,6 +1609,63 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
             .values
             .insert("general:border_size".into(), Value::Int(5));
     }
+    let block_editor = super::monitors::show(parent, &state, &status);
+    let rule: gtk::DropDown = named(block_editor.upcast_ref(), "monitor-rule");
+    rule.set_selected(4);
+    let operation: gtk::DropDown = named(block_editor.upcast_ref(), "monitor-legacy-operation");
+    assert_eq!(operation.selected(), 4);
+    let fields: gtk::DropDown = named(block_editor.upcast_ref(), "monitor-field");
+    assert_eq!(fields.model().unwrap().n_items(), 22);
+    let index = hyprland_editor_core::monitor::catalogue(BASELINE)
+        .iter()
+        .position(|field| field.lua_key == "max_luminance")
+        .unwrap();
+    fields.set_selected(index as u32);
+    let value = widgets(block_editor.upcast_ref())
+        .into_iter()
+        .find_map(|widget| widget.downcast::<gtk::SpinButton>().ok())
+        .unwrap();
+    assert_eq!(value.value(), 1000.0);
+    value.set_value(1300.0);
+    button(block_editor.upcast_ref(), "Update Monitor Draft").emit_clicked();
+    assert_eq!(
+        state.borrow().monitors[BASELINE][4].fields["max_luminance"],
+        Value::Int(1300)
+    );
+    if let Some(path) = std::env::var_os("HYPRLAND_EDITOR_TEST_CAPTURE") {
+        block_editor.set_default_size(360, 800);
+        block_editor.present();
+        let start = std::time::Instant::now();
+        while start.elapsed() < Duration::from_millis(250) {
+            let context = gtk::glib::MainContext::default();
+            while context.pending() {
+                context.iteration(false);
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        let paintable = gtk::WidgetPaintable::new(Some(&block_editor));
+        let snapshot = gtk::Snapshot::new();
+        paintable.snapshot(
+            &snapshot,
+            block_editor.width() as f64,
+            block_editor.height() as f64,
+        );
+        block_editor
+            .renderer()
+            .unwrap()
+            .render_texture(snapshot.to_node().expect("monitor block frame"), None)
+            .save_to_png(format!(
+                "{}.monitor-block.png",
+                std::path::Path::new(&path).display()
+            ))
+            .unwrap();
+        assert!(
+            block_editor.width() <= 360,
+            "block editor width {}",
+            block_editor.width()
+        );
+    }
+    block_editor.destroy();
     let expected = state.borrow().session[BASELINE].clone();
     let snapshot = captured_workspace(&state.borrow()).unwrap();
     assert!(snapshot.legacy_session_origin_sha256.is_some());
@@ -1611,6 +1696,8 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     assert!(output.contains("execr-once = new startup application"));
     assert!(output.contains("border_size = 5"));
     assert!(output.contains("monitor = DP-1,transform,3 # rotation"));
+    assert!(output.contains("max_luminance = 1300 # luminance\r\n"));
+    assert!(output.contains("# keep HDR\r\n") && output.contains("} # close HDR\r\n"));
     assert_eq!(
         hyprland_editor_core::legacy_monitor::export(
             &hyprland_editor_core::legacy_monitor::inspect(&output)
@@ -1657,10 +1744,26 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     )
     .unwrap();
     let rebuilt = read_import(old_monitor_path, catalogue.clone(), BASELINE.into()).unwrap();
-    assert_eq!(rebuilt.monitors.len(), 5);
-    assert_eq!(rebuilt.monitors[4].id, "legacy-monitor-0");
-    assert_ne!(rebuilt.monitors[0].id, rebuilt.monitors[4].id);
+    assert_eq!(rebuilt.monitors.len(), 6);
+    assert_eq!(rebuilt.monitors[5].id, "legacy-monitor-0");
+    assert_ne!(rebuilt.monitors[0].id, rebuilt.monitors[5].id);
     assert!(!rebuilt.saved_json);
+    let mut previous_codec = snapshot.clone();
+    previous_codec.monitors.clear();
+    previous_codec.legacy_monitor_schema_sha256 = Some(hyprland_editor_core::lua::source_hash(
+        include_str!("../../../data/legacy-monitors-v1.json"),
+    ));
+    let previous_path = root.path().join("classic-codec.hye");
+    let previous_bytes = previous_codec.to_json(&catalogue).unwrap();
+    std::fs::write(&previous_path, &previous_bytes).unwrap();
+    let rebuilt = read_import(previous_path.clone(), catalogue.clone(), BASELINE.into()).unwrap();
+    assert_eq!(rebuilt.monitors.len(), 1);
+    assert_eq!(
+        rebuilt.monitors[0].legacy_operation,
+        Some(hyprland_editor_core::monitor::LegacyOperation::Block)
+    );
+    assert!(!rebuilt.saved_json);
+    assert_eq!(std::fs::read(previous_path).unwrap(), previous_bytes);
     let mut old = snapshot;
     old.legacy_session_origin_sha256 = None;
     old.legacy_session_schema_sha256 = None;

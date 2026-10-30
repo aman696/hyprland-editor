@@ -166,8 +166,10 @@ impl Workspace {
                 .is_none_or(|r| r.language != SourceLanguage::Legacy || r.origin.sha256 != *hash)
                 || self.source_graph.is_some()
                 || self.draft.version != crate::BASELINE
-                || self.legacy_monitor_schema_sha256.as_deref()
-                    != Some(&crate::legacy_monitor::schema_hash())
+                || !self
+                    .legacy_monitor_schema_sha256
+                    .as_deref()
+                    .is_some_and(|pin| crate::legacy_monitor::accepts_schema(pin, &self.monitors))
             {
                 return Err(
                     "Legacy monitor projection marker does not match its captured root".into(),
