@@ -121,6 +121,20 @@ fn read_import_for_review(
             .map_or(0, |doc| doc.report.diagnostics.len());
         let mut legacy_projection_changed = false;
         if let Some(doc) = &legacy {
+            if workspace.legacy_monitor_origin_sha256.is_none() {
+                let mut rebuilt = doc.monitors.rules.clone();
+                for (n, rule) in rebuilt.iter_mut().enumerate() {
+                    let mut serial = n;
+                    while workspace.monitors.iter().any(|old| old.id == rule.id) {
+                        rule.id = format!("rebuilt-monitor-{serial}");
+                        serial += 1;
+                    }
+                }
+                rebuilt.append(&mut workspace.monitors);
+                hyprland_editor_core::monitor::validate(&rebuilt, &workspace.draft.version)?;
+                workspace.monitors = rebuilt;
+                legacy_projection_changed = true;
+            }
             if workspace.legacy_session_origin_sha256.is_none() {
                 let mut entries = doc.session.draft.entries.clone();
                 entries.append(&mut workspace.session.entries);
@@ -131,7 +145,7 @@ fn read_import_for_review(
         }
         let saved_json = migration.is_none() && !legacy_projection_changed;
         return Ok(Imported { migration,graph,draft:workspace.draft,source,legacy,origin,saved_json,monitors:workspace.monitors,devices:workspace.devices,bindings:workspace.bindings,workspace_rules:workspace.workspace_rules,rules:workspace.rules,animations:workspace.animations,gestures:workspace.gestures,session:workspace.session,
-            message:format!("{} with {diagnostics} source diagnostics. Source snapshots were reparsed; recorded original paths were not opened. Desktop state is separate.", if saved_json { "Saved draft reopened" } else if legacy_projection_changed {"Legacy session view rebuilt from retained source; older separate session drafts appended for review. Save a new project copy"} else { "Rebuilt copy loaded; save it as a new private workspace" }) });
+            message:format!("{} with {diagnostics} source diagnostics. Source snapshots were reparsed; recorded original paths were not opened. Desktop state is separate.", if saved_json { "Saved draft reopened" } else if legacy_projection_changed {"Legacy views rebuilt from retained source; older separate drafts appended for review. Save a new project copy"} else { "Rebuilt copy loaded; save it as a new private workspace" }) });
     }
     let captured = if path
         .extension()
@@ -143,7 +157,7 @@ fn read_import_for_review(
     };
     match path.extension().and_then(|s|s.to_str()) {
         Some("json")=>Draft::from_json(&captured.content,&catalogue).map(|draft|Imported{migration:None,graph:None,draft,source:None,legacy:None,origin:None,monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),session:Default::default(),message:"Validated value-only draft loaded".into(),saved_json:true}),
-        Some("conf")=>super::legacy_source::Document::new(captured.content,&catalogue).map(|doc|Imported{migration:None,graph:None,message:format!("Retained {} scalar overrides and {} session entries; {} lines unresolved; {} repeated keys. Includes and variables are not evaluated. Review Source Copy includes supported scalar and session edits.",doc.report.draft.values.len(),doc.session.draft.entries.len(),doc.report.skipped.len(),doc.report.duplicate_keys.len()),draft:doc.report.draft.clone(),session:doc.session.draft.clone(),source:None,legacy:Some(doc),origin:Some(captured.identity),monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),saved_json:false}),
+        Some("conf")=>super::legacy_source::Document::new(captured.content,&catalogue).map(|doc|Imported{migration:None,graph:None,message:format!("Retained {} scalar overrides, {} session entries and {} monitor declarations; {} lines unresolved; {} repeated keys. Includes and variables are not evaluated. Review Source Copy includes supported scalar, session and monitor edits.",doc.report.draft.values.len(),doc.session.draft.entries.len(),doc.monitors.rules.len(),doc.report.skipped.len(),doc.report.duplicate_keys.len()),draft:doc.report.draft.clone(),session:doc.session.draft.clone(),monitors:doc.monitors.rules.clone(),source:None,legacy:Some(doc),origin:Some(captured.identity),devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),saved_json:false}),
         Some("lua")=>{
             let doc=parse_source(captured.content,version,&catalogue)?;
             let mut message=format!("Imported {} scalar declarations, {} monitor rules and {} device rules; {} diagnostics. Effective values are not inferred by executing Lua.",doc.report.draft.values.len(),doc.report.monitors.len(),doc.report.devices.len(),doc.report.diagnostics.len());
@@ -244,6 +258,10 @@ pub(super) fn captured_workspace(s: &super::State) -> Result<Workspace, String> 
             .source_origins
             .get(version)
             .ok_or("Legacy source identity missing")?;
+        snapshot.legacy_monitor_origin_sha256 =
+            Some(hyprland_editor_core::lua::source_hash(&doc.content));
+        snapshot.legacy_monitor_schema_sha256 =
+            Some(hyprland_editor_core::legacy_monitor::schema_hash());
         snapshot.legacy_session_origin_sha256 =
             Some(hyprland_editor_core::lua::source_hash(&doc.content));
         snapshot.legacy_session_schema_sha256 =
@@ -487,11 +505,11 @@ pub(super) fn connect_source_copy(
         if s.source_graphs.contains_key(&s.draft.version) {drop(s);super::project_copy::show(&window,&state);return;}
         if let Some(doc)=s.legacy_sources.get(&s.draft.version).cloned(){
             let snapshot=match captured_workspace(&s){Ok(snapshot)=>snapshot,Err(error)=>{drop(s);notice(&window,"Cannot prepare legacy copy",&error);return;}};
-            if !snapshot.monitors.is_empty() || !snapshot.devices.is_empty() || !snapshot.bindings.is_empty() || !snapshot.workspace_rules.is_empty() || !snapshot.rules.is_empty() || !snapshot.animations.declarations.is_empty() || !snapshot.gestures.declarations.is_empty() {
-                drop(s);notice(&window,"Structured legacy export pending","This source copy includes supported scalar and session edits. Other structured draft groups need their legacy codecs; save the project to retain them.");return;
+            if !snapshot.devices.is_empty() || !snapshot.bindings.is_empty() || !snapshot.workspace_rules.is_empty() || !snapshot.rules.is_empty() || !snapshot.animations.declarations.is_empty() || !snapshot.gestures.declarations.is_empty() {
+                drop(s);notice(&window,"Structured legacy export pending","This source copy includes supported scalar, session and monitor edits. Other structured draft groups need their legacy codecs; save the project to retain them.");return;
             }
-            let draft=s.draft.clone();let session=snapshot.session;let generation=s.generation;drop(s);let state=state.clone();let win=window.downgrade();let button=button.downgrade();if let Some(button)=button.upgrade(){button.set_sensitive(false);}
-            background(move||doc.edited_with_session(&draft,&session),move|result|{
+            let draft=s.draft.clone();let session=snapshot.session;let monitors=snapshot.monitors;let generation=s.generation;drop(s);let state=state.clone();let win=window.downgrade();let button=button.downgrade();if let Some(button)=button.upgrade(){button.set_sensitive(false);}
+            background(move||doc.edited_with_session(&draft,&session,&monitors),move|result|{
                 if let Some(button)=button.upgrade(){button.set_sensitive(true);}let Some(win)=win.upgrade()else{return;};if state.borrow().generation!=generation{notice(&win,"Draft changed","The draft changed while the copy was prepared. Review again to use the current edits.");return;}
                 match result{Ok(source)=>{super::text_export::review_legacy(&win,source);},Err(error)=>notice(&win,"Cannot prepare legacy copy",&error)}
             });return;
@@ -1460,11 +1478,19 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     let root = super::test_support::TempDir::new("legacy-session-ui");
     let original = root.path().join("original.conf");
     let marker = root.path().join("never-run");
-    let source=format!("# retained café\r\nenv = GTK_THEME,Nord # environment\r\nexec-once = touch {} # startup\r\npermission = ^/usr/bin/application$,screencopy,ask # policy\r\ngeneral:border_size = 2\r\nexec = $unresolved\r\nsource = missing.conf\r\n",marker.display());
+    let source=format!("# retained café\r\nenv = GTK_THEME,Nord # environment\r\nexec-once = touch {} # startup\r\npermission = ^/usr/bin/application$,screencopy,ask # policy\r\ngeneral:border_size = 2\r\nmonitor = DP-1,2560x1440@144,0x0,1 # display\r\nmonitor = HDMI-A-1,disable\r\nmonitor = DP-1,transform,1 # rotation\r\nmonitor = DP-1,addreserved,10,20,30,40 # reserved\r\nexec = $unresolved\r\nsource = missing.conf\r\n",marker.display());
     std::fs::write(&original, &source).unwrap();
     let catalogue = hyprland_editor_core::catalogue();
     let imported = read_import(original.clone(), catalogue.clone(), BASELINE.into()).unwrap();
     assert_eq!(imported.session.entries.len(), 3);
+    assert_eq!(imported.monitors.len(), 4);
+    let worker::Response::LegacyParsed(parsed) = worker::run(worker::Request::ParseLegacy {
+        source: source.clone(),
+    })
+    .unwrap() else {
+        panic!("wrong legacy parser response")
+    };
+    assert_eq!(parsed.monitors.rules, imported.monitors);
     std::fs::remove_file(&original).unwrap();
     let state = super::initial_state();
     let status = gtk::Label::new(None);
@@ -1491,6 +1517,63 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     button(window.upcast_ref(), "Update Entry").emit_clicked();
     wait(|| state.borrow().generation != epoch);
     window.destroy();
+    let monitors = super::monitors::show(parent, &state, &status);
+    let rule: gtk::DropDown = named(monitors.upcast_ref(), "monitor-rule");
+    rule.set_selected(2);
+    let operation: gtk::DropDown = named(monitors.upcast_ref(), "monitor-legacy-operation");
+    assert_eq!(operation.selected(), 2);
+    let fields: gtk::DropDown = named(monitors.upcast_ref(), "monitor-field");
+    assert_eq!(fields.model().unwrap().n_items(), 1);
+    let transform: gtk::DropDown = named(monitors.upcast_ref(), "monitor-transform");
+    transform.set_selected(3);
+    button(monitors.upcast_ref(), "Update Monitor Draft").emit_clicked();
+    assert_eq!(
+        state.borrow().monitors[BASELINE][2].fields["transform"],
+        Value::Int(3)
+    );
+    // Operation conversion is explicit and undo restores every field.
+    rule.set_selected(0);
+    let original_rule = state.borrow().monitors[BASELINE][0].clone();
+    operation.set_selected(3);
+    button(monitors.upcast_ref(), "Change Monitor Operation").emit_clicked();
+    assert_eq!(
+        state.borrow().monitors[BASELINE][0].legacy_operation,
+        Some(hyprland_editor_core::monitor::LegacyOperation::Reserved)
+    );
+    assert_eq!(fields.model().unwrap().n_items(), 2);
+    button(monitors.upcast_ref(), "Undo").emit_clicked();
+    assert_eq!(state.borrow().monitors[BASELINE][0], original_rule);
+    rule.set_selected(2);
+    if let Some(path) = std::env::var_os("HYPRLAND_EDITOR_TEST_CAPTURE") {
+        monitors.set_default_size(360, 800);
+        monitors.present();
+        let start = std::time::Instant::now();
+        while start.elapsed() < Duration::from_millis(250) {
+            let context = gtk::glib::MainContext::default();
+            while context.pending() {
+                context.iteration(false);
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        let paintable = gtk::WidgetPaintable::new(Some(&monitors));
+        let snapshot = gtk::Snapshot::new();
+        paintable.snapshot(&snapshot, monitors.width() as f64, monitors.height() as f64);
+        monitors
+            .renderer()
+            .unwrap()
+            .render_texture(snapshot.to_node().expect("legacy monitor frame"), None)
+            .save_to_png(format!(
+                "{}.legacy-monitors.png",
+                std::path::Path::new(&path).display()
+            ))
+            .unwrap();
+        assert!(
+            monitors.width() <= 360,
+            "legacy monitor width {}",
+            monitors.width()
+        );
+    }
+    monitors.destroy();
     {
         let mut s = state.borrow_mut();
         s.remember("general:border_size").unwrap();
@@ -1502,10 +1585,13 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     let snapshot = captured_workspace(&state.borrow()).unwrap();
     assert!(snapshot.legacy_session_origin_sha256.is_some());
     assert!(snapshot.legacy_session_schema_sha256.is_some());
+    assert!(snapshot.legacy_monitor_schema_sha256.is_some());
+    let expected_monitors = state.borrow().monitors[BASELINE].clone();
     let saved = root.path().join("current.hye");
     std::fs::write(&saved, snapshot.to_json(&catalogue).unwrap()).unwrap();
     let imported = read_import(saved, catalogue.clone(), BASELINE.into()).unwrap();
     assert_eq!(imported.session, expected);
+    assert_eq!(imported.monitors, expected_monitors);
     assert!(imported.saved_json);
     let copy = gtk::Button::new();
     connect_source_copy(&copy, parent, &state);
@@ -1524,6 +1610,16 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     let output = buffer.text(&buffer.start_iter(), &buffer.end_iter(), false);
     assert!(output.contains("execr-once = new startup application"));
     assert!(output.contains("border_size = 5"));
+    assert!(output.contains("monitor = DP-1,transform,3 # rotation"));
+    assert_eq!(
+        hyprland_editor_core::legacy_monitor::export(
+            &hyprland_editor_core::legacy_monitor::inspect(&output)
+                .unwrap()
+                .rules
+        )
+        .unwrap(),
+        hyprland_editor_core::legacy_monitor::export(&expected_monitors).unwrap()
+    );
     assert!(output.contains("# startup\r\n"));
     assert!(output.contains("exec = $unresolved\r\n"));
     assert!(output.contains("source = missing.conf\r\n"));
@@ -1534,6 +1630,7 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
         .borrow_mut()
         .replace_session(Session::default())
         .unwrap();
+    state.borrow_mut().replace_monitors(vec![]).unwrap();
     let empty = root.path().join("empty.hye");
     std::fs::write(
         &empty,
@@ -1545,9 +1642,25 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     .unwrap();
     let reopened = read_import(empty, catalogue.clone(), BASELINE.into()).unwrap();
     assert!(reopened.session.is_empty());
+    assert!(reopened.monitors.is_empty());
     assert!(reopened.saved_json);
     // Older projects had separate session drafts, so retain source entries and
     // append those older drafts for explicit review rather than replacing them.
+    let mut older_monitor = snapshot.clone();
+    older_monitor.legacy_monitor_origin_sha256 = None;
+    older_monitor.legacy_monitor_schema_sha256 = None;
+    older_monitor.monitors = vec![hyprland_editor_core::monitor::Rule::new("legacy-monitor-0")];
+    let old_monitor_path = root.path().join("old-monitors.hye");
+    std::fs::write(
+        &old_monitor_path,
+        older_monitor.to_json(&catalogue).unwrap(),
+    )
+    .unwrap();
+    let rebuilt = read_import(old_monitor_path, catalogue.clone(), BASELINE.into()).unwrap();
+    assert_eq!(rebuilt.monitors.len(), 5);
+    assert_eq!(rebuilt.monitors[4].id, "legacy-monitor-0");
+    assert_ne!(rebuilt.monitors[0].id, rebuilt.monitors[4].id);
+    assert!(!rebuilt.saved_json);
     let mut old = snapshot;
     old.legacy_session_origin_sha256 = None;
     old.legacy_session_schema_sha256 = None;

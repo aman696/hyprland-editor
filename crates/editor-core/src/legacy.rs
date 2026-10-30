@@ -1,6 +1,9 @@
 //! Retained legacy source and lossless edits to its supported scalar projection.
 //! No includes, variable expansion or commands are evaluated here.
-use crate::{import, legacy_session, session, Draft, Setting, Value, BASELINE, MAX_DOCUMENT_BYTES};
+use crate::{
+    import, legacy_monitor, legacy_session, session, Draft, Setting, Value, BASELINE,
+    MAX_DOCUMENT_BYTES,
+};
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeSet, ops::Range};
 
@@ -9,6 +12,7 @@ pub struct Document {
     pub content: String,
     pub report: import::ImportReport,
     pub session: legacy_session::Report,
+    pub monitors: legacy_monitor::Report,
 }
 
 struct Assignment {
@@ -135,6 +139,7 @@ pub struct Report {
     pub source_sha256: String,
     pub scalar: import::ImportReport,
     pub session: legacy_session::Report,
+    pub monitors: legacy_monitor::Report,
 }
 impl Document {
     pub fn into_report(self) -> Report {
@@ -142,6 +147,7 @@ impl Document {
             source_sha256: crate::lua::source_hash(&self.content),
             scalar: self.report,
             session: self.session,
+            monitors: self.monitors,
         }
     }
     pub fn edited_with_session(
@@ -150,8 +156,18 @@ impl Document {
         session: &session::Draft,
         catalogue: &[Setting],
     ) -> Result<String, String> {
+        self.edited_with_monitors(draft, session, &self.monitors.rules, catalogue)
+    }
+    pub fn edited_with_monitors(
+        &self,
+        draft: &Draft,
+        session: &session::Draft,
+        monitors: &[crate::monitor::Rule],
+        catalogue: &[Setting],
+    ) -> Result<String, String> {
         let scalars = self.edited_copy(draft, catalogue)?;
-        let output = legacy_session::edited_copy(&scalars, session)?;
+        let sessions = legacy_session::edited_copy(&scalars, session)?;
+        let output = legacy_monitor::edited_copy(&sessions, monitors)?;
         let final_report = import::legacy(&output, catalogue)?;
         if final_report.draft.values.len() != draft.values.len()
             || draft
@@ -167,10 +183,12 @@ impl Document {
     pub fn new(content: String, catalogue: &[Setting]) -> Result<Self, String> {
         let report = import::legacy(&content, catalogue)?;
         let session = legacy_session::inspect(&content)?;
+        let monitors = legacy_monitor::inspect(&content)?;
         Ok(Self {
             content,
             report,
             session,
+            monitors,
         })
     }
 

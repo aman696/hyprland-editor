@@ -1,10 +1,13 @@
 //! Captured legacy bytes and restricted projections, with no restored path access.
-use hyprland_editor_core::{import, legacy_session, session, Draft, Setting, BASELINE};
+use hyprland_editor_core::{
+    import, legacy_monitor, legacy_session, session, Draft, Setting, BASELINE,
+};
 #[derive(Debug)]
 pub(super) struct Document {
     pub content: String,
     pub report: import::ImportReport,
     pub session: legacy_session::Report,
+    pub monitors: legacy_monitor::Report,
 }
 impl Document {
     pub fn new(content: String, catalogue: &[Setting]) -> Result<Self, String> {
@@ -18,7 +21,10 @@ impl Document {
         #[cfg(test)]
         let parsed =
             hyprland_editor_core::legacy::Document::new(content.clone(), catalogue)?.into_report();
-        if parsed.session.schema_sha256 != legacy_session::schema_hash()
+        if parsed.monitors.schema_sha256 != legacy_monitor::schema_hash()
+            || parsed.monitors.source_sha256 != parsed.source_sha256
+            || parsed.monitors.sites.len() != parsed.monitors.rules.len()
+            || parsed.session.schema_sha256 != legacy_session::schema_hash()
             || parsed.source_sha256 != hyprland_editor_core::lua::source_hash(&content)
             || parsed.session.source_sha256 != parsed.source_sha256
             || parsed.scalar.draft.version != BASELINE
@@ -28,25 +34,30 @@ impl Document {
         }
         parsed.scalar.draft.validate(catalogue)?;
         parsed.session.draft.validate(BASELINE)?;
+        hyprland_editor_core::monitor::validate(&parsed.monitors.rules, BASELINE)?;
         let mut report = parsed.scalar;
-        report
-            .skipped
-            .retain(|line| !parsed.session.sites.iter().any(|site| site.line == *line));
+        report.skipped.retain(|line| {
+            !parsed.session.sites.iter().any(|site| site.line == *line)
+                && !parsed.monitors.sites.iter().any(|site| site.line == *line)
+        });
         Ok(Self {
             content,
             report,
             session: parsed.session,
+            monitors: parsed.monitors,
         })
     }
     pub fn edited_with_session(
         &self,
         draft: &Draft,
         session: &session::Draft,
+        monitors: &[hyprland_editor_core::monitor::Rule],
     ) -> Result<String, String> {
         match super::worker::run(super::worker::Request::CopyLegacy {
             source: self.content.clone(),
             draft: draft.clone(),
             session: session.clone(),
+            monitors: monitors.to_vec(),
         })? {
             super::worker::Response::Copy(source) => Ok(source),
             _ => Err("Unexpected legacy copy response".into()),

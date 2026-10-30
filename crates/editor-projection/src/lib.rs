@@ -277,6 +277,15 @@ pub fn compile(workspace: &Workspace, scenario: &Scenario) -> Result<Projection,
     builder.append("})\n")?;
     let scalar_span = scalar_start..builder.lua.len();
     for original in &workspace.monitors {
+        if original.legacy_operation.is_some() {
+            builder.record(
+                format!("monitor/{}", original.id),
+                Fidelity::Unsupported,
+                "Legacy monitor operations require explicit preview conversion and remain omitted",
+            )?;
+            continue;
+        }
+
         let Some(target) = scenario.monitor_targets.get(&original.id) else {
             builder.record(
                 format!("monitor/{}", original.id),
@@ -496,6 +505,7 @@ fn schema_pins(workspace: &Workspace) -> BTreeMap<String, String> {
     BTreeMap::from([
         ("scalar", workspace.schema.catalogue_sha256.clone()),
         ("monitor", monitor::schema_hash()),
+        ("legacy-monitor", editor_core::legacy_monitor::schema_hash()),
         ("device", editor_core::device::schema_hash()),
         ("action", action::schema_hash()),
         ("binding", editor_core::binding::schema_hash()),

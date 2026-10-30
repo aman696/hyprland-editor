@@ -78,6 +78,10 @@ pub struct Workspace {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub session_schema_sha256: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy_monitor_origin_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy_monitor_schema_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub legacy_session_origin_sha256: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub legacy_session_schema_sha256: Option<String>,
@@ -112,6 +116,8 @@ impl Workspace {
             gestures: Default::default(),
             session: Default::default(),
             session_schema_sha256: None,
+            legacy_monitor_origin_sha256: None,
+            legacy_monitor_schema_sha256: None,
             legacy_session_origin_sha256: None,
             legacy_session_schema_sha256: None,
             gesture_schema_sha256: None,
@@ -153,6 +159,28 @@ impl Workspace {
             && self.legacy_session_origin_sha256.is_none()
         {
             return Err("Legacy session schema has no captured source marker".into());
+        }
+        if let Some(hash) = &self.legacy_monitor_origin_sha256 {
+            if self
+                .root()
+                .is_none_or(|r| r.language != SourceLanguage::Legacy || r.origin.sha256 != *hash)
+                || self.source_graph.is_some()
+                || self.draft.version != crate::BASELINE
+                || self.legacy_monitor_schema_sha256.as_deref()
+                    != Some(&crate::legacy_monitor::schema_hash())
+            {
+                return Err(
+                    "Legacy monitor projection marker does not match its captured root".into(),
+                );
+            }
+        }
+        if (self.legacy_monitor_schema_sha256.is_some()
+            || self.monitors.iter().any(|r| r.legacy_operation.is_some()))
+            && self.legacy_monitor_origin_sha256.is_none()
+        {
+            return Err(
+                "Legacy monitor drafts require their captured source and codec identities".into(),
+            );
         }
         self.draft.validate(catalogue)?;
         self.animations.validate(&self.draft.version)?;

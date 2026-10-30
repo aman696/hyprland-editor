@@ -236,7 +236,7 @@ fn every_family_projects_in_order_with_explicit_synthetic_identity_and_fidelity(
         let first = projection.lua().find("hl.curve(").unwrap();
         let second = projection.lua().find("hl.animation(").unwrap();
         assert!(first < second);
-        assert_eq!(projection.report().schema_pins.len(), 12);
+        assert_eq!(projection.report().schema_pins.len(), 13);
         assert_eq!(
             projection.identity(),
             compile(&workspace, &scenario).unwrap().identity()
@@ -396,4 +396,43 @@ fn session_commands_environment_and_permission_payloads_are_omitted_and_reported
         assert!(!projection.lua.contains("hl.exec_cmd"));
         assert!(!projection.lua.contains("hl.permission"));
     }
+}
+#[test]
+fn legacy_monitor_operations_never_become_implicitly_converted_preview_commands() {
+    use editor_core::{legacy_monitor, workspace::SourceLanguage};
+    let source = "monitor = PRIVATE_OUTPUT,transform,1\n";
+    let hash = editor_core::lua::source_hash(source);
+    let identity = SourceIdentity {
+        selected_path: b"/private/config.conf".to_vec(),
+        resolved_path: None,
+        links: vec![],
+        device: 1,
+        inode: 2,
+        owner: 1000,
+        mode: 0o100600,
+        size: source.len() as u64,
+        modified_seconds: 0,
+        modified_nanoseconds: 0,
+        changed_seconds: 0,
+        changed_nanoseconds: 0,
+        sha256: hash.clone(),
+        recorded_ownership: RecordedOwnership::UserOwned,
+    };
+    let mut workspace = workspace(BASELINE)
+        .with_root(source.into(), identity)
+        .with_monitors(legacy_monitor::inspect(source).unwrap().rules);
+    workspace.sources[0].language = SourceLanguage::Legacy;
+    workspace.legacy_monitor_origin_sha256 = Some(hash);
+    workspace.legacy_monitor_schema_sha256 = Some(legacy_monitor::schema_hash());
+    let projection = compile(&workspace, &Scenario::default()).unwrap();
+    assert!(!projection.lua().contains("PRIVATE_OUTPUT"));
+    assert!(!serde_json::to_string(projection.report())
+        .unwrap()
+        .contains("PRIVATE_OUTPUT"));
+    assert!(projection
+        .report()
+        .entries
+        .iter()
+        .any(|entry| entry.subject == "monitor/legacy-monitor-0"
+            && entry.fidelity == Fidelity::Unsupported));
 }

@@ -2,7 +2,7 @@
 use super::{controls, label, presentation, Shared};
 use adw::prelude::*;
 use hyprland_editor_core::{
-    monitor::{self, Mode, Modeline, Output, Position, Rule},
+    monitor::{self, LegacyOperation, Mode, Modeline, Output, Position, Rule},
     Setting, Value,
 };
 use std::{
@@ -416,6 +416,7 @@ pub(super) fn builder(
                 ],
                 index,
             );
+            picker.set_widget_name("monitor-transform");
             Box::new(move || Ok(Value::Int(i64::from(picker.selected()))))
         }
         "vrr" => {
@@ -625,7 +626,11 @@ pub(super) fn connect(
         }
     });
 }
-fn show(window: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) -> adw::Window {
+pub(super) fn show(
+    window: &adw::ApplicationWindow,
+    state: &Shared,
+    status: &gtk::Label,
+) -> adw::Window {
     show_with_outputs(
         window,
         state,
@@ -658,7 +663,7 @@ fn show_with_outputs(
     ] {
         setter(content.upcast_ref(), 16);
     }
-    content.append(&label("Arrange outputs and edit one field at a time. This layout is a draft; automatic modes and scaling are schematic until their dimensions are known."));
+    content.append(&label("Select a monitor rule and edit its fields. Changes stay in your draft until you export them."));
     let canvas = gtk::DrawingArea::builder()
         .content_height(180)
         .hexpand(true)
@@ -701,13 +706,32 @@ fn show_with_outputs(
     target_details.set_widget_name("monitor-target-section");
     target_details.set_child(Some(&target));
     content.append(&target_details);
+    let legacy = state
+        .borrow()
+        .legacy_sources
+        .contains_key(&state.borrow().draft.version);
+    let operation_box = gtk::Box::new(gtk::Orientation::Vertical, 8);
+    let operation = choices(
+        &operation_box,
+        &LegacyOperation::ALL.map(LegacyOperation::label),
+        0,
+    );
+    operation.set_widget_name("monitor-legacy-operation");
+    let operation_save = gtk::Button::with_label("Change Monitor Operation");
+    operation_save.set_widget_name("monitor-legacy-operation-save");
+    operation_box.append(&operation_save);
+    let operation_details=gtk::Expander::builder().label("About Monitor Operations").child(&label("Changing operation keeps compatible fields. Undo restores the previous draft. Transform and reserved-space updates affect an existing matching rule; defining a monitor rule replaces its configuration.")).build();
+    operation_box.append(&operation_details);
+    operation_box.set_visible(legacy);
+    content.append(&operation_box);
     let fields = monitor::catalogue(&state.borrow().draft.version);
     let names: Vec<_> = fields
         .iter()
         .map(|s| presentation::setting_name(&s.id))
         .collect();
     let refs: Vec<_> = names.iter().map(String::as_str).collect();
-    let property = gtk::DropDown::from_strings(&refs);
+    let property_model = gtk::StringList::new(&refs);
+    let property = gtk::DropDown::builder().model(&property_model).build();
     compact(&property);
     property.set_widget_name("monitor-field");
     content.append(&property);
@@ -716,7 +740,11 @@ fn show_with_outputs(
     let feedback = label("");
     feedback.set_widget_name("monitor-feedback");
     content.append(&feedback);
-    let review = gtk::Button::with_label("Review Monitor Lua");
+    let review = gtk::Button::with_label(if legacy {
+        "Review Monitor Config"
+    } else {
+        "Review Monitor Lua"
+    });
     content.append(&review);
     root.append(
         &gtk::ScrolledWindow::builder()
@@ -734,6 +762,8 @@ fn show_with_outputs(
         let selected = selected.clone();
         let property = property.clone();
         let fields = fields.clone();
+        let property_model = property_model.clone();
+        let operation = operation.clone();
         let model = rule_model.clone();
         let target_type = target_type.clone();
         let target_name = target_name.clone();
@@ -798,8 +828,40 @@ fn show_with_outputs(
                 }
             }
             target_name.set_sensitive(target_type.selected() != 0);
+            let chosen_operation = rules.get(index).and_then(|r| r.legacy_operation);
+            operation.set_selected(
+                chosen_operation
+                    .and_then(|op| LegacyOperation::ALL.iter().position(|v| *v == op))
+                    .unwrap_or(0) as u32,
+            );
+            let eligible: Vec<_> = fields
+                .iter()
+                .filter(|field| chosen_operation.is_none_or(|op| op.accepts(&field.lua_key)))
+                .collect();
+            canvas.set_visible(chosen_operation.is_none_or(|op| op == LegacyOperation::Replace));
+            property.set_visible(eligible.len() > 1);
+            let field_names: Vec<_> = eligible
+                .iter()
+                .map(|field| presentation::setting_name(&field.id))
+                .collect();
+            let changed = property_model.n_items() as usize != field_names.len()
+                || field_names.iter().enumerate().any(|(n, name)| {
+                    property_model.string(n as u32).as_deref() != Some(name.as_str())
+                });
+            if changed {
+                let old = property_model.string(property.selected());
+                property_model.splice(
+                    0,
+                    property_model.n_items(),
+                    &field_names.iter().map(String::as_str).collect::<Vec<_>>(),
+                );
+                property.set_selected(
+                    old.and_then(|old| field_names.iter().position(|name| name == old.as_str()))
+                        .unwrap_or(0) as u32,
+                );
+            }
             if let (Some(win), Some(setting)) =
-                (win.upgrade(), fields.get(property.selected() as usize))
+                (win.upgrade(), eligible.get(property.selected() as usize))
             {
                 edit_field(
                     &panel,
@@ -868,7 +930,11 @@ fn show_with_outputs(
                         };
                         rule.clone()
                     } else {
-                        Rule::new(&id)
+                        let mut rule = Rule::new(&id);
+                        if legacy {
+                            rule.legacy_operation = Some(LegacyOperation::Replace);
+                        }
+                        rule
                     };
                     rule.id = id;
                     rules.push(rule);
@@ -913,6 +979,28 @@ fn show_with_outputs(
             refresh_c();
         }
     });
+    {
+        let state = state.clone();
+        let status = status.clone();
+        let feedback = feedback.clone();
+        let selected = selected.clone();
+        let operation = operation.clone();
+        let refresh = refresh.clone();
+        operation_save.connect_clicked(move |_| {
+            let mut rules=current(&state);
+            let Some(rule)=rules.get_mut(selected.selected() as usize) else {return;};
+            let Some(op)=LegacyOperation::ALL.get(operation.selected() as usize).copied() else {return;};
+            rule.legacy_operation=Some(op);
+            rule.fields.retain(|key,_|op.accepts(key));
+            match op {
+                LegacyOperation::Disable=>{rule.fields.insert("disabled".into(),Value::Bool(true));}
+                LegacyOperation::Transform=>{rule.fields.entry("transform".into()).or_insert(Value::Int(0));}
+                LegacyOperation::Reserved=>{if !rule.fields.contains_key("reserved_area"){rule.fields.entry("reserved".into()).or_insert(Value::CssGap([0;4]));}}
+                LegacyOperation::Replace=>{}
+            }
+            if commit(&state,rules,&status,&feedback) {refresh();feedback.set_text("Monitor operation updated. Incompatible fields were removed; Undo restores the previous draft.");}
+        });
+    }
     let undo = gtk::Button::with_label("Undo");
     let ordering = gtk::Box::new(gtk::Orientation::Horizontal, 6);
     for b in [&up, &down, &undo] {
@@ -943,11 +1031,11 @@ fn show_with_outputs(
     let win = dialog.downgrade();
     review.connect_clicked(move|_|{
         let s=state_c.borrow();let rules=s.monitors.get(&s.draft.version).map(Vec::as_slice).unwrap_or(&[]);
-        let text=match monitor::export_lua(rules,&s.draft.version){Ok(text)=>text,Err(error)=>{if let Some(win)=win.upgrade(){let d=adw::MessageDialog::new(Some(&win),Some("Invalid monitor draft"),Some(&error));d.add_response("close","Close");d.present();}return;}};
-        let Some(win)=win.upgrade()else{return;};let review=adw::Window::builder().title("Review Monitor Lua").transient_for(&win).modal(true).default_width(680).default_height(500).build();
+        let text=match if legacy {hyprland_editor_core::legacy_monitor::export(rules)}else{monitor::export_lua(rules,&s.draft.version)}{Ok(text)=>text,Err(error)=>{if let Some(win)=win.upgrade(){let d=adw::MessageDialog::new(Some(&win),Some("Invalid monitor draft"),Some(&error));d.add_response("close","Close");d.present();}return;}};
+        let Some(win)=win.upgrade()else{return;};let review=adw::Window::builder().title(if legacy {"Review Monitor Config"}else{"Review Monitor Lua"}).transient_for(&win).modal(true).default_width(680).default_height(500).build();
         let box_=gtk::Box::new(gtk::Orientation::Vertical,12);box_.append(&label("These are ordered draft monitor declarations. Copying does not apply them. They must not replace a full configuration."));
         let view=gtk::TextView::builder().editable(false).monospace(true).wrap_mode(gtk::WrapMode::WordChar).build();view.buffer().set_text(&text);box_.append(&gtk::ScrolledWindow::builder().child(&view).vexpand(true).build());
-        let copy=gtk::Button::with_label("Copy Reviewed Monitor Lua");box_.append(&copy);let target=review.downgrade();copy.connect_clicked(move|_|{if let Some(win)=target.upgrade(){win.clipboard().set_text(&text);}});review.set_content(Some(&box_));review.present();
+        let copy=gtk::Button::with_label(if legacy {"Copy Reviewed Monitor Config"}else{"Copy Reviewed Monitor Lua"});box_.append(&copy);let target=review.downgrade();copy.connect_clicked(move|_|{if let Some(win)=target.upgrade(){win.clipboard().set_text(&text);}});review.set_content(Some(&box_));review.present();
     });
     let geometry = Rc::new(RefCell::new(Vec::<(String, f64, f64, f64, f64, f64)>::new()));
     let state_c = state.clone();
