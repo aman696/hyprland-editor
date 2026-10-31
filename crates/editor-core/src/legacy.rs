@@ -14,6 +14,7 @@ pub struct Document {
     pub session: legacy_session::Report,
     pub monitors: legacy_monitor::Report,
     pub bindings: crate::legacy_binding::Report,
+    pub workspaces: crate::legacy_workspace::Report,
 }
 
 struct Assignment {
@@ -142,6 +143,7 @@ pub struct Report {
     pub session: legacy_session::Report,
     pub monitors: legacy_monitor::Report,
     pub bindings: crate::legacy_binding::Report,
+    pub workspaces: crate::legacy_workspace::Report,
 }
 impl Document {
     pub fn into_report(self) -> Report {
@@ -151,6 +153,7 @@ impl Document {
             session: self.session,
             monitors: self.monitors,
             bindings: self.bindings,
+            workspaces: self.workspaces,
         }
     }
     pub fn edited_with_session(
@@ -178,10 +181,29 @@ impl Document {
         bindings: &crate::legacy_binding::Draft,
         catalogue: &[Setting],
     ) -> Result<String, String> {
+        self.edited_with_workspaces(
+            draft,
+            session,
+            monitors,
+            bindings,
+            &self.workspaces.rules,
+            catalogue,
+        )
+    }
+    pub fn edited_with_workspaces(
+        &self,
+        draft: &Draft,
+        session: &session::Draft,
+        monitors: &[crate::monitor::Rule],
+        bindings: &crate::legacy_binding::Draft,
+        workspaces: &[crate::workspace_rule::Rule],
+        catalogue: &[Setting],
+    ) -> Result<String, String> {
         let scalars = self.edited_copy(draft, catalogue)?;
         let sessions = legacy_session::edited_copy(&scalars, session)?;
         let output = legacy_monitor::edited_copy(&sessions, monitors)?;
         let output = crate::legacy_binding::edited_copy(&output, bindings)?;
+        let output = crate::legacy_workspace::edited_copy(&output, workspaces)?;
         // env with unspecified versus explicitly false activation both encode
         // as the same native directive. Compare the native projection, while
         // private projects retain that presence distinction.
@@ -196,6 +218,11 @@ impl Document {
             != session_projection(session)?
             || legacy_monitor::export(&legacy_monitor::inspect(&output)?.rules)?
                 != legacy_monitor::export(monitors)?
+            || crate::legacy_workspace::export(&crate::legacy_workspace::inspect(&output)?.rules)?
+                != crate::legacy_workspace::export(workspaces)?
+            || crate::legacy_binding::export(
+                &crate::legacy_binding::inspect_mode(&output, bindings.local_variables)?.draft,
+            )? != crate::legacy_binding::export(bindings)?
         {
             return Err(
                 "Binding edits changed another source projection; no copy was produced".into(),
@@ -225,12 +252,14 @@ impl Document {
         let session = legacy_session::inspect(&content)?;
         let monitors = legacy_monitor::inspect(&content)?;
         let bindings = crate::legacy_binding::inspect_mode(&content, local_variables)?;
+        let workspaces = crate::legacy_workspace::inspect(&content)?;
         Ok(Self {
             content,
             report,
             session,
             monitors,
             bindings,
+            workspaces,
         })
     }
 

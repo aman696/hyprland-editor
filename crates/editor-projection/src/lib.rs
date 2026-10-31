@@ -333,6 +333,10 @@ pub fn compile(workspace: &Workspace, scenario: &Scenario) -> Result<Projection,
         builder.append(&projected.export_lua(version)?)?;
     }
     for original in &workspace.workspace_rules {
+        if original.legacy {
+            builder.record(format!("workspace/{}", original.id), Fidelity::OmittedUntrusted, "Native workspace declaration requires explicit preview conversion; host references and hooks omitted")?;
+            continue;
+        }
         let mut projected = original.clone();
         for key in ["on_created_empty", "monitor"] {
             if projected.fields.remove(key).is_some() {
@@ -503,6 +507,7 @@ pub fn model_sha256() -> String {
         include_str!("../../editor-core/src/monitor.rs"),
         include_str!("../../editor-core/src/rule.rs"),
         include_str!("../../editor-core/src/workspace_rule.rs"),
+        include_str!("../../editor-core/src/legacy_workspace.rs"),
         include_str!("../../editor-core/src/session.rs"),
         include_str!("../../../data/session.json")
     ))
@@ -513,6 +518,10 @@ fn schema_pins(workspace: &Workspace) -> BTreeMap<String, String> {
         ("monitor", monitor::schema_hash()),
         ("legacy-monitor", editor_core::legacy_monitor::schema_hash()),
         ("legacy-binding", editor_core::legacy_binding::schema_hash()),
+        (
+            "legacy-workspace",
+            editor_core::legacy_workspace::schema_hash(),
+        ),
         ("device", editor_core::device::schema_hash()),
         ("action", action::schema_hash()),
         ("binding", editor_core::binding::schema_hash()),

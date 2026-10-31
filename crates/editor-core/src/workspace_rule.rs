@@ -26,6 +26,8 @@ pub fn schema_hash() -> String {
 pub struct Rule {
     pub id: String,
     pub selector: String,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub legacy: bool,
     #[serde(default)]
     pub enabled: Option<bool>,
     #[serde(default, deserialize_with = "crate::unique_values")]
@@ -38,6 +40,7 @@ impl Rule {
         Self {
             id: id.into(),
             selector: "1".into(),
+            legacy: false,
             enabled: None,
             fields: BTreeMap::new(),
             layout_options: BTreeMap::new(),
@@ -64,6 +67,17 @@ impl Rule {
         }
         if self.fields.len() > 15 || self.layout_options.len() > 128 {
             return Err("Too many workspace fields or layout options".into());
+        }
+        if self.legacy
+            && (version != BASELINE
+                || self.enabled.is_some()
+                || self.fields.contains_key("float_gaps")
+                || self
+                    .layout_options
+                    .values()
+                    .any(|v| !matches!(v, Value::String(_))))
+        {
+            return Err("Native workspace rules require baseline fields, no enabled override, and string layout options".into());
         }
         let fields = catalogue(version);
         for (key, value) in &self.fields {
@@ -92,6 +106,9 @@ impl Rule {
     }
     pub fn export_lua(&self, version: &str) -> Result<String, String> {
         self.validate(version)?;
+        if self.legacy {
+            return Err("Native workspace declarations require an explicit Lua conversion".into());
+        }
         let mut text = format!(
             "hl.workspace_rule({{ workspace = {}",
             quote_lua(&self.selector)
@@ -143,7 +160,8 @@ pub fn export_lua(rules: &[Rule], version: &str) -> Result<String, String> {
 pub fn same_declarations(a: &[Rule], b: &[Rule]) -> bool {
     a.len() == b.len()
         && a.iter().zip(b).all(|(a, b)| {
-            a.selector == b.selector
+            a.legacy == b.legacy
+                && a.selector == b.selector
                 && a.enabled == b.enabled
                 && a.fields == b.fields
                 && a.layout_options == b.layout_options
@@ -156,7 +174,7 @@ pub fn consolidate(rules: &[Rule]) -> Vec<Rule> {
     for rule in rules {
         if let Some(existing) = result
             .iter_mut()
-            .find(|r| r.is_enabled() && r.selector == rule.selector)
+            .find(|r| r.legacy == rule.legacy && r.is_enabled() && r.selector == rule.selector)
         {
             for (key, value) in &rule.fields {
                 if key == "monitor" && *value == Value::String(String::new()) {
@@ -176,11 +194,11 @@ pub fn findings(rules: &[Rule]) -> Vec<String> {
     let mut active = BTreeSet::new();
     let mut messages = vec![];
     for rule in rules {
-        if active.contains(&rule.selector) {
+        if active.contains(&(rule.legacy, rule.selector.as_str())) {
             messages.push(if !rule.is_enabled(){format!("{}: disabled declaration merges into an earlier enabled rule with this selector; it does not disable that rule.",rule.id)}else{format!("{}: later fields/options merge into an earlier enabled declaration of this selector.",rule.id)});
         }
         if rule.is_enabled() {
-            active.insert(rule.selector.clone());
+            active.insert((rule.legacy, rule.selector.as_str()));
         }
         if rule.fields.get("persistent") == Some(&Value::Bool(true)) && rule.selector.contains('[')
         {

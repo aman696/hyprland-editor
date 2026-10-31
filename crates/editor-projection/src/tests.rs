@@ -237,7 +237,11 @@ fn every_family_projects_in_order_with_explicit_synthetic_identity_and_fidelity(
         let first = projection.lua().find("hl.curve(").unwrap();
         let second = projection.lua().find("hl.animation(").unwrap();
         assert!(first < second);
-        assert_eq!(projection.report().schema_pins.len(), 14);
+        assert_eq!(projection.report().schema_pins.len(), 15);
+        assert_eq!(
+            projection.report().schema_pins["legacy-workspace"],
+            editor_core::legacy_workspace::schema_hash()
+        );
         assert_eq!(
             projection.identity(),
             compile(&workspace, &scenario).unwrap().identity()
@@ -489,4 +493,55 @@ fn legacy_bindings_are_omitted_without_command_description_device_or_submap_payl
             .count(),
         5
     );
+}
+
+#[test]
+fn native_workspace_preview_omits_commands_names_outputs_and_custom_option_payloads() {
+    use editor_core::{legacy_workspace, workspace::SourceLanguage};
+    let source = "workspace = name:PRIVATE_NAME,monitor:PRIVATE_OUTPUT,on-created-empty:PRIVATE_COMMAND,layoutopt:PRIVATE_KEY:PRIVATE_VALUE\n";
+    let hash = editor_core::lua::source_hash(source);
+    let identity = SourceIdentity {
+        selected_path: b"/private/config.conf".to_vec(),
+        resolved_path: None,
+        links: vec![],
+        device: 1,
+        inode: 2,
+        owner: 1000,
+        mode: 0o100600,
+        size: source.len() as u64,
+        modified_seconds: 0,
+        modified_nanoseconds: 0,
+        changed_seconds: 0,
+        changed_nanoseconds: 0,
+        sha256: hash.clone(),
+        recorded_ownership: RecordedOwnership::UserOwned,
+    };
+    let mut workspace = workspace(BASELINE)
+        .with_root(source.into(), identity)
+        .with_workspace_rules(legacy_workspace::inspect(source).unwrap().rules);
+    workspace.sources[0].language = SourceLanguage::Legacy;
+    workspace.legacy_workspace_origin_sha256 = Some(hash);
+    workspace.legacy_workspace_schema_sha256 = Some(legacy_workspace::schema_hash());
+    let projection = compile(&workspace, &Scenario::default()).unwrap();
+    for payload in [
+        "PRIVATE_NAME",
+        "PRIVATE_OUTPUT",
+        "PRIVATE_COMMAND",
+        "PRIVATE_KEY",
+        "PRIVATE_VALUE",
+    ] {
+        assert!(!projection.lua().contains(payload));
+        assert!(!serde_json::to_string(projection.report())
+            .unwrap()
+            .contains(payload));
+    }
+    assert!(!serde_json::to_string(projection.report())
+        .unwrap()
+        .contains("PRIVATE_OUTPUT"));
+    assert!(projection
+        .report()
+        .entries
+        .iter()
+        .any(|entry| entry.subject == "workspace/legacy-workspace-0"
+            && entry.fidelity == Fidelity::OmittedUntrusted));
 }

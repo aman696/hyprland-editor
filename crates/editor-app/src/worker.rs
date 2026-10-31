@@ -34,6 +34,7 @@ pub enum Request {
         session: hyprland_editor_core::session::Draft,
         monitors: Vec<hyprland_editor_core::monitor::Rule>,
         bindings: hyprland_editor_core::legacy_binding::Draft,
+        workspaces: Vec<hyprland_editor_core::workspace_rule::Rule>,
     },
     ExpandLegacyBindings {
         source: String,
@@ -459,12 +460,13 @@ pub fn entry() {
                 session,
                 monitors,
                 bindings,
+                workspaces,
             } => hyprland_editor_core::legacy::Document::new_with_binding_mode(
                 source,
                 &c,
                 bindings.local_variables,
             )?
-            .edited_with_bindings(&draft, &session, &monitors, &bindings, &c)
+            .edited_with_workspaces(&draft, &session, &monitors, &bindings, &workspaces, &c)
             .map(Response::Copy),
             Request::ExpandLegacyBindings { source, draft } => {
                 hyprland_editor_core::legacy_binding::expanded_view(&source, &draft)

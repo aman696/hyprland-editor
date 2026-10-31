@@ -15,6 +15,7 @@ pub mod legacy_binding;
 pub mod legacy_monitor;
 pub mod legacy_session;
 mod legacy_syntax;
+pub mod legacy_workspace;
 pub mod lua;
 pub mod module_cache;
 pub mod module_path;

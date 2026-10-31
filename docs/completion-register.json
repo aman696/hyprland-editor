@@ -14,6 +14,32 @@
   },
   "foundations": [
     {
+      "area": "graphical legacy workspace rules with native field mapping and editable layout options",
+      "code": [
+        "crates/editor-core/src/legacy_workspace.rs",
+        "crates/editor-core/src/workspace_rule.rs",
+        "crates/editor-core/src/legacy.rs",
+        "crates/editor-core/src/workspace.rs",
+        "crates/editor-app/src/workspaces.rs",
+        "crates/editor-app/src/workspaces/options.rs",
+        "crates/editor-app/src/legacy_source.rs",
+        "crates/editor-app/src/worker.rs",
+        "crates/editor-app/src/workflow.rs",
+        "crates/editor-projection/src/lib.rs",
+        "data/legacy-workspaces.json"
+      ],
+      "test_references": [
+        "workspace_fields_inversion_strings_comments_and_repeated_selectors_round_trip",
+        "ordered_workspace_copy_supports_add_duplicate_remove_reorder_and_combined_families",
+        "unsupported_syntax_and_native_substring_precedence_never_silently_change_fields",
+        "native_workspace_projects_preserve_empty_targets_and_require_source_and_codec_markers",
+        "native_workspace_preview_omits_commands_names_outputs_and_custom_option_payloads",
+        "workflow::test_legacy_session_editing",
+        "native_forms_and_draft_workflow"
+      ],
+      "limits": "14 literal native workspace fields with border/shadow/rounding inversion, separate ordered selectors, raw inert hook arguments, string layoutopt values and editable custom options; one resident option form with common choices and retained Lua literal types; comment/unknown-source retention, combined scalar/session/monitor/binding/workspace copy reparse, deliberate empty targets and old separate Lua drafts retained without identity collisions, captured-source/codec markers, payload-free preview omission; 110-input model/32 reviewed predecessors preserve captured inputs and compiler observations. No native float_gaps/enabled conversion, variables/includes/expressions/conditionals/qualified/continued syntax, full native effective matching/hook-cleaning/default/persistence semantics, actual isolated preview/live apply/recovery or full audit/resource/accessibility/security/release acceptance"
+    },
+    {
       "area": "source-defined legacy shortcut variables with field reference preservation and explicit old-project upgrade",
       "code": [
         "crates/editor-core/src/legacy_binding.rs",

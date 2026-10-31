@@ -84,6 +84,10 @@ pub struct Workspace {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub legacy_monitor_origin_sha256: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy_workspace_origin_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy_workspace_schema_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub legacy_monitor_schema_sha256: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub legacy_session_origin_sha256: Option<String>,
@@ -123,6 +127,8 @@ impl Workspace {
             legacy_binding_origin_sha256: None,
             legacy_binding_schema_sha256: None,
             legacy_monitor_origin_sha256: None,
+            legacy_workspace_origin_sha256: None,
+            legacy_workspace_schema_sha256: None,
             legacy_monitor_schema_sha256: None,
             legacy_session_origin_sha256: None,
             legacy_session_schema_sha256: None,
@@ -219,6 +225,28 @@ impl Workspace {
         {
             return Err(
                 "Legacy monitor drafts require their captured source and codec identities".into(),
+            );
+        }
+        if let Some(hash) = &self.legacy_workspace_origin_sha256 {
+            if self
+                .root()
+                .is_none_or(|r| r.language != SourceLanguage::Legacy || r.origin.sha256 != *hash)
+                || self.source_graph.is_some()
+                || self.draft.version != crate::BASELINE
+                || self.legacy_workspace_schema_sha256.as_deref()
+                    != Some(&crate::legacy_workspace::schema_hash())
+            {
+                return Err(
+                    "Legacy workspace projection marker does not match its captured root".into(),
+                );
+            }
+        }
+        if (self.legacy_workspace_schema_sha256.is_some()
+            || self.workspace_rules.iter().any(|r| r.legacy))
+            && self.legacy_workspace_origin_sha256.is_none()
+        {
+            return Err(
+                "Legacy workspace drafts require their captured source and codec identities".into(),
             );
         }
         self.draft.validate(catalogue)?;

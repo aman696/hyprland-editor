@@ -151,6 +151,26 @@ fn read_import_for_review(
                     );
                 }
             }
+            if workspace.legacy_workspace_origin_sha256.is_none() {
+                let mut rebuilt = doc.workspaces.rules.clone();
+                for (n, rule) in rebuilt.iter_mut().enumerate() {
+                    let mut serial = n;
+                    while workspace
+                        .workspace_rules
+                        .iter()
+                        .any(|old| old.id == rule.id)
+                    {
+                        rule.id = format!("rebuilt-workspace-{serial}");
+                        serial += 1;
+                    }
+                }
+                rebuilt.append(&mut workspace.workspace_rules);
+                hyprland_editor_core::workspace_rule::validate(&rebuilt, &workspace.draft.version)?;
+                workspace.workspace_rules = rebuilt;
+                if !doc.workspaces.rules.is_empty() {
+                    legacy_projection_changed = true;
+                }
+            }
             if workspace.legacy_monitor_origin_sha256.is_none() {
                 let mut rebuilt = doc.monitors.rules.clone();
                 for (n, rule) in rebuilt.iter_mut().enumerate() {
@@ -215,7 +235,7 @@ fn read_import_for_review(
     };
     match path.extension().and_then(|s|s.to_str()) {
         Some("json")=>Draft::from_json(&captured.content,&catalogue).map(|draft|Imported{migration:None,graph:None,draft,source:None,legacy:None,origin:None,monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),session:Default::default(),message:"Validated value-only draft loaded".into(),saved_json:true}),
-        Some("conf")=>super::legacy_source::Document::new(captured.content,&catalogue).map(|doc|Imported{migration:None,graph:None,message:format!("Retained {} scalar overrides, {} session entries and {} monitor declarations and {} binding operations; {} lines unresolved; {} repeated keys. Known local shortcut values are projected; includes and other variable uses remain unresolved. Review Source Copy includes supported scalar, session, monitor and binding edits.",doc.report.draft.values.len(),doc.session.draft.entries.len(),doc.monitors.rules.len(),doc.bindings.draft.entries.len(),doc.report.skipped.len(),doc.report.duplicate_keys.len()),draft:doc.report.draft.clone(),session:doc.session.draft.clone(),monitors:doc.monitors.rules.clone(),source:None,origin:Some(captured.identity),devices:vec![],bindings:hyprland_editor_core::binding::Draft{legacy:Some(doc.bindings.draft.clone()),..Default::default()},workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),saved_json:false,legacy:Some(doc)}),
+        Some("conf")=>super::legacy_source::Document::new(captured.content,&catalogue).map(|doc|Imported{migration:None,graph:None,message:format!("Retained {} scalar overrides, {} session entries and {} monitor declarations and {} binding operations and {} workspace declarations; {} lines unresolved; {} repeated keys. Known local shortcut values are projected; includes and other variable uses remain unresolved. Review Source Copy includes supported scalar, session, monitor, workspace and binding edits.",doc.report.draft.values.len(),doc.session.draft.entries.len(),doc.monitors.rules.len(),doc.bindings.draft.entries.len(),doc.workspaces.rules.len(),doc.report.skipped.len(),doc.report.duplicate_keys.len()),draft:doc.report.draft.clone(),session:doc.session.draft.clone(),monitors:doc.monitors.rules.clone(),source:None,origin:Some(captured.identity),devices:vec![],bindings:hyprland_editor_core::binding::Draft{legacy:Some(doc.bindings.draft.clone()),..Default::default()},workspace_rules:doc.workspaces.rules.clone(),rules:vec![],animations:Default::default(),gestures:Default::default(),saved_json:false,legacy:Some(doc)}),
         Some("lua")=>{
             let doc=parse_source(captured.content,version,&catalogue)?;
             let mut message=format!("Imported {} scalar declarations, {} monitor rules and {} device rules; {} diagnostics. Effective values are not inferred by executing Lua.",doc.report.draft.values.len(),doc.report.monitors.len(),doc.report.devices.len(),doc.report.diagnostics.len());
@@ -323,6 +343,10 @@ pub(super) fn captured_workspace(s: &super::State) -> Result<Workspace, String> 
                 hyprland_editor_core::legacy_binding::schema_hash,
                 hyprland_editor_core::legacy_binding::draft_schema_hash,
             ));
+        snapshot.legacy_workspace_origin_sha256 =
+            Some(hyprland_editor_core::lua::source_hash(&doc.content));
+        snapshot.legacy_workspace_schema_sha256 =
+            Some(hyprland_editor_core::legacy_workspace::schema_hash());
         snapshot.legacy_monitor_origin_sha256 =
             Some(hyprland_editor_core::lua::source_hash(&doc.content));
         snapshot.legacy_monitor_schema_sha256 =
@@ -570,11 +594,11 @@ pub(super) fn connect_source_copy(
         if s.source_graphs.contains_key(&s.draft.version) {drop(s);super::project_copy::show(&window,&state);return;}
         if let Some(doc)=s.legacy_sources.get(&s.draft.version).cloned(){
             let snapshot=match captured_workspace(&s){Ok(snapshot)=>snapshot,Err(error)=>{drop(s);notice(&window,"Cannot prepare legacy copy",&error);return;}};
-            if !snapshot.devices.is_empty() || (!snapshot.bindings.binds.is_empty() || !snapshot.bindings.submaps.is_empty() || !snapshot.bindings.order.is_empty()) || !snapshot.workspace_rules.is_empty() || !snapshot.rules.is_empty() || !snapshot.animations.declarations.is_empty() || !snapshot.gestures.declarations.is_empty() {
-                drop(s);notice(&window,"Structured legacy export pending","This source copy includes supported scalar, session, monitor and legacy binding edits. Separate Lua bindings and other structured draft groups need their legacy codecs; save the project to retain them.");return;
+            if !snapshot.devices.is_empty() || (!snapshot.bindings.binds.is_empty() || !snapshot.bindings.submaps.is_empty() || !snapshot.bindings.order.is_empty()) || snapshot.workspace_rules.iter().any(|r| !r.legacy) || !snapshot.rules.is_empty() || !snapshot.animations.declarations.is_empty() || !snapshot.gestures.declarations.is_empty() {
+                drop(s);notice(&window,"Structured legacy export pending","This source copy includes supported scalar, session, monitor, workspace and legacy binding edits. Separate Lua bindings and other structured draft groups need their legacy codecs; save the project to retain them.");return;
             }
-            let draft=s.draft.clone();let session=snapshot.session;let monitors=snapshot.monitors;let bindings=snapshot.bindings.legacy.unwrap_or_default();let generation=s.generation;drop(s);let state=state.clone();let win=window.downgrade();let button=button.downgrade();if let Some(button)=button.upgrade(){button.set_sensitive(false);}
-            background(move||doc.edited_with_session(&draft,&session,&monitors,&bindings),move|result|{
+            let draft=s.draft.clone();let session=snapshot.session;let monitors=snapshot.monitors;let workspaces=snapshot.workspace_rules;let bindings=snapshot.bindings.legacy.unwrap_or_default();let generation=s.generation;drop(s);let state=state.clone();let win=window.downgrade();let button=button.downgrade();if let Some(button)=button.upgrade(){button.set_sensitive(false);}
+            background(move||doc.edited_with_session(&draft,&session,&monitors,&bindings,&workspaces),move|result|{
                 if let Some(button)=button.upgrade(){button.set_sensitive(true);}let Some(win)=win.upgrade()else{return;};if state.borrow().generation!=generation{notice(&win,"Draft changed","The draft changed while the copy was prepared. Review again to use the current edits.");return;}
                 match result{Ok(source)=>{super::text_export::review_legacy(&win,source);},Err(error)=>notice(&win,"Cannot prepare legacy copy",&error)}
             });return;
@@ -1543,7 +1567,7 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     let root = super::test_support::TempDir::new("legacy-session-ui");
     let original = root.path().join("original.conf");
     let marker = root.path().join("never-run");
-    let source=format!("# retained café\r\n$mainMod = SUPER\r\n$terminal = old application\r\nenv = GTK_THEME,Nord # environment\r\nexec-once = touch {} # startup\r\npermission = ^/usr/bin/application$,screencopy,ask # policy\r\ngeneral:border_size = 2\r\nmonitor = DP-1,2560x1440@144,0x0,1 # display\r\nmonitor = HDMI-A-1,disable\r\nmonitor = DP-1,transform,1 # rotation\r\nmonitor = DP-1,addreserved,10,20,30,40 # reserved\r\nmonitorv2 {{ # HDR block\r\n output = DP-2\r\n supports_hdr = 1 # keep HDR\r\n max_luminance = 1000 # luminance\r\n}} # close HDR\r\nbind = $mainMod,Return,exec,$terminal # shortcut\r\nsubmap = resize\r\nbind = SUPER,catchall,submap,reset\r\nsubmap = reset\r\nunbind = SUPER,Q\r\nexec = $unresolved\r\nsource = missing.conf\r\n",marker.display());
+    let source=format!("# retained café\r\n$mainMod = SUPER\r\n$terminal = old application\r\nenv = GTK_THEME,Nord # environment\r\nexec-once = touch {} # startup\r\npermission = ^/usr/bin/application$,screencopy,ask # policy\r\ngeneral:border_size = 2\r\nworkspace = name:work,monitor:DP-1,border:false,layoutopt:orientation:left # workspace\r\nworkspace = 2,persistent:true,on-created-empty:never-run-workspace # hook\r\nmonitor = DP-1,2560x1440@144,0x0,1 # display\r\nmonitor = HDMI-A-1,disable\r\nmonitor = DP-1,transform,1 # rotation\r\nmonitor = DP-1,addreserved,10,20,30,40 # reserved\r\nmonitorv2 {{ # HDR block\r\n output = DP-2\r\n supports_hdr = 1 # keep HDR\r\n max_luminance = 1000 # luminance\r\n}} # close HDR\r\nbind = $mainMod,Return,exec,$terminal # shortcut\r\nsubmap = resize\r\nbind = SUPER,catchall,submap,reset\r\nsubmap = reset\r\nunbind = SUPER,Q\r\nexec = $unresolved\r\nsource = missing.conf\r\n",marker.display());
     std::fs::write(&original, &source).unwrap();
     let catalogue = hyprland_editor_core::catalogue();
     let imported = read_import(original.clone(), catalogue.clone(), BASELINE.into()).unwrap();
@@ -1557,6 +1581,8 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
         panic!("wrong legacy parser response")
     };
     assert_eq!(parsed.monitors.rules, imported.monitors);
+    assert_eq!(parsed.workspaces.rules, imported.workspace_rules);
+    assert_eq!(imported.workspace_rules.len(), 2);
     assert_eq!(parsed.bindings.draft.entries.len(), 5);
     assert_eq!(
         imported.bindings.legacy.as_ref().unwrap(),
@@ -1825,12 +1851,109 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
         );
     }
     block_editor.destroy();
+    let workspace_editor = super::workspaces::show(parent, &state, &status);
+    assert_eq!(
+        named::<gtk::DropDown>(workspace_editor.upcast_ref(), "workspace-rule").selected(),
+        0
+    );
+    let field: gtk::DropDown = named(workspace_editor.upcast_ref(), "workspace-field");
+    let fields: Vec<_> = hyprland_editor_core::workspace_rule::catalogue(BASELINE)
+        .into_iter()
+        .filter(|s| s.lua_key != "float_gaps")
+        .collect();
+    assert_eq!(field.model().unwrap().n_items(), 14);
+    let enabled: gtk::DropDown = named(workspace_editor.upcast_ref(), "workspace-enabled");
+    assert!(!enabled.is_visible());
+    field.set_selected(
+        fields
+            .iter()
+            .position(|s| s.lua_key == "no_border")
+            .unwrap() as u32,
+    );
+    let field_body: gtk::Box = named(workspace_editor.upcast_ref(), "workspace-field-value");
+    let toggle = widgets(field_body.upcast_ref())
+        .into_iter()
+        .find_map(|w| w.downcast::<gtk::Switch>().ok())
+        .unwrap();
+    assert!(toggle.is_active());
+    toggle.set_active(false);
+    assert!(!toggle.is_active());
+    for expander in widgets(workspace_editor.upcast_ref())
+        .into_iter()
+        .filter_map(|w| w.downcast::<gtk::Expander>().ok())
+    {
+        expander.set_expanded(true);
+    }
+    let option_value: gtk::Entry = named(workspace_editor.upcast_ref(), "workspace-option-value");
+    option_value.set_text("center");
+    button(workspace_editor.upcast_ref(), "Add Option").emit_clicked();
+    let option_name: gtk::Entry = named(workspace_editor.upcast_ref(), "workspace-option-name");
+    option_name.set_text("custom");
+    option_value.set_text("one:two");
+    button(workspace_editor.upcast_ref(), "Update Workspace Draft").emit_clicked();
+    assert_eq!(
+        state.borrow().workspace_rules[BASELINE][0].fields["no_border"],
+        Value::Bool(false),
+        "{}",
+        named::<gtk::Label>(workspace_editor.upcast_ref(), "workspace-feedback").text()
+    );
+    assert_eq!(
+        state.borrow().workspace_rules[BASELINE][0].layout_options["orientation"],
+        Value::String("center".into())
+    );
+    assert_eq!(
+        state.borrow().workspace_rules[BASELINE][0].layout_options["custom"],
+        Value::String("one:two".into())
+    );
+    button(workspace_editor.upcast_ref(), "Duplicate").emit_clicked();
+    assert_eq!(state.borrow().workspace_rules[BASELINE].len(), 3);
+    button(workspace_editor.upcast_ref(), "Undo").emit_clicked();
+    assert_eq!(state.borrow().workspace_rules[BASELINE].len(), 2);
+    // Keep the compact native form captured before returning to the main review.
+    if let Some(path) = std::env::var_os("HYPRLAND_EDITOR_TEST_CAPTURE") {
+        named::<gtk::DropDown>(workspace_editor.upcast_ref(), "workspace-rule").set_selected(0);
+        named::<gtk::DropDown>(workspace_editor.upcast_ref(), "workspace-field").set_selected(
+            fields
+                .iter()
+                .position(|s| s.lua_key == "no_border")
+                .unwrap() as u32,
+        );
+        workspace_editor.set_default_size(360, 760);
+        for _ in 0..10 {
+            let context = gtk::glib::MainContext::default();
+            while context.pending() {
+                context.iteration(false);
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        assert!(
+            workspace_editor.width() <= 360,
+            "workspace form width {}",
+            workspace_editor.width()
+        );
+        let paintable = gtk::WidgetPaintable::new(Some(&workspace_editor));
+        let snap = gtk::Snapshot::new();
+        paintable.snapshot(
+            &snap,
+            workspace_editor.width() as f64,
+            workspace_editor.height() as f64,
+        );
+        workspace_editor
+            .renderer()
+            .unwrap()
+            .render_texture(snap.to_node().unwrap(), None)
+            .save_to_png(format!("{}.legacy-workspaces.png", path.to_string_lossy()))
+            .unwrap();
+    }
+    workspace_editor.destroy();
+    let expected_workspaces = state.borrow().workspace_rules[BASELINE].clone();
     let expected = state.borrow().session[BASELINE].clone();
     let snapshot = captured_workspace(&state.borrow()).unwrap();
     assert!(snapshot.legacy_session_origin_sha256.is_some());
     assert!(snapshot.legacy_session_schema_sha256.is_some());
     assert!(snapshot.legacy_monitor_schema_sha256.is_some());
     assert!(snapshot.legacy_binding_schema_sha256.is_some());
+    assert!(snapshot.legacy_workspace_schema_sha256.is_some());
     let expected_monitors = state.borrow().monitors[BASELINE].clone();
     let saved = root.path().join("current.hye");
     std::fs::write(&saved, snapshot.to_json(&catalogue).unwrap()).unwrap();
@@ -1838,6 +1961,7 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     assert_eq!(imported.session, expected);
     assert_eq!(imported.monitors, expected_monitors);
     assert_eq!(imported.bindings, expected_bindings);
+    assert_eq!(imported.workspace_rules, expected_workspaces);
     assert!(imported.saved_json);
     let copy = gtk::Button::new();
     connect_source_copy(&copy, parent, &state);
@@ -1876,6 +2000,18 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
         )
         .unwrap(),
         hyprland_editor_core::legacy_monitor::export(&expected_monitors).unwrap()
+    );
+    assert!(output.contains("border:true"));
+    assert!(output.contains("layoutopt:custom:one:two"));
+    assert!(output.contains("# workspace\r\n"));
+    assert_eq!(
+        hyprland_editor_core::legacy_workspace::export(
+            &hyprland_editor_core::legacy_workspace::inspect(&output)
+                .unwrap()
+                .rules
+        )
+        .unwrap(),
+        hyprland_editor_core::legacy_workspace::export(&expected_workspaces).unwrap()
     );
     assert!(output.contains("# startup\r\n"));
     assert!(output.contains("exec = $unresolved\r\n"));
@@ -2037,6 +2173,31 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     );
     assert!(!rebuilt.saved_json);
     assert_eq!(std::fs::read(previous_path).unwrap(), previous_bytes);
+    let mut empty_workspace = snapshot.clone();
+    empty_workspace.workspace_rules.clear();
+    let path = root.path().join("empty-workspaces.hye");
+    std::fs::write(&path, empty_workspace.to_json(&catalogue).unwrap()).unwrap();
+    let reopened = read_import(path, catalogue.clone(), BASELINE.into()).unwrap();
+    assert!(reopened.workspace_rules.is_empty());
+    assert!(reopened.saved_json);
+    let mut older_workspace = snapshot.clone();
+    older_workspace.legacy_workspace_origin_sha256 = None;
+    older_workspace.legacy_workspace_schema_sha256 = None;
+    older_workspace.workspace_rules = vec![hyprland_editor_core::workspace_rule::Rule::new(
+        "legacy-workspace-0",
+    )];
+    let path = root.path().join("older-workspaces.hye");
+    let bytes = older_workspace.to_json(&catalogue).unwrap();
+    std::fs::write(&path, &bytes).unwrap();
+    let reopened = read_import(path.clone(), catalogue.clone(), BASELINE.into()).unwrap();
+    assert_eq!(reopened.workspace_rules.len(), 3);
+    assert_ne!(
+        reopened.workspace_rules[0].id,
+        reopened.workspace_rules[2].id
+    );
+    assert!(!reopened.workspace_rules[2].legacy);
+    assert!(!reopened.saved_json);
+    assert_eq!(std::fs::read(path).unwrap(), bytes);
     let mut old = snapshot;
     old.legacy_session_origin_sha256 = None;
     old.legacy_session_schema_sha256 = None;
