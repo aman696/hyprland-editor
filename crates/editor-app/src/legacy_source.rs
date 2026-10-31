@@ -8,6 +8,7 @@ pub(super) struct Document {
     pub report: import::ImportReport,
     pub session: legacy_session::Report,
     pub monitors: legacy_monitor::Report,
+    pub bindings: hyprland_editor_core::legacy_binding::Report,
 }
 impl Document {
     pub fn new(content: String, catalogue: &[Setting]) -> Result<Self, String> {
@@ -21,7 +22,10 @@ impl Document {
         #[cfg(test)]
         let parsed =
             hyprland_editor_core::legacy::Document::new(content.clone(), catalogue)?.into_report();
-        if parsed.monitors.schema_sha256 != legacy_monitor::schema_hash()
+        if parsed.bindings.schema_sha256 != hyprland_editor_core::legacy_binding::schema_hash()
+            || parsed.bindings.source_sha256 != parsed.source_sha256
+            || parsed.bindings.sites.len() != parsed.bindings.draft.entries.len()
+            || parsed.monitors.schema_sha256 != legacy_monitor::schema_hash()
             || parsed.monitors.source_sha256 != parsed.source_sha256
             || parsed.monitors.sites.len() != parsed.monitors.rules.len()
             || parsed
@@ -29,6 +33,7 @@ impl Document {
                 .sites
                 .iter()
                 .chain(&parsed.session.sites)
+                .chain(&parsed.bindings.sites)
                 .any(|site| content.get(site.statement.clone()).is_none())
             || parsed.session.schema_sha256 != legacy_session::schema_hash()
             || parsed.source_sha256 != hyprland_editor_core::lua::source_hash(&content)
@@ -40,10 +45,16 @@ impl Document {
         }
         parsed.scalar.draft.validate(catalogue)?;
         parsed.session.draft.validate(BASELINE)?;
+        parsed.bindings.draft.validate(BASELINE)?;
         hyprland_editor_core::monitor::validate(&parsed.monitors.rules, BASELINE)?;
         let mut report = parsed.scalar;
-        let session_lines: std::collections::BTreeSet<_> =
-            parsed.session.sites.iter().map(|site| site.line).collect();
+        let session_lines: std::collections::BTreeSet<_> = parsed
+            .session
+            .sites
+            .iter()
+            .chain(&parsed.bindings.sites)
+            .map(|site| site.line)
+            .collect();
         let monitor_lines: Vec<_> = parsed
             .monitors
             .sites
@@ -68,6 +79,7 @@ impl Document {
             report,
             session: parsed.session,
             monitors: parsed.monitors,
+            bindings: parsed.bindings,
         })
     }
     pub fn edited_with_session(
@@ -75,12 +87,14 @@ impl Document {
         draft: &Draft,
         session: &session::Draft,
         monitors: &[hyprland_editor_core::monitor::Rule],
+        bindings: &hyprland_editor_core::legacy_binding::Draft,
     ) -> Result<String, String> {
         match super::worker::run(super::worker::Request::CopyLegacy {
             source: self.content.clone(),
             draft: draft.clone(),
             session: session.clone(),
             monitors: monitors.to_vec(),
+            bindings: bindings.clone(),
         })? {
             super::worker::Response::Copy(source) => Ok(source),
             _ => Err("Unexpected legacy copy response".into()),

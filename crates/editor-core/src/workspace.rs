@@ -78,6 +78,10 @@ pub struct Workspace {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub session_schema_sha256: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy_binding_origin_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy_binding_schema_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub legacy_monitor_origin_sha256: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub legacy_monitor_schema_sha256: Option<String>,
@@ -116,6 +120,8 @@ impl Workspace {
             gestures: Default::default(),
             session: Default::default(),
             session_schema_sha256: None,
+            legacy_binding_origin_sha256: None,
+            legacy_binding_schema_sha256: None,
             legacy_monitor_origin_sha256: None,
             legacy_monitor_schema_sha256: None,
             legacy_session_origin_sha256: None,
@@ -140,6 +146,27 @@ impl Workspace {
     pub fn validate(&self, catalogue: &[Setting]) -> Result<(), String> {
         if self.format != WORKSPACE_FORMAT || self.sources.len() > MAX_SOURCE_DOCUMENTS {
             return Err("Unsupported workspace format or source count".into());
+        }
+        if let Some(hash) = &self.legacy_binding_origin_sha256 {
+            if self
+                .root()
+                .is_none_or(|r| r.language != SourceLanguage::Legacy || r.origin.sha256 != *hash)
+                || self.source_graph.is_some()
+                || self.draft.version != crate::BASELINE
+                || self.legacy_binding_schema_sha256.as_deref()
+                    != Some(&crate::legacy_binding::schema_hash())
+            {
+                return Err(
+                    "Legacy binding projection marker does not match its captured root".into(),
+                );
+            }
+        }
+        if (self.legacy_binding_schema_sha256.is_some() || self.bindings.legacy.is_some())
+            && self.legacy_binding_origin_sha256.is_none()
+        {
+            return Err(
+                "Legacy binding drafts require their captured source and codec identities".into(),
+            );
         }
         if let Some(hash) = &self.legacy_session_origin_sha256 {
             if self

@@ -289,7 +289,10 @@ fn submap_bytes(m: &hyprland_editor_core::binding::Submap) -> usize {
         + m.reset.as_ref().map_or(0, String::capacity)
 }
 fn bindings_bytes(b: &hyprland_editor_core::binding::Draft) -> usize {
-    string_list_bytes(&b.order)
+    b.legacy.as_ref().map_or(
+        0,
+        hyprland_editor_core::legacy_binding::Draft::retained_bytes,
+    ) + string_list_bytes(&b.order)
         + b.binds.capacity() * size_of::<hyprland_editor_core::binding::Bind>()
         + b.binds.iter().map(bind_bytes).sum::<usize>()
         + b.submaps.capacity() * size_of::<hyprland_editor_core::binding::Submap>()
@@ -573,20 +576,23 @@ impl History {
         after: &hyprland_editor_core::binding::Draft,
     ) -> Result<(), String> {
         let inverse = hyprland_editor_core::binding::Inverse::between(before, after);
-        let retained_bytes = 1024
-            + inverse
+        let retained_bytes =
+            1024 + inverse.legacy.as_ref().and_then(Option::as_ref).map_or(
+                0,
+                hyprland_editor_core::legacy_binding::Draft::retained_bytes,
+            ) + inverse
                 .binds
                 .iter()
                 .map(|(id, b)| id.capacity() + b.as_ref().map_or(0, bind_bytes))
                 .sum::<usize>()
-            + inverse
-                .submaps
-                .iter()
-                .map(|(id, m)| id.capacity() + m.as_ref().map_or(0, submap_bytes))
-                .sum::<usize>()
-            + inverse.bind_ids.as_ref().map_or(0, string_list_bytes)
-            + inverse.submap_ids.as_ref().map_or(0, string_list_bytes)
-            + inverse.order.as_ref().map_or(0, string_list_bytes);
+                + inverse
+                    .submaps
+                    .iter()
+                    .map(|(id, m)| id.capacity() + m.as_ref().map_or(0, submap_bytes))
+                    .sum::<usize>()
+                + inverse.bind_ids.as_ref().map_or(0, string_list_bytes)
+                + inverse.submap_ids.as_ref().map_or(0, string_list_bytes)
+                + inverse.order.as_ref().map_or(0, string_list_bytes);
         self.push(Undo::Bindings {
             inverse,
             retained_bytes,

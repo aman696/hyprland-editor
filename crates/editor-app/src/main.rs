@@ -17,6 +17,7 @@ mod graph_migration;
 #[cfg(test)]
 mod graph_transaction_tests;
 mod history;
+mod legacy_binding_editor;
 mod legacy_source;
 mod monitors;
 mod native_build;
@@ -701,7 +702,10 @@ fn summary(state: &Shared, status: &gtk::Label) {
         s.bindings
             .get(&s.draft.version)
             .filter(|b| !b.is_empty())
-            .map_or(String::new(), |b| format!(" · {} bindings", b.binds.len())),
+            .map_or(String::new(), |b| format!(
+                " · {} binding declarations",
+                b.order.len() + b.legacy.as_ref().map_or(0, |d| d.entries.len())
+            )),
         s.workspace_rules
             .get(&s.draft.version)
             .filter(|r| !r.is_empty())

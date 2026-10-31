@@ -368,6 +368,12 @@ pub fn compile(workspace: &Workspace, scenario: &Scenario) -> Result<Projection,
         )?;
     }
     let mut bindings = workspace.bindings.clone();
+    if let Some(legacy) = bindings.legacy.take() {
+        for (index, _) in legacy.entries.iter().enumerate() {
+            builder.record(format!("legacy-binding/{index}"), Fidelity::Unsupported,
+                "Legacy binding operation omitted; native submap/dispatcher semantics require explicit preview support")?;
+        }
+    }
     for submap in &bindings.submaps {
         builder.record(
             format!("submap/{}", submap.id),
@@ -506,6 +512,7 @@ fn schema_pins(workspace: &Workspace) -> BTreeMap<String, String> {
         ("scalar", workspace.schema.catalogue_sha256.clone()),
         ("monitor", monitor::schema_hash()),
         ("legacy-monitor", editor_core::legacy_monitor::schema_hash()),
+        ("legacy-binding", editor_core::legacy_binding::schema_hash()),
         ("device", editor_core::device::schema_hash()),
         ("action", action::schema_hash()),
         ("binding", editor_core::binding::schema_hash()),

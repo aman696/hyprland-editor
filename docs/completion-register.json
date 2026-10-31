@@ -14,6 +14,34 @@
   },
   "foundations": [
     {
+      "area": "graphical native legacy binding submap and unbind editing with preserved scope barriers",
+      "code": [
+        "crates/editor-core/src/legacy_binding.rs",
+        "crates/editor-core/src/binding.rs",
+        "crates/editor-core/src/legacy.rs",
+        "crates/editor-core/src/workspace.rs",
+        "crates/editor-app/src/legacy_binding_editor.rs",
+        "crates/editor-app/src/legacy_source.rs",
+        "crates/editor-app/src/worker.rs",
+        "crates/editor-app/src/workflow.rs",
+        "crates/editor-app/src/history.rs",
+        "crates/editor-projection/src/lib.rs",
+        "data/legacy-bindings.json"
+      ],
+      "test_references": [
+        "native_binding_variants_keep_order_flags_devices_and_flat_submap_scope",
+        "combined_source_editing_reorders_duplicates_removes_and_retains_other_families",
+        "unresolved_submap_and_include_context_are_retained_and_unsafe_changes_refused",
+        "argument_literals_flags_and_all_dispatcher_names_roundtrip_without_dispatch",
+        "legacy_project_markers_and_binding_undo_preserve_intent_without_lua_conversion",
+        "unknown_binding_reports_remain_bounded_and_never_capture_host_variables",
+        "legacy_bindings_are_omitted_without_command_description_device_or_submap_payloads",
+        "workflow::test_legacy_session_editing",
+        "native_forms_and_draft_workflow"
+      ],
+      "limits": "baseline selected-file literal ordered bind suffixes, chord/multi-symbol controls, focused-only recording, 71 dispatcher names with common presets and exact argument text, description and include/exclude device filters, native flat submap/reset and unbind/all, duplicate/remove/reorder/undo, source comments and unknown-context barrier digest, combined scalar/session/monitor/binding copies, private markers preserve intentional empty targets and older separate Lua drafts; 105-input model/30 predecessors preserve captured inputs/compiler observations; no variable/include evaluation, full dispatcher selector/coordinate/action grammar builders, effective state, physical input delivery, actual preview, live apply/recovery, measured whole-app resource or full audit/security/release acceptance"
+    },
+    {
       "area": "graphical monitorv2 block editing with retained field syntax and older project review",
       "code": [
         "crates/editor-core/src/legacy_monitor/blocks.rs",

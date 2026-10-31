@@ -13,6 +13,7 @@ pub struct Document {
     pub report: import::ImportReport,
     pub session: legacy_session::Report,
     pub monitors: legacy_monitor::Report,
+    pub bindings: crate::legacy_binding::Report,
 }
 
 struct Assignment {
@@ -140,6 +141,7 @@ pub struct Report {
     pub scalar: import::ImportReport,
     pub session: legacy_session::Report,
     pub monitors: legacy_monitor::Report,
+    pub bindings: crate::legacy_binding::Report,
 }
 impl Document {
     pub fn into_report(self) -> Report {
@@ -148,6 +150,7 @@ impl Document {
             scalar: self.report,
             session: self.session,
             monitors: self.monitors,
+            bindings: self.bindings,
         }
     }
     pub fn edited_with_session(
@@ -165,9 +168,39 @@ impl Document {
         monitors: &[crate::monitor::Rule],
         catalogue: &[Setting],
     ) -> Result<String, String> {
+        self.edited_with_bindings(draft, session, monitors, &self.bindings.draft, catalogue)
+    }
+    pub fn edited_with_bindings(
+        &self,
+        draft: &Draft,
+        session: &session::Draft,
+        monitors: &[crate::monitor::Rule],
+        bindings: &crate::legacy_binding::Draft,
+        catalogue: &[Setting],
+    ) -> Result<String, String> {
         let scalars = self.edited_copy(draft, catalogue)?;
         let sessions = legacy_session::edited_copy(&scalars, session)?;
         let output = legacy_monitor::edited_copy(&sessions, monitors)?;
+        let output = crate::legacy_binding::edited_copy(&output, bindings)?;
+        // env with unspecified versus explicitly false activation both encode
+        // as the same native directive. Compare the native projection, while
+        // private projects retain that presence distinction.
+        let session_projection = |draft: &session::Draft| {
+            draft
+                .entries
+                .iter()
+                .map(legacy_session::encode)
+                .collect::<Result<Vec<_>, String>>()
+        };
+        if session_projection(&legacy_session::inspect(&output)?.draft)?
+            != session_projection(session)?
+            || legacy_monitor::export(&legacy_monitor::inspect(&output)?.rules)?
+                != legacy_monitor::export(monitors)?
+        {
+            return Err(
+                "Binding edits changed another source projection; no copy was produced".into(),
+            );
+        }
         let final_report = import::legacy(&output, catalogue)?;
         if final_report.draft.values.len() != draft.values.len()
             || draft
@@ -184,11 +217,13 @@ impl Document {
         let report = import::legacy(&content, catalogue)?;
         let session = legacy_session::inspect(&content)?;
         let monitors = legacy_monitor::inspect(&content)?;
+        let bindings = crate::legacy_binding::inspect(&content)?;
         Ok(Self {
             content,
             report,
             session,
             monitors,
+            bindings,
         })
     }
 

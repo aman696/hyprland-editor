@@ -16,6 +16,7 @@ fn action(version: &str, name: &str, argument: &str) -> action::Action {
 }
 fn bind(action: action::Action) -> binding::Draft {
     binding::Draft {
+        legacy: None,
         binds: vec![binding::Bind {
             id: "bind".into(),
             chord: binding::Chord::parse("SUPER+Q"),
@@ -236,7 +237,7 @@ fn every_family_projects_in_order_with_explicit_synthetic_identity_and_fidelity(
         let first = projection.lua().find("hl.curve(").unwrap();
         let second = projection.lua().find("hl.animation(").unwrap();
         assert!(first < second);
-        assert_eq!(projection.report().schema_pins.len(), 13);
+        assert_eq!(projection.report().schema_pins.len(), 14);
         assert_eq!(
             projection.identity(),
             compile(&workspace, &scenario).unwrap().identity()
@@ -435,4 +436,57 @@ fn legacy_monitor_operations_never_become_implicitly_converted_preview_commands(
         .iter()
         .any(|entry| entry.subject == "monitor/legacy-monitor-0"
             && entry.fidelity == Fidelity::Unsupported));
+}
+
+#[test]
+fn legacy_bindings_are_omitted_without_command_description_device_or_submap_payloads() {
+    use editor_core::{legacy_binding, workspace::SourceLanguage};
+    let source = "binddk = SUPER,Q,PRIVATE_DEVICE,PRIVATE_DESCRIPTION,exec,PRIVATE_COMMAND\nsubmap = PRIVATE_SUBMAP\nbind = ,catchall,submap,reset\nsubmap = reset\nunbind = all\n";
+    let hash = editor_core::lua::source_hash(source);
+    let identity = SourceIdentity {
+        selected_path: b"/private/config.conf".to_vec(),
+        resolved_path: None,
+        links: vec![],
+        device: 1,
+        inode: 2,
+        owner: 1000,
+        mode: 0o100600,
+        size: source.len() as u64,
+        modified_seconds: 0,
+        modified_nanoseconds: 0,
+        changed_seconds: 0,
+        changed_nanoseconds: 0,
+        sha256: hash.clone(),
+        recorded_ownership: RecordedOwnership::UserOwned,
+    };
+    let mut workspace = workspace(BASELINE)
+        .with_root(source.into(), identity)
+        .with_bindings(binding::Draft {
+            legacy: Some(legacy_binding::inspect(source).unwrap().draft),
+            ..Default::default()
+        });
+    workspace.sources[0].language = SourceLanguage::Legacy;
+    workspace.legacy_binding_origin_sha256 = Some(hash);
+    workspace.legacy_binding_schema_sha256 = Some(legacy_binding::schema_hash());
+    let projection = compile(&workspace, &Scenario::default()).unwrap();
+    let report = serde_json::to_string(projection.report()).unwrap();
+    for payload in [
+        "PRIVATE_DEVICE",
+        "PRIVATE_DESCRIPTION",
+        "PRIVATE_COMMAND",
+        "PRIVATE_SUBMAP",
+    ] {
+        assert!(!projection.lua().contains(payload));
+        assert!(!report.contains(payload));
+    }
+    assert_eq!(
+        projection
+            .report()
+            .entries
+            .iter()
+            .filter(|entry| entry.subject.starts_with("legacy-binding/")
+                && entry.fidelity == Fidelity::Unsupported)
+            .count(),
+        5
+    );
 }

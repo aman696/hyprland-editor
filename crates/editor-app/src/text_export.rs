@@ -72,7 +72,11 @@ pub(super) fn review(
 }
 
 pub(super) fn review_legacy(parent: &impl IsA<gtk::Window>, text: String) -> adw::Window {
-    review_format(parent,"Review edited legacy source copy","Supported scalar, session and classic monitor edits are included; unknown directives and comments are preserved. Includes and variable expansion remain unresolved. Save with a new filename. Other structured draft groups are not exported here.","hyprland-edited.conf",text,true)
+    review_format(parent,"Review edited legacy source copy","Supported scalar, session, monitor and legacy binding edits are included; unknown directives and comments are preserved. Includes and variable expansion remain unresolved. Save with a new filename. Other structured draft groups are not exported here.","hyprland-edited.conf",text,true)
+}
+
+pub(super) fn review_legacy_bindings(parent: &impl IsA<gtk::Window>, text: String) -> adw::Window {
+    review_format(parent,"Review legacy binding fragment","This contains only ordered shortcut, submap and unbind declarations. It must not replace a whole configuration. No action has been executed.","hyprland-bindings.conf",text,true)
 }
 
 fn review_format(

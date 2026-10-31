@@ -99,6 +99,7 @@ fn actual_staging_preserves_inputs_maps_private_hardware_and_keeps_commands_iner
             .with_monitors(vec![monitor::Rule::new("monitor")])
             .with_devices(vec![device::Spec::new("device", "HYE_HOST_DEVICE")])
             .with_bindings(binding::Draft {
+                legacy: None,
                 binds: vec![binding::Bind {
                     id: "command".into(),
                     chord: binding::Chord::parse("SUPER+Q"),

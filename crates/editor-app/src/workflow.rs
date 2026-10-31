@@ -121,6 +121,11 @@ fn read_import_for_review(
             .map_or(0, |doc| doc.report.diagnostics.len());
         let mut legacy_projection_changed = false;
         if let Some(doc) = &legacy {
+            if workspace.legacy_binding_origin_sha256.is_none() {
+                workspace.bindings.legacy = Some(doc.bindings.draft.clone());
+                workspace.bindings.validate(&workspace.draft.version)?;
+                legacy_projection_changed = true;
+            }
             if workspace.legacy_monitor_origin_sha256.is_none() {
                 let mut rebuilt = doc.monitors.rules.clone();
                 for (n, rule) in rebuilt.iter_mut().enumerate() {
@@ -185,7 +190,7 @@ fn read_import_for_review(
     };
     match path.extension().and_then(|s|s.to_str()) {
         Some("json")=>Draft::from_json(&captured.content,&catalogue).map(|draft|Imported{migration:None,graph:None,draft,source:None,legacy:None,origin:None,monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),session:Default::default(),message:"Validated value-only draft loaded".into(),saved_json:true}),
-        Some("conf")=>super::legacy_source::Document::new(captured.content,&catalogue).map(|doc|Imported{migration:None,graph:None,message:format!("Retained {} scalar overrides, {} session entries and {} monitor declarations; {} lines unresolved; {} repeated keys. Includes and variables are not evaluated. Review Source Copy includes supported scalar, session and monitor edits.",doc.report.draft.values.len(),doc.session.draft.entries.len(),doc.monitors.rules.len(),doc.report.skipped.len(),doc.report.duplicate_keys.len()),draft:doc.report.draft.clone(),session:doc.session.draft.clone(),monitors:doc.monitors.rules.clone(),source:None,legacy:Some(doc),origin:Some(captured.identity),devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),saved_json:false}),
+        Some("conf")=>super::legacy_source::Document::new(captured.content,&catalogue).map(|doc|Imported{migration:None,graph:None,message:format!("Retained {} scalar overrides, {} session entries and {} monitor declarations and {} binding operations; {} lines unresolved; {} repeated keys. Includes and variables are not evaluated. Review Source Copy includes supported scalar, session, monitor and binding edits.",doc.report.draft.values.len(),doc.session.draft.entries.len(),doc.monitors.rules.len(),doc.bindings.draft.entries.len(),doc.report.skipped.len(),doc.report.duplicate_keys.len()),draft:doc.report.draft.clone(),session:doc.session.draft.clone(),monitors:doc.monitors.rules.clone(),source:None,origin:Some(captured.identity),devices:vec![],bindings:hyprland_editor_core::binding::Draft{legacy:Some(doc.bindings.draft.clone()),..Default::default()},workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),saved_json:false,legacy:Some(doc)}),
         Some("lua")=>{
             let doc=parse_source(captured.content,version,&catalogue)?;
             let mut message=format!("Imported {} scalar declarations, {} monitor rules and {} device rules; {} diagnostics. Effective values are not inferred by executing Lua.",doc.report.draft.values.len(),doc.report.monitors.len(),doc.report.devices.len(),doc.report.diagnostics.len());
@@ -286,6 +291,10 @@ pub(super) fn captured_workspace(s: &super::State) -> Result<Workspace, String> 
             .source_origins
             .get(version)
             .ok_or("Legacy source identity missing")?;
+        snapshot.legacy_binding_origin_sha256 =
+            Some(hyprland_editor_core::lua::source_hash(&doc.content));
+        snapshot.legacy_binding_schema_sha256 =
+            Some(hyprland_editor_core::legacy_binding::schema_hash());
         snapshot.legacy_monitor_origin_sha256 =
             Some(hyprland_editor_core::lua::source_hash(&doc.content));
         snapshot.legacy_monitor_schema_sha256 =
@@ -533,11 +542,11 @@ pub(super) fn connect_source_copy(
         if s.source_graphs.contains_key(&s.draft.version) {drop(s);super::project_copy::show(&window,&state);return;}
         if let Some(doc)=s.legacy_sources.get(&s.draft.version).cloned(){
             let snapshot=match captured_workspace(&s){Ok(snapshot)=>snapshot,Err(error)=>{drop(s);notice(&window,"Cannot prepare legacy copy",&error);return;}};
-            if !snapshot.devices.is_empty() || !snapshot.bindings.is_empty() || !snapshot.workspace_rules.is_empty() || !snapshot.rules.is_empty() || !snapshot.animations.declarations.is_empty() || !snapshot.gestures.declarations.is_empty() {
-                drop(s);notice(&window,"Structured legacy export pending","This source copy includes supported scalar, session and monitor edits. Other structured draft groups need their legacy codecs; save the project to retain them.");return;
+            if !snapshot.devices.is_empty() || (!snapshot.bindings.binds.is_empty() || !snapshot.bindings.submaps.is_empty() || !snapshot.bindings.order.is_empty()) || !snapshot.workspace_rules.is_empty() || !snapshot.rules.is_empty() || !snapshot.animations.declarations.is_empty() || !snapshot.gestures.declarations.is_empty() {
+                drop(s);notice(&window,"Structured legacy export pending","This source copy includes supported scalar, session, monitor and legacy binding edits. Separate Lua bindings and other structured draft groups need their legacy codecs; save the project to retain them.");return;
             }
-            let draft=s.draft.clone();let session=snapshot.session;let monitors=snapshot.monitors;let generation=s.generation;drop(s);let state=state.clone();let win=window.downgrade();let button=button.downgrade();if let Some(button)=button.upgrade(){button.set_sensitive(false);}
-            background(move||doc.edited_with_session(&draft,&session,&monitors),move|result|{
+            let draft=s.draft.clone();let session=snapshot.session;let monitors=snapshot.monitors;let bindings=snapshot.bindings.legacy.unwrap_or_default();let generation=s.generation;drop(s);let state=state.clone();let win=window.downgrade();let button=button.downgrade();if let Some(button)=button.upgrade(){button.set_sensitive(false);}
+            background(move||doc.edited_with_session(&draft,&session,&monitors,&bindings),move|result|{
                 if let Some(button)=button.upgrade(){button.set_sensitive(true);}let Some(win)=win.upgrade()else{return;};if state.borrow().generation!=generation{notice(&win,"Draft changed","The draft changed while the copy was prepared. Review again to use the current edits.");return;}
                 match result{Ok(source)=>{super::text_export::review_legacy(&win,source);},Err(error)=>notice(&win,"Cannot prepare legacy copy",&error)}
             });return;
@@ -1480,7 +1489,7 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
         widgets(root)
             .into_iter()
             .find(|w| w.widget_name() == name)
-            .unwrap()
+            .unwrap_or_else(|| panic!("Missing widget {name}"))
             .downcast()
             .ok()
             .unwrap()
@@ -1506,7 +1515,7 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     let root = super::test_support::TempDir::new("legacy-session-ui");
     let original = root.path().join("original.conf");
     let marker = root.path().join("never-run");
-    let source=format!("# retained café\r\nenv = GTK_THEME,Nord # environment\r\nexec-once = touch {} # startup\r\npermission = ^/usr/bin/application$,screencopy,ask # policy\r\ngeneral:border_size = 2\r\nmonitor = DP-1,2560x1440@144,0x0,1 # display\r\nmonitor = HDMI-A-1,disable\r\nmonitor = DP-1,transform,1 # rotation\r\nmonitor = DP-1,addreserved,10,20,30,40 # reserved\r\nmonitorv2 {{ # HDR block\r\n output = DP-2\r\n supports_hdr = 1 # keep HDR\r\n max_luminance = 1000 # luminance\r\n}} # close HDR\r\nexec = $unresolved\r\nsource = missing.conf\r\n",marker.display());
+    let source=format!("# retained café\r\nenv = GTK_THEME,Nord # environment\r\nexec-once = touch {} # startup\r\npermission = ^/usr/bin/application$,screencopy,ask # policy\r\ngeneral:border_size = 2\r\nmonitor = DP-1,2560x1440@144,0x0,1 # display\r\nmonitor = HDMI-A-1,disable\r\nmonitor = DP-1,transform,1 # rotation\r\nmonitor = DP-1,addreserved,10,20,30,40 # reserved\r\nmonitorv2 {{ # HDR block\r\n output = DP-2\r\n supports_hdr = 1 # keep HDR\r\n max_luminance = 1000 # luminance\r\n}} # close HDR\r\nbind = SUPER,Return,exec,old application # shortcut\r\nsubmap = resize\r\nbind = SUPER,catchall,submap,reset\r\nsubmap = reset\r\nunbind = SUPER,Q\r\nexec = $unresolved\r\nsource = missing.conf\r\n",marker.display());
     std::fs::write(&original, &source).unwrap();
     let catalogue = hyprland_editor_core::catalogue();
     let imported = read_import(original.clone(), catalogue.clone(), BASELINE.into()).unwrap();
@@ -1519,6 +1528,11 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
         panic!("wrong legacy parser response")
     };
     assert_eq!(parsed.monitors.rules, imported.monitors);
+    assert_eq!(parsed.bindings.draft.entries.len(), 5);
+    assert_eq!(
+        imported.bindings.legacy.as_ref().unwrap(),
+        &parsed.bindings.draft
+    );
     std::fs::remove_file(&original).unwrap();
     let state = super::initial_state();
     let status = gtk::Label::new(None);
@@ -1526,6 +1540,111 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     let selection = gtk::SingleSelection::new(Some(gtk::StringList::new(&[])));
     let panel = gtk::Box::new(gtk::Orientation::Vertical, 0);
     apply_import(imported, &state, &status, &version, &selection, &panel);
+    let shortcuts = super::bindings::show(parent, &state, &status);
+    assert_eq!(
+        shortcuts.title().as_deref(),
+        Some("Legacy Shortcuts and Submaps")
+    );
+    let argument: gtk::Entry = named(shortcuts.upcast_ref(), "legacy-bind-argument");
+    argument.set_text("$unresolved");
+    let generation = state.borrow().generation;
+    button(shortcuts.upcast_ref(), "Update Entry").emit_clicked();
+    assert_eq!(state.borrow().generation, generation);
+    assert_eq!(argument.text(), "$unresolved");
+    argument.set_text("new shortcut application,with,commas");
+    let options = widgets(shortcuts.upcast_ref())
+        .into_iter()
+        .filter_map(|w| w.downcast::<gtk::Expander>().ok())
+        .find(|e| e.label().as_deref() == Some("Behavior and device filters"))
+        .unwrap();
+    options.set_expanded(true);
+    let description: gtk::Entry = named(shortcuts.upcast_ref(), "legacy-bind-description");
+    description.set_text("Launch application");
+    let enabled = widgets(shortcuts.upcast_ref())
+        .into_iter()
+        .filter_map(|w| w.downcast::<gtk::CheckButton>().ok())
+        .find(|c| c.label().as_deref() == Some("Include description"))
+        .unwrap();
+    enabled.set_active(true);
+    button(shortcuts.upcast_ref(), "Update Entry").emit_clicked();
+    let expected_bindings = state.borrow().bindings[BASELINE].clone();
+    assert!(state.borrow().dirty());
+    let management: gtk::Expander = named(shortcuts.upcast_ref(), "legacy-bind-management");
+    management.set_expanded(true);
+    button(shortcuts.upcast_ref(), "Duplicate").emit_clicked();
+    assert_eq!(
+        state.borrow().bindings[BASELINE]
+            .legacy
+            .as_ref()
+            .unwrap()
+            .entries
+            .len(),
+        6
+    );
+    button(shortcuts.upcast_ref(), "Undo").emit_clicked();
+    assert_eq!(state.borrow().bindings[BASELINE], expected_bindings);
+    let entry_choice: gtk::DropDown = named(shortcuts.upcast_ref(), "legacy-bind-entries");
+    entry_choice.set_selected(2);
+    let shortcut_section = widgets(shortcuts.upcast_ref())
+        .into_iter()
+        .filter_map(|w| w.downcast::<gtk::Expander>().ok())
+        .find(|e| e.label().is_some_and(|l| l.starts_with("Shortcut ·")))
+        .unwrap();
+    shortcut_section.set_expanded(true);
+    let catchall = widgets(shortcuts.upcast_ref())
+        .into_iter()
+        .filter_map(|w| w.downcast::<gtk::CheckButton>().ok())
+        .find(|c| c.label().as_deref() == Some("Catch All (Submap Only)"))
+        .unwrap();
+    assert!(catchall.is_active());
+    let alt = widgets(shortcuts.upcast_ref())
+        .into_iter()
+        .filter_map(|w| w.downcast::<gtk::CheckButton>().ok())
+        .find(|c| c.label().as_deref() == Some("ALT"))
+        .unwrap();
+    alt.set_active(true);
+    button(shortcuts.upcast_ref(), "Update Entry").emit_clicked();
+    assert!(
+        matches!(&state.borrow().bindings[BASELINE].legacy.as_ref().unwrap().entries[2],hyprland_editor_core::legacy_binding::Entry::Bind{chord,..}if chord.modifiers.contains(&"ALT".into())&&chord.modifiers.contains(&"SUPER".into())&&chord.keys==["catchall"])
+    );
+    button(shortcuts.upcast_ref(), "Undo").emit_clicked();
+    assert_eq!(state.borrow().bindings[BASELINE], expected_bindings);
+    management.set_expanded(false);
+    entry_choice.set_selected(0);
+    if let Some(path) = std::env::var_os("HYPRLAND_EDITOR_TEST_CAPTURE") {
+        shortcuts.set_default_size(360, 800);
+        shortcuts.present();
+        let start = std::time::Instant::now();
+        while start.elapsed() < Duration::from_millis(250) {
+            let context = gtk::glib::MainContext::default();
+            while context.pending() {
+                context.iteration(false);
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        let paintable = gtk::WidgetPaintable::new(Some(&shortcuts));
+        let snapshot = gtk::Snapshot::new();
+        paintable.snapshot(
+            &snapshot,
+            shortcuts.width() as f64,
+            shortcuts.height() as f64,
+        );
+        shortcuts
+            .renderer()
+            .unwrap()
+            .render_texture(snapshot.to_node().expect("legacy shortcut frame"), None)
+            .save_to_png(format!(
+                "{}.legacy-bindings.png",
+                std::path::Path::new(&path).display()
+            ))
+            .unwrap();
+        assert!(
+            shortcuts.width() <= 360,
+            "shortcut editor width {}",
+            shortcuts.width()
+        );
+    }
+    shortcuts.destroy();
     let window = super::session_editor::show(parent, &state, &status);
     let choice: gtk::DropDown = named(window.upcast_ref(), "session-entries");
     let value: gtk::TextView = named(window.upcast_ref(), "session-env-value");
@@ -1671,12 +1790,14 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     assert!(snapshot.legacy_session_origin_sha256.is_some());
     assert!(snapshot.legacy_session_schema_sha256.is_some());
     assert!(snapshot.legacy_monitor_schema_sha256.is_some());
+    assert!(snapshot.legacy_binding_schema_sha256.is_some());
     let expected_monitors = state.borrow().monitors[BASELINE].clone();
     let saved = root.path().join("current.hye");
     std::fs::write(&saved, snapshot.to_json(&catalogue).unwrap()).unwrap();
     let imported = read_import(saved, catalogue.clone(), BASELINE.into()).unwrap();
     assert_eq!(imported.session, expected);
     assert_eq!(imported.monitors, expected_monitors);
+    assert_eq!(imported.bindings, expected_bindings);
     assert!(imported.saved_json);
     let copy = gtk::Button::new();
     connect_source_copy(&copy, parent, &state);
@@ -1694,6 +1815,13 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     let buffer = view.buffer();
     let output = buffer.text(&buffer.start_iter(), &buffer.end_iter(), false);
     assert!(output.contains("execr-once = new startup application"));
+    assert!(output.contains("new shortcut application,with,commas # shortcut"));
+    assert_eq!(
+        hyprland_editor_core::legacy_binding::inspect(&output)
+            .unwrap()
+            .draft,
+        expected_bindings.legacy.clone().unwrap()
+    );
     assert!(output.contains("border_size = 5"));
     assert!(output.contains("monitor = DP-1,transform,3 # rotation"));
     assert!(output.contains("max_luminance = 1300 # luminance\r\n"));
@@ -1718,6 +1846,9 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
         .replace_session(Session::default())
         .unwrap();
     state.borrow_mut().replace_monitors(vec![]).unwrap();
+    let mut empty_bindings = expected_bindings.clone();
+    empty_bindings.legacy = Some(Default::default());
+    state.borrow_mut().replace_bindings(empty_bindings).unwrap();
     let empty = root.path().join("empty.hye");
     std::fs::write(
         &empty,
@@ -1730,9 +1861,25 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     let reopened = read_import(empty, catalogue.clone(), BASELINE.into()).unwrap();
     assert!(reopened.session.is_empty());
     assert!(reopened.monitors.is_empty());
+    assert!(reopened.bindings.is_empty());
     assert!(reopened.saved_json);
     // Older projects had separate session drafts, so retain source entries and
     // append those older drafts for explicit review rather than replacing them.
+    let mut older_bindings = snapshot.clone();
+    older_bindings.legacy_binding_origin_sha256 = None;
+    older_bindings.legacy_binding_schema_sha256 = None;
+    older_bindings.bindings =
+        hyprland_editor_core::lua::parse("hl.bind('Q', hl.dsp.no_op())", BASELINE, &catalogue)
+            .unwrap()
+            .bindings;
+    assert_eq!(older_bindings.bindings.binds.len(), 1);
+    let retained_lua = older_bindings.bindings.binds.clone();
+    let path = root.path().join("old-bindings.hye");
+    std::fs::write(&path, older_bindings.to_json(&catalogue).unwrap()).unwrap();
+    let rebuilt = read_import(path, catalogue.clone(), BASELINE.into()).unwrap();
+    assert_eq!(rebuilt.bindings.binds, retained_lua);
+    assert_eq!(rebuilt.bindings.legacy.as_ref().unwrap().entries.len(), 5);
+    assert!(!rebuilt.saved_json);
     let mut older_monitor = snapshot.clone();
     older_monitor.legacy_monitor_origin_sha256 = None;
     older_monitor.legacy_monitor_schema_sha256 = None;

@@ -32,6 +32,7 @@ pub enum Request {
         draft: Draft,
         session: hyprland_editor_core::session::Draft,
         monitors: Vec<hyprland_editor_core::monitor::Rule>,
+        bindings: hyprland_editor_core::legacy_binding::Draft,
     },
     ValidateSessionEntry {
         entry: hyprland_editor_core::session::Entry,
@@ -446,8 +447,9 @@ pub fn entry() {
                 draft,
                 session,
                 monitors,
+                bindings,
             } => hyprland_editor_core::legacy::Document::new(source, &c)?
-                .edited_with_monitors(&draft, &session, &monitors, &c)
+                .edited_with_bindings(&draft, &session, &monitors, &bindings, &c)
                 .map(Response::Copy),
             Request::ValidateSessionEntry { entry, version } => {
                 hyprland_editor_core::session::Draft {

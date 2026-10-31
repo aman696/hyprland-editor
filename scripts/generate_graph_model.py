@@ -24,7 +24,7 @@ def main():
         "crates/editor-core/native/complex_text.cpp", "data/complex-scalar-sources.json", "data/complex-scalar-fixtures.json",
         "crates/editor-lua55/native/bridge.inc",
         "data/lua-numeric-codegen.json",
-        "data/actions.json", "data/bindings.json", "data/session.json", "data/session-v1.json", "data/legacy-session.json", "data/legacy-monitors.json", "data/legacy-monitors-v1.json",
+        "data/actions.json", "data/bindings.json", "data/session.json", "data/session-v1.json", "data/legacy-session.json", "data/legacy-monitors.json", "data/legacy-monitors-v1.json", "data/legacy-bindings.json",
         "data/lua55-profiles.json", "crates/editor-lua55/native/lua55.cpp",
     ]]
     value = {"format": "hye-graph-model-source-1", "inputs": {

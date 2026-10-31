@@ -30,6 +30,7 @@ fn strings(event: &Event) -> Result<(String, Option<String>), String> {
 }
 fn validate(version: &str, name: &str, reset: &Option<String>) -> Result<(), String> {
     crate::binding::Draft {
+        legacy: None,
         binds: vec![],
         submaps: vec![crate::binding::Submap {
             id: "header".into(),
