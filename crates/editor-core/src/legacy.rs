@@ -214,10 +214,17 @@ impl Document {
     }
 
     pub fn new(content: String, catalogue: &[Setting]) -> Result<Self, String> {
+        Self::new_with_binding_mode(content, catalogue, true)
+    }
+    pub fn new_with_binding_mode(
+        content: String,
+        catalogue: &[Setting],
+        local_variables: bool,
+    ) -> Result<Self, String> {
         let report = import::legacy(&content, catalogue)?;
         let session = legacy_session::inspect(&content)?;
         let monitors = legacy_monitor::inspect(&content)?;
-        let bindings = crate::legacy_binding::inspect(&content)?;
+        let bindings = crate::legacy_binding::inspect_mode(&content, local_variables)?;
         Ok(Self {
             content,
             report,

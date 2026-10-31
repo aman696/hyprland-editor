@@ -28,7 +28,10 @@ fn native_binding_variants_keep_order_flags_devices_and_flat_submap_scope() {
     );
     assert!(matches!(&report.draft.entries[6],Entry::Unbind{chord,..}if chord.keys==["code:42"]));
     let exported = codec::export(&report.draft).unwrap();
-    assert_eq!(codec::inspect(&exported).unwrap().draft, report.draft);
+    assert_eq!(
+        codec::inspect(&exported).unwrap().draft.entries,
+        report.draft.entries
+    );
     assert!(report.draft.validate(AUDITED_MAIN).is_err());
 }
 #[test]
@@ -36,9 +39,9 @@ fn combined_source_editing_reorders_duplicates_removes_and_retains_other_familie
     let source=format!("{SOURCE}general:border_size = 2 # scalar\r\nenv = THEME,Nord # env\r\nmonitor = DP-1,transform,1 # monitor\r\n");
     let doc = legacy::Document::new(source.clone(), &catalogue()).unwrap();
     let mut target = doc.bindings.draft.clone();
-    target.entries.swap(0, 1);
-    target.entries.remove(8);
-    target.entries.push(target.entries[0].clone());
+    target.swap(0, 1);
+    target.remove(8);
+    target.push(target.entries[0].clone());
     if let Entry::Bind { argument, .. } = &mut target.entries[1] {
         *argument = "changed ## command".into();
     }
@@ -58,7 +61,10 @@ fn combined_source_editing_reorders_duplicates_removes_and_retains_other_familie
     let output = doc
         .edited_with_bindings(&scalar, &session, &monitors, &target, &catalogue())
         .unwrap();
-    assert_eq!(codec::inspect(&output).unwrap().draft, target);
+    assert_eq!(
+        codec::export(&codec::inspect(&output).unwrap().draft).unwrap(),
+        codec::export(&target).unwrap()
+    );
     assert!(output.contains("border_size = 6 # scalar\r\n"));
     assert!(output.contains("monitor = DP-1,transform,3 # monitor\r\n"));
     assert!(output.contains("THEME,New") && output.contains("# env\r\n"));
@@ -99,7 +105,7 @@ fn unresolved_submap_and_include_context_are_retained_and_unsafe_changes_refused
     }
     assert!(codec::edited_copy(source, &unsafe_scope).is_err());
     let dynamic = "$tail = ubmap\ns$tail = resize\nbind = ,R,exec,unknown-scope\nsubmap = reset\nbind = ,Q,killactive,\n";
-    let report = codec::inspect(dynamic).unwrap();
+    let report = codec::inspect_mode(dynamic, false).unwrap();
     assert_eq!(report.unresolved_count, 2);
     assert_eq!(report.draft.entries.len(), 2);
     assert!(codec::edited_copy(dynamic, &report.draft)
@@ -112,6 +118,8 @@ fn unresolved_submap_and_include_context_are_retained_and_unsafe_changes_refused
         .entries
         .remove(0);
     let mut appended = Draft {
+        local_variables: true,
+        source_links: vec![],
         entries: vec![binding.clone()],
     };
     assert!(codec::edited_copy(source, &appended).is_err());
@@ -260,6 +268,8 @@ fn unknown_binding_reports_remain_bounded_and_never_capture_host_variables() {
         source
     );
     let huge = Draft {
+        local_variables: true,
+        source_links: vec![],
         entries: vec![
             Entry::Unbind {
                 all: false,

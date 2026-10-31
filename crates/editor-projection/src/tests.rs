@@ -441,7 +441,7 @@ fn legacy_monitor_operations_never_become_implicitly_converted_preview_commands(
 #[test]
 fn legacy_bindings_are_omitted_without_command_description_device_or_submap_payloads() {
     use editor_core::{legacy_binding, workspace::SourceLanguage};
-    let source = "binddk = SUPER,Q,PRIVATE_DEVICE,PRIVATE_DESCRIPTION,exec,PRIVATE_COMMAND\nsubmap = PRIVATE_SUBMAP\nbind = ,catchall,submap,reset\nsubmap = reset\nunbind = all\n";
+    let source = "$device = PRIVATE_DEVICE\n$description = PRIVATE_DESCRIPTION\n$command = PRIVATE_COMMAND\n$map = PRIVATE_SUBMAP\nbinddk = SUPER,Q,$device,$description,exec,$command\nsubmap = $map\nbind = ,catchall,submap,reset\nsubmap = reset\nunbind = all\n";
     let hash = editor_core::lua::source_hash(source);
     let identity = SourceIdentity {
         selected_path: b"/private/config.conf".to_vec(),

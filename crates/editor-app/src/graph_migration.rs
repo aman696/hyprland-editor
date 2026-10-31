@@ -89,7 +89,11 @@ const LEGACY_BINDING_FROM: &str =
     "ad42a1275314d45ee6c23651bc66b585e808cd7a24448192e76d481e51e1cca4";
 const LEGACY_BINDING_MODEL: &str =
     include_str!("../../../data/migrations/graph-model-before-legacy-bindings.json");
-const TO: &str = "71a681eb1dd93b52985c77269c324fda13432374c441cec79ca0a9a20710752e";
+const BINDING_VARIABLES_FROM: &str =
+    "71a681eb1dd93b52985c77269c324fda13432374c441cec79ca0a9a20710752e";
+const BINDING_VARIABLES_MODEL: &str =
+    include_str!("../../../data/migrations/graph-model-before-binding-variables.json");
+const TO: &str = "53d85f744208257078e5c79853e4f6149b8b29b8da508627ae43059926617e3c";
 const OLD: &str = include_str!("../../../data/migrations/graph-model-before-projection.json");
 const FROM_PROJECTION: &str = "046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371";
 const PROJECTION: &str = include_str!("../../../data/migrations/graph-model-projection.json");
@@ -1364,9 +1368,9 @@ fn before_legacy_binding_transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
-fn transition(from: &str) -> Result<(), String> {
+fn before_binding_variables_transition(from: &str) -> Result<(), String> {
     if lua::source_hash(LEGACY_BINDING_MODEL) != LEGACY_BINDING_FROM
-        || lua::source_hash(CURRENT) != TO
+        || lua::source_hash(BINDING_VARIABLES_MODEL) != BINDING_VARIABLES_FROM
     {
         return Err("No reviewed legacy binding transition to this model is available".into());
     }
@@ -1375,7 +1379,8 @@ fn transition(from: &str) -> Result<(), String> {
     }
     let old: serde_json::Value =
         serde_json::from_str(LEGACY_BINDING_MODEL).map_err(|e| e.to_string())?;
-    let new: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let new: serde_json::Value =
+        serde_json::from_str(BINDING_VARIABLES_MODEL).map_err(|e| e.to_string())?;
     let old = old["inputs"]
         .as_object()
         .ok_or("Invalid preceding binding model")?;
@@ -1413,6 +1418,57 @@ fn transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
+fn transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(BINDING_VARIABLES_MODEL) != BINDING_VARIABLES_FROM
+        || lua::source_hash(CURRENT) != TO
+    {
+        return Err(
+            "No reviewed local-variable binding transition to this model is available".into(),
+        );
+    }
+    if from != BINDING_VARIABLES_FROM {
+        before_binding_variables_transition(from)?;
+    }
+    let old: serde_json::Value =
+        serde_json::from_str(BINDING_VARIABLES_MODEL).map_err(|e| e.to_string())?;
+    let new: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let old = old["inputs"]
+        .as_object()
+        .ok_or("Invalid preceding binding model")?;
+    let new = new["inputs"]
+        .as_object()
+        .ok_or("Invalid variable binding model")?;
+    let added: Vec<_> = new
+        .keys()
+        .filter(|key| !old.contains_key(*key))
+        .map(String::as_str)
+        .collect();
+    let changed: Vec<_> = old
+        .keys()
+        .filter(|key| new.get(*key) != Some(&old[*key]))
+        .map(String::as_str)
+        .collect();
+    if old.len() != 105
+        || new.len() != 108
+        || added
+            != [
+                "crates/editor-core/src/legacy_binding/fields.rs",
+                "crates/editor-core/src/legacy_binding/variables.rs",
+                "data/legacy-bindings-v1.json",
+            ]
+        || changed
+            != [
+                "crates/editor-app/src/worker.rs",
+                "crates/editor-core/src/legacy.rs",
+                "crates/editor-core/src/legacy_binding.rs",
+                "crates/editor-core/src/workspace.rs",
+                "data/legacy-bindings.json",
+            ]
+    {
+        return Err("Local-variable binding editing differs from its reviewed bounded source resolver, field/reference preservation, explicit view mode and restricted worker; captured inputs and existing compiler observations must remain unchanged".into());
+    }
+    Ok(())
+}
 pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, String> {
     if text.len() > MAX_WORKSPACE_BYTES {
         return Err("Saved workspace exceeds 8 MiB".into());
@@ -1446,6 +1502,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != LEGACY_MONITOR_FROM
         && previous != MONITOR_BLOCK_FROM
         && previous != LEGACY_BINDING_FROM
+        && previous != BINDING_VARIABLES_FROM
         && raw["source_graph"].get("private").is_some()
     {
         return Err("Previous graph writers had no private input layer; new payloads cannot be introduced during migration".into());
@@ -1463,6 +1520,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != LEGACY_MONITOR_FROM
         && previous != MONITOR_BLOCK_FROM
         && previous != LEGACY_BINDING_FROM
+        && previous != BINDING_VARIABLES_FROM
         && raw["source_graph"]["compiler"]
             .get("numeric_codegen")
             .is_some()
@@ -1494,7 +1552,8 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != LEGACY_SESSION_FROM
         && previous != LEGACY_MONITOR_FROM
         && previous != MONITOR_BLOCK_FROM
-        && previous != LEGACY_BINDING_FROM;
+        && previous != LEGACY_BINDING_FROM
+        && previous != BINDING_VARIABLES_FROM;
     let mut expected_compiler = current_compiler.clone();
     if compiler_observation_renewed {
         expected_compiler.numeric_codegen = None;
@@ -1615,6 +1674,7 @@ mod tests {
         transition(LEGACY_MONITOR_FROM).unwrap();
         transition(MONITOR_BLOCK_FROM).unwrap();
         transition(LEGACY_BINDING_FROM).unwrap();
+        transition(BINDING_VARIABLES_FROM).unwrap();
         assert!(transition(&"0".repeat(64)).is_err());
         assert_ne!(FROM, TO);
         assert_eq!(lua::source_hash(CURRENT), TO);

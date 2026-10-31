@@ -26,6 +26,7 @@ pub enum Request {
     },
     ParseLegacy {
         source: String,
+        binding_variables: bool,
     },
     CopyLegacy {
         source: String,
@@ -33,6 +34,10 @@ pub enum Request {
         session: hyprland_editor_core::session::Draft,
         monitors: Vec<hyprland_editor_core::monitor::Rule>,
         bindings: hyprland_editor_core::legacy_binding::Draft,
+    },
+    ExpandLegacyBindings {
+        source: String,
+        draft: hyprland_editor_core::legacy_binding::Draft,
     },
     ValidateSessionEntry {
         entry: hyprland_editor_core::session::Entry,
@@ -177,6 +182,7 @@ pub enum Request {
 pub enum Response {
     LegacyParsed(Box<hyprland_editor_core::legacy::Report>),
     SessionEntry(hyprland_editor_core::session::Entry),
+    LegacyBindings(hyprland_editor_core::legacy_binding::Draft),
     ProjectCopy(Box<lua::replay::project_copy::Prepared>),
     Parsed(Box<LuaReport>),
     SubmapHeader(lua::replay::declaration_edit::submap::Header),
@@ -438,19 +444,32 @@ pub fn entry() {
             } => LuaDocument::from_report(source, *report, &c)?
                 .edited_copy(&draft, &c)
                 .map(Response::Copy),
-            Request::ParseLegacy { source } => {
-                hyprland_editor_core::legacy::Document::new(source, &c)
-                    .map(|doc| Response::LegacyParsed(Box::new(doc.into_report())))
-            }
+            Request::ParseLegacy {
+                source,
+                binding_variables,
+            } => hyprland_editor_core::legacy::Document::new_with_binding_mode(
+                source,
+                &c,
+                binding_variables,
+            )
+            .map(|doc| Response::LegacyParsed(Box::new(doc.into_report()))),
             Request::CopyLegacy {
                 source,
                 draft,
                 session,
                 monitors,
                 bindings,
-            } => hyprland_editor_core::legacy::Document::new(source, &c)?
-                .edited_with_bindings(&draft, &session, &monitors, &bindings, &c)
-                .map(Response::Copy),
+            } => hyprland_editor_core::legacy::Document::new_with_binding_mode(
+                source,
+                &c,
+                bindings.local_variables,
+            )?
+            .edited_with_bindings(&draft, &session, &monitors, &bindings, &c)
+            .map(Response::Copy),
+            Request::ExpandLegacyBindings { source, draft } => {
+                hyprland_editor_core::legacy_binding::expanded_view(&source, &draft)
+                    .map(Response::LegacyBindings)
+            }
             Request::ValidateSessionEntry { entry, version } => {
                 hyprland_editor_core::session::Draft {
                     entries: vec![entry.clone()],

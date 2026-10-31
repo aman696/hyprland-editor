@@ -76,7 +76,7 @@ pub(super) fn review_legacy(parent: &impl IsA<gtk::Window>, text: String) -> adw
 }
 
 pub(super) fn review_legacy_bindings(parent: &impl IsA<gtk::Window>, text: String) -> adw::Window {
-    review_format(parent,"Review legacy binding fragment","This contains only ordered shortcut, submap and unbind declarations. It must not replace a whole configuration. No action has been executed.","hyprland-bindings.conf",text,true)
+    review_format(parent,"Review legacy binding fragment","This literal fragment contains the current shortcut, submap and unbind values. Use Review Source Copy to preserve local variable references. This must not replace a whole configuration. No action has been executed.","hyprland-bindings.conf",text,true)
 }
 
 fn review_format(

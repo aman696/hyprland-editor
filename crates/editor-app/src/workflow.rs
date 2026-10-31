@@ -108,8 +108,12 @@ fn read_import_for_review(
                     if workspace.draft.version != BASELINE || graph.is_some() {
                         return Err("Legacy source snapshots require the baseline pack and cannot be a Lua source graph.".into());
                     }
-                    let doc =
-                        super::legacy_source::Document::new(root.content.clone(), &catalogue)?;
+                    let doc = super::legacy_source::Document::new_with_binding_mode(
+                        root.content.clone(),
+                        &catalogue,
+                        workspace.legacy_binding_schema_sha256.as_deref()
+                            == Some(&hyprland_editor_core::legacy_binding::schema_hash()),
+                    )?;
                     (None, Some(doc), Some(root.origin.clone()))
                 }
             }
@@ -125,6 +129,27 @@ fn read_import_for_review(
                 workspace.bindings.legacy = Some(doc.bindings.draft.clone());
                 workspace.bindings.validate(&workspace.draft.version)?;
                 legacy_projection_changed = true;
+            } else if workspace.bindings.legacy.is_none() {
+                // Empty targets omit the whole binding draft. The retained
+                // codec marker still determines which source view was removed.
+                workspace.bindings.legacy = Some(hyprland_editor_core::legacy_binding::Draft {
+                    local_variables: workspace.legacy_binding_schema_sha256.as_deref()
+                        == Some(&hyprland_editor_core::legacy_binding::schema_hash()),
+                    entries: vec![],
+                    source_links: vec![],
+                });
+            }
+            if let Some(bindings) = &workspace.bindings.legacy {
+                if bindings.source_links.iter().flatten().any(|line| {
+                    doc.bindings
+                        .sites
+                        .binary_search_by_key(line, |site| site.line)
+                        .is_err()
+                }) {
+                    return Err(
+                        "A binding reference no longer belongs to its captured source view".into(),
+                    );
+                }
             }
             if workspace.legacy_monitor_origin_sha256.is_none() {
                 let mut rebuilt = doc.monitors.rules.clone();
@@ -190,7 +215,7 @@ fn read_import_for_review(
     };
     match path.extension().and_then(|s|s.to_str()) {
         Some("json")=>Draft::from_json(&captured.content,&catalogue).map(|draft|Imported{migration:None,graph:None,draft,source:None,legacy:None,origin:None,monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),session:Default::default(),message:"Validated value-only draft loaded".into(),saved_json:true}),
-        Some("conf")=>super::legacy_source::Document::new(captured.content,&catalogue).map(|doc|Imported{migration:None,graph:None,message:format!("Retained {} scalar overrides, {} session entries and {} monitor declarations and {} binding operations; {} lines unresolved; {} repeated keys. Includes and variables are not evaluated. Review Source Copy includes supported scalar, session, monitor and binding edits.",doc.report.draft.values.len(),doc.session.draft.entries.len(),doc.monitors.rules.len(),doc.bindings.draft.entries.len(),doc.report.skipped.len(),doc.report.duplicate_keys.len()),draft:doc.report.draft.clone(),session:doc.session.draft.clone(),monitors:doc.monitors.rules.clone(),source:None,origin:Some(captured.identity),devices:vec![],bindings:hyprland_editor_core::binding::Draft{legacy:Some(doc.bindings.draft.clone()),..Default::default()},workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),saved_json:false,legacy:Some(doc)}),
+        Some("conf")=>super::legacy_source::Document::new(captured.content,&catalogue).map(|doc|Imported{migration:None,graph:None,message:format!("Retained {} scalar overrides, {} session entries and {} monitor declarations and {} binding operations; {} lines unresolved; {} repeated keys. Known local shortcut values are projected; includes and other variable uses remain unresolved. Review Source Copy includes supported scalar, session, monitor and binding edits.",doc.report.draft.values.len(),doc.session.draft.entries.len(),doc.monitors.rules.len(),doc.bindings.draft.entries.len(),doc.report.skipped.len(),doc.report.duplicate_keys.len()),draft:doc.report.draft.clone(),session:doc.session.draft.clone(),monitors:doc.monitors.rules.clone(),source:None,origin:Some(captured.identity),devices:vec![],bindings:hyprland_editor_core::binding::Draft{legacy:Some(doc.bindings.draft.clone()),..Default::default()},workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),saved_json:false,legacy:Some(doc)}),
         Some("lua")=>{
             let doc=parse_source(captured.content,version,&catalogue)?;
             let mut message=format!("Imported {} scalar declarations, {} monitor rules and {} device rules; {} diagnostics. Effective values are not inferred by executing Lua.",doc.report.draft.values.len(),doc.report.monitors.len(),doc.report.devices.len(),doc.report.diagnostics.len());
@@ -294,7 +319,10 @@ pub(super) fn captured_workspace(s: &super::State) -> Result<Workspace, String> 
         snapshot.legacy_binding_origin_sha256 =
             Some(hyprland_editor_core::lua::source_hash(&doc.content));
         snapshot.legacy_binding_schema_sha256 =
-            Some(hyprland_editor_core::legacy_binding::schema_hash());
+            Some(snapshot.bindings.legacy.as_ref().map_or_else(
+                hyprland_editor_core::legacy_binding::schema_hash,
+                hyprland_editor_core::legacy_binding::draft_schema_hash,
+            ));
         snapshot.legacy_monitor_origin_sha256 =
             Some(hyprland_editor_core::lua::source_hash(&doc.content));
         snapshot.legacy_monitor_schema_sha256 =
@@ -1515,7 +1543,7 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     let root = super::test_support::TempDir::new("legacy-session-ui");
     let original = root.path().join("original.conf");
     let marker = root.path().join("never-run");
-    let source=format!("# retained café\r\nenv = GTK_THEME,Nord # environment\r\nexec-once = touch {} # startup\r\npermission = ^/usr/bin/application$,screencopy,ask # policy\r\ngeneral:border_size = 2\r\nmonitor = DP-1,2560x1440@144,0x0,1 # display\r\nmonitor = HDMI-A-1,disable\r\nmonitor = DP-1,transform,1 # rotation\r\nmonitor = DP-1,addreserved,10,20,30,40 # reserved\r\nmonitorv2 {{ # HDR block\r\n output = DP-2\r\n supports_hdr = 1 # keep HDR\r\n max_luminance = 1000 # luminance\r\n}} # close HDR\r\nbind = SUPER,Return,exec,old application # shortcut\r\nsubmap = resize\r\nbind = SUPER,catchall,submap,reset\r\nsubmap = reset\r\nunbind = SUPER,Q\r\nexec = $unresolved\r\nsource = missing.conf\r\n",marker.display());
+    let source=format!("# retained café\r\n$mainMod = SUPER\r\n$terminal = old application\r\nenv = GTK_THEME,Nord # environment\r\nexec-once = touch {} # startup\r\npermission = ^/usr/bin/application$,screencopy,ask # policy\r\ngeneral:border_size = 2\r\nmonitor = DP-1,2560x1440@144,0x0,1 # display\r\nmonitor = HDMI-A-1,disable\r\nmonitor = DP-1,transform,1 # rotation\r\nmonitor = DP-1,addreserved,10,20,30,40 # reserved\r\nmonitorv2 {{ # HDR block\r\n output = DP-2\r\n supports_hdr = 1 # keep HDR\r\n max_luminance = 1000 # luminance\r\n}} # close HDR\r\nbind = $mainMod,Return,exec,$terminal # shortcut\r\nsubmap = resize\r\nbind = SUPER,catchall,submap,reset\r\nsubmap = reset\r\nunbind = SUPER,Q\r\nexec = $unresolved\r\nsource = missing.conf\r\n",marker.display());
     std::fs::write(&original, &source).unwrap();
     let catalogue = hyprland_editor_core::catalogue();
     let imported = read_import(original.clone(), catalogue.clone(), BASELINE.into()).unwrap();
@@ -1523,6 +1551,7 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     assert_eq!(imported.monitors.len(), 5);
     let worker::Response::LegacyParsed(parsed) = worker::run(worker::Request::ParseLegacy {
         source: source.clone(),
+        binding_variables: true,
     })
     .unwrap() else {
         panic!("wrong legacy parser response")
@@ -1571,6 +1600,17 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     assert!(state.borrow().dirty());
     let management: gtk::Expander = named(shortcuts.upcast_ref(), "legacy-bind-management");
     management.set_expanded(true);
+    button(shortcuts.upcast_ref(), "Use Literal Values for This Entry").emit_clicked();
+    assert_eq!(
+        state.borrow().bindings[BASELINE]
+            .legacy
+            .as_ref()
+            .unwrap()
+            .source_links[0],
+        None
+    );
+    button(shortcuts.upcast_ref(), "Undo").emit_clicked();
+    assert_eq!(state.borrow().bindings[BASELINE], expected_bindings);
     button(shortcuts.upcast_ref(), "Duplicate").emit_clicked();
     assert_eq!(
         state.borrow().bindings[BASELINE]
@@ -1816,6 +1856,8 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     let output = buffer.text(&buffer.start_iter(), &buffer.end_iter(), false);
     assert!(output.contains("execr-once = new startup application"));
     assert!(output.contains("new shortcut application,with,commas # shortcut"));
+    assert!(output.contains("bindd = $mainMod,Return,Launch application,exec,new shortcut application,with,commas # shortcut"));
+    assert!(output.contains("$terminal = old application\r\n"));
     assert_eq!(
         hyprland_editor_core::legacy_binding::inspect(&output)
             .unwrap()
@@ -1840,6 +1882,89 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     assert!(output.contains("source = missing.conf\r\n"));
     assert_eq!(legacy_session::inspect(&output).unwrap().draft, expected);
     review.destroy();
+    // V1 projects retain literal-only removal intent until an explicit review.
+    let mut literal_project = snapshot.clone();
+    literal_project.bindings.legacy = Some(hyprland_editor_core::legacy_binding::Draft::literal());
+    literal_project.legacy_binding_schema_sha256 =
+        Some(hyprland_editor_core::legacy_binding::literal_schema_hash());
+    let old_path = root.path().join("literal-bindings.hye");
+    let old_bytes = literal_project.to_json(&catalogue).unwrap();
+    std::fs::write(&old_path, &old_bytes).unwrap();
+    let imported = read_import(old_path.clone(), catalogue.clone(), BASELINE.into()).unwrap();
+    assert!(imported.saved_json);
+    assert!(!imported.bindings.legacy.as_ref().unwrap().local_variables);
+    assert!(imported.bindings.is_empty());
+    let old_state = super::initial_state();
+    apply_import(imported, &old_state, &status, &version, &selection, &panel);
+    let old_window = super::bindings::show(parent, &old_state, &status);
+    let upgrade: gtk::Button = named(old_window.upcast_ref(), "legacy-bind-upgrade");
+    assert!(upgrade.is_visible());
+    upgrade.emit_clicked();
+    let review_window = || {
+        gtk::Window::list_toplevels()
+            .into_iter()
+            .filter_map(|w| w.downcast::<gtk::Window>().ok())
+            .find(|w| w.title().as_deref() == Some("Review Variable-Based Shortcuts"))
+    };
+    wait(|| review_window().is_some());
+    let proposed = review_window().unwrap();
+    button(proposed.upcast_ref(), "Keep Literal-Only View").emit_clicked();
+    assert!(
+        !old_state.borrow().bindings[BASELINE]
+            .legacy
+            .as_ref()
+            .unwrap()
+            .local_variables
+    );
+    upgrade.emit_clicked();
+    wait(|| review_window().is_some());
+    let proposed = review_window().unwrap();
+    button(proposed.upcast_ref(), "Use Variable-Aware View").emit_clicked();
+    assert!(
+        old_state.borrow().bindings[BASELINE]
+            .legacy
+            .as_ref()
+            .unwrap()
+            .local_variables
+    );
+    assert_eq!(
+        old_state.borrow().bindings[BASELINE]
+            .legacy
+            .as_ref()
+            .unwrap()
+            .entries
+            .len(),
+        1
+    );
+    assert!(!upgrade.is_visible());
+    let upgraded_path = root.path().join("variable-bindings.hye");
+    std::fs::write(
+        &upgraded_path,
+        captured_workspace(&old_state.borrow())
+            .unwrap()
+            .to_json(&catalogue)
+            .unwrap(),
+    )
+    .unwrap();
+    let imported = read_import(upgraded_path, catalogue.clone(), BASELINE.into()).unwrap();
+    assert!(imported.saved_json);
+    assert!(imported.bindings.legacy.as_ref().unwrap().local_variables);
+    assert_eq!(imported.bindings.legacy.as_ref().unwrap().entries.len(), 1);
+    let management: gtk::Expander = named(old_window.upcast_ref(), "legacy-bind-management");
+    management.set_expanded(true);
+    button(old_window.upcast_ref(), "Undo").emit_clicked();
+    assert!(upgrade.is_visible());
+    assert!(
+        !old_state.borrow().bindings[BASELINE]
+            .legacy
+            .as_ref()
+            .unwrap()
+            .local_variables
+    );
+    assert!(old_state.borrow().bindings[BASELINE].is_empty());
+    assert!(!old_state.borrow().dirty());
+    assert_eq!(std::fs::read(old_path).unwrap(), old_bytes);
+    old_window.destroy();
     // A recorded empty target is intentional removal and must not be reimported.
     state
         .borrow_mut()
@@ -1878,7 +2003,8 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     std::fs::write(&path, older_bindings.to_json(&catalogue).unwrap()).unwrap();
     let rebuilt = read_import(path, catalogue.clone(), BASELINE.into()).unwrap();
     assert_eq!(rebuilt.bindings.binds, retained_lua);
-    assert_eq!(rebuilt.bindings.legacy.as_ref().unwrap().entries.len(), 5);
+    assert_eq!(rebuilt.bindings.legacy.as_ref().unwrap().entries.len(), 4);
+    assert!(!rebuilt.bindings.legacy.as_ref().unwrap().local_variables);
     assert!(!rebuilt.saved_json);
     let mut older_monitor = snapshot.clone();
     older_monitor.legacy_monitor_origin_sha256 = None;

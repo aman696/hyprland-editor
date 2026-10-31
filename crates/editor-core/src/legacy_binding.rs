@@ -9,6 +9,8 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
+mod fields;
+mod variables;
 pub const FLAGS: &[(char, &str)] = &[
     ('l', "Locked"),
     ('r', "On release"),
@@ -52,10 +54,73 @@ pub enum Entry {
         chord: Chord,
     },
 }
-#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Draft {
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub local_variables: bool,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub source_links: Vec<Option<usize>>,
     pub entries: Vec<Entry>,
+}
+fn is_false(value: &bool) -> bool {
+    !value
+}
+impl Default for Draft {
+    fn default() -> Self {
+        Self {
+            entries: vec![],
+            source_links: vec![],
+            local_variables: true,
+        }
+    }
+}
+impl Draft {
+    pub fn literal() -> Self {
+        Self {
+            entries: vec![],
+            source_links: vec![],
+            local_variables: false,
+        }
+    }
+    fn link_storage(&mut self) {
+        if self.local_variables && self.source_links.is_empty() {
+            self.source_links.resize(self.entries.len(), None);
+        }
+    }
+    pub fn push(&mut self, entry: Entry) {
+        self.link_storage();
+        if self.local_variables {
+            self.source_links.push(None);
+        }
+        self.entries.push(entry);
+    }
+    pub fn duplicate(&mut self, index: usize) {
+        self.link_storage();
+        if self.local_variables {
+            self.source_links
+                .insert(index + 1, self.source_links[index]);
+        }
+        self.entries.insert(index + 1, self.entries[index].clone());
+    }
+    pub fn remove(&mut self, index: usize) {
+        if !self.source_links.is_empty() {
+            self.source_links.remove(index);
+        }
+        self.entries.remove(index);
+    }
+    pub fn swap(&mut self, a: usize, b: usize) {
+        if !self.source_links.is_empty() {
+            self.source_links.swap(a, b);
+        }
+        self.entries.swap(a, b);
+    }
+    pub fn materialize(&mut self, index: usize) {
+        self.link_storage();
+        if self.local_variables {
+            self.source_links[index] = None;
+        }
+    }
 }
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -67,6 +132,7 @@ pub struct Report {
     pub unresolved: Vec<usize>,
     pub unresolved_count: usize,
     pub barriers_sha256: String,
+    pub derived_sites: Vec<usize>,
 }
 pub fn dispatchers() -> &'static [String] {
     static ALL: std::sync::OnceLock<Vec<String>> = std::sync::OnceLock::new();
@@ -84,6 +150,19 @@ pub fn dispatchers() -> &'static [String] {
 }
 pub fn schema_hash() -> String {
     source_hash(include_str!("../../../data/legacy-bindings.json"))
+}
+pub fn literal_schema_hash() -> String {
+    source_hash(include_str!("../../../data/legacy-bindings-v1.json"))
+}
+pub fn draft_schema_hash(draft: &Draft) -> String {
+    if draft.local_variables {
+        schema_hash()
+    } else {
+        literal_schema_hash()
+    }
+}
+pub fn accepts_schema(pin: &str, draft: &Draft) -> bool {
+    pin == draft_schema_hash(draft)
 }
 fn string(value: &str, empty: bool) -> Result<(), String> {
     if (!empty && value.is_empty()) || value.len() > 16384 || value.contains('\0') {
@@ -250,6 +329,16 @@ impl Draft {
         self.entries.is_empty()
     }
     pub fn validate(&self, version: &str) -> Result<(), String> {
+        if (!self.local_variables && !self.source_links.is_empty())
+            || (!self.source_links.is_empty() && self.source_links.len() != self.entries.len())
+            || self
+                .source_links
+                .iter()
+                .flatten()
+                .any(|line| *line == 0 || *line > MAX_DOCUMENT_BYTES)
+        {
+            return Err("Binding source links do not match this source view".into());
+        }
         if version != BASELINE || self.entries.len() > 10000 {
             return Err(
                 "Legacy binding drafts need the baseline pack and at most 10,000 entries".into(),
@@ -275,7 +364,8 @@ impl Draft {
     }
     pub fn retained_bytes(&self) -> usize {
         use std::mem::size_of;
-        self.entries.capacity() * size_of::<Entry>()
+        self.source_links.capacity() * size_of::<Option<usize>>()
+            + self.entries.capacity() * size_of::<Entry>()
             + self
                 .entries
                 .iter()
@@ -521,14 +611,26 @@ fn scope(entry: &Entry, current: &str) -> String {
     }
 }
 pub fn inspect(content: &str) -> Result<Report, String> {
+    inspect_mode(content, true)
+}
+pub fn inspect_mode(content: &str, local_variables: bool) -> Result<Report, String> {
     let mut report = Report {
-        schema_sha256: schema_hash(),
+        schema_sha256: if local_variables {
+            schema_hash()
+        } else {
+            literal_schema_hash()
+        },
         source_sha256: source_hash(content),
-        draft: Draft::default(),
+        draft: Draft {
+            local_variables,
+            source_links: vec![],
+            entries: vec![],
+        },
         sites: vec![],
         unresolved: vec![],
         unresolved_count: 0,
         barriers_sha256: String::new(),
+        derived_sites: vec![],
     };
     let mut context = scope(
         &Entry::Submap {
@@ -538,35 +640,75 @@ pub fn inspect(content: &str) -> Result<Report, String> {
         "",
     );
     let mut barriers = Sha256::new();
+    let mut locals = variables::Locals::default();
+    let mut projection_bytes = 0;
+    let mut projection_exceeded = false;
     let mut known = true;
     let mut named = false;
     legacy_syntax::walk(content, |line| {
-        // Hyprlang substitutes inside non-variable LHS strings too: a key such
-        // as s$tail can become submap/source. Never assume following scope.
+        if projection_exceeded {
+            return;
+        }
+        if local_variables && line.key.starts_with('$') {
+            locals.define(line.key, line.value, line.editable);
+            return;
+        }
+        let expanded_key = if local_variables {
+            locals.expand(line.key).ok()
+        } else {
+            Some((line.key.into(), false))
+        };
+        let key = expanded_key
+            .as_ref()
+            .map_or(line.key, |(key, _)| key.as_str());
         let dynamic_keyword = line.key.contains('$') && !line.key.starts_with('$');
+        let unknown_dynamic = dynamic_keyword && (!local_variables || expanded_key.is_none());
         let relevant = dynamic_keyword
-            || line.key.starts_with("bind")
-            || ["submap", "unbind", "source"].contains(&line.key);
+            || key.starts_with("bind")
+            || ["submap", "unbind", "source"].contains(&key);
         if !relevant {
             return;
         }
+        let expanded_value = if local_variables {
+            locals.expand(line.value).ok()
+        } else {
+            Some((line.value.into(), false))
+        };
+        let derived = expanded_key.as_ref().is_some_and(|(_, used)| *used)
+            || expanded_value.as_ref().is_some_and(|(_, used)| *used);
         let parsed = if line.editable
-            && line.key != "source"
-            && (known || line.key == "submap" || line.key == "unbind")
+            && !unknown_dynamic
+            && key != "source"
+            && (known || key == "submap" || key == "unbind")
             && report.draft.entries.len() < 10000
         {
-            unescape(line.value)
-                .and_then(|value| decode(line.key, &value))
-                .ok()
+            expanded_value
+                .as_ref()
+                .and_then(|(value, _)| unescape(value).and_then(|value| decode(key, &value)).ok())
+                .filter(|entry| !derived || fields::boundaries(line.value, entry, &locals))
         } else {
             None
         };
         let parsed=parsed.filter(|entry|!matches!(entry,Entry::Bind{chord,..}if !chord.multi&&chord.keys==["catchall"]&&!named));
         if let Some(entry) = parsed {
+            projection_bytes += serde_json::to_vec(&entry)
+                .expect("Typed legacy entry serializes")
+                .len()
+                + 1;
+            if projection_bytes > MAX_DOCUMENT_BYTES {
+                projection_exceeded = true;
+                return;
+            }
             if let Entry::Submap { name, .. } = &entry {
                 known = true;
                 named = !name.is_empty();
                 context = scope(&entry, &context);
+            }
+            if derived {
+                report.derived_sites.push(line.line);
+            }
+            if local_variables {
+                report.draft.source_links.push(Some(line.line));
             }
             report.draft.entries.push(entry);
             report.sites.push(Site {
@@ -574,12 +716,15 @@ pub fn inspect(content: &str) -> Result<Report, String> {
                 statement: line.statement,
             });
         } else {
-            if dynamic_keyword || line.key == "source" || line.key == "submap" {
+            if unknown_dynamic || key == "source" || key == "submap" {
                 context = source_hash(&format!(
                     "{context}:{}",
                     source_hash(&content[line.statement.clone()])
                 ));
                 known = false;
+                if key == "source" || unknown_dynamic {
+                    locals.invalidate();
+                }
             }
             report.unresolved_count += 1;
             if report.unresolved.len() < 4096 {
@@ -589,6 +734,9 @@ pub fn inspect(content: &str) -> Result<Report, String> {
             barriers.update(source_hash(&context).as_bytes());
         }
     })?;
+    if projection_exceeded {
+        return Err("Expanded bindings exceed their 1 MiB projection budget".into());
+    }
     report.barriers_sha256 = format!("{:x}", barriers.finalize());
     // JSON size also bounds temporary graph/state retention.
     if serde_json::to_vec(&report.draft)
@@ -602,20 +750,51 @@ pub fn inspect(content: &str) -> Result<Report, String> {
 }
 pub fn edited_copy(content: &str, target: &Draft) -> Result<String, String> {
     target.validate(BASELINE)?;
-    let before = inspect(content)?;
+    let before = inspect_mode(content, target.local_variables)?;
     if before.draft == *target {
         return Ok(content.into());
     }
+    let linked = |index: usize| -> Result<Option<usize>, String> {
+        let line = target.source_links.get(index).copied().flatten();
+        line.map(|line| {
+            before
+                .sites
+                .binary_search_by_key(&line, |site| site.line)
+                .map_err(|_| {
+                    "A binding source link no longer identifies a captured declaration".to_string()
+                })
+        })
+        .transpose()
+    };
+    let render = |index: usize, entry: &Entry| -> Result<String, String> {
+        let origin = if target.local_variables {
+            linked(index)?
+        } else {
+            (index < before.sites.len()).then_some(index)
+        };
+        if let Some(origin) = origin {
+            fields::render(
+                &content[before.sites[origin].statement.clone()],
+                &before.draft.entries[origin],
+                entry,
+            )
+        } else {
+            encode(entry)
+        }
+    };
     let mut output = content.to_string();
     for (index, site) in before.sites.iter().enumerate().rev() {
-        if target.entries.get(index) == before.draft.entries.get(index) {
+        if target.entries.get(index) == before.draft.entries.get(index)
+            && (!target.local_variables
+                || target.source_links.get(index) == before.draft.source_links.get(index))
+        {
             continue;
         }
         let text = target
             .entries
             .get(index)
             .map(|entry| {
-                encode(entry).map(|text| {
+                render(index, entry).map(|text| {
                     format!(
                         "{text}{}",
                         if content.as_bytes().get(site.statement.end) == Some(&b'#') {
@@ -635,19 +814,42 @@ pub fn edited_copy(content: &str, target: &Draft) -> Result<String, String> {
     } else {
         "\n"
     };
-    for entry in target.entries.iter().skip(before.sites.len()) {
+    for (index, entry) in target.entries.iter().enumerate().skip(before.sites.len()) {
         if !output.is_empty() && !output.ends_with('\n') {
             output.push_str(newline);
         }
-        output.push_str(&encode(entry)?);
+        output.push_str(&render(index, entry)?);
         output.push_str(newline);
     }
     if output.len() > MAX_DOCUMENT_BYTES {
         return Err("Legacy source copy exceeds 1 MiB".into());
     }
-    let after = inspect(&output)?;
+    let after = inspect_mode(&output, target.local_variables)?;
     if export(&after.draft)? != export(target)? || after.barriers_sha256 != before.barriers_sha256 {
-        return Err("The copy changes unresolved binding context or cannot reproduce the draft. Keep your project; add an explicit submap switch/reset where needed before exporting.".into());
+        return Err("The copy cannot preserve these values and unresolved scope. Review submap boundaries. To move an entry across changing variable definitions, explicitly use literal values for that entry before exporting.".into());
     }
     Ok(output)
+}
+
+/// Explicit proposal for opening newly recognized variable-based entries while
+/// preserving earlier literal-only edits through their original source codec.
+pub fn expanded_view(content: &str, literal: &Draft) -> Result<Draft, String> {
+    if literal.local_variables {
+        return Err("This view already recognizes local variables".into());
+    }
+    let materialized = edited_copy(content, literal)?;
+    let original = inspect(content)?;
+    let mut proposed = inspect(&materialized)?.draft;
+    for link in &mut proposed.source_links {
+        if link.is_some_and(|line| {
+            original
+                .sites
+                .binary_search_by_key(&line, |site| site.line)
+                .is_err()
+        }) {
+            *link = None;
+        }
+    }
+    edited_copy(content, &proposed)?;
+    Ok(proposed)
 }

@@ -14,6 +14,33 @@
   },
   "foundations": [
     {
+      "area": "source-defined legacy shortcut variables with field reference preservation and explicit old-project upgrade",
+      "code": [
+        "crates/editor-core/src/legacy_binding.rs",
+        "crates/editor-core/src/legacy_binding/variables.rs",
+        "crates/editor-core/src/legacy_binding/fields.rs",
+        "crates/editor-core/src/legacy.rs",
+        "crates/editor-core/src/workspace.rs",
+        "crates/editor-app/src/legacy_binding_editor.rs",
+        "crates/editor-app/src/legacy_source.rs",
+        "crates/editor-app/src/worker.rs",
+        "crates/editor-app/src/workflow.rs",
+        "data/legacy-bindings.json",
+        "data/legacy-bindings-v1.json"
+      ],
+      "test_references": [
+        "preceding_locals_aliases_reassignments_flags_and_submaps_populate_the_view",
+        "field_edits_preserve_other_references_comments_and_combined_source_changes",
+        "source_links_distinguish_equal_rows_and_follow_duplicate_reorder_and_undo",
+        "external_forward_expression_prefix_and_include_values_remain_unresolved",
+        "literal_projects_upgrade_explicitly_and_expansion_amplification_is_bounded",
+        "legacy_bindings_are_omitted_without_command_description_device_or_submap_payloads",
+        "workflow::test_legacy_session_editing",
+        "native_forms_and_draft_workflow"
+      ],
+      "limits": "preceding source-only identifier definitions/aliases/reassignments for supported bind/submap/unbind, no ambient lookup, prefix-column injection refusal, unknown includes/dynamic names invalidate local knowledge, bounded name/value storage and incremental projection growth, unchanged raw fields keep references, per-row captured-line links follow equal-value duplicate/reorder and private undo, explicit literal conversion for moves across changing definitions, frozen V1 mode preserves old edits and empty targets until readonly reviewed upgrade, original-free save/reopen/source copies and payload-free preview omissions; 108-input model/31 reviewed predecessors retain captured inputs and existing compiler observations; no definition GUI, arbitrary prefix/braced/forward/ambient/expression/include evaluation, other-family variables, complete action grammars, native effective state, actual preview, live apply/recovery or full resource/security/release acceptance"
+    },
+    {
       "area": "graphical native legacy binding submap and unbind editing with preserved scope barriers",
       "code": [
         "crates/editor-core/src/legacy_binding.rs",

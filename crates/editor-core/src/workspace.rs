@@ -153,8 +153,18 @@ impl Workspace {
                 .is_none_or(|r| r.language != SourceLanguage::Legacy || r.origin.sha256 != *hash)
                 || self.source_graph.is_some()
                 || self.draft.version != crate::BASELINE
-                || self.legacy_binding_schema_sha256.as_deref()
-                    != Some(&crate::legacy_binding::schema_hash())
+                || !self
+                    .legacy_binding_schema_sha256
+                    .as_deref()
+                    .is_some_and(|pin| {
+                        self.bindings.legacy.as_ref().map_or_else(
+                            || {
+                                pin == crate::legacy_binding::schema_hash()
+                                    || pin == crate::legacy_binding::literal_schema_hash()
+                            },
+                            |draft| crate::legacy_binding::accepts_schema(pin, draft),
+                        )
+                    })
             {
                 return Err(
                     "Legacy binding projection marker does not match its captured root".into(),

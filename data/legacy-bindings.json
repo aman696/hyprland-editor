@@ -1,5 +1,5 @@
 {
-  "format": "hye-legacy-binding-schema-1",
+  "format": "hye-legacy-binding-schema-2",
   "version": "0.56.2",
   "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
   "source_sha256": {
@@ -94,5 +94,13 @@
     "path": "src/config.cpp",
     "sha256": "868ac5a7c5600b71283c92fb10e39faf9c0b3d4e8cbcd2a2fef6aaab8e716002",
     "scope": "Non-variable directive names can expand; unresolved dynamic names are binding-context barriers. No environment variables are read."
+  },
+  "local_variables": {
+    "recognition": "Explicit preceding selected-file identifier definitions and known aliases only; no host environment or include evaluation",
+    "maximum_active_names": 1024,
+    "maximum_expanded_value_bytes": 65536,
+    "maximum_retained_value_bytes": 262144,
+    "unknown": "Unknown/forward/expression values stay unresolved; includes or unresolved dynamic directive names invalidate prior local knowledge",
+    "field_rewrite": "Preserve original raw fields when their projected values are unchanged; materialize only changed fields; reject variable expansion across prefix argument boundaries"
   }
 }

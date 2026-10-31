@@ -12,17 +12,35 @@ pub(super) struct Document {
 }
 impl Document {
     pub fn new(content: String, catalogue: &[Setting]) -> Result<Self, String> {
+        Self::new_with_binding_mode(content, catalogue, true)
+    }
+    pub fn new_with_binding_mode(
+        content: String,
+        catalogue: &[Setting],
+        local_variables: bool,
+    ) -> Result<Self, String> {
         #[cfg(not(test))]
         let parsed = match super::worker::run(super::worker::Request::ParseLegacy {
             source: content.clone(),
+            binding_variables: local_variables,
         })? {
             super::worker::Response::LegacyParsed(report) => *report,
             _ => return Err("Unexpected legacy parser response".into()),
         };
         #[cfg(test)]
-        let parsed =
-            hyprland_editor_core::legacy::Document::new(content.clone(), catalogue)?.into_report();
-        if parsed.bindings.schema_sha256 != hyprland_editor_core::legacy_binding::schema_hash()
+        let parsed = hyprland_editor_core::legacy::Document::new_with_binding_mode(
+            content.clone(),
+            catalogue,
+            local_variables,
+        )?
+        .into_report();
+        if parsed.bindings.schema_sha256
+            != (if local_variables {
+                hyprland_editor_core::legacy_binding::schema_hash()
+            } else {
+                hyprland_editor_core::legacy_binding::literal_schema_hash()
+            })
+            || parsed.bindings.draft.local_variables != local_variables
             || parsed.bindings.source_sha256 != parsed.source_sha256
             || parsed.bindings.sites.len() != parsed.bindings.draft.entries.len()
             || parsed.monitors.schema_sha256 != legacy_monitor::schema_hash()
@@ -46,6 +64,34 @@ impl Document {
         parsed.scalar.draft.validate(catalogue)?;
         parsed.session.draft.validate(BASELINE)?;
         parsed.bindings.draft.validate(BASELINE)?;
+        if (local_variables
+            && parsed.bindings.draft.source_links.len() != parsed.bindings.sites.len())
+            || (!local_variables && !parsed.bindings.draft.source_links.is_empty())
+            || parsed
+                .bindings
+                .draft
+                .source_links
+                .iter()
+                .zip(&parsed.bindings.sites)
+                .any(|(link, site)| *link != Some(site.line))
+        {
+            return Err("Binding source references do not match captured declarations".into());
+        }
+        let binding_lines: std::collections::BTreeSet<_> =
+            parsed.bindings.sites.iter().map(|site| site.line).collect();
+        if parsed
+            .bindings
+            .derived_sites
+            .windows(2)
+            .any(|pair| pair[0] >= pair[1])
+            || parsed
+                .bindings
+                .derived_sites
+                .iter()
+                .any(|line| !binding_lines.contains(line))
+        {
+            return Err("Variable-derived binding sites do not match captured declarations".into());
+        }
         hyprland_editor_core::monitor::validate(&parsed.monitors.rules, BASELINE)?;
         let mut report = parsed.scalar;
         let session_lines: std::collections::BTreeSet<_> = parsed
