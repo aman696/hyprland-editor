@@ -97,7 +97,11 @@ const LEGACY_WORKSPACE_FROM: &str =
     "53d85f744208257078e5c79853e4f6149b8b29b8da508627ae43059926617e3c";
 const LEGACY_WORKSPACE_MODEL: &str =
     include_str!("../../../data/migrations/graph-model-before-legacy-workspaces.json");
-const TO: &str = "ebc1b2de6a5871ccdca118514d6e6c60f4c42ab7daf9dc7dc2418c6890031102";
+const LEGACY_ANIMATION_FROM: &str =
+    "ebc1b2de6a5871ccdca118514d6e6c60f4c42ab7daf9dc7dc2418c6890031102";
+const LEGACY_ANIMATION_MODEL: &str =
+    include_str!("../../../data/migrations/graph-model-before-legacy-animations.json");
+const TO: &str = "88468b790c82ea011b17cce060259bcb244bcfbe9d44783631a8e05dd484c972";
 const OLD: &str = include_str!("../../../data/migrations/graph-model-before-projection.json");
 const FROM_PROJECTION: &str = "046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371";
 const PROJECTION: &str = include_str!("../../../data/migrations/graph-model-projection.json");
@@ -1474,9 +1478,9 @@ fn before_legacy_workspace_transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
-fn transition(from: &str) -> Result<(), String> {
+fn before_legacy_animation_transition(from: &str) -> Result<(), String> {
     if lua::source_hash(LEGACY_WORKSPACE_MODEL) != LEGACY_WORKSPACE_FROM
-        || lua::source_hash(CURRENT) != TO
+        || lua::source_hash(LEGACY_ANIMATION_MODEL) != LEGACY_ANIMATION_FROM
     {
         return Err("No reviewed legacy workspace transition to this model is available".into());
     }
@@ -1485,7 +1489,8 @@ fn transition(from: &str) -> Result<(), String> {
     }
     let old: serde_json::Value =
         serde_json::from_str(LEGACY_WORKSPACE_MODEL).map_err(|e| e.to_string())?;
-    let new: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let new: serde_json::Value =
+        serde_json::from_str(LEGACY_ANIMATION_MODEL).map_err(|e| e.to_string())?;
     let old = old["inputs"]
         .as_object()
         .ok_or("Invalid preceding workspace model")?;
@@ -1517,6 +1522,54 @@ fn transition(from: &str) -> Result<(), String> {
             ]
     {
         return Err("Legacy workspace editing differs from its reviewed inert native codec, additive source identities and restricted worker; captured inputs and compiler observations must remain unchanged".into());
+    }
+    Ok(())
+}
+fn transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(LEGACY_ANIMATION_MODEL) != LEGACY_ANIMATION_FROM
+        || lua::source_hash(CURRENT) != TO
+    {
+        return Err("No reviewed native animation transition to this model is available".into());
+    }
+    if from != LEGACY_ANIMATION_FROM {
+        before_legacy_animation_transition(from)?;
+    }
+    let old: serde_json::Value =
+        serde_json::from_str(LEGACY_ANIMATION_MODEL).map_err(|e| e.to_string())?;
+    let new: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let old = old["inputs"]
+        .as_object()
+        .ok_or("Invalid preceding animation model")?;
+    let new = new["inputs"].as_object().ok_or("Invalid animation model")?;
+    let added: Vec<_> = new
+        .keys()
+        .filter(|k| !old.contains_key(*k))
+        .map(String::as_str)
+        .collect();
+    let changed: Vec<_> = old
+        .keys()
+        .filter(|k| new.get(*k) != Some(&old[*k]))
+        .map(String::as_str)
+        .collect();
+    if old.len() != 110
+        || new.len() != 112
+        || added
+            != [
+                "crates/editor-core/src/legacy_animation.rs",
+                "data/legacy-animations.json",
+            ]
+        || changed
+            != [
+                "crates/editor-app/src/worker.rs",
+                "crates/editor-core/src/animation.rs",
+                "crates/editor-core/src/legacy.rs",
+                "crates/editor-core/src/legacy_syntax.rs",
+                "crates/editor-core/src/lib.rs",
+                "crates/editor-core/src/lua.rs",
+                "crates/editor-core/src/workspace.rs",
+            ]
+    {
+        return Err("Native animation editing differs from its reviewed inert category codec, separate registry/provenance, additive markers and restricted worker; captured inputs and existing compiler observations must remain exact".into());
     }
     Ok(())
 }
@@ -1553,6 +1606,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != LEGACY_MONITOR_FROM
         && previous != MONITOR_BLOCK_FROM
         && previous != LEGACY_BINDING_FROM
+        && previous != LEGACY_ANIMATION_FROM
         && previous != LEGACY_WORKSPACE_FROM
         && previous != BINDING_VARIABLES_FROM
         && raw["source_graph"].get("private").is_some()
@@ -1572,6 +1626,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != LEGACY_MONITOR_FROM
         && previous != MONITOR_BLOCK_FROM
         && previous != LEGACY_BINDING_FROM
+        && previous != LEGACY_ANIMATION_FROM
         && previous != LEGACY_WORKSPACE_FROM
         && previous != BINDING_VARIABLES_FROM
         && raw["source_graph"]["compiler"]
@@ -1606,6 +1661,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != LEGACY_MONITOR_FROM
         && previous != MONITOR_BLOCK_FROM
         && previous != LEGACY_BINDING_FROM
+        && previous != LEGACY_ANIMATION_FROM
         && previous != LEGACY_WORKSPACE_FROM
         && previous != BINDING_VARIABLES_FROM;
     let mut expected_compiler = current_compiler.clone();
@@ -1730,6 +1786,7 @@ mod tests {
         transition(LEGACY_BINDING_FROM).unwrap();
         transition(BINDING_VARIABLES_FROM).unwrap();
         transition(LEGACY_WORKSPACE_FROM).unwrap();
+        transition(LEGACY_ANIMATION_FROM).unwrap();
         assert!(transition(&"0".repeat(64)).is_err());
         assert_ne!(FROM, TO);
         assert_eq!(lua::source_hash(CURRENT), TO);

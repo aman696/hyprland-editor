@@ -35,3 +35,7 @@ Validation covers scalar edits, all eight session directives, raw launch modes, 
 ## Workspace rules
 
 Literal workspace declarations now populate the graphical workspace editor. All 14 native handler fields, ordered repeated selectors and string layout options can join the combined source review. Deliberate empty targets persist; older separate Lua drafts remain separate. Unknown syntax stays unresolved, and no hook is executed or implicitly projected into preview. See [workspace editing](workspace-editor.md) for the field mapping, workflow and remaining limits.
+
+## Animations and Bézier curves
+
+Literal top-level and flat `animations` category declarations now populate the graphical animation editor and join the combined source copy. Native timing/ranges, disabled ignored arguments and ordered curve references remain distinct from Lua drafts. Private markers retain intentional empty views and older separate drafts; ordinary preview omits native curve/style payloads. See [animation editing](animation-editor.md) for the workflow and limits.

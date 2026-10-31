@@ -151,6 +151,27 @@ fn read_import_for_review(
                     );
                 }
             }
+            if workspace.legacy_animation_origin_sha256.is_none() {
+                let mut rebuilt = doc.animations.draft.declarations.clone();
+                for (n, d) in rebuilt.iter_mut().enumerate() {
+                    let mut serial = n;
+                    while workspace
+                        .animations
+                        .declarations
+                        .iter()
+                        .any(|old| old.id == d.id)
+                    {
+                        d.id = format!("rebuilt-animation-{serial}");
+                        serial += 1;
+                    }
+                }
+                rebuilt.append(&mut workspace.animations.declarations);
+                workspace.animations.declarations = rebuilt;
+                workspace.animations.validate(&workspace.draft.version)?;
+                if !doc.animations.draft.is_empty() {
+                    legacy_projection_changed = true;
+                }
+            }
             if workspace.legacy_workspace_origin_sha256.is_none() {
                 let mut rebuilt = doc.workspaces.rules.clone();
                 for (n, rule) in rebuilt.iter_mut().enumerate() {
@@ -235,7 +256,7 @@ fn read_import_for_review(
     };
     match path.extension().and_then(|s|s.to_str()) {
         Some("json")=>Draft::from_json(&captured.content,&catalogue).map(|draft|Imported{migration:None,graph:None,draft,source:None,legacy:None,origin:None,monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),session:Default::default(),message:"Validated value-only draft loaded".into(),saved_json:true}),
-        Some("conf")=>super::legacy_source::Document::new(captured.content,&catalogue).map(|doc|Imported{migration:None,graph:None,message:format!("Retained {} scalar overrides, {} session entries and {} monitor declarations and {} binding operations and {} workspace declarations; {} lines unresolved; {} repeated keys. Known local shortcut values are projected; includes and other variable uses remain unresolved. Review Source Copy includes supported scalar, session, monitor, workspace and binding edits.",doc.report.draft.values.len(),doc.session.draft.entries.len(),doc.monitors.rules.len(),doc.bindings.draft.entries.len(),doc.workspaces.rules.len(),doc.report.skipped.len(),doc.report.duplicate_keys.len()),draft:doc.report.draft.clone(),session:doc.session.draft.clone(),monitors:doc.monitors.rules.clone(),source:None,origin:Some(captured.identity),devices:vec![],bindings:hyprland_editor_core::binding::Draft{legacy:Some(doc.bindings.draft.clone()),..Default::default()},workspace_rules:doc.workspaces.rules.clone(),rules:vec![],animations:Default::default(),gestures:Default::default(),saved_json:false,legacy:Some(doc)}),
+        Some("conf")=>super::legacy_source::Document::new(captured.content,&catalogue).map(|doc|Imported{migration:None,graph:None,message:format!("Retained {} scalar overrides, {} session entries and {} monitor declarations and {} binding operations and {} workspace declarations and {} animation declarations; {} lines unresolved; {} repeated keys. Known local shortcut values are projected; includes and other variable uses remain unresolved. Review Source Copy includes supported scalar, session, monitor, workspace, animation and binding edits.",doc.report.draft.values.len(),doc.session.draft.entries.len(),doc.monitors.rules.len(),doc.bindings.draft.entries.len(),doc.workspaces.rules.len(),doc.animations.draft.declarations.len(),doc.report.skipped.len(),doc.report.duplicate_keys.len()),draft:doc.report.draft.clone(),session:doc.session.draft.clone(),monitors:doc.monitors.rules.clone(),source:None,origin:Some(captured.identity),devices:vec![],bindings:hyprland_editor_core::binding::Draft{legacy:Some(doc.bindings.draft.clone()),..Default::default()},workspace_rules:doc.workspaces.rules.clone(),rules:vec![],animations:doc.animations.draft.clone(),gestures:Default::default(),saved_json:false,legacy:Some(doc)}),
         Some("lua")=>{
             let doc=parse_source(captured.content,version,&catalogue)?;
             let mut message=format!("Imported {} scalar declarations, {} monitor rules and {} device rules; {} diagnostics. Effective values are not inferred by executing Lua.",doc.report.draft.values.len(),doc.report.monitors.len(),doc.report.devices.len(),doc.report.diagnostics.len());
@@ -343,6 +364,10 @@ pub(super) fn captured_workspace(s: &super::State) -> Result<Workspace, String> 
                 hyprland_editor_core::legacy_binding::schema_hash,
                 hyprland_editor_core::legacy_binding::draft_schema_hash,
             ));
+        snapshot.legacy_animation_origin_sha256 =
+            Some(hyprland_editor_core::lua::source_hash(&doc.content));
+        snapshot.legacy_animation_schema_sha256 =
+            Some(hyprland_editor_core::legacy_animation::schema_hash());
         snapshot.legacy_workspace_origin_sha256 =
             Some(hyprland_editor_core::lua::source_hash(&doc.content));
         snapshot.legacy_workspace_schema_sha256 =
@@ -594,11 +619,11 @@ pub(super) fn connect_source_copy(
         if s.source_graphs.contains_key(&s.draft.version) {drop(s);super::project_copy::show(&window,&state);return;}
         if let Some(doc)=s.legacy_sources.get(&s.draft.version).cloned(){
             let snapshot=match captured_workspace(&s){Ok(snapshot)=>snapshot,Err(error)=>{drop(s);notice(&window,"Cannot prepare legacy copy",&error);return;}};
-            if !snapshot.devices.is_empty() || (!snapshot.bindings.binds.is_empty() || !snapshot.bindings.submaps.is_empty() || !snapshot.bindings.order.is_empty()) || snapshot.workspace_rules.iter().any(|r| !r.legacy) || !snapshot.rules.is_empty() || !snapshot.animations.declarations.is_empty() || !snapshot.gestures.declarations.is_empty() {
-                drop(s);notice(&window,"Structured legacy export pending","This source copy includes supported scalar, session, monitor, workspace and legacy binding edits. Separate Lua bindings and other structured draft groups need their legacy codecs; save the project to retain them.");return;
+            if !snapshot.devices.is_empty() || (!snapshot.bindings.binds.is_empty() || !snapshot.bindings.submaps.is_empty() || !snapshot.bindings.order.is_empty()) || snapshot.workspace_rules.iter().any(|r| !r.legacy) || !snapshot.rules.is_empty() || snapshot.animations.declarations.iter().any(|d|!d.legacy) || !snapshot.gestures.declarations.is_empty() {
+                drop(s);notice(&window,"Structured legacy export pending","This source copy includes supported scalar, session, monitor, workspace, animation and legacy binding edits. Separate Lua bindings and other structured draft groups need their legacy codecs; save the project to retain them.");return;
             }
-            let draft=s.draft.clone();let session=snapshot.session;let monitors=snapshot.monitors;let workspaces=snapshot.workspace_rules;let bindings=snapshot.bindings.legacy.unwrap_or_default();let generation=s.generation;drop(s);let state=state.clone();let win=window.downgrade();let button=button.downgrade();if let Some(button)=button.upgrade(){button.set_sensitive(false);}
-            background(move||doc.edited_with_session(&draft,&session,&monitors,&bindings,&workspaces),move|result|{
+            let draft=s.draft.clone();let session=snapshot.session;let monitors=snapshot.monitors;let workspaces=snapshot.workspace_rules;let animations=snapshot.animations;let bindings=snapshot.bindings.legacy.unwrap_or_default();let generation=s.generation;drop(s);let state=state.clone();let win=window.downgrade();let button=button.downgrade();if let Some(button)=button.upgrade(){button.set_sensitive(false);}
+            background(move||doc.edited_with_session(&draft,&session,&monitors,&bindings,&workspaces,&animations),move|result|{
                 if let Some(button)=button.upgrade(){button.set_sensitive(true);}let Some(win)=win.upgrade()else{return;};if state.borrow().generation!=generation{notice(&win,"Draft changed","The draft changed while the copy was prepared. Review again to use the current edits.");return;}
                 match result{Ok(source)=>{super::text_export::review_legacy(&win,source);},Err(error)=>notice(&win,"Cannot prepare legacy copy",&error)}
             });return;
@@ -1567,7 +1592,7 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     let root = super::test_support::TempDir::new("legacy-session-ui");
     let original = root.path().join("original.conf");
     let marker = root.path().join("never-run");
-    let source=format!("# retained café\r\n$mainMod = SUPER\r\n$terminal = old application\r\nenv = GTK_THEME,Nord # environment\r\nexec-once = touch {} # startup\r\npermission = ^/usr/bin/application$,screencopy,ask # policy\r\ngeneral:border_size = 2\r\nworkspace = name:work,monitor:DP-1,border:false,layoutopt:orientation:left # workspace\r\nworkspace = 2,persistent:true,on-created-empty:never-run-workspace # hook\r\nmonitor = DP-1,2560x1440@144,0x0,1 # display\r\nmonitor = HDMI-A-1,disable\r\nmonitor = DP-1,transform,1 # rotation\r\nmonitor = DP-1,addreserved,10,20,30,40 # reserved\r\nmonitorv2 {{ # HDR block\r\n output = DP-2\r\n supports_hdr = 1 # keep HDR\r\n max_luminance = 1000 # luminance\r\n}} # close HDR\r\nbind = $mainMod,Return,exec,$terminal # shortcut\r\nsubmap = resize\r\nbind = SUPER,catchall,submap,reset\r\nsubmap = reset\r\nunbind = SUPER,Q\r\nexec = $unresolved\r\nsource = missing.conf\r\n",marker.display());
+    let source=format!("# retained café\r\n$mainMod = SUPER\r\n$terminal = old application\r\nenv = GTK_THEME,Nord # environment\r\nexec-once = touch {} # startup\r\npermission = ^/usr/bin/application$,screencopy,ask # policy\r\ngeneral:border_size = 2\r\nworkspace = name:work,monitor:DP-1,border:false,layoutopt:orientation:left # workspace\r\nworkspace = 2,persistent:true,on-created-empty:never-run-workspace # hook\r\nmonitor = DP-1,2560x1440@144,0x0,1 # display\r\nmonitor = HDMI-A-1,disable\r\nmonitor = DP-1,transform,1 # rotation\r\nmonitor = DP-1,addreserved,10,20,30,40 # reserved\r\nmonitorv2 {{ # HDR block\r\n output = DP-2\r\n supports_hdr = 1 # keep HDR\r\n max_luminance = 1000 # luminance\r\n}} # close HDR\r\nanimations {{ # motion\r\n bezier = ease,0.1,0.2,0.3,0.4 # curve\r\n animation = windows,1,8,ease,popin # branch\r\n animation = windowsOut,0,ignored,missing,ignored # off\r\n}} # close motion\r\nbind = $mainMod,Return,exec,$terminal # shortcut\r\nsubmap = resize\r\nbind = SUPER,catchall,submap,reset\r\nsubmap = reset\r\nunbind = SUPER,Q\r\nexec = $unresolved\r\nsource = missing.conf\r\n",marker.display());
     std::fs::write(&original, &source).unwrap();
     let catalogue = hyprland_editor_core::catalogue();
     let imported = read_import(original.clone(), catalogue.clone(), BASELINE.into()).unwrap();
@@ -1582,6 +1607,8 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     };
     assert_eq!(parsed.monitors.rules, imported.monitors);
     assert_eq!(parsed.workspaces.rules, imported.workspace_rules);
+    assert_eq!(parsed.animations.draft, imported.animations);
+    assert_eq!(imported.animations.declarations.len(), 3);
     assert_eq!(imported.workspace_rules.len(), 2);
     assert_eq!(parsed.bindings.draft.entries.len(), 5);
     assert_eq!(
@@ -1947,6 +1974,82 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     }
     workspace_editor.destroy();
     let expected_workspaces = state.borrow().workspace_rules[BASELINE].clone();
+    let animation_editor = super::animations::show(parent, &state, &status);
+    let pick: gtk::DropDown = named(animation_editor.upcast_ref(), "animation-declaration");
+    assert_eq!(pick.selected(), 0);
+    let manage: gtk::Expander = named(animation_editor.upcast_ref(), "animation-management");
+    manage.set_expanded(true);
+    assert!(!button(animation_editor.upcast_ref(), "Add Spring").is_visible());
+    let point: gtk::Entry = named(animation_editor.upcast_ref(), "animation-point-0");
+    point.set_text("2.5");
+    button(animation_editor.upcast_ref(), "Update Animation Draft").emit_clicked();
+    {
+        let hyprland_editor_core::animation::Operation::Curve(c) =
+            &state.borrow().animations[BASELINE].declarations[0].operation
+        else {
+            panic!()
+        };
+        let hyprland_editor_core::animation::CurveKind::Bezier { points } = &c.shape else {
+            panic!()
+        };
+        assert_eq!(points[0][0], Value::Float(2.5));
+    }
+    pick.set_selected(1);
+    let speed: gtk::Entry = named(animation_editor.upcast_ref(), "animation-speed");
+    speed.set_text("150");
+    button(animation_editor.upcast_ref(), "Update Animation Draft").emit_clicked();
+    {
+        let hyprland_editor_core::animation::Operation::Node(n) =
+            &state.borrow().animations[BASELINE].declarations[1].operation
+        else {
+            panic!()
+        };
+        assert_eq!(n.speed, Some(Value::Float(150.)));
+    }
+    button(animation_editor.upcast_ref(), "Duplicate").emit_clicked();
+    assert_eq!(state.borrow().animations[BASELINE].declarations.len(), 4);
+    button(animation_editor.upcast_ref(), "Undo").emit_clicked();
+    assert_eq!(state.borrow().animations[BASELINE].declarations.len(), 3);
+    if let Some(path) = std::env::var_os("HYPRLAND_EDITOR_TEST_CAPTURE") {
+        pick.set_selected(0);
+        let (minimum, _, _, _) = animation_editor
+            .content()
+            .unwrap()
+            .measure(gtk::Orientation::Horizontal, -1);
+        assert!(
+            minimum <= 350,
+            "Expanded animation form requires {minimum}px"
+        );
+        manage.set_expanded(false);
+        animation_editor.set_default_size(360, 760);
+        for _ in 0..10 {
+            let context = gtk::glib::MainContext::default();
+            while context.pending() {
+                context.iteration(false);
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        assert!(
+            animation_editor.width() <= 360,
+            "Animation width {}",
+            animation_editor.width()
+        );
+        let paintable = gtk::WidgetPaintable::new(Some(&animation_editor));
+        let snap = gtk::Snapshot::new();
+        paintable.snapshot(
+            &snap,
+            animation_editor.width() as f64,
+            animation_editor.height() as f64,
+        );
+        animation_editor
+            .renderer()
+            .unwrap()
+            .render_texture(snap.to_node().unwrap(), None)
+            .save_to_png(format!("{}.legacy-animations.png", path.to_string_lossy()))
+            .unwrap();
+    }
+    animation_editor.destroy();
+    let expected_animations = state.borrow().animations[BASELINE].clone();
     let expected = state.borrow().session[BASELINE].clone();
     let snapshot = captured_workspace(&state.borrow()).unwrap();
     assert!(snapshot.legacy_session_origin_sha256.is_some());
@@ -1954,6 +2057,7 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     assert!(snapshot.legacy_monitor_schema_sha256.is_some());
     assert!(snapshot.legacy_binding_schema_sha256.is_some());
     assert!(snapshot.legacy_workspace_schema_sha256.is_some());
+    assert!(snapshot.legacy_animation_schema_sha256.is_some());
     let expected_monitors = state.borrow().monitors[BASELINE].clone();
     let saved = root.path().join("current.hye");
     std::fs::write(&saved, snapshot.to_json(&catalogue).unwrap()).unwrap();
@@ -1962,6 +2066,7 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     assert_eq!(imported.monitors, expected_monitors);
     assert_eq!(imported.bindings, expected_bindings);
     assert_eq!(imported.workspace_rules, expected_workspaces);
+    assert_eq!(imported.animations, expected_animations);
     assert!(imported.saved_json);
     let copy = gtk::Button::new();
     connect_source_copy(&copy, parent, &state);
@@ -2012,6 +2117,17 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
         )
         .unwrap(),
         hyprland_editor_core::legacy_workspace::export(&expected_workspaces).unwrap()
+    );
+    assert!(output.contains("animation = windows,1,150,ease,popin # branch\r\n"));
+    assert!(output.contains("# curve\r\n"));
+    assert_eq!(
+        hyprland_editor_core::legacy_animation::export(
+            &hyprland_editor_core::legacy_animation::inspect(&output)
+                .unwrap()
+                .draft
+        )
+        .unwrap(),
+        hyprland_editor_core::legacy_animation::export(&expected_animations).unwrap()
     );
     assert!(output.contains("# startup\r\n"));
     assert!(output.contains("exec = $unresolved\r\n"));
@@ -2196,6 +2312,36 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
         reopened.workspace_rules[2].id
     );
     assert!(!reopened.workspace_rules[2].legacy);
+    assert!(!reopened.saved_json);
+    assert_eq!(std::fs::read(path).unwrap(), bytes);
+    let mut empty_animation = snapshot.clone();
+    empty_animation.animations.declarations.clear();
+    let path = root.path().join("empty-animations.hye");
+    std::fs::write(&path, empty_animation.to_json(&catalogue).unwrap()).unwrap();
+    let reopened = read_import(path, catalogue.clone(), BASELINE.into()).unwrap();
+    assert!(reopened.animations.is_empty());
+    assert!(reopened.saved_json);
+    let mut old_animation = snapshot.clone();
+    old_animation.legacy_animation_origin_sha256 = None;
+    old_animation.legacy_animation_schema_sha256 = None;
+    old_animation.animations = hyprland_editor_core::lua::parse(
+        "hl.curve('separate',{type='bezier',points={{0,0},{1,1}}})",
+        BASELINE,
+        &catalogue,
+    )
+    .unwrap()
+    .animations;
+    old_animation.animations.declarations[0].id = "legacy-animation-0".into();
+    let path = root.path().join("old-animations.hye");
+    let bytes = old_animation.to_json(&catalogue).unwrap();
+    std::fs::write(&path, &bytes).unwrap();
+    let reopened = read_import(path.clone(), catalogue.clone(), BASELINE.into()).unwrap();
+    assert_eq!(reopened.animations.declarations.len(), 4);
+    assert_ne!(
+        reopened.animations.declarations[0].id,
+        reopened.animations.declarations[3].id
+    );
+    assert!(!reopened.animations.declarations[3].legacy);
     assert!(!reopened.saved_json);
     assert_eq!(std::fs::read(path).unwrap(), bytes);
     let mut old = snapshot;

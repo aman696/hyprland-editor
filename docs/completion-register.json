@@ -14,6 +14,32 @@
   },
   "foundations": [
     {
+      "area": "graphical native animation and Bezier source editing with separate ordered registries",
+      "code": [
+        "crates/editor-core/src/legacy_animation.rs",
+        "crates/editor-core/src/animation.rs",
+        "crates/editor-core/src/legacy_syntax.rs",
+        "crates/editor-core/src/legacy.rs",
+        "crates/editor-core/src/workspace.rs",
+        "crates/editor-app/src/animations.rs",
+        "crates/editor-app/src/legacy_source.rs",
+        "crates/editor-app/src/worker.rs",
+        "crates/editor-app/src/workflow.rs",
+        "crates/editor-projection/src/lib.rs",
+        "data/legacy-animations.json"
+      ],
+      "test_references": [
+        "native_animation_category_curves_timing_and_disabled_arguments_retain_their_meanings",
+        "ordered_native_animation_add_duplicate_remove_reorder_and_all_family_copy_reparse",
+        "native_numbers_signed_zero_unknown_forms_and_lua_registries_do_not_silently_convert",
+        "native_animation_project_markers_preserve_intentional_empty_views",
+        "native_animation_projection_omits_curve_names_and_style_payloads",
+        "workflow::test_legacy_session_editing",
+        "native_forms_and_draft_workflow"
+      ],
+      "limits": "literal top-level and flat animations category Bezier/animation declarations; native normal-float32 coordinate/timing validation without Lua -1..2/speed100 caps, native decimal numeric spellings, signed zero and disabled ignored argument retention; separate ordered native/Lua curve registries, no native spring conversion, one selected graphical form with adaptive diagrams/ranges and compact responsive management controls; original-free private save/reopen/undo, combined six-family source copy with comments/unresolved retention and reparse, deliberate empty targets and old separate Lua drafts retained without identity collisions, payload-free preview omission; 112-input model/33 reviewed predecessors retain captured inputs and existing compiler observations. No variables/includes/general expressions/conditionals/continuations/qualified or other-category syntax, full native interpolation/effective semantics, isolated real preview/live apply/recovery or full audit/resource/accessibility/security/release acceptance"
+    },
+    {
       "area": "graphical legacy workspace rules with native field mapping and editable layout options",
       "code": [
         "crates/editor-core/src/legacy_workspace.rs",

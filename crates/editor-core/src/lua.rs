@@ -1042,6 +1042,7 @@ impl Projection<'_> {
                 }
             }
             Ok(Declaration {
+                legacy: false,
                 id: format!(
                     "source-animation-{}",
                     self.report.animations.declarations.len()

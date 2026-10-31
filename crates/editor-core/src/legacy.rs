@@ -15,6 +15,16 @@ pub struct Document {
     pub monitors: legacy_monitor::Report,
     pub bindings: crate::legacy_binding::Report,
     pub workspaces: crate::legacy_workspace::Report,
+    pub animations: crate::legacy_animation::Report,
+}
+
+pub struct Edits<'a> {
+    pub draft: &'a Draft,
+    pub session: &'a session::Draft,
+    pub monitors: &'a [crate::monitor::Rule],
+    pub bindings: &'a crate::legacy_binding::Draft,
+    pub workspaces: &'a [crate::workspace_rule::Rule],
+    pub animations: &'a crate::animation::Draft,
 }
 
 struct Assignment {
@@ -144,6 +154,7 @@ pub struct Report {
     pub monitors: legacy_monitor::Report,
     pub bindings: crate::legacy_binding::Report,
     pub workspaces: crate::legacy_workspace::Report,
+    pub animations: crate::legacy_animation::Report,
 }
 impl Document {
     pub fn into_report(self) -> Report {
@@ -154,6 +165,7 @@ impl Document {
             monitors: self.monitors,
             bindings: self.bindings,
             workspaces: self.workspaces,
+            animations: self.animations,
         }
     }
     pub fn edited_with_session(
@@ -199,11 +211,37 @@ impl Document {
         workspaces: &[crate::workspace_rule::Rule],
         catalogue: &[Setting],
     ) -> Result<String, String> {
+        self.edited_with_animations(
+            Edits {
+                draft,
+                session,
+                monitors,
+                bindings,
+                workspaces,
+                animations: &self.animations.draft,
+            },
+            catalogue,
+        )
+    }
+    pub fn edited_with_animations(
+        &self,
+        edits: Edits<'_>,
+        catalogue: &[Setting],
+    ) -> Result<String, String> {
+        let Edits {
+            draft,
+            session,
+            monitors,
+            bindings,
+            workspaces,
+            animations,
+        } = edits;
         let scalars = self.edited_copy(draft, catalogue)?;
         let sessions = legacy_session::edited_copy(&scalars, session)?;
         let output = legacy_monitor::edited_copy(&sessions, monitors)?;
         let output = crate::legacy_binding::edited_copy(&output, bindings)?;
         let output = crate::legacy_workspace::edited_copy(&output, workspaces)?;
+        let output = crate::legacy_animation::edited_copy(&output, animations)?;
         // env with unspecified versus explicitly false activation both encode
         // as the same native directive. Compare the native projection, while
         // private projects retain that presence distinction.
@@ -220,6 +258,8 @@ impl Document {
                 != legacy_monitor::export(monitors)?
             || crate::legacy_workspace::export(&crate::legacy_workspace::inspect(&output)?.rules)?
                 != crate::legacy_workspace::export(workspaces)?
+            || crate::legacy_animation::export(&crate::legacy_animation::inspect(&output)?.draft)?
+                != crate::legacy_animation::export(animations)?
             || crate::legacy_binding::export(
                 &crate::legacy_binding::inspect_mode(&output, bindings.local_variables)?.draft,
             )? != crate::legacy_binding::export(bindings)?
@@ -253,6 +293,7 @@ impl Document {
         let monitors = legacy_monitor::inspect(&content)?;
         let bindings = crate::legacy_binding::inspect_mode(&content, local_variables)?;
         let workspaces = crate::legacy_workspace::inspect(&content)?;
+        let animations = crate::legacy_animation::inspect(&content)?;
         Ok(Self {
             content,
             report,
@@ -260,6 +301,7 @@ impl Document {
             monitors,
             bindings,
             workspaces,
+            animations,
         })
     }
 

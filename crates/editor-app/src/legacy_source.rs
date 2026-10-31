@@ -10,6 +10,7 @@ pub(super) struct Document {
     pub monitors: legacy_monitor::Report,
     pub bindings: hyprland_editor_core::legacy_binding::Report,
     pub workspaces: hyprland_editor_core::legacy_workspace::Report,
+    pub animations: hyprland_editor_core::legacy_animation::Report,
 }
 impl Document {
     pub fn new(content: String, catalogue: &[Setting]) -> Result<Self, String> {
@@ -44,6 +45,10 @@ impl Document {
             || parsed.bindings.draft.local_variables != local_variables
             || parsed.bindings.source_sha256 != parsed.source_sha256
             || parsed.bindings.sites.len() != parsed.bindings.draft.entries.len()
+            || parsed.animations.schema_sha256
+                != hyprland_editor_core::legacy_animation::schema_hash()
+            || parsed.animations.source_sha256 != parsed.source_sha256
+            || parsed.animations.sites.len() != parsed.animations.draft.declarations.len()
             || parsed.workspaces.schema_sha256
                 != hyprland_editor_core::legacy_workspace::schema_hash()
             || parsed.workspaces.source_sha256 != parsed.source_sha256
@@ -55,6 +60,7 @@ impl Document {
                 .monitors
                 .sites
                 .iter()
+                .chain(&parsed.animations.sites)
                 .chain(&parsed.workspaces.sites)
                 .chain(&parsed.session.sites)
                 .chain(&parsed.bindings.sites)
@@ -100,6 +106,7 @@ impl Document {
         }
         hyprland_editor_core::monitor::validate(&parsed.monitors.rules, BASELINE)?;
         hyprland_editor_core::workspace_rule::validate(&parsed.workspaces.rules, BASELINE)?;
+        parsed.animations.draft.validate(BASELINE)?;
         let mut report = parsed.scalar;
         let session_lines: std::collections::BTreeSet<_> = parsed
             .session
@@ -107,6 +114,7 @@ impl Document {
             .iter()
             .chain(&parsed.bindings.sites)
             .chain(&parsed.workspaces.sites)
+            .chain(&parsed.animations.sites)
             .map(|site| site.line)
             .collect();
         let monitor_lines: Vec<_> = parsed
@@ -135,6 +143,7 @@ impl Document {
             monitors: parsed.monitors,
             bindings: parsed.bindings,
             workspaces: parsed.workspaces,
+            animations: parsed.animations,
         })
     }
     pub fn edited_with_session(
@@ -144,6 +153,7 @@ impl Document {
         monitors: &[hyprland_editor_core::monitor::Rule],
         bindings: &hyprland_editor_core::legacy_binding::Draft,
         workspaces: &[hyprland_editor_core::workspace_rule::Rule],
+        animations: &hyprland_editor_core::animation::Draft,
     ) -> Result<String, String> {
         match super::worker::run(super::worker::Request::CopyLegacy {
             source: self.content.clone(),
@@ -152,6 +162,7 @@ impl Document {
             monitors: monitors.to_vec(),
             bindings: bindings.clone(),
             workspaces: workspaces.to_vec(),
+            animations: animations.clone(),
         })? {
             super::worker::Response::Copy(source) => Ok(source),
             _ => Err("Unexpected legacy copy response".into()),

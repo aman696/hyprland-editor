@@ -150,11 +150,20 @@ pub(crate) struct Statement<'a> {
     pub editable: bool,
 }
 /// Walk declarations without collecting arbitrarily many source lines.
-pub(crate) fn walk(content: &str, mut visit: impl FnMut(Statement<'_>)) -> Result<(), String> {
+pub(crate) fn walk(content: &str, visit: impl FnMut(Statement<'_>)) -> Result<(), String> {
+    walk_with_category(content, None, visit)
+}
+/// Additional literal ordinary category accepted by a selected codec.
+pub(crate) fn walk_with_category(
+    content: &str,
+    category: Option<&str>,
+    mut visit: impl FnMut(Statement<'_>),
+) -> Result<(), String> {
     if content.len() > MAX_DOCUMENT_BYTES || content.contains('\0') {
         return Err("Legacy source exceeds its size policy or contains NUL".into());
     }
     let (mut offset, mut depth, mut continued, mut flags) = (0usize, 0usize, false, false);
+    let mut first_category = String::new();
     for (index, line) in content.split_inclusive('\n').enumerate() {
         let physical = line.trim_end_matches(['\r', '\n']);
         let previous = continued;
@@ -184,11 +193,17 @@ pub(crate) fn walk(content: &str, mut visit: impl FnMut(Statement<'_>)) -> Resul
                 key: trim(key),
                 value: trim(rhs),
                 statement,
-                editable: depth == 0 && !flags && !previous && !continued,
+                editable: (depth == 0 || depth == 1 && category == Some(first_category.as_str()))
+                    && !flags
+                    && !previous
+                    && !continued,
             });
         } else if value == "}" {
             depth = depth.saturating_sub(1);
-        } else if value.ends_with('{') {
+        } else if let Some(name) = value.strip_suffix('{') {
+            if depth == 0 {
+                first_category = trim(name).to_owned();
+            }
             depth = depth
                 .checked_add(1)
                 .ok_or("Legacy category depth overflow")?;

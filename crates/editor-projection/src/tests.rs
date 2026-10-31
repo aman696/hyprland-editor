@@ -184,10 +184,12 @@ fn every_family_projects_in_order_with_explicit_synthetic_identity_and_fidelity(
         let animations = animation::Draft {
             declarations: vec![
                 animation::Declaration {
+                    legacy: false,
                     id: "curve".into(),
                     operation: animation::Operation::Curve(animation::Curve::bezier("samplecurve")),
                 },
                 animation::Declaration {
+                    legacy: false,
                     id: "node".into(),
                     operation: animation::Operation::Node(animation::Node::new("windows")),
                 },
@@ -237,7 +239,7 @@ fn every_family_projects_in_order_with_explicit_synthetic_identity_and_fidelity(
         let first = projection.lua().find("hl.curve(").unwrap();
         let second = projection.lua().find("hl.animation(").unwrap();
         assert!(first < second);
-        assert_eq!(projection.report().schema_pins.len(), 15);
+        assert_eq!(projection.report().schema_pins.len(), 16);
         assert_eq!(
             projection.report().schema_pins["legacy-workspace"],
             editor_core::legacy_workspace::schema_hash()
@@ -544,4 +546,48 @@ fn native_workspace_preview_omits_commands_names_outputs_and_custom_option_paylo
         .iter()
         .any(|entry| entry.subject == "workspace/legacy-workspace-0"
             && entry.fidelity == Fidelity::OmittedUntrusted));
+}
+
+#[test]
+fn native_animation_projection_omits_curve_names_and_style_payloads() {
+    use editor_core::{legacy_animation, workspace::SourceLanguage};
+    let source="bezier = PRIVATE_CURVE,0,0,1,1\nanimation = windows,1,150,PRIVATE_CURVE,slide PRIVATE_STYLE\n";
+    let hash = editor_core::lua::source_hash(source);
+    let identity = SourceIdentity {
+        selected_path: b"/private/config.conf".to_vec(),
+        resolved_path: None,
+        links: vec![],
+        device: 1,
+        inode: 2,
+        owner: 1000,
+        mode: 0o100600,
+        size: source.len() as u64,
+        modified_seconds: 0,
+        modified_nanoseconds: 0,
+        changed_seconds: 0,
+        changed_nanoseconds: 0,
+        sha256: hash.clone(),
+        recorded_ownership: RecordedOwnership::UserOwned,
+    };
+    let mut w = workspace(BASELINE)
+        .with_root(source.into(), identity)
+        .with_animations(legacy_animation::inspect(source).unwrap().draft);
+    w.sources[0].language = SourceLanguage::Legacy;
+    w.legacy_animation_origin_sha256 = Some(hash);
+    w.legacy_animation_schema_sha256 = Some(legacy_animation::schema_hash());
+    let projection = compile(&w, &Scenario::default()).unwrap();
+    let report = serde_json::to_string(projection.report()).unwrap();
+    for payload in ["PRIVATE_CURVE", "PRIVATE_STYLE"] {
+        assert!(!projection.lua().contains(payload));
+        assert!(!report.contains(payload));
+    }
+    assert_eq!(
+        projection
+            .report()
+            .entries
+            .iter()
+            .filter(|e| e.subject.starts_with("animation/") && e.fidelity == Fidelity::Unsupported)
+            .count(),
+        2
+    );
 }

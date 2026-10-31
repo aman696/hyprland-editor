@@ -363,8 +363,21 @@ pub fn compile(workspace: &Workspace, scenario: &Scenario) -> Result<Projection,
         builder.record(format!("rule/{}", original.id), Fidelity::SampleApproximation, "Ordered predicates/named effects emitted for private synthetic clients; match/effect fidelity remains unverified")?;
         builder.append(&projected.export_lua(version)?)?;
     }
-    builder.append(&workspace.animations.export_lua(version)?)?;
     for declaration in &workspace.animations.declarations {
+        if declaration.legacy {
+            builder.record(
+                format!("animation/{}", declaration.id),
+                Fidelity::Unsupported,
+                "Native animation declaration omitted; explicit preview conversion is required",
+            )?;
+            continue;
+        }
+        // Validate the complete ordered registry once; single references need not be standalone.
+        let source = match &declaration.operation {
+            editor_core::animation::Operation::Curve(c) => c.export_lua()?,
+            editor_core::animation::Operation::Node(n) => n.export_lua(version)?,
+        };
+        builder.append(&source)?;
         builder.record(
             format!("animation/{}", declaration.id),
             Fidelity::SampleApproximation,
@@ -508,6 +521,7 @@ pub fn model_sha256() -> String {
         include_str!("../../editor-core/src/rule.rs"),
         include_str!("../../editor-core/src/workspace_rule.rs"),
         include_str!("../../editor-core/src/legacy_workspace.rs"),
+        include_str!("../../editor-core/src/legacy_animation.rs"),
         include_str!("../../editor-core/src/session.rs"),
         include_str!("../../../data/session.json")
     ))
@@ -518,6 +532,10 @@ fn schema_pins(workspace: &Workspace) -> BTreeMap<String, String> {
         ("monitor", monitor::schema_hash()),
         ("legacy-monitor", editor_core::legacy_monitor::schema_hash()),
         ("legacy-binding", editor_core::legacy_binding::schema_hash()),
+        (
+            "legacy-animation",
+            editor_core::legacy_animation::schema_hash(),
+        ),
         (
             "legacy-workspace",
             editor_core::legacy_workspace::schema_hash(),
