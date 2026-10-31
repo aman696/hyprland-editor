@@ -12,6 +12,7 @@ use std::{
     cell::{Cell, RefCell},
     rc::Rc,
 };
+mod native;
 type Submit = Rc<dyn Fn() -> Result<(), String>>;
 type ActionGet = Rc<dyn Fn() -> Result<GestureAction, String>>;
 fn current(state: &Shared) -> Draft {
@@ -24,6 +25,7 @@ fn current(state: &Shared) -> Draft {
 fn title(spec: &Spec) -> String {
     let action = match &spec.action {
         GestureAction::Builtin(n) => super::human_name(n),
+        GestureAction::NativeDispatcher { .. } => "Native Dispatcher".into(),
         GestureAction::Callbacks(_) => "Phase Action Blocks".into(),
         GestureAction::LegacyFinish(_) => "Legacy Finish Blocks".into(),
     };
@@ -73,6 +75,40 @@ fn text_field(
     let shown = original.as_ref().map_or(String::new(), display);
     let e = entry(parent, title, &shown, name);
     e.set_sensitive(set.is_active());
+    if name == "gesture-mode" {
+        let presets = [
+            ("Keep Entered Value", ""),
+            ("Toggle", "toggle"),
+            ("Float", "float"),
+            ("Tile", "tile"),
+            ("Fullscreen", "fullscreen"),
+            ("Maximize", "maximize"),
+            ("Multiply Zoom", "mult"),
+            ("Live Zoom", "live"),
+        ];
+        let pick = gtk::DropDown::from_strings(
+            &presets.iter().map(|(label, _)| *label).collect::<Vec<_>>(),
+        );
+        compact(&pick);
+        pick.set_widget_name("gesture-mode-preset");
+        parent.append(&pick);
+        let weak = e.downgrade();
+        let set = set.downgrade();
+        pick.connect_selected_notify(move |p| {
+            if p.selected() == 0 {
+                return;
+            }
+            if let (Some(e), Some(set), Some((_, value))) = (
+                weak.upgrade(),
+                set.upgrade(),
+                presets.get(p.selected() as usize),
+            ) {
+                set.set_active(true);
+                e.set_text(value);
+            }
+        });
+    }
+
     let weak = e.downgrade();
     set.connect_toggled(move |set| {
         if let Some(e) = weak.upgrade() {
@@ -418,7 +454,7 @@ fn action_form(
     kind.set_widget_name("gesture-action-kind");
     parent.append(&kind);
     let index = match original {
-        GestureAction::Builtin(_) => 0,
+        GestureAction::Builtin(_) | GestureAction::NativeDispatcher { .. } => 0,
         GestureAction::Callbacks(_) => 1,
         GestureAction::LegacyFinish(_) => 2,
     };
@@ -482,6 +518,9 @@ fn action_form(
                         ))
                     })
                 }
+                GestureAction::NativeDispatcher { .. } => {
+                    Rc::new(|| Err("Native dispatchers require the native gesture form".into()))
+                }
                 GestureAction::Callbacks(c) => callback_form(&body, c, &version, &feedback),
                 GestureAction::LegacyFinish(w) => {
                     body.append(&label("Legacy finish callbacks receive no event data."));
@@ -538,6 +577,9 @@ fn editor(
     changed: Rc<dyn Fn()>,
 ) -> Submit {
     let version = state.borrow().draft.version.clone();
+    if original.legacy {
+        parent.append(&label("Imported .conf gesture. Edits join Review Source Copy; no touchpad input or dispatcher is run."));
+    }
     let outer = parent;
     let stack = gtk::Stack::builder()
         .transition_type(gtk::StackTransitionType::None)
@@ -615,7 +657,10 @@ fn editor(
     parent.append(&scale_set);
     let scale_row = gtk::Box::new(gtk::Orientation::Vertical, 4);
     parent.append(&scale_row);
-    let scale_shown = original.scale.as_ref().map_or("1".into(), display);
+    let scale_shown = original.scale.as_ref().map_or("1".into(), |v| match v {
+        Value::Float(n) if original.legacy => (*n as f32).to_string(),
+        _ => display(v),
+    });
     let scale = entry(&scale_row, "Multiplier", &scale_shown, "gesture-scale");
     let n = original
         .scale
@@ -624,7 +669,8 @@ fn editor(
         .unwrap_or(1.);
     let invert = gtk::CheckButton::with_label("Invert motion");
     invert.set_sensitive(version == AUDITED_MAIN);
-    invert.set_active(n < 0.);
+    invert.set_visible(!original.legacy);
+    invert.set_active(n < 0. && !original.legacy);
     scale_row.append(&invert);
     let slider = gtk::Scale::with_range(
         gtk::Orientation::Horizontal,
@@ -637,7 +683,14 @@ fn editor(
         0.01,
     );
     slider.set_draw_value(false);
-    slider.set_value(n.abs().clamp(gesture::MIN_SCALE, 10.));
+    slider.set_value(if original.legacy {
+        n.clamp(gesture::MIN_SCALE, 10.)
+    } else {
+        n.abs().clamp(gesture::MIN_SCALE, 10.)
+    });
+    if original.legacy {
+        scale_row.append(&label("Native motion multipliers are clamped to 0.1–10; negative values do not invert motion."));
+    }
     scale_row.append(&slider);
     let weak = scale.downgrade();
     let invert_c = invert.clone();
@@ -693,7 +746,11 @@ fn editor(
         "gesture-workspace",
     );
     extra.append(&label("Mode: float/tile/toggle; fullscreen/maximize; cursor zoom mult/live/toggle. Parameters are retained when a different action ignores them."));
-    let action = action_form(&action_panel, &original.action, &version, feedback);
+    let action = if original.legacy {
+        native::form(&action_panel, &original.action)
+    } else {
+        action_form(&action_panel, &original.action, &version, feedback)
+    };
     let original = original.clone();
     let state = state.clone();
     let status = status.clone();
@@ -805,14 +862,26 @@ pub(super) fn show(
     ] {
         setter(content.upcast_ref(), 16);
     }
-    content.append(&label("Create private gesture drafts and callback action blocks. Declaration order affects registration and matching."));
+    content.append(&label(if state.borrow().legacy_sources.contains_key(&state.borrow().draft.version){"Edit imported gestures using matching and action controls. Declaration order affects registration; your desktop input stays unchanged."}else{"Create private gesture drafts and callback action blocks. Declaration order affects registration and matching."}));
     let model = gtk::StringList::new(&[]);
     let pick = gtk::DropDown::builder().model(&model).build();
     compact(&pick);
     pick.set_widget_name("gesture-declaration");
     content.append(&pick);
-    let row = gtk::Box::new(gtk::Orientation::Horizontal, 6);
-    let row2 = gtk::Box::new(gtk::Orientation::Horizontal, 6);
+    let row = gtk::FlowBox::builder()
+        .selection_mode(gtk::SelectionMode::None)
+        .min_children_per_line(1)
+        .max_children_per_line(3)
+        .row_spacing(6)
+        .column_spacing(6)
+        .build();
+    let row2 = gtk::FlowBox::builder()
+        .selection_mode(gtk::SelectionMode::None)
+        .min_children_per_line(1)
+        .max_children_per_line(3)
+        .row_spacing(6)
+        .column_spacing(6)
+        .build();
     let buttons = [
         "Add Gesture",
         "Duplicate",
@@ -824,13 +893,20 @@ pub(super) fn show(
     ]
     .map(gtk::Button::with_label);
     for b in &buttons[..4] {
-        row.append(b);
+        row.insert(b, -1);
     }
     for b in &buttons[4..] {
-        row2.append(b);
+        row2.insert(b, -1);
     }
-    content.append(&row);
-    content.append(&row2);
+    let manage = gtk::Box::new(gtk::Orientation::Vertical, 6);
+    manage.append(&row);
+    manage.append(&row2);
+    let expander = gtk::Expander::builder()
+        .label("Manage Gestures")
+        .child(&manage)
+        .build();
+    expander.set_widget_name("gesture-management");
+    content.append(&expander);
     let panel = gtk::Box::new(gtk::Orientation::Vertical, 8);
     content.append(&panel);
     let feedback = label("");
@@ -915,7 +991,11 @@ pub(super) fn show(
         move || {
             busy.set(true);
             let draft = current(&state);
-            let index = active.get().min(draft.declarations.len().saturating_sub(1));
+            let index = if active.get() == gtk::INVALID_LIST_POSITION as usize {
+                0
+            } else {
+                active.get().min(draft.declarations.len().saturating_sub(1))
+            };
             active.set(index);
             let titles = draft.declarations.iter().map(title).collect::<Vec<_>>();
             model.splice(
@@ -1006,7 +1086,12 @@ pub(super) fn show(
                 match op {
                     0 => {
                         let id = unique(&draft);
-                        draft.declarations.push(Spec::new(&id));
+                        let mut spec = Spec::new(&id);
+                        spec.legacy = state
+                            .borrow()
+                            .legacy_sources
+                            .contains_key(&state.borrow().draft.version);
+                        draft.declarations.push(spec);
                         target = draft.declarations.len() - 1;
                     }
                     1 | 3 => {
@@ -1081,6 +1166,7 @@ pub(super) fn show(
             gtk::glib::Propagation::Proceed
         }
     });
+    gtk::prelude::GtkWindowExt::set_focus(&win, Some(&pick));
     win.present();
     win
 }
@@ -1108,6 +1194,12 @@ pub(super) fn test_editor(parent: &adw::ApplicationWindow) {
             .unwrap()
     }
     fn click(win: &adw::Window, name: &str) {
+        for e in descendants(win.upcast_ref())
+            .into_iter()
+            .filter_map(|w| w.downcast::<gtk::Expander>().ok())
+        {
+            e.set_expanded(true);
+        }
         descendants(win.upcast_ref())
             .into_iter()
             .filter_map(|w| w.downcast::<gtk::Button>().ok())

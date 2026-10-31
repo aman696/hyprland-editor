@@ -239,7 +239,7 @@ fn every_family_projects_in_order_with_explicit_synthetic_identity_and_fidelity(
         let first = projection.lua().find("hl.curve(").unwrap();
         let second = projection.lua().find("hl.animation(").unwrap();
         assert!(first < second);
-        assert_eq!(projection.report().schema_pins.len(), 16);
+        assert_eq!(projection.report().schema_pins.len(), 17);
         assert_eq!(
             projection.report().schema_pins["legacy-workspace"],
             editor_core::legacy_workspace::schema_hash()
@@ -587,6 +587,54 @@ fn native_animation_projection_omits_curve_names_and_style_payloads() {
             .entries
             .iter()
             .filter(|e| e.subject.starts_with("animation/") && e.fidelity == Fidelity::Unsupported)
+            .count(),
+        2
+    );
+}
+
+#[test]
+fn native_gestures_omit_dispatcher_arguments_modifiers_and_workspace_payloads() {
+    use editor_core::{legacy_gesture, workspace::SourceLanguage};
+    let source="gesturep = 3,horizontal,mod:PRIVATE_MOD,dispatcher,PRIVATE_DISPATCHER,PRIVATE_COMMAND\ngesture = 4,down,special,PRIVATE_WORKSPACE\n";
+    let hash = editor_core::lua::source_hash(source);
+    let identity = SourceIdentity {
+        selected_path: b"/private/config.conf".to_vec(),
+        resolved_path: None,
+        links: vec![],
+        device: 1,
+        inode: 2,
+        owner: 1000,
+        mode: 0o100600,
+        size: source.len() as u64,
+        modified_seconds: 0,
+        modified_nanoseconds: 0,
+        changed_seconds: 0,
+        changed_nanoseconds: 0,
+        sha256: hash.clone(),
+        recorded_ownership: RecordedOwnership::UserOwned,
+    };
+    let mut w = workspace(BASELINE)
+        .with_root(source.into(), identity)
+        .with_gestures(legacy_gesture::inspect(source).unwrap().draft);
+    w.sources[0].language = SourceLanguage::Legacy;
+    w.legacy_gesture_origin_sha256 = Some(hash);
+    w.legacy_gesture_schema_sha256 = Some(legacy_gesture::schema_hash());
+    let p = compile(&w, &Scenario::default()).unwrap();
+    let report = serde_json::to_string(p.report()).unwrap();
+    for value in [
+        "PRIVATE_MOD",
+        "PRIVATE_DISPATCHER",
+        "PRIVATE_COMMAND",
+        "PRIVATE_WORKSPACE",
+    ] {
+        assert!(!p.lua().contains(value));
+        assert!(!report.contains(value));
+    }
+    assert_eq!(
+        p.report()
+            .entries
+            .iter()
+            .filter(|e| e.subject.starts_with("gesture/") && e.fidelity == Fidelity::Unsupported)
             .count(),
         2
     );

@@ -88,6 +88,10 @@ pub struct Workspace {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub legacy_animation_origin_sha256: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy_gesture_origin_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy_gesture_schema_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub legacy_animation_schema_sha256: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub legacy_workspace_schema_sha256: Option<String>,
@@ -133,6 +137,8 @@ impl Workspace {
             legacy_monitor_origin_sha256: None,
             legacy_workspace_origin_sha256: None,
             legacy_animation_origin_sha256: None,
+            legacy_gesture_origin_sha256: None,
+            legacy_gesture_schema_sha256: None,
             legacy_animation_schema_sha256: None,
             legacy_workspace_schema_sha256: None,
             legacy_monitor_schema_sha256: None,
@@ -275,6 +281,28 @@ impl Workspace {
         {
             return Err(
                 "Native animation drafts require captured source and codec identities".into(),
+            );
+        }
+        if let Some(hash) = &self.legacy_gesture_origin_sha256 {
+            if self
+                .root()
+                .is_none_or(|r| r.language != SourceLanguage::Legacy || r.origin.sha256 != *hash)
+                || self.source_graph.is_some()
+                || self.draft.version != crate::BASELINE
+                || self.legacy_gesture_schema_sha256.as_deref()
+                    != Some(&crate::legacy_gesture::schema_hash())
+            {
+                return Err(
+                    "Native gesture marker does not match the captured source and codec".into(),
+                );
+            }
+        }
+        if (self.legacy_gesture_schema_sha256.is_some()
+            || self.gestures.declarations.iter().any(|s| s.legacy))
+            && self.legacy_gesture_origin_sha256.is_none()
+        {
+            return Err(
+                "Native gesture drafts require captured source and codec identities".into(),
             );
         }
         self.draft.validate(catalogue)?;

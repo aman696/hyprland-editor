@@ -159,6 +159,9 @@ fn gesture_bytes(draft: &hyprland_editor_core::gesture::Draft) -> usize {
                     .sum::<usize>()
                     + match &s.action {
                         GestureAction::Builtin(name) => name.capacity(),
+                        GestureAction::NativeDispatcher { name, argument } => {
+                            name.capacity() + argument.capacity()
+                        }
                         GestureAction::LegacyFinish(w) => workflow(w),
                         GestureAction::Callbacks(c) => c
                             .phases()

@@ -180,7 +180,7 @@ fn chord(
         Ok(result)
     })
 }
-fn action_name(name: &str) -> &str {
+pub(super) fn action_name(name: &str) -> &str {
     match name {
         "exec" => "Run command",
         "execr" => "Run raw command",
@@ -256,7 +256,11 @@ fn action_name(name: &str) -> &str {
         _ => name,
     }
 }
-fn argument(panel: &gtk::Box, dispatcher: &str, initial: &str) -> Box<dyn Fn() -> String> {
+pub(super) fn argument(
+    panel: &gtk::Box,
+    dispatcher: &str,
+    initial: &str,
+) -> Box<dyn Fn() -> String> {
     // Preserve exact existing arguments; choosing a preset is always explicit.
     let presets: &[(&str, &str)] = match dispatcher {
         "movefocus"

@@ -36,6 +36,7 @@ pub enum Request {
         bindings: hyprland_editor_core::legacy_binding::Draft,
         workspaces: Vec<hyprland_editor_core::workspace_rule::Rule>,
         animations: hyprland_editor_core::animation::Draft,
+        gestures: hyprland_editor_core::gesture::Draft,
     },
     ExpandLegacyBindings {
         source: String,
@@ -463,12 +464,13 @@ pub fn entry() {
                 bindings,
                 workspaces,
                 animations,
+                gestures,
             } => hyprland_editor_core::legacy::Document::new_with_binding_mode(
                 source,
                 &c,
                 bindings.local_variables,
             )?
-            .edited_with_animations(
+            .edited_groups(
                 hyprland_editor_core::legacy::Edits {
                     draft: &draft,
                     session: &session,
@@ -476,6 +478,7 @@ pub fn entry() {
                     bindings: &bindings,
                     workspaces: &workspaces,
                     animations: &animations,
+                    gestures: &gestures,
                 },
                 &c,
             )

@@ -421,6 +421,10 @@ pub fn compile(workspace: &Workspace, scenario: &Scenario) -> Result<Projection,
     }
     builder.append(&bindings.export_lua(version)?)?;
     let mut gestures = workspace.gestures.clone();
+    for spec in gestures.declarations.iter().filter(|s| s.legacy) {
+        builder.record(format!("gesture/{}",spec.id),Fidelity::Unsupported,"Native gesture omitted; physical input and dispatcher semantics require explicit preview support")?;
+    }
+    gestures.declarations.retain(|s| !s.legacy);
     for spec in &mut gestures.declarations {
         let subject = format!("gesture/{}", spec.id);
         builder.record(subject.clone(), Fidelity::SampleApproximation, "Gesture registration/identity emitted; synthetic input routing and native effects remain unverified")?;
@@ -437,6 +441,9 @@ pub fn compile(workspace: &Workspace, scenario: &Scenario) -> Result<Projection,
                 builder.workflow(&mut workflow, version, &subject)?;
                 builder.entries.last_mut().unwrap().mocked_intent = Some(intent);
                 spec.action = gesture::GestureAction::LegacyFinish(workflow);
+            }
+            gesture::GestureAction::NativeDispatcher { .. } => {
+                return Err("Native dispatcher cannot enter Lua preview projection".into())
             }
             gesture::GestureAction::LegacyFinish(workflow) => {
                 builder.workflow(workflow, version, &subject)?
@@ -522,6 +529,7 @@ pub fn model_sha256() -> String {
         include_str!("../../editor-core/src/workspace_rule.rs"),
         include_str!("../../editor-core/src/legacy_workspace.rs"),
         include_str!("../../editor-core/src/legacy_animation.rs"),
+        include_str!("../../editor-core/src/legacy_gesture.rs"),
         include_str!("../../editor-core/src/session.rs"),
         include_str!("../../../data/session.json")
     ))
@@ -532,6 +540,7 @@ fn schema_pins(workspace: &Workspace) -> BTreeMap<String, String> {
         ("monitor", monitor::schema_hash()),
         ("legacy-monitor", editor_core::legacy_monitor::schema_hash()),
         ("legacy-binding", editor_core::legacy_binding::schema_hash()),
+        ("legacy-gesture", editor_core::legacy_gesture::schema_hash()),
         (
             "legacy-animation",
             editor_core::legacy_animation::schema_hash(),

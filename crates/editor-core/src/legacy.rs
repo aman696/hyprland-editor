@@ -16,6 +16,7 @@ pub struct Document {
     pub bindings: crate::legacy_binding::Report,
     pub workspaces: crate::legacy_workspace::Report,
     pub animations: crate::legacy_animation::Report,
+    pub gestures: crate::legacy_gesture::Report,
 }
 
 pub struct Edits<'a> {
@@ -25,6 +26,7 @@ pub struct Edits<'a> {
     pub bindings: &'a crate::legacy_binding::Draft,
     pub workspaces: &'a [crate::workspace_rule::Rule],
     pub animations: &'a crate::animation::Draft,
+    pub gestures: &'a crate::gesture::Draft,
 }
 
 struct Assignment {
@@ -155,6 +157,7 @@ pub struct Report {
     pub bindings: crate::legacy_binding::Report,
     pub workspaces: crate::legacy_workspace::Report,
     pub animations: crate::legacy_animation::Report,
+    pub gestures: crate::legacy_gesture::Report,
 }
 impl Document {
     pub fn into_report(self) -> Report {
@@ -166,6 +169,7 @@ impl Document {
             bindings: self.bindings,
             workspaces: self.workspaces,
             animations: self.animations,
+            gestures: self.gestures,
         }
     }
     pub fn edited_with_session(
@@ -211,7 +215,7 @@ impl Document {
         workspaces: &[crate::workspace_rule::Rule],
         catalogue: &[Setting],
     ) -> Result<String, String> {
-        self.edited_with_animations(
+        self.edited_groups(
             Edits {
                 draft,
                 session,
@@ -219,15 +223,12 @@ impl Document {
                 bindings,
                 workspaces,
                 animations: &self.animations.draft,
+                gestures: &self.gestures.draft,
             },
             catalogue,
         )
     }
-    pub fn edited_with_animations(
-        &self,
-        edits: Edits<'_>,
-        catalogue: &[Setting],
-    ) -> Result<String, String> {
+    pub fn edited_groups(&self, edits: Edits<'_>, catalogue: &[Setting]) -> Result<String, String> {
         let Edits {
             draft,
             session,
@@ -235,6 +236,7 @@ impl Document {
             bindings,
             workspaces,
             animations,
+            gestures,
         } = edits;
         let scalars = self.edited_copy(draft, catalogue)?;
         let sessions = legacy_session::edited_copy(&scalars, session)?;
@@ -242,6 +244,7 @@ impl Document {
         let output = crate::legacy_binding::edited_copy(&output, bindings)?;
         let output = crate::legacy_workspace::edited_copy(&output, workspaces)?;
         let output = crate::legacy_animation::edited_copy(&output, animations)?;
+        let output = crate::legacy_gesture::edited_copy(&output, gestures)?;
         // env with unspecified versus explicitly false activation both encode
         // as the same native directive. Compare the native projection, while
         // private projects retain that presence distinction.
@@ -258,6 +261,8 @@ impl Document {
                 != legacy_monitor::export(monitors)?
             || crate::legacy_workspace::export(&crate::legacy_workspace::inspect(&output)?.rules)?
                 != crate::legacy_workspace::export(workspaces)?
+            || crate::legacy_gesture::export(&crate::legacy_gesture::inspect(&output)?.draft)?
+                != crate::legacy_gesture::export(gestures)?
             || crate::legacy_animation::export(&crate::legacy_animation::inspect(&output)?.draft)?
                 != crate::legacy_animation::export(animations)?
             || crate::legacy_binding::export(
@@ -294,6 +299,7 @@ impl Document {
         let bindings = crate::legacy_binding::inspect_mode(&content, local_variables)?;
         let workspaces = crate::legacy_workspace::inspect(&content)?;
         let animations = crate::legacy_animation::inspect(&content)?;
+        let gestures = crate::legacy_gesture::inspect(&content)?;
         Ok(Self {
             content,
             report,
@@ -302,6 +308,7 @@ impl Document {
             bindings,
             workspaces,
             animations,
+            gestures,
         })
     }
 

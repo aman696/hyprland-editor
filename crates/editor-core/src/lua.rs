@@ -813,6 +813,7 @@ impl Projection<'_> {
                 GestureAction::Builtin(name)
             };
             let spec = Spec {
+                legacy: false,
                 id: format!("source-gesture-{}", self.report.gestures.declarations.len()),
                 fingers,
                 direction,

@@ -39,3 +39,7 @@ Literal workspace declarations now populate the graphical workspace editor. All 
 ## Animations and Bézier curves
 
 Literal top-level and flat `animations` category declarations now populate the graphical animation editor and join the combined source copy. Native timing/ranges, disabled ignored arguments and ordered curve references remain distinct from Lua drafts. Private markers retain intentional empty views and older separate drafts; ordinary preview omits native curve/style payloads. See [animation editing](animation-editor.md) for the workflow and limits.
+
+## Gestures
+
+Literal native gestures now populate matching/action controls and join the combined source copy. Native inhibition flags, modifier/scale prefixes, builtin parameter order and inert dispatcher arguments remain distinct from Lua callbacks. Save/reopen and undo preserve deliberate empty targets and older separate drafts. See [gesture editing](gesture-editor.md) for supported forms, registration identities and remaining limits.

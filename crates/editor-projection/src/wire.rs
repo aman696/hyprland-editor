@@ -2,6 +2,7 @@
 //! authenticity or execution safety. A decoded result authorizes no launch.
 use super::*;
 pub const MAX_RESULT_BYTES: usize = 12 * MAX_DOCUMENT_BYTES;
+const MAX_SCHEMA_PINS: usize = 17;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -151,7 +152,7 @@ pub(super) fn targets<'de, D: serde::Deserializer<'de>>(
 pub(super) fn pins<'de, D: serde::Deserializer<'de>>(
     d: D,
 ) -> Result<BTreeMap<String, String>, D::Error> {
-    bounded_map::<D, String, 16>(d)
+    bounded_map::<D, String, MAX_SCHEMA_PINS>(d)
 }
 pub(super) fn entries<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Vec<Entry>, D::Error> {
     bounded_vec::<D, Entry, MAX_ENTRIES>(d)
@@ -204,7 +205,7 @@ mod tests {
         let scenario = Scenario::default();
         let result =
             serde_json::to_value(Artifact::from(compile(&workspace, &scenario).unwrap())).unwrap();
-        for mutation in 0..4 {
+        for mutation in 0..5 {
             let mut value = result.clone();
             match mutation {
                 0 => {
@@ -215,6 +216,13 @@ mod tests {
                 2 => {
                     value["report"]["scenario"]["outputs"] =
                         vec![value["report"]["scenario"]["outputs"][0].clone(); 5].into()
+                }
+                3 => {
+                    value["report"]["schema_pins"] = serde_json::Value::Object(
+                        (0..=MAX_SCHEMA_PINS)
+                            .map(|i| (format!("pin-{i}"), "0".repeat(64).into()))
+                            .collect(),
+                    );
                 }
                 _ => value["report"]["hidden"] = true.into(),
             }

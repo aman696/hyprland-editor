@@ -14,6 +14,37 @@
   },
   "foundations": [
     {
+      "area": "graphical native gesture editing with inert dispatchers and exact native registration identities",
+      "code": [
+        "crates/editor-core/src/legacy_gesture.rs",
+        "crates/editor-core/src/gesture.rs",
+        "crates/editor-core/src/legacy.rs",
+        "crates/editor-core/src/workspace.rs",
+        "crates/editor-app/src/gestures.rs",
+        "crates/editor-app/src/gestures/native.rs",
+        "crates/editor-app/src/legacy_binding_editor.rs",
+        "crates/editor-app/src/legacy_source.rs",
+        "crates/editor-app/src/worker.rs",
+        "crates/editor-app/src/workflow.rs",
+        "crates/editor-app/src/history.rs",
+        "crates/editor-projection/src/lib.rs",
+        "crates/editor-projection/src/wire.rs",
+        "data/legacy-gestures.json"
+      ],
+      "test_references": [
+        "native_gesture_flags_modifiers_scale_clamp_builtin_spelling_and_dispatcher_arguments_round_trip",
+        "native_gesture_registration_unset_add_duplicate_order_and_all_family_copy_remain_inert",
+        "native_unknown_syntax_parameter_boundaries_and_lua_workflows_do_not_silently_convert",
+        "native_gesture_private_markers_preserve_intentional_empty_targets",
+        "native_gestures_omit_dispatcher_arguments_modifiers_and_workspace_payloads",
+        "worker_collections_refuse_excessive_counts_duplicates_and_hidden_fields",
+        "actual_staging_preserves_inputs_maps_private_hardware_and_keeps_commands_inert",
+        "workflow::test_legacy_session_editing",
+        "native_forms_and_draft_workflow"
+      ],
+      "limits": "literal top-level/flat gestures category native builtins and gesturep flag, ordered repeated mod/scale prefixes, raw finite normal float32 scale with native 0.1..10 clamp in registration identity, cursorZoom zoom-then-mode and scrollMove spelling, inert native dispatcher name/comma-joined arguments with shared 71-name/common-preset chooser and retained unknown plugin names; native/Lua registration separation, graphical matching/action tabs and mode choices, compact responsive management; combined seven-family source copies, comment/unresolved retention/reparse, captured source/codec markers for deliberate empties/older separate Lua drafts and collision-free restore, payload-free native preview omission; strict preview transport grows to 17 known schema identities with valid staging/oversize checks; 114-input model/34 reviewed predecessors preserve captured inputs and compiler observations. No variables/includes/expressions/qualified/other-category syntax, unknown flags or arbitrary native numeric prefix/hex/nonfinite aliases, implicit Lua callback conversion, complete action grammars or native/hardware/effective/isolated-preview/live-apply/recovery/resource/accessibility/security/release acceptance"
+    },
+    {
       "area": "graphical native animation and Bezier source editing with separate ordered registries",
       "code": [
         "crates/editor-core/src/legacy_animation.rs",

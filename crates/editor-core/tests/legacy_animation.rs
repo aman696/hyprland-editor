@@ -61,7 +61,7 @@ fn ordered_native_animation_add_duplicate_remove_reorder_and_all_family_copy_rep
         .values
         .insert("general:border_size".into(), Value::Int(7));
     let output = doc
-        .edited_with_animations(
+        .edited_groups(
             legacy::Edits {
                 draft: &draft,
                 session: &doc.session.draft,
@@ -69,6 +69,7 @@ fn ordered_native_animation_add_duplicate_remove_reorder_and_all_family_copy_rep
                 bindings: &doc.bindings.draft,
                 workspaces: &doc.workspaces.rules,
                 animations: &target,
+                gestures: &doc.gestures.draft,
             },
             &catalogue(),
         )
