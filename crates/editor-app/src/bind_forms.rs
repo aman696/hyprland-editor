@@ -112,6 +112,17 @@ fn token(row: &TokenRow) -> Result<String, String> {
     })
 }
 pub(super) fn chord(panel: &gtk::Box, initial: &Chord, version: &str) -> ChordGetter {
+    chord_inner(panel, initial, version, false)
+}
+pub(super) fn legacy_chord(panel: &gtk::Box, initial: &Chord) -> ChordGetter {
+    chord_inner(panel, initial, hyprland_editor_core::BASELINE, true)
+}
+fn chord_inner(
+    panel: &gtk::Box,
+    initial: &Chord,
+    version: &str,
+    native_catchall: bool,
+) -> ChordGetter {
     let manual = gtk::Box::new(gtk::Orientation::Vertical, 8);
     panel.append(&manual);
     let mods = Rc::new(
@@ -303,7 +314,11 @@ pub(super) fn chord(panel: &gtk::Box, initial: &Chord, version: &str) -> ChordGe
     let add_c = add.clone();
     append.connect_clicked(move |_| add_c("Return"));
     let catchall = gtk::CheckButton::with_label("Catch All (Submap Only)");
-    catchall.set_active(initial.tokens == ["catchall"]);
+    catchall.set_active(if native_catchall {
+        initial.tokens.iter().any(|t| t == "catchall")
+    } else {
+        initial.tokens == ["catchall"]
+    });
     panel.append(&catchall);
     let mode = choices(
         panel,
@@ -410,6 +425,7 @@ pub(super) fn chord(panel: &gtk::Box, initial: &Chord, version: &str) -> ChordGe
             m.set_sensitive(p.selected() == 0);
         }
     });
+    let catchall_mods = mods.clone();
     let manual_get: Rc<dyn Fn() -> Result<Chord, String>> = Rc::new(move || {
         let mut tokens = mods
             .iter()
@@ -429,7 +445,17 @@ pub(super) fn chord(panel: &gtk::Box, initial: &Chord, version: &str) -> ChordGe
     let original = initial.clone();
     Box::new(move || {
         if catchall.is_active() {
-            return Ok(Chord::parse("catchall"));
+            let mut tokens = if native_catchall {
+                catchall_mods
+                    .iter()
+                    .filter(|(_, w)| w.is_active())
+                    .map(|(name, _)| (*name).to_owned())
+                    .collect::<Vec<_>>()
+            } else {
+                vec![]
+            };
+            tokens.push("catchall".into());
+            return Ok(Chord { tokens });
         }
         if mode.selected() == 1 {
             return recorded

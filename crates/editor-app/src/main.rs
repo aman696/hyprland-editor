@@ -1,17 +1,57 @@
 mod animations;
 mod bind_forms;
 mod bindings;
+mod capture_worker;
+mod compiler_check;
+#[allow(dead_code)] // Separate installed role; never selects a saved Lua 5.4 model.
+mod compiler_client;
 mod controls;
+mod detected_devices;
+mod detected_outputs;
 mod device_forms;
 mod devices;
+mod directory_worker;
+mod fd_channel;
 mod gestures;
+mod graph_migration;
+#[cfg(test)]
+mod graph_transaction_tests;
 mod history;
+mod legacy_binding_editor;
+mod legacy_source;
 mod monitors;
+mod native_build;
 mod presentation;
+mod preview_layers;
+mod preview_preparation;
+mod process_policy;
+mod project_copy;
+mod project_export;
+mod project_save;
+mod projection_worker;
 mod reconciliation;
 mod rule_forms;
 mod rules;
 mod selector_forms;
+mod session_editor;
+mod source_access;
+mod source_analysis;
+mod source_changes;
+mod source_compound_forms;
+mod source_context;
+mod source_declarations;
+mod source_family_editor;
+mod source_graph;
+mod source_modules;
+mod source_monitors;
+mod source_overrides;
+mod source_pending;
+mod source_provenance;
+mod source_reconcile;
+mod source_submap_header;
+#[cfg(test)]
+mod test_support;
+mod text_export;
 mod worker;
 mod workflow;
 mod workspaces;
@@ -24,6 +64,7 @@ use std::{cell::RefCell, collections::BTreeMap, rc::Rc, sync::Arc};
 
 type Shared = Rc<RefCell<State>>;
 struct State {
+    main_status: gtk::glib::WeakRef<gtk::Label>,
     catalogue: Vec<Setting>,
     draft: Draft,
     undo: history::History,
@@ -31,7 +72,10 @@ struct State {
     visible: Vec<Setting>,
     category: Option<String>,
     sources: BTreeMap<String, Arc<hyprland_editor_core::lua::LuaDocument>>,
+    legacy_sources: BTreeMap<String, Arc<legacy_source::Document>>,
     source_origins: BTreeMap<String, SourceIdentity>,
+    source_graphs: BTreeMap<String, Arc<source_graph::Saved>>,
+    saved_source_graphs: BTreeMap<String, Option<String>>,
     saved_source_origins: BTreeMap<String, Option<SourceIdentity>>,
     active: Option<hyprland_editor_discovery::Snapshot>,
     generation: u64,
@@ -44,6 +88,8 @@ struct State {
     saved_bindings: BTreeMap<String, hyprland_editor_core::binding::Draft>,
     gestures: BTreeMap<String, hyprland_editor_core::gesture::Draft>,
     saved_gestures: BTreeMap<String, hyprland_editor_core::gesture::Draft>,
+    session: BTreeMap<String, hyprland_editor_core::session::Draft>,
+    saved_session: BTreeMap<String, hyprland_editor_core::session::Draft>,
     animations: BTreeMap<String, hyprland_editor_core::animation::Draft>,
     saved_animations: BTreeMap<String, hyprland_editor_core::animation::Draft>,
     rules: BTreeMap<String, Vec<hyprland_editor_core::rule::Rule>>,
@@ -105,6 +151,16 @@ impl State {
                     .get(version)
                     .map(|g| g.declarations.as_slice())
                     .unwrap_or(&[])
+            || self
+                .session
+                .get(version)
+                .map(|d| d.entries.as_slice())
+                .unwrap_or(&[])
+                != self
+                    .saved_session
+                    .get(version)
+                    .map(|d| d.entries.as_slice())
+                    .unwrap_or(&[])
             || bindings_changed
             || self
                 .workspace_rules
@@ -117,6 +173,14 @@ impl State {
                     .map(Vec::as_slice)
                     .unwrap_or(&[])
             || values_changed
+            || self
+                .source_graphs
+                .get(version)
+                .map(|g| g.fingerprint.as_str())
+                != self
+                    .saved_source_graphs
+                    .get(version)
+                    .and_then(Option::as_deref)
             || source_changed
             || monitors != saved_monitors
             || self.devices.get(version).map(Vec::as_slice).unwrap_or(&[])
@@ -140,6 +204,9 @@ impl State {
         origin: SourceIdentity,
         draft: Draft,
     ) -> Result<(), String> {
+        if self.source_graphs.contains_key(&self.draft.version) {
+            return Err("This workspace retains a source graph. Single-file replacement would invalidate its inputs; graph reconciliation is still required.".into());
+        }
         draft.validate(&self.catalogue)?;
         origin.validate(&document.source)?;
         if draft.version != self.draft.version || document.report.draft.version != draft.version {
@@ -163,11 +230,193 @@ impl State {
         self.generation += 1;
         Ok(())
     }
+    fn keep_graph(&mut self, graph: Arc<source_graph::Saved>) -> Result<(), String> {
+        self.keep_graph_and_overrides(graph, self.draft.clone())
+    }
+    fn check_graph_root(&self, graph: &source_graph::Saved) -> Result<(), String> {
+        let version = &self.draft.version;
+        let root = graph
+            .bundle
+            .sources
+            .iter()
+            .find(|s| s.id == graph.bundle.graph.root)
+            .ok_or("Graph root missing")?;
+        if graph.version != *version
+            || self.source_origins.get(version) != Some(&root.origin)
+            || self
+                .sources
+                .get(version)
+                .is_none_or(|d| d.source != root.content)
+        {
+            return Err("Analyze the imported root at its exact recorded revision before retaining the graph.".into());
+        }
+        Ok(())
+    }
+    fn keep_graph_and_monitors(
+        &mut self,
+        graph: Arc<source_graph::Saved>,
+        monitors: Vec<hyprland_editor_core::monitor::Rule>,
+    ) -> Result<(), String> {
+        hyprland_editor_core::monitor::validate(&monitors, &self.draft.version)?;
+        self.check_graph_root(&graph)?;
+        let version = self.draft.version.clone();
+        self.undo.graph_monitors(
+            self.source_graphs.get(&version).cloned(),
+            self.monitors.get(&version).cloned(),
+        )?;
+        self.source_graphs.insert(version.clone(), graph);
+        self.monitors.insert(version, monitors);
+        self.generation += 1;
+        Ok(())
+    }
+    fn keep_graph_and_overrides(
+        &mut self,
+        graph: Arc<source_graph::Saved>,
+        draft: Draft,
+    ) -> Result<(), String> {
+        self.check_graph_root(&graph)?;
+        let version = &self.draft.version;
+        let document = self
+            .sources
+            .get(version)
+            .cloned()
+            .ok_or("Source snapshot missing")?;
+        let origin = self
+            .source_origins
+            .get(version)
+            .cloned()
+            .ok_or("Source identity missing")?;
+        self.keep_graph_revision(graph, draft, document, origin, self.generation)
+    }
+    /// Commit a freshly rebuilt graph and its captured root under one inverse.
+    /// Callers must separately reconstruct dependencies and review merge choices.
+    fn keep_graph_revision(
+        &mut self,
+        graph: Arc<source_graph::Saved>,
+        draft: Draft,
+        document: Arc<hyprland_editor_core::lua::LuaDocument>,
+        origin: SourceIdentity,
+        expected_generation: u64,
+    ) -> Result<(), String> {
+        if self.generation != expected_generation {
+            return Err("The draft changed while its graph revision was being reviewed".into());
+        }
+        draft.validate(&self.catalogue)?;
+        origin.validate(&document.source)?;
+        let root = graph
+            .bundle
+            .sources
+            .iter()
+            .find(|s| s.id == graph.bundle.graph.root)
+            .ok_or("Graph root missing")?;
+        if graph.version != self.draft.version
+            || document.report.draft.version != self.draft.version
+            || document.report.source_sha256
+                != hyprland_editor_core::lua::source_hash(&document.source)
+            || root.content != document.source
+            || root.origin != origin
+        {
+            return Err(
+                "The graph and parsed root must use the same captured bytes, identity and snapshot"
+                    .into(),
+            );
+        }
+        if draft.version != self.draft.version
+            || draft.values.iter().any(|(id, value)| {
+                self.draft
+                    .values
+                    .get(id)
+                    .is_none_or(|old| match (old, value) {
+                        (Value::Float(a), Value::Float(b)) => a.to_bits() != b.to_bits(),
+                        _ => old != value,
+                    })
+            })
+        {
+            return Err(
+                "Source reconciliation can only remove explicitly reviewed overrides".into(),
+            );
+        }
+        let changes = self
+            .draft
+            .values
+            .iter()
+            .filter(|(id, _)| !draft.values.contains_key(*id))
+            .map(|(id, v)| (id.clone(), Some(v.clone())))
+            .collect::<Vec<_>>();
+        let version = &self.draft.version;
+        let old_document = self
+            .sources
+            .get(version)
+            .cloned()
+            .ok_or("Source snapshot missing")?;
+        let old_origin = self
+            .source_origins
+            .get(version)
+            .cloned()
+            .ok_or("Source identity missing")?;
+        let source_changed = old_document.source != document.source || old_origin != origin;
+        if changes.is_empty()
+            && !source_changed
+            && self
+                .source_graphs
+                .get(version)
+                .is_some_and(|g| g.fingerprint == graph.fingerprint)
+        {
+            return Ok(());
+        }
+        self.undo.graph(
+            self.source_graphs.get(version).cloned(),
+            changes,
+            source_changed.then_some((old_document, old_origin)),
+        )?;
+        if source_changed {
+            self.sources.insert(version.clone(), document);
+            self.source_origins.insert(version.clone(), origin);
+        }
+        self.source_graphs.insert(version.clone(), graph);
+        self.draft = draft;
+        self.generation += 1;
+        Ok(())
+    }
     fn undo_last(&mut self) {
         let Some(operation) = self.undo.pop() else {
             return;
         };
         match operation {
+            history::Undo::Graph {
+                previous,
+                source,
+                changes,
+                monitor_changed,
+                previous_monitors,
+                ..
+            } => {
+                if let Some(source) = source {
+                    self.sources
+                        .insert(self.draft.version.clone(), source.document);
+                    self.source_origins
+                        .insert(self.draft.version.clone(), source.origin);
+                }
+                if let Some(graph) = previous {
+                    self.source_graphs.insert(self.draft.version.clone(), graph);
+                } else {
+                    self.source_graphs.remove(&self.draft.version);
+                }
+                for (id, previous) in changes {
+                    if let Some(value) = previous {
+                        self.draft.values.insert(id, value);
+                    } else {
+                        self.draft.values.remove(&id);
+                    }
+                }
+                if monitor_changed {
+                    if let Some(monitors) = previous_monitors {
+                        self.monitors.insert(self.draft.version.clone(), monitors);
+                    } else {
+                        self.monitors.remove(&self.draft.version);
+                    }
+                }
+            }
             history::Undo::Field { id, previous } => {
                 if let Some(value) = previous {
                     self.draft.values.insert(id, value);
@@ -191,6 +440,9 @@ impl State {
                 let version = self.draft.version.clone();
                 self.sources.insert(version.clone(), document);
                 self.source_origins.insert(version, origin);
+            }
+            history::Undo::Session { previous, .. } => {
+                self.session.insert(self.draft.version.clone(), previous);
             }
             history::Undo::Gestures { previous, .. } => {
                 self.gestures.insert(self.draft.version.clone(), previous);
@@ -218,6 +470,15 @@ impl State {
         self.generation += 1;
     }
     fn export_lua(&self) -> Result<String, String> {
+        if self
+            .source_graphs
+            .get(&self.draft.version)
+            .is_some_and(|g| {
+                !g.bundle.graph.revisions.is_empty() || !g.bundle.graph.private.is_empty()
+            })
+        {
+            return Err("This draft includes private source revisions. Save the full workspace; override-only export would omit them. Full source export is not available yet.".into());
+        }
         let mut text = self.draft.export_lua(&self.catalogue)?;
         if let Some(rules) = self.monitors.get(&self.draft.version) {
             if !rules.is_empty() {
@@ -254,7 +515,28 @@ impl State {
         if let Some(gestures) = self.gestures.get(&self.draft.version) {
             text.push_str(&gestures.export_lua(&self.draft.version)?);
         }
+        if let Some(session) = self.session.get(&self.draft.version) {
+            text.push_str(&session.export_lua(&self.draft.version)?);
+        }
         Ok(text)
+    }
+    fn replace_session(
+        &mut self,
+        session: hyprland_editor_core::session::Draft,
+    ) -> Result<(), String> {
+        session.validate(&self.draft.version)?;
+        let before = self
+            .session
+            .get(&self.draft.version)
+            .cloned()
+            .unwrap_or_default();
+        if before == session {
+            return Ok(());
+        }
+        self.undo.session(before)?;
+        self.session.insert(self.draft.version.clone(), session);
+        self.generation += 1;
+        Ok(())
     }
     fn replace_gestures(
         &mut self,
@@ -402,7 +684,7 @@ fn label(text: &str) -> gtk::Label {
 fn summary(state: &Shared, status: &gtk::Label) {
     let s = state.borrow();
     status.set_text(&format!(
-        "{} {} in draft{}{}{}{}{}{}{} · {}",
+        "{} {} in draft{}{}{}{}{}{}{}{}{} · {}",
         s.draft.values.len(),
         if s.draft.values.len() == 1 {
             "setting"
@@ -420,7 +702,10 @@ fn summary(state: &Shared, status: &gtk::Label) {
         s.bindings
             .get(&s.draft.version)
             .filter(|b| !b.is_empty())
-            .map_or(String::new(), |b| format!(" · {} bindings", b.binds.len())),
+            .map_or(String::new(), |b| format!(
+                " · {} binding declarations",
+                b.order.len() + b.legacy.as_ref().map_or(0, |d| d.entries.len())
+            )),
         s.workspace_rules
             .get(&s.draft.version)
             .filter(|r| !r.is_empty())
@@ -446,6 +731,21 @@ fn summary(state: &Shared, status: &gtk::Label) {
                 " · {} gesture declarations",
                 g.declarations.len()
             )),
+        s.session
+            .get(&s.draft.version)
+            .filter(|d| !d.is_empty())
+            .map_or(String::new(), |d| format!(
+                " · {} session entries",
+                d.entries.len()
+            )),
+        s.source_graphs
+            .get(&s.draft.version)
+            .filter(|g| !g.bundle.graph.revisions.is_empty() || !g.bundle.graph.private.is_empty())
+            .map_or(String::new(), |g| if !g.bundle.graph.private.is_empty() {
+                " · Private source data".into()
+            } else {
+                format!(" · {} source revisions", g.bundle.graph.revisions.len())
+            }),
         if s.dirty_version(&s.draft.version) {
             "Unsaved changes"
         } else {
@@ -693,6 +993,7 @@ fn refill(
 }
 fn initial_state() -> Shared {
     Rc::new(RefCell::new(State {
+        main_status: gtk::glib::WeakRef::new(),
         catalogue: catalogue(),
         draft: Draft::new(BASELINE),
         undo: history::History::default(),
@@ -700,7 +1001,10 @@ fn initial_state() -> Shared {
         visible: vec![],
         category: None,
         sources: BTreeMap::new(),
+        legacy_sources: BTreeMap::new(),
         source_origins: BTreeMap::new(),
+        source_graphs: BTreeMap::new(),
+        saved_source_graphs: BTreeMap::new(),
         saved_source_origins: BTreeMap::new(),
         active: None,
         generation: 0,
@@ -713,6 +1017,8 @@ fn initial_state() -> Shared {
         saved_bindings: BTreeMap::new(),
         gestures: BTreeMap::new(),
         saved_gestures: BTreeMap::new(),
+        session: BTreeMap::new(),
+        saved_session: BTreeMap::new(),
         animations: BTreeMap::new(),
         saved_animations: BTreeMap::new(),
         rules: BTreeMap::new(),
@@ -734,6 +1040,10 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
         .tooltip_text("Import Configuration (Ctrl+O)")
         .build();
     let save = gtk::Button::with_label("Save Draft");
+    save.set_tooltip_text(Some(
+        "Save a new backup in the editor's state folder (Ctrl+S)",
+    ));
+    let save_as = gtk::Button::with_label("Save Project As…");
     let review = gtk::Button::with_label("Review Draft");
     review.set_tooltip_text(Some("Review and Export Draft (Ctrl+Return)"));
     let review_child = gtk::Box::new(gtk::Orientation::Horizontal, 6);
@@ -886,6 +1196,7 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
         .ellipsize(gtk::pango::EllipsizeMode::End)
         .build();
     status.add_css_class("caption");
+    state.borrow_mut().main_status = status.downgrade();
     status.add_css_class("dim-label");
     content.append(&status);
     let sidebar_page = adw::NavigationPage::new(&sidebar_box, "Hyprland Editor");
@@ -1023,12 +1334,13 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
         summary(&s, &st);
     });
     workflow::connect_save(&save, &window, &state, &status);
+    project_save::connect(&save_as, &window, &state, &status);
     let s = state.clone();
     let win = window.downgrade();
     review.connect_clicked(move |_|{
         let Some(win) = win.upgrade() else { return; };
         let state=s.borrow();let result=state.export_lua();match result{Ok(lua)=>{
-            let dialog=adw::Window::builder().title("Review draft overrides").transient_for(&win).modal(true).default_width(720).default_height(560).build();let b=gtk::Box::new(gtk::Orientation::Vertical,12);b.set_margin_top(16);b.set_margin_bottom(16);b.set_margin_start(16);b.set_margin_end(16);b.append(&label("These are draft overrides, not a diff against the running compositor. Copying does not apply them."));let text=gtk::TextView::builder().editable(false).monospace(true).wrap_mode(gtk::WrapMode::WordChar).build();text.buffer().set_text(&lua);b.append(&gtk::ScrolledWindow::builder().child(&text).vexpand(true).build());let copy=gtk::Button::with_label("Copy reviewed Lua to clipboard");b.append(&copy);let w=dialog.downgrade();copy.connect_clicked(move |_|{if let Some(w)=w.upgrade(){w.clipboard().set_text(&lua);}});dialog.set_content(Some(&b));dialog.present();
+            text_export::review(&win,"Review draft overrides","Review the current draft overrides, then save a separate Lua copy or copy the text. This export contains the reviewed snapshot.","hyprland-overrides.lua",lua);
         },Err(e)=>notice(&win,"Invalid draft",&e)}
     });
     workflow::connect_import(
@@ -1037,10 +1349,16 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     let live = gtk::Button::with_label("Refresh Desktop Values");
     let source_copy = gtk::Button::with_label("Review Source Copy");
     let diagnostics = gtk::Button::with_label("Import Diagnostics");
+    let source_modules = gtk::Button::with_label("Inspect Source Modules");
+    let prepare_preview = gtk::Button::with_label("Prepare Preview Draft");
+    preview_preparation::connect(&prepare_preview, &window, &state);
+    source_modules::connect(&source_modules, &window, &state);
     let reattach = gtk::Button::with_label("Verify Source File");
     let reconcile = gtk::Button::with_label("Compare Changed Source");
     let binding_editor = gtk::Button::with_label("Edit Bindings");
     bindings::connect(&binding_editor, &window, &state, &status);
+    let session_editor = gtk::Button::with_label("Environment and Startup");
+    session_editor::connect(&session_editor, &window, &state, &status);
     let gesture_editor = gtk::Button::with_label("Gestures");
     gestures::connect(&gesture_editor, &window, &state, &status);
     let animation_editor = gtk::Button::with_label("Animations");
@@ -1061,12 +1379,15 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     for (name, button) in [
         ("import", &open),
         ("save-draft", &save),
+        ("save-project-as", &save_as),
         ("review", &review),
         ("undo", &undo),
         ("coverage", &coverage),
         ("read-live", &live),
         ("source-copy", &source_copy),
         ("diagnostics", &diagnostics),
+        ("source-modules", &source_modules),
+        ("prepare-preview", &prepare_preview),
         ("reattach-source", &reattach),
         ("reconcile-source", &reconcile),
         ("monitors", &monitor_editor),
@@ -1076,6 +1397,7 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
         ("rules", &rule_editor),
         ("animations", &animation_editor),
         ("gestures", &gesture_editor),
+        ("session", &session_editor),
     ] {
         presentation::bridge(&window, name, button);
     }
@@ -1083,8 +1405,10 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     let win = window.downgrade();
     mode.connect_activate(move|_,_|{if let Some(win)=win.upgrade(){notice(&win,"Draft Mode","Changes stay in editor drafts. Desktop inspection is read-only. Applying changes and compositor preview are not available in this release.");}});
     window.add_action(&mode);
+    compiler_check::connect(&window, &state);
     app.set_accels_for_action("win.import", &["<Primary>o"]);
     app.set_accels_for_action("win.save-draft", &["<Primary>s"]);
+    app.set_accels_for_action("win.save-project-as", &["<Primary><Shift>s"]);
     app.set_accels_for_action("win.undo", &["<Primary>z"]);
     app.set_accels_for_action("win.review", &["<Primary>Return"]);
     let focus = gtk::gio::SimpleAction::new("search", None);
@@ -1103,9 +1427,10 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     let win = window.downgrade();
     coverage.connect_clicked(move |_|{
         let Some(win) = win.upgrade() else { return; };
-        let dialog=adw::Window::builder().title("Audited feature coverage").transient_for(&win).default_width(850).default_height(600).build();let b=gtk::Box::new(gtk::Orientation::Vertical,12);b.set_margin_top(16);b.set_margin_start(16);b.set_margin_end(16);b.set_margin_bottom(16);b.append(&label("1,453 audited feature contracts. Scalar draft controls are implemented; other feature families below are engineering requirements, not completed controls."));
+        let dialog=adw::Window::builder().title("Audited feature coverage").transient_for(&win).default_width(850).default_height(600).build();let b=gtk::Box::new(gtk::Orientation::Vertical,12);b.set_margin_top(16);b.set_margin_start(16);b.set_margin_end(16);b.set_margin_bottom(16);b.append(&label("1,453 original audit contracts plus 5 source-discovered requirements. Draft editors cover parts of these families; full acceptance remains unproven."));
         // Loaded on demand. A single text buffer avoids constructing 1,453 widgets.
         let data:serde_json::Value=serde_json::from_str(include_str!("../../../data/features.json")).unwrap();let mut text=String::new();for feature in data.as_array().unwrap(){text.push_str(&format!("{}  ·  {}  ·  {}\n",feature["id"].as_str().unwrap_or("?"),feature["engine"].as_str().unwrap_or("?"),feature["version_membership"]));}
+        let additions:serde_json::Value=serde_json::from_str(include_str!("../../../data/source-additions.json")).unwrap();text.push_str("\nAdditional source-discovered requirements (full acceptance unproven)\n");for requirement in additions["requirements"].as_array().unwrap(){text.push_str(&format!("{}  ·  {}  ·  {}\n",requirement["id"].as_str().unwrap(),requirement["engine"].as_str().unwrap(),requirement["versions"]));}
         let view=gtk::TextView::builder().editable(false).monospace(true).build();view.buffer().set_text(&text);b.append(&gtk::ScrolledWindow::builder().child(&view).vexpand(true).build());dialog.set_content(Some(&b));dialog.present();
     });
     workflow::connect_close(&window, &state);
@@ -1113,8 +1438,159 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     window
 }
 fn main() {
+    if std::env::args_os().nth(1).as_deref()
+        == Some(std::ffi::OsStr::new("--check-preview-projection-selected"))
+    {
+        let args: Vec<_> = std::env::args_os().skip(2).collect();
+        let result = if args.len() == 3 {
+            projection_worker::check_selected(
+                args[0].clone().into(),
+                args[1].clone().into(),
+                Some(args[2].clone().into()),
+            )
+        } else {
+            Err("Specify workspace, scenario and scalar selection files".into())
+        };
+        match result {
+            Ok(report) => println!("{report}"),
+            Err(error) => {
+                eprintln!("{}", error.chars().take(1024).collect::<String>());
+                std::process::exit(1);
+            }
+        }
+        return;
+    }
+    if std::env::args_os().nth(1).as_deref() == Some(std::ffi::OsStr::new("--check-preview-layers"))
+    {
+        let args: Vec<_> = std::env::args_os().skip(2).collect();
+        let result = if args.len() == 1 {
+            projection_worker::check_layers(args[0].clone().into())
+        } else {
+            Err("Specify one saved workspace for read-only layer review".into())
+        };
+        match result {
+            Ok(report) => println!("{report}"),
+            Err(error) => {
+                eprintln!("{}", error.chars().take(1024).collect::<String>());
+                std::process::exit(1);
+            }
+        }
+        return;
+    }
+    if std::env::args_os().nth(1).as_deref()
+        == Some(std::ffi::OsStr::new("--projection-policy-probe"))
+    {
+        projection_worker::policy_probe();
+        return;
+    }
+    if std::env::args_os().nth(1).as_deref() == Some(std::ffi::OsStr::new("--projection-worker")) {
+        projection_worker::entry();
+        return;
+    }
+    if std::env::args_os().nth(1).as_deref()
+        == Some(std::ffi::OsStr::new("--check-preview-projection"))
+    {
+        let args: Vec<_> = std::env::args_os().skip(2).collect();
+        let result = if args.len() == 2 {
+            projection_worker::check(args[0].clone().into(), args[1].clone().into())
+        } else {
+            Err("Specify a saved workspace and private scenario file".into())
+        };
+        match result {
+            Ok(report) => println!("{report}"),
+            Err(error) => {
+                eprintln!("{}", error.chars().take(1024).collect::<String>());
+                std::process::exit(1);
+            }
+        }
+        return;
+    }
+    if std::env::args_os().nth(1).as_deref()
+        == Some(std::ffi::OsStr::new("--directory-source-worker"))
+    {
+        directory_worker::entry();
+        return;
+    }
+    if std::env::args_os().nth(1).as_deref() == Some(std::ffi::OsStr::new("--check-source-graph")) {
+        use std::os::unix::ffi::OsStrExt;
+        let args: Vec<_> = std::env::args_os().skip(2).collect();
+        let result = if (3..=4).contains(&args.len()) {
+            args[2]
+                .to_str()
+                .ok_or_else(|| "Source graph needs an audited UTF-8 version identifier".into())
+                .and_then(|version| {
+                    source_graph::check(
+                        std::path::Path::new(&args[0]),
+                        args[1].as_bytes(),
+                        version.to_owned(),
+                        args.get(3).map(|cwd| cwd.as_bytes().to_vec()),
+                    )
+                })
+        } else {
+            Err("--check-source-graph requires an approved folder, root file, audited version and optional captured working directory".into())
+        };
+        match result {
+            Ok(value) => println!("{value}"),
+            Err(error) => {
+                eprintln!("{error}");
+                std::process::exit(1);
+            }
+        }
+        return;
+    }
+    if matches!(std::env::args_os().nth(1).as_deref(),Some(flag) if flag==std::ffi::OsStr::new("--check-source-folder") || flag==std::ffi::OsStr::new("--probe-source-folder"))
+    {
+        use std::os::unix::ffi::OsStrExt;
+        let args: Vec<_> = std::env::args_os().skip(2).collect();
+        let result = if args.len() == 2 {
+            if std::env::args_os().nth(1).as_deref()
+                == Some(std::ffi::OsStr::new("--probe-source-folder"))
+            {
+                directory_worker::check_probe(std::path::Path::new(&args[0]), args[1].as_bytes())
+            } else {
+                directory_worker::check(std::path::Path::new(&args[0]), args[1].as_bytes())
+            }
+        } else {
+            Err(
+                "Folder diagnostics require an explicitly selected folder and a candidate path"
+                    .into(),
+            )
+        };
+        match result {
+            Ok(value) => println!("{value}"),
+            Err(error) => {
+                eprintln!("{error}");
+                std::process::exit(1);
+            }
+        }
+        return;
+    }
+    if std::env::args_os().nth(1).as_deref()
+        == Some(std::ffi::OsStr::new("--capture-source-worker"))
+    {
+        capture_worker::entry();
+        return;
+    }
     if std::env::args_os().nth(1).as_deref() == Some(std::ffi::OsStr::new("--lua-source-worker")) {
         worker::entry();
+        return;
+    }
+    if std::env::args_os().nth(1).as_deref()
+        == Some(std::ffi::OsStr::new("--check-workspace-migration"))
+    {
+        let args: Vec<_> = std::env::args_os().skip(2).collect();
+        let result = if args.len() == 1 {
+            graph_migration::check(args[0].clone().into())
+        } else {
+            Err("Specify one saved .hye workspace for read-only migration review".into())
+        };
+        match result {
+            Ok(report) => println!("{report}"),
+            Err(error) => {
+                eprintln!("{}", error.chars().take(1024).collect::<String>());
+                std::process::exit(1);
+            }
+        }
         return;
     }
     if std::env::args_os().nth(1).as_deref() == Some(std::ffi::OsStr::new("--check-workspace")) {
@@ -1142,6 +1618,35 @@ fn main() {
         };
         match result {
             Ok(report) => println!("{}", report),
+            Err(error) => {
+                eprintln!("{}", error.chars().take(1024).collect::<String>());
+                std::process::exit(1);
+            }
+        }
+        return;
+    }
+    if std::env::args_os().nth(1).as_deref()
+        == Some(std::ffi::OsStr::new("--check-preview-delegation"))
+    {
+        let result = (|| {
+            use std::os::{fd::AsFd, unix::fs::OpenOptionsExt};
+            let args = std::env::args_os().skip(2).collect::<Vec<_>>();
+            if args.len() != 1 {
+                return Err("Specify one explicitly selected delegation directory".to_string());
+            }
+            let file = std::fs::OpenOptions::new()
+                .read(true)
+                .custom_flags(libc::O_DIRECTORY | libc::O_NOFOLLOW | libc::O_NONBLOCK)
+                .open(&args[0])
+                .map_err(|e| e.to_string())?;
+            let delegation =
+                hyprland_editor_preview::cgroup::Delegation::from_directory(file.as_fd())
+                    .map_err(|e| e.to_string())?;
+            let observation = delegation.observe().map_err(|e| e.to_string())?;
+            serde_json::to_string(&observation).map_err(|e| e.to_string())
+        })();
+        match result {
+            Ok(value) => println!("{value}"),
             Err(error) => {
                 eprintln!("{}", error.chars().take(1024).collect::<String>());
                 std::process::exit(1);
@@ -1202,6 +1707,16 @@ mod tests {
             .build();
         app.register(None::<&gtk::gio::Cancellable>).unwrap();
         let window = build(&app);
+        if std::env::var("HYE_PENDING_INPUTS_ONLY").as_deref() == Ok("1") {
+            source_pending::test_workflow(&window);
+            window.destroy();
+            return;
+        }
+        if std::env::var("HYE_EXTERNAL_MERGE_ONLY").as_deref() == Ok("1") {
+            graph_transaction_tests::test_external_merge_ui(&window);
+            window.destroy();
+            return;
+        }
         let widgets = descendants(window.upcast_ref());
         let list = widgets
             .iter()
@@ -1388,16 +1903,50 @@ mod tests {
         assert!(descendants(review.upcast_ref())
             .iter()
             .any(|w| w.is::<gtk::TextView>()));
+        for label in ["Copy Lua", "Save Lua File…"] {
+            assert!(
+                descendants(review.upcast_ref()).iter().any(|widget| {
+                    widget
+                        .downcast_ref::<gtk::Button>()
+                        .is_some_and(|button| button.label().as_deref() == Some(label))
+                }),
+                "Missing export action: {label}"
+            );
+        }
+        let (minimum, _, _, _) = review
+            .child()
+            .unwrap()
+            .measure(gtk::Orientation::Horizontal, -1);
+        assert!(minimum <= 350, "Lua export review needs {minimum}px");
         review.destroy();
         workflow::test_source_persistence(&window);
+        workflow::test_combined_source_copy(&window);
+        workflow::test_legacy_persistence(&window);
+        workflow::test_legacy_session_editing(&window);
+        workflow::test_graph_migration(&window);
+        compiler_check::test_ui(&window);
+        preview_preparation::test_preparation(&window);
         reconciliation::test_review(&window);
         monitors::test_editor(&window);
+        monitors::test_detected_outputs(&window);
         devices::test_editor(&window);
+        devices::test_detected_devices(&window);
         bindings::test_editor(&window);
         workspaces::test_editor(&window);
         rules::test_editor(&window);
         animations::test_editor(&window);
         gestures::test_editor(&window);
+        session_editor::test_editor(&window);
+        source_modules::test_view(&window);
+        source_access::test_retained_graph(&window);
+        source_access::test_declaration_families(&window);
+        graph_transaction_tests::test_private_graph_ui(&window);
+        source_pending::test_workflow(&window);
+        graph_transaction_tests::test_external_merge_ui(&window);
+        source_compound_forms::test_workflow(&window);
+        source_changes::test_monitor_workflow(&window);
+        source_monitors::test_workflow(&window);
+        source_declarations::test_workflow(&window);
         rule_forms::test_forms();
         window.close();
         assert!(

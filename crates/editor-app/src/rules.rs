@@ -618,7 +618,11 @@ pub(super) fn connect(
         }
     });
 }
-fn show(parent: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) -> adw::Window {
+pub(super) fn show(
+    parent: &impl IsA<gtk::Window>,
+    state: &Shared,
+    status: &gtk::Label,
+) -> adw::Window {
     let win = adw::Window::builder()
         .title("Window and Layer Rules")
         .transient_for(parent)
@@ -672,6 +676,11 @@ fn show(parent: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
     let check = gtk::Button::with_label("Check Rule Relationships");
     content.append(&check);
     let save = gtk::Button::with_label("Save Draft");
+    save.set_visible(
+        parent
+            .upcast_ref::<gtk::Window>()
+            .is::<adw::ApplicationWindow>(),
+    );
     content.append(&save);
     root.append(
         &gtk::ScrolledWindow::builder()
@@ -907,7 +916,11 @@ fn show(parent: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
             return;
         }
         if let Some(parent) = weak.upgrade() {
-            if let Some(a) = parent.lookup_action("save-draft") {
+            if let Some(a) = parent
+                .upcast_ref::<gtk::Window>()
+                .downcast_ref::<adw::ApplicationWindow>()
+                .and_then(|window| window.lookup_action("save-draft"))
+            {
                 a.activate(None);
             }
         }

@@ -1,0 +1,64 @@
+{
+  "format": "hye-lua55-compiler-parent-observation-1",
+  "scope": "Hash-pinned temporary official Lua releases; ordinary/static compiler role suites and actual sealed static-image parent checks. No local root-package fixture, source evaluator/profile selection, selected compositor or full security/resource/release certificate. Temporary sources and build products removed.",
+  "tool_sha256": "b04a35172fe22ff5e581c86f9bd35df9f053d8b41db3cec79592a49e3c965ea3",
+  "profiles": [
+    {
+      "release": "5.5.0",
+      "archive_url": "https://www.lua.org/ftp/lua-5.5.0.tar.gz",
+      "archive_sha256": "57ccc32bbbd005cab75bcc52444052535af691789dba2b9016d5c50640d68b3d",
+      "library_sha256": "2c9fe9b5c7c047e18d0d2cc099de4636f5cd710e7f9bb313c22bc7f76c93558a",
+      "static_parent": {
+        "source_inputs": {
+          "crates/editor-app/src/compiler_client.rs": "ea18cfc6683487692ead79bab96546cc85291cc967773c9d792f4229a942cc3f",
+          "crates/editor-app/tests/compiler_client.rs": "e64b07770a6e3b8a6776ab5e5d3fa9a0de1aa19517ed1d3f14cf3e960fed9e05",
+          "crates/editor-lua55/src/protocol.rs": "b53a82c9966270b09575148bd19d2ab815c92ad59c855b95b0185be0f0d9b92a",
+          "crates/editor-preview/src/image.rs": "407bd0b4190c0743ec03ef4dc2ab63179e40046d7d687bf3e40b54951f00118e",
+          "scripts/compiler_install_probe.py": "662a0250fe125f6b2bc8a4d1453c7692250d25ec6187195c73d306d1c605cfbb",
+          "Cargo.toml": "7d654efdc2dfa4b6f607f6f339b6fe60d353b1c2599c943193b111c02609742c",
+          "Cargo.lock": "0c828e50e9642a4820734dac526146def1279139d3d00558558f76014f6db86f",
+          "data/graph-model.json": "09e8ff83ee94a51dcd54a7c7cbabc543d956b4e1c50eb5369b3b56cf34b3b0b9"
+        },
+        "host": "x86_64-unknown-linux-gnu",
+        "image_sha256": "da57e37c445a629056e23b28d36e4fe4f964d5b8fdfbebed0f775716b0200758",
+        "image_bytes": 1885616,
+        "parent_test_sha256": "1d7e780bcca698d2426754fb73fe1206b8cd44d3e2062b8652a051d66e5fc6f5",
+        "elf_headers_sha256": "7f336f484b99a9b9de95e15b328fa7ea63937ea57e02353be81a9a34418e8a1c",
+        "interpreter_present": false,
+        "needed_shared_libraries": [],
+        "installed_root_package_verified": false,
+        "gui_selection_verified": false,
+        "source_evaluator_verified": false
+      }
+    },
+    {
+      "release": "5.5.1",
+      "archive_url": "https://www.lua.org/ftp/lua-5.5.1.tar.gz",
+      "archive_sha256": "1c4b4068d67061f2a2231ad2b5422e77acea1487ea9890f6320af614f4373dce",
+      "library_sha256": "a369bcfd5800bb52d4332d7be6e0e57dd4a83a8a454ee541383beda6622cc36d",
+      "static_parent": {
+        "source_inputs": {
+          "crates/editor-app/src/compiler_client.rs": "ea18cfc6683487692ead79bab96546cc85291cc967773c9d792f4229a942cc3f",
+          "crates/editor-app/tests/compiler_client.rs": "e64b07770a6e3b8a6776ab5e5d3fa9a0de1aa19517ed1d3f14cf3e960fed9e05",
+          "crates/editor-lua55/src/protocol.rs": "b53a82c9966270b09575148bd19d2ab815c92ad59c855b95b0185be0f0d9b92a",
+          "crates/editor-preview/src/image.rs": "407bd0b4190c0743ec03ef4dc2ab63179e40046d7d687bf3e40b54951f00118e",
+          "scripts/compiler_install_probe.py": "662a0250fe125f6b2bc8a4d1453c7692250d25ec6187195c73d306d1c605cfbb",
+          "Cargo.toml": "7d654efdc2dfa4b6f607f6f339b6fe60d353b1c2599c943193b111c02609742c",
+          "Cargo.lock": "0c828e50e9642a4820734dac526146def1279139d3d00558558f76014f6db86f",
+          "data/graph-model.json": "09e8ff83ee94a51dcd54a7c7cbabc543d956b4e1c50eb5369b3b56cf34b3b0b9"
+        },
+        "host": "x86_64-unknown-linux-gnu",
+        "image_sha256": "f95f7b42c9fe90c96b85665b31b00e295de8dfc09a77374858059ca28bc47c88",
+        "image_bytes": 1885616,
+        "parent_test_sha256": "1d7e780bcca698d2426754fb73fe1206b8cd44d3e2062b8652a051d66e5fc6f5",
+        "elf_headers_sha256": "6c67c616af33382543f4d7a56e7d62521ec0158980c2a21ffcb28077b452ba3e",
+        "interpreter_present": false,
+        "needed_shared_libraries": [],
+        "installed_root_package_verified": false,
+        "gui_selection_verified": false,
+        "source_evaluator_verified": false
+      }
+    }
+  ],
+  "static_linker": "GNU ld.bfd explicitly selected through the compiler driver"
+}

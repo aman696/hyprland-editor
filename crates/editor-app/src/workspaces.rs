@@ -13,6 +13,7 @@ use std::{
     cell::{Cell, RefCell},
     rc::Rc,
 };
+mod options;
 type Getter = Rc<dyn Fn() -> Result<(), String>>;
 fn current(state: &Shared) -> Vec<Rule> {
     let s = state.borrow();
@@ -112,7 +113,14 @@ fn editor(
         },
     );
     enabled.set_widget_name("workspace-enabled");
-    let fields = workspace_rule::catalogue(&version);
+    enabled.set_visible(!rule.legacy);
+    if rule.legacy {
+        panel.append(&label("Imported .conf rule. Review Source Copy includes these edits; commands are stored as text."));
+    }
+    let fields: Vec<_> = workspace_rule::catalogue(&version)
+        .into_iter()
+        .filter(|s| !rule.legacy || s.lua_key != "float_gaps")
+        .collect();
     let field = choices(
         panel,
         &fields
@@ -129,6 +137,7 @@ fn editor(
     set.set_widget_name("workspace-field-enabled");
     panel.append(&set);
     let body = gtk::Box::new(gtk::Orientation::Vertical, 8);
+    body.set_widget_name("workspace-field-value");
     panel.append(&body);
     let values = Rc::new(RefCell::new(rule.fields.clone()));
     let get = Rc::new(RefCell::new(None::<Box<dyn Fn() -> Result<Value, String>>>));
@@ -212,95 +221,13 @@ fn editor(
     });
     render();
     let opts = gtk::Box::new(gtk::Orientation::Vertical, 8);
-    let orientation_set = gtk::CheckButton::with_label("Set Master Orientation");
-    opts.append(&orientation_set);
-    orientation_set.set_active(rule.layout_options.contains_key("orientation"));
-    let mut orientations = vec![
-        "left".to_string(),
-        "top".into(),
-        "right".into(),
-        "bottom".into(),
-        "center".into(),
-        "".into(),
-    ];
-    let orientation_initial = rule.layout_options.get("orientation");
-    if let Some(Value::String(s)) = orientation_initial {
-        if !orientations.contains(s) {
-            orientations.push(s.clone());
-        }
-    }
-    let mut captions = orientations
-        .iter()
-        .map(|s| {
-            if s.is_empty() {
-                "Empty Literal".into()
-            } else {
-                s.clone()
-            }
-        })
-        .collect::<Vec<String>>();
-    let oi = if let Some(Value::String(s)) = orientation_initial {
-        orientations.iter().position(|n| n == s).unwrap()
-    } else if let Some(v) = orientation_initial {
-        captions.push(format!("Retained {}", v.lua()));
-        captions.len() - 1
-    } else {
-        0
-    };
-    let orientation = choices(
-        &opts,
-        &captions.iter().map(String::as_str).collect::<Vec<_>>(),
-        oi as u32,
-    );
-    let direction_set = gtk::CheckButton::with_label("Set Scrolling Direction");
-    opts.append(&direction_set);
-    direction_set.set_active(rule.layout_options.contains_key("direction"));
-    let mut directions = vec![
-        "right".to_string(),
-        "left".into(),
-        "up".into(),
-        "down".into(),
-        "".into(),
-    ];
-    let direction_initial = rule.layout_options.get("direction");
-    if let Some(Value::String(s)) = direction_initial {
-        if !directions.contains(s) {
-            directions.push(s.clone());
-        }
-    }
-    let mut captions = directions
-        .iter()
-        .map(|s| {
-            if s.is_empty() {
-                "Empty Literal".into()
-            } else {
-                s.clone()
-            }
-        })
-        .collect::<Vec<String>>();
-    let di = if let Some(Value::String(s)) = direction_initial {
-        directions.iter().position(|n| n == s).unwrap()
-    } else if let Some(v) = direction_initial {
-        captions.push(format!("Retained {}", v.lua()));
-        captions.len() - 1
-    } else {
-        0
-    };
-    let direction = choices(
-        &opts,
-        &captions.iter().map(String::as_str).collect::<Vec<_>>(),
-        di as u32,
-    );
-    opts.append(&label("Other imported layout options are retained unchanged. Custom-layout option authoring requires the later layout editor."));
+    let get_options = options::form(&opts, &rule.layout_options, rule.legacy);
     panel.append(
         &gtk::Expander::builder()
             .label("Layout Options")
             .child(&opts)
             .build(),
     );
-    let original_opts = rule.layout_options.clone();
-    let original_orientation = orientation.selected();
-    let original_direction = direction.selected();
     let id = rule.id.clone();
     let state = state.clone();
     let status = status.clone();
@@ -314,43 +241,17 @@ fn editor(
             .find(|r| r.id == id)
             .ok_or("Workspace declaration was removed")?;
         r.selector = selector()?;
-        r.enabled = match enabled.selected() {
-            0 => None,
-            1 => Some(true),
-            _ => Some(false),
+        r.enabled = if r.legacy {
+            None
+        } else {
+            match enabled.selected() {
+                0 => None,
+                1 => Some(true),
+                _ => Some(false),
+            }
         };
         r.fields = values.borrow().clone();
-        r.layout_options = original_opts.clone();
-        for (key, set, picker, initial, values) in [
-            (
-                "orientation",
-                &orientation_set,
-                &orientation,
-                original_orientation,
-                &orientations[..],
-            ),
-            (
-                "direction",
-                &direction_set,
-                &direction,
-                original_direction,
-                &directions[..],
-            ),
-        ] {
-            if !set.is_active() {
-                r.layout_options.remove(key);
-            } else if picker.selected() != initial || !r.layout_options.contains_key(key) {
-                r.layout_options.insert(
-                    key.into(),
-                    Value::String(
-                        values
-                            .get(picker.selected() as usize)
-                            .ok_or("Select a known option or retain the imported value")?
-                            .clone(),
-                    ),
-                );
-            }
-        }
+        r.layout_options = get_options()?;
         state.borrow_mut().replace_workspaces(rules)?;
         super::summary(&state, &status);
         Ok(())
@@ -382,7 +283,11 @@ pub(super) fn connect(
         }
     });
 }
-fn show(parent: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) -> adw::Window {
+pub(super) fn show(
+    parent: &impl IsA<gtk::Window>,
+    state: &Shared,
+    status: &gtk::Label,
+) -> adw::Window {
     let win = adw::Window::builder()
         .title("Workspace Drafts")
         .transient_for(parent)
@@ -432,6 +337,11 @@ fn show(parent: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
     let check = gtk::Button::with_label("Check Declaration Order");
     content.append(&check);
     let save = gtk::Button::with_label("Save Draft");
+    save.set_visible(
+        parent
+            .upcast_ref::<gtk::Window>()
+            .is::<adw::ApplicationWindow>(),
+    );
     content.append(&save);
     root.append(
         &gtk::ScrolledWindow::builder()
@@ -468,12 +378,17 @@ fn show(parent: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
                 return;
             }
             let rules = current(&state);
-            let index = (pick.selected() as usize).min(rules.len().saturating_sub(1));
+            let index = if pick.selected() == gtk::INVALID_LIST_POSITION {
+                0
+            } else {
+                (pick.selected() as usize).min(rules.len().saturating_sub(1))
+            };
             let names = rules
                 .iter()
                 .map(|r| {
                     format!(
-                        "{}{}",
+                        "{}{}{}",
+                        if r.legacy { "Imported · " } else { "" },
                         if r.is_enabled() { "" } else { "Disabled · " },
                         if r.selector.is_empty() {
                             "All Workspaces"
@@ -555,6 +470,10 @@ fn show(parent: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
             let target = match op {
                 0 => {
                     let mut r = Rule::new(&unique(&rules));
+                    r.legacy = state
+                        .borrow()
+                        .legacy_sources
+                        .contains_key(&state.borrow().draft.version);
                     r.selector = (rules.len() + 1).to_string();
                     rules.push(r);
                     rules.len() - 1
@@ -623,7 +542,11 @@ fn show(parent: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
             return;
         }
         if let Some(parent) = weak.upgrade() {
-            if let Some(a) = parent.lookup_action("save-draft") {
+            if let Some(a) = parent
+                .upcast_ref::<gtk::Window>()
+                .downcast_ref::<adw::ApplicationWindow>()
+                .and_then(|window| window.lookup_action("save-draft"))
+            {
                 a.activate(None);
             }
         }
@@ -651,6 +574,7 @@ fn show(parent: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
         }
     });
     refresh();
+    gtk::prelude::GtkWindowExt::set_focus(&win, Some(&pick));
     win.present();
     win
 }
@@ -764,6 +688,45 @@ pub(super) fn test_editor(parent: &adw::ApplicationWindow) {
     let submit = editor(&box_, &state, &retained, &status, &label(""));
     submit().unwrap();
     assert_eq!(current(&state)[0], retained);
+    // Custom options retain literal types and invalid edits while switching rows.
+    for expander in descendants(box_.upcast_ref())
+        .into_iter()
+        .filter_map(|w| w.downcast::<gtk::Expander>().ok())
+    {
+        expander.set_expanded(true);
+    }
+    let option_pick = descendants(box_.upcast_ref())
+        .into_iter()
+        .find(|w| w.widget_name() == "workspace-option")
+        .unwrap()
+        .downcast::<gtk::DropDown>()
+        .unwrap();
+    let option_kind = descendants(box_.upcast_ref())
+        .into_iter()
+        .find(|w| w.widget_name() == "workspace-option-type")
+        .unwrap()
+        .downcast::<gtk::DropDown>()
+        .unwrap();
+    let option_value = descendants(box_.upcast_ref())
+        .into_iter()
+        .find(|w| w.widget_name() == "workspace-option-value")
+        .unwrap()
+        .downcast::<gtk::Entry>()
+        .unwrap();
+    option_kind.set_selected(3);
+    option_value.set_text("invalid number");
+    option_pick.set_selected(1);
+    assert_eq!(option_pick.selected(), 0);
+    assert_eq!(option_value.text(), "invalid number");
+    assert!(submit().is_err());
+    assert_eq!(current(&state)[0], retained);
+    option_value.set_text("2.5");
+    submit().unwrap();
+    assert_eq!(
+        current(&state)[0].layout_options["custom"],
+        Value::Float(2.5)
+    );
+    state.borrow_mut().undo_last();
     state.borrow_mut().undo_last();
     let context = gtk::glib::MainContext::default();
     let settle = || {
@@ -828,11 +791,26 @@ pub(super) fn test_editor(parent: &adw::ApplicationWindow) {
             .unwrap();
     }
     let weak = pick(&win, "workspace-field").downgrade();
+    for expander in descendants(win.upcast_ref())
+        .into_iter()
+        .filter_map(|w| w.downcast::<gtk::Expander>().ok())
+    {
+        expander.set_expanded(true);
+    }
+    let option_weak = descendants(win.upcast_ref())
+        .into_iter()
+        .find(|w| w.widget_name() == "workspace-option-value")
+        .unwrap()
+        .downgrade();
     win.destroy();
     drop(win);
     settle();
     assert!(
         weak.upgrade().is_none(),
         "Workspace controls leaked after closure"
+    );
+    assert!(
+        option_weak.upgrade().is_none(),
+        "Layout option controls leaked after closure"
     );
 }

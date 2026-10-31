@@ -48,6 +48,8 @@ pub struct SourceSnapshot {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Workspace {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_graph: Option<crate::workspace_graph::Graph>,
     pub format: String,
     pub schema: SchemaPin,
     pub draft: Draft,
@@ -71,6 +73,34 @@ pub struct Workspace {
     pub animations: crate::animation::Draft,
     #[serde(default, skip_serializing_if = "crate::gesture::Draft::is_empty")]
     pub gestures: crate::gesture::Draft,
+    #[serde(default, skip_serializing_if = "crate::session::Draft::is_empty")]
+    pub session: crate::session::Draft,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub session_schema_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy_binding_origin_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy_binding_schema_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy_monitor_origin_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy_workspace_origin_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy_animation_origin_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy_gesture_origin_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy_gesture_schema_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy_animation_schema_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy_workspace_schema_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy_monitor_schema_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy_session_origin_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy_session_schema_sha256: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub gesture_schema_sha256: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -85,6 +115,7 @@ pub struct Workspace {
 impl Workspace {
     pub fn new(draft: Draft) -> Self {
         Self {
+            source_graph: None,
             format: WORKSPACE_FORMAT.into(),
             schema: SchemaPin::for_version(&draft.version),
             draft,
@@ -99,6 +130,20 @@ impl Workspace {
             rules: vec![],
             animations: Default::default(),
             gestures: Default::default(),
+            session: Default::default(),
+            session_schema_sha256: None,
+            legacy_binding_origin_sha256: None,
+            legacy_binding_schema_sha256: None,
+            legacy_monitor_origin_sha256: None,
+            legacy_workspace_origin_sha256: None,
+            legacy_animation_origin_sha256: None,
+            legacy_gesture_origin_sha256: None,
+            legacy_gesture_schema_sha256: None,
+            legacy_animation_schema_sha256: None,
+            legacy_workspace_schema_sha256: None,
+            legacy_monitor_schema_sha256: None,
+            legacy_session_origin_sha256: None,
+            legacy_session_schema_sha256: None,
             gesture_schema_sha256: None,
             animation_schema_sha256: None,
             rule_schema_sha256: None,
@@ -120,9 +165,158 @@ impl Workspace {
         if self.format != WORKSPACE_FORMAT || self.sources.len() > MAX_SOURCE_DOCUMENTS {
             return Err("Unsupported workspace format or source count".into());
         }
+        if let Some(hash) = &self.legacy_binding_origin_sha256 {
+            if self
+                .root()
+                .is_none_or(|r| r.language != SourceLanguage::Legacy || r.origin.sha256 != *hash)
+                || self.source_graph.is_some()
+                || self.draft.version != crate::BASELINE
+                || !self
+                    .legacy_binding_schema_sha256
+                    .as_deref()
+                    .is_some_and(|pin| {
+                        self.bindings.legacy.as_ref().map_or_else(
+                            || {
+                                pin == crate::legacy_binding::schema_hash()
+                                    || pin == crate::legacy_binding::literal_schema_hash()
+                            },
+                            |draft| crate::legacy_binding::accepts_schema(pin, draft),
+                        )
+                    })
+            {
+                return Err(
+                    "Legacy binding projection marker does not match its captured root".into(),
+                );
+            }
+        }
+        if (self.legacy_binding_schema_sha256.is_some() || self.bindings.legacy.is_some())
+            && self.legacy_binding_origin_sha256.is_none()
+        {
+            return Err(
+                "Legacy binding drafts require their captured source and codec identities".into(),
+            );
+        }
+        if let Some(hash) = &self.legacy_session_origin_sha256 {
+            if self
+                .root()
+                .is_none_or(|r| r.language != SourceLanguage::Legacy || r.origin.sha256 != *hash)
+                || self.source_graph.is_some()
+                || self.draft.version != crate::BASELINE
+                || self.legacy_session_schema_sha256.as_deref()
+                    != Some(&crate::legacy_session::schema_hash())
+            {
+                return Err(
+                    "Legacy session projection marker does not match its captured root".into(),
+                );
+            }
+        }
+        if self.legacy_session_schema_sha256.is_some()
+            && self.legacy_session_origin_sha256.is_none()
+        {
+            return Err("Legacy session schema has no captured source marker".into());
+        }
+        if let Some(hash) = &self.legacy_monitor_origin_sha256 {
+            if self
+                .root()
+                .is_none_or(|r| r.language != SourceLanguage::Legacy || r.origin.sha256 != *hash)
+                || self.source_graph.is_some()
+                || self.draft.version != crate::BASELINE
+                || !self
+                    .legacy_monitor_schema_sha256
+                    .as_deref()
+                    .is_some_and(|pin| crate::legacy_monitor::accepts_schema(pin, &self.monitors))
+            {
+                return Err(
+                    "Legacy monitor projection marker does not match its captured root".into(),
+                );
+            }
+        }
+        if (self.legacy_monitor_schema_sha256.is_some()
+            || self.monitors.iter().any(|r| r.legacy_operation.is_some()))
+            && self.legacy_monitor_origin_sha256.is_none()
+        {
+            return Err(
+                "Legacy monitor drafts require their captured source and codec identities".into(),
+            );
+        }
+        if let Some(hash) = &self.legacy_workspace_origin_sha256 {
+            if self
+                .root()
+                .is_none_or(|r| r.language != SourceLanguage::Legacy || r.origin.sha256 != *hash)
+                || self.source_graph.is_some()
+                || self.draft.version != crate::BASELINE
+                || self.legacy_workspace_schema_sha256.as_deref()
+                    != Some(&crate::legacy_workspace::schema_hash())
+            {
+                return Err(
+                    "Legacy workspace projection marker does not match its captured root".into(),
+                );
+            }
+        }
+        if (self.legacy_workspace_schema_sha256.is_some()
+            || self.workspace_rules.iter().any(|r| r.legacy))
+            && self.legacy_workspace_origin_sha256.is_none()
+        {
+            return Err(
+                "Legacy workspace drafts require their captured source and codec identities".into(),
+            );
+        }
+        if let Some(hash) = &self.legacy_animation_origin_sha256 {
+            if self
+                .root()
+                .is_none_or(|r| r.language != SourceLanguage::Legacy || r.origin.sha256 != *hash)
+                || self.source_graph.is_some()
+                || self.draft.version != crate::BASELINE
+                || self.legacy_animation_schema_sha256.as_deref()
+                    != Some(&crate::legacy_animation::schema_hash())
+            {
+                return Err(
+                    "Legacy animation marker does not match the captured source and codec".into(),
+                );
+            }
+        }
+        if (self.legacy_animation_schema_sha256.is_some()
+            || self.animations.declarations.iter().any(|d| d.legacy))
+            && self.legacy_animation_origin_sha256.is_none()
+        {
+            return Err(
+                "Native animation drafts require captured source and codec identities".into(),
+            );
+        }
+        if let Some(hash) = &self.legacy_gesture_origin_sha256 {
+            if self
+                .root()
+                .is_none_or(|r| r.language != SourceLanguage::Legacy || r.origin.sha256 != *hash)
+                || self.source_graph.is_some()
+                || self.draft.version != crate::BASELINE
+                || self.legacy_gesture_schema_sha256.as_deref()
+                    != Some(&crate::legacy_gesture::schema_hash())
+            {
+                return Err(
+                    "Native gesture marker does not match the captured source and codec".into(),
+                );
+            }
+        }
+        if (self.legacy_gesture_schema_sha256.is_some()
+            || self.gestures.declarations.iter().any(|s| s.legacy))
+            && self.legacy_gesture_origin_sha256.is_none()
+        {
+            return Err(
+                "Native gesture drafts require captured source and codec identities".into(),
+            );
+        }
         self.draft.validate(catalogue)?;
         self.animations.validate(&self.draft.version)?;
         self.gestures.validate(&self.draft.version)?;
+        self.session.validate(&self.draft.version)?;
+        if (!self.session.is_empty() && self.session_schema_sha256.is_none())
+            || self
+                .session_schema_sha256
+                .as_ref()
+                .is_some_and(|pin| !crate::session::accepts_schema(pin, &self.session))
+        {
+            return Err("Session schema differs from the pinned environment, command and permission handlers".into());
+        }
         let gesture_hash = crate::gesture::schema_hash();
         if (!self.gestures.is_empty()
             && self.gesture_schema_sha256.as_deref() != Some(&gesture_hash))
@@ -157,12 +351,11 @@ impl Workspace {
         }
         crate::monitor::validate(&self.monitors, &self.draft.version)?;
         crate::device::validate(&self.devices, &self.draft.version)?;
-        let device_hash = crate::device::schema_hash();
-        if (!self.devices.is_empty() && self.device_schema_sha256.as_deref() != Some(&device_hash))
+        if (!self.devices.is_empty() && self.device_schema_sha256.is_none())
             || self
                 .device_schema_sha256
                 .as_ref()
-                .is_some_and(|h| *h != device_hash)
+                .is_some_and(|h| !crate::device::compatible_schema(h, &self.devices))
         {
             return Err("Device schema differs from the audited fields".into());
         }
@@ -228,7 +421,20 @@ impl Workspace {
         {
             return Err("Invalid workspace source root".into());
         }
+        if let Some(graph) = &self.source_graph {
+            graph.program(
+                &self.sources,
+                self.root_source.as_deref(),
+                &self.draft.version,
+            )?;
+        }
         Ok(())
+    }
+    pub fn with_graph(mut self, bundle: &crate::workspace_graph::Bundle) -> Self {
+        self.root_source = Some(bundle.graph.root.clone());
+        self.sources = bundle.sources.as_ref().clone();
+        self.source_graph = Some(bundle.graph.clone());
+        self
     }
     pub fn to_json(&self, catalogue: &[Setting]) -> Result<Vec<u8>, String> {
         self.validate(catalogue)?;
@@ -250,6 +456,11 @@ impl Workspace {
         self.root_source
             .as_deref()
             .and_then(|id| self.sources.iter().find(|s| s.id == id))
+    }
+    pub fn with_session(mut self, session: crate::session::Draft) -> Self {
+        self.session_schema_sha256 = (!session.is_empty()).then(crate::session::schema_hash);
+        self.session = session;
+        self
     }
     pub fn with_gestures(mut self, gestures: crate::gesture::Draft) -> Self {
         self.gesture_schema_sha256 = (!gestures.is_empty()).then(crate::gesture::schema_hash);

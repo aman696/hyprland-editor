@@ -1,0 +1,238 @@
+{
+  "format": "hye-lua55-language-fixtures-1",
+  "scope": "Trusted Lua 5.5 default official source compatibility flags: contextual global declarations, loop-control and error-object cases with base library, explicit allocator seed and bounds. Reserved-global builds are not established. No imported source, grammar/evaluator, complete language or compositor compatibility certificate.",
+  "cases": [
+    {
+      "case": "global_name_compatibility",
+      "source": "local global=1; return global",
+      "observation": {
+        "compiled": true,
+        "runtime_ok": true,
+        "values": [
+          {
+            "type": "int",
+            "value": 1
+          }
+        ]
+      }
+    },
+    {
+      "case": "declared_global",
+      "source": "global x; x=3; return x",
+      "observation": {
+        "compiled": true,
+        "runtime_ok": true,
+        "values": [
+          {
+            "type": "int",
+            "value": 3
+          }
+        ]
+      }
+    },
+    {
+      "case": "undeclared_name",
+      "source": "global x; y=1",
+      "observation": {
+        "compiled": false,
+        "runtime_ok": null,
+        "values": [
+          {
+            "type": "bytes",
+            "hex": "6c616e67756167652d666978747572653a313a207661726961626c6520277927206e6f74206465636c61726564"
+          }
+        ]
+      }
+    },
+    {
+      "case": "global_constant_write",
+      "source": "global<const> x; x=1",
+      "observation": {
+        "compiled": false,
+        "runtime_ok": null,
+        "values": [
+          {
+            "type": "bytes",
+            "hex": "6c616e67756167652d666978747572653a313a20617474656d707420746f2061737369676e20746f20636f6e7374207661726961626c6520277827"
+          }
+        ]
+      }
+    },
+    {
+      "case": "global_constant_initialization",
+      "source": "global<const> x=7; return x",
+      "observation": {
+        "compiled": true,
+        "runtime_ok": true,
+        "values": [
+          {
+            "type": "int",
+            "value": 7
+          }
+        ]
+      }
+    },
+    {
+      "case": "global_initialization_does_not_replace",
+      "source": "x=1; global x=2; return x",
+      "observation": {
+        "compiled": true,
+        "runtime_ok": false,
+        "values": [
+          {
+            "type": "bytes",
+            "hex": "6c616e67756167652d666978747572653a313a20676c6f62616c2027782720616c726561647920646566696e6564"
+          }
+        ]
+      }
+    },
+    {
+      "case": "global_without_initializer_preserves",
+      "source": "x=4; global x; return x",
+      "observation": {
+        "compiled": true,
+        "runtime_ok": true,
+        "values": [
+          {
+            "type": "int",
+            "value": 4
+          }
+        ]
+      }
+    },
+    {
+      "case": "global_default_scope_restored",
+      "source": "x=1; do global y; y=2 end; x=3; return x",
+      "observation": {
+        "compiled": true,
+        "runtime_ok": true,
+        "values": [
+          {
+            "type": "int",
+            "value": 3
+          }
+        ]
+      }
+    },
+    {
+      "case": "global_constant_star",
+      "source": "global<const> *; x=1",
+      "observation": {
+        "compiled": false,
+        "runtime_ok": null,
+        "values": [
+          {
+            "type": "bytes",
+            "hex": "6c616e67756167652d666978747572653a313a20617474656d707420746f2061737369676e20746f20636f6e7374207661726961626c6520277827"
+          }
+        ]
+      }
+    },
+    {
+      "case": "environment_write_bypasses_global_const",
+      "source": "global<const> x; _ENV.x=9; return x",
+      "observation": {
+        "compiled": true,
+        "runtime_ok": true,
+        "values": [
+          {
+            "type": "int",
+            "value": 9
+          }
+        ]
+      }
+    },
+    {
+      "case": "numeric_for_read_only",
+      "source": "for i=1,2 do i=3 end",
+      "observation": {
+        "compiled": false,
+        "runtime_ok": null,
+        "values": [
+          {
+            "type": "bytes",
+            "hex": "6c616e67756167652d666978747572653a313a20617474656d707420746f2061737369676e20746f20636f6e7374207661726961626c6520276927"
+          }
+        ]
+      }
+    },
+    {
+      "case": "generic_for_control_read_only",
+      "source": "for k,v in pairs({x=1}) do k=2 end",
+      "observation": {
+        "compiled": false,
+        "runtime_ok": null,
+        "values": [
+          {
+            "type": "bytes",
+            "hex": "6c616e67756167652d666978747572653a313a20617474656d707420746f2061737369676e20746f20636f6e7374207661726961626c6520276b27"
+          }
+        ]
+      }
+    },
+    {
+      "case": "generic_for_secondary_writable",
+      "source": "for k,v in pairs({x=1}) do v=2; return v end",
+      "observation": {
+        "compiled": true,
+        "runtime_ok": true,
+        "values": [
+          {
+            "type": "int",
+            "value": 2
+          }
+        ]
+      }
+    },
+    {
+      "case": "shadow_loop_control",
+      "source": "for i=1,2 do local i=i+3; return i end",
+      "observation": {
+        "compiled": true,
+        "runtime_ok": true,
+        "values": [
+          {
+            "type": "int",
+            "value": 4
+          }
+        ]
+      }
+    },
+    {
+      "case": "nil_error_object",
+      "source": "return pcall(error,nil)",
+      "observation": {
+        "compiled": true,
+        "runtime_ok": true,
+        "values": [
+          {
+            "type": "bool",
+            "value": false
+          },
+          {
+            "type": "bytes",
+            "hex": "3c6e6f206572726f72206f626a6563743e"
+          }
+        ]
+      }
+    },
+    {
+      "case": "false_error_object",
+      "source": "return pcall(error,false)",
+      "observation": {
+        "compiled": true,
+        "runtime_ok": true,
+        "values": [
+          {
+            "type": "bool",
+            "value": false
+          },
+          {
+            "type": "bool",
+            "value": false
+          }
+        ]
+      }
+    }
+  ]
+}
