@@ -13,6 +13,7 @@ use std::{
     cell::{Cell, RefCell},
     rc::Rc,
 };
+mod native;
 type Getter = Rc<dyn Fn() -> Result<(), String>>;
 type ValueGetter = Box<dyn Fn() -> Result<EffectValue, String>>;
 fn current(state: &Shared) -> Vec<Rule> {
@@ -356,6 +357,9 @@ fn editor(
     status: &gtk::Label,
     feedback: &gtk::Label,
 ) -> Getter {
+    if rule.legacy.is_some() {
+        panel.append(&label("Imported native rule. Review Source Copy includes these edits. Repeated block names can supply earlier values; inline effects keep their order."));
+    }
     let metadata = gtk::Box::new(gtk::Orientation::Vertical, 8);
     panel.append(
         &gtk::Expander::builder()
@@ -388,6 +392,41 @@ fn editor(
         },
     );
     enabled.set_widget_name("rule-enabled");
+    let native_enable = if let Some(n) = &rule.legacy {
+        enabled.set_visible(false);
+        metadata.append(&label("Named native block enable: the pinned loader disables window blocks on 0, but layer blocks on nonzero. Inline rules have no enable field."));
+        let mode = choices(
+            &metadata,
+            &[
+                "Unspecified",
+                "Enabled by loader",
+                "Disabled by loader",
+                "Native integer",
+            ],
+            match n.enable {
+                None => 0,
+                Some(v) if v == 0 || v == 1 => {
+                    if (rule.kind == Kind::Window && v != 0) || (rule.kind == Kind::Layer && v == 0)
+                    {
+                        1
+                    } else {
+                        2
+                    }
+                }
+                Some(_) => 3,
+            },
+        );
+        mode.set_widget_name("rule-native-enable-mode");
+        let raw = text(
+            &metadata,
+            "Native enable integer",
+            &n.enable.unwrap_or(1).to_string(),
+        );
+        raw.set_widget_name("rule-native-enable");
+        Some((mode, raw))
+    } else {
+        None
+    };
     let selection = gtk::Box::new(gtk::Orientation::Horizontal, 8);
     panel.append(&selection);
     let section = choices(&selection, &["Conditions", "Effects"], 0);
@@ -428,7 +467,7 @@ fn editor(
                 let mut d = draft.borrow().clone();
                 if *effect {
                     if let Some(value) = value {
-                        if let Some(effect) = d.effects.iter_mut().find(|e| e.key == *key) {
+                        if let Some(effect) = d.effects.iter_mut().rev().find(|e| e.key == *key) {
                             effect.value = value;
                         } else {
                             d.effects.push(Effect {
@@ -473,6 +512,11 @@ fn editor(
             let effect = section.selected() == 1;
             let keys = if effect {
                 fields.iter().map(|s| s.lua_key.clone()).collect::<Vec<_>>()
+            } else if draft.borrow().legacy.is_some() {
+                hyprland_editor_core::legacy_rule::properties()
+                    .iter()
+                    .map(|s| (*s).into())
+                    .collect()
             } else {
                 properties(kind).iter().map(|s| (*s).into()).collect()
             };
@@ -501,11 +545,16 @@ fn editor(
                 let value = d
                     .effects
                     .iter()
+                    .rev()
                     .find(|e| e.key == *key)
                     .map(|e| e.value.clone());
                 set.set_active(value.is_some());
                 body.append(&label(&super::human_name(key)));
-                effect_form(&body, &fields[index], value, &version)
+                if d.legacy.is_some() {
+                    native::effect(&body, &fields[index], value, &version)
+                } else {
+                    effect_form(&body, &fields[index], value, &version)
+                }
             } else {
                 let value = d
                     .predicates
@@ -514,8 +563,12 @@ fn editor(
                     .map(|p| p.value.clone());
                 set.set_active(value.is_some());
                 body.append(&label(&format!("Condition: {key}")));
-                let predicate = predicate_form(&body, kind, key, value);
-                Box::new(move || predicate().map(EffectValue::Literal))
+                if d.legacy.is_some() {
+                    native::predicate(&body, kind, key, value)
+                } else {
+                    let predicate = predicate_form(&body, kind, key, value);
+                    Box::new(move || predicate().map(EffectValue::Literal))
+                }
             };
             *get.borrow_mut() = Some(getter);
             body.set_sensitive(set.is_active());
@@ -579,6 +632,25 @@ fn editor(
             1 => Some(true),
             _ => Some(false),
         };
+        if let Some((mode, raw)) = &native_enable {
+            let block = named.is_active();
+            let enable = if !block {
+                None
+            } else {
+                match mode.selected() {
+                    0 => None,
+                    1 => Some(if updated.kind == Kind::Window { 1 } else { 0 }),
+                    2 => Some(if updated.kind == Kind::Window { 0 } else { 1 }),
+                    _ => Some(
+                        raw.text()
+                            .parse::<i64>()
+                            .map_err(|_| "Enter a native signed enable integer")?,
+                    ),
+                }
+            };
+            updated.legacy = Some(hyprland_editor_core::legacy_rule::Native { block, enable });
+            updated.enabled = None;
+        }
         let mut rules = current(&state);
         *rules
             .iter_mut()
@@ -618,7 +690,11 @@ pub(super) fn connect(
         }
     });
 }
-fn show(parent: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) -> adw::Window {
+pub(super) fn show(
+    parent: &impl IsA<gtk::Window>,
+    state: &Shared,
+    status: &gtk::Label,
+) -> adw::Window {
     let win = adw::Window::builder()
         .title("Window and Layer Rules")
         .transient_for(parent)
@@ -638,19 +714,28 @@ fn show(parent: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
     ] {
         setter(content.upcast_ref(), 16);
     }
-    content.append(&label("Configure private rule drafts. Named declarations accumulate effects; effects inside one table have unspecified order."));
+    content.append(&label(
+        "Edit one condition or effect at a time. Changes stay in your private draft.",
+    ));
     let model = gtk::StringList::new(&[]);
     let pick = gtk::DropDown::builder().model(&model).build();
     compact(&pick);
     pick.set_widget_name("match-effect-rule");
     content.append(&pick);
-    let row = gtk::Box::new(gtk::Orientation::Horizontal, 6);
+    let row = gtk::FlowBox::builder()
+        .selection_mode(gtk::SelectionMode::None)
+        .min_children_per_line(1)
+        .max_children_per_line(4)
+        .column_spacing(6)
+        .row_spacing(6)
+        .homogeneous(false)
+        .build();
     let add = gtk::Button::with_label("Add");
     let layer = gtk::Button::with_label("Add Layer");
     let duplicate = gtk::Button::with_label("Duplicate");
     let remove = gtk::Button::with_label("Remove");
     for b in [&add, &layer, &duplicate, &remove] {
-        row.append(b);
+        row.insert(b, -1);
     }
     content.append(&row);
     let row = gtk::Box::new(gtk::Orientation::Horizontal, 6);
@@ -672,6 +757,11 @@ fn show(parent: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
     let check = gtk::Button::with_label("Check Rule Relationships");
     content.append(&check);
     let save = gtk::Button::with_label("Save Draft");
+    save.set_visible(
+        parent
+            .upcast_ref::<gtk::Window>()
+            .is::<adw::ApplicationWindow>(),
+    );
     content.append(&save);
     root.append(
         &gtk::ScrolledWindow::builder()
@@ -708,7 +798,11 @@ fn show(parent: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
                 return;
             }
             let rules = current(&state);
-            let index = (pick.selected() as usize).min(rules.len().saturating_sub(1));
+            let index = if pick.selected() == gtk::INVALID_LIST_POSITION {
+                0
+            } else {
+                (pick.selected() as usize).min(rules.len().saturating_sub(1))
+            };
             let names = rules
                 .iter()
                 .map(|r| {
@@ -797,15 +891,17 @@ fn show(parent: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
             let index = pick.selected() as usize;
             let target = match op {
                 0 | 5 => {
-                    let r = Rule::new(
+                    let mut r = Rule::new(
                         &unique(&rules),
                         if op == 5 { Kind::Layer } else { Kind::Window },
                     );
+                    if state.borrow().legacy_sources.contains_key(&state.borrow().draft.version){r.legacy=Some(hyprland_editor_core::legacy_rule::Native{block:false,enable:None});}
                     rules.push(r);
                     rules.len() - 1
                 }
                 6 if index < rules.len() => {
                     let mut first = rules[index].clone();
+                    if first.legacy.is_some(){feedback.set_text("Native block effect order is determined by the loader; inline effects already retain their written order. Conversion requires separate review.");return;}
                     if first.name.as_ref().is_none_or(|n| n.is_empty()) {
                         feedback
                             .set_text("Choose a nonempty name before ordering effects explicitly.");
@@ -907,7 +1003,11 @@ fn show(parent: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
             return;
         }
         if let Some(parent) = weak.upgrade() {
-            if let Some(a) = parent.lookup_action("save-draft") {
+            if let Some(a) = parent
+                .upcast_ref::<gtk::Window>()
+                .downcast_ref::<adw::ApplicationWindow>()
+                .and_then(|window| window.lookup_action("save-draft"))
+            {
                 a.activate(None);
             }
         }
@@ -936,6 +1036,7 @@ fn show(parent: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
     });
     refresh();
     win.present();
+    pick.grab_focus();
     win
 }
 

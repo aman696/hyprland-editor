@@ -1,5 +1,20 @@
 //! Static Lua source projection and byte-preserving copy preparation. Never runs Lua.
+pub mod config_inspection;
+pub mod config_table;
+mod dependencies;
+pub mod monitor_inspection;
+pub mod registration;
+pub mod replay;
+pub mod scalar_codec;
+mod session;
+pub mod workspace_copy;
 use crate::{parse_color, Draft, Setting, Value, AUDITED_MAIN, BASELINE, MAX_DOCUMENT_BYTES};
+pub use dependencies::{
+    inspect as inspect_dependencies, Barrier as DependencyBarrier,
+    BarrierKind as DependencyBarrierKind, Binding as DependencyBinding,
+    Inventory as DependencyInventory, Loader as DependencyLoader, Site as DependencySite,
+    SiteScope as DependencyScope,
+};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::{
@@ -43,6 +58,8 @@ pub struct LuaReport {
     pub animations: crate::animation::Draft,
     #[serde(default)]
     pub gestures: crate::gesture::Draft,
+    #[serde(default)]
+    pub session: crate::session::Draft,
     pub declarations: Vec<Declaration>,
     pub diagnostics: Vec<Diagnostic>,
     pub opaque_effects: bool,
@@ -87,7 +104,10 @@ fn text<'a>(node: Node<'_>, source: &'a str) -> &'a str {
 }
 fn named(node: Node<'_>) -> Vec<Node<'_>> {
     let mut c = node.walk();
-    node.named_children(&mut c)
+    node.children(&mut c)
+        // The Lua grammar exposes contextual `global` expression identifiers
+        // as unnamed terminals. They still occupy a value/argument slot.
+        .filter(|n| n.is_named() || (cfg!(feature = "native55") && n.kind() == "global"))
         .filter(|n| n.kind() != "comment")
         .collect()
 }
@@ -355,7 +375,7 @@ fn typed(setting: &Setting, expr: Expr) -> Option<Value> {
         ("Float", v) => Value::Float(v.number()?),
         ("String", Expr::Text(v)) => Value::String(v),
         ("Color", v) => Value::Color(as_color(&v)?),
-        ("FontWeight", v) => Value::FontWeight(integer(&v)?.try_into().ok()?),
+        ("FontWeight", v) => Value::FontWeight(integer(&v)?),
         ("Vec2", Expr::Table(v)) => {
             let a = array(&v, 2)?;
             Value::Vec2([a[0].number()?, a[1].number()?])
@@ -462,6 +482,10 @@ impl Projection<'_> {
                 self.diagnostic(field, "Computed configuration key is unresolved");
                 continue;
             };
+            // The pinned hlConfig constructs std::string(lua_tostring(key)),
+            // so the API key ends at the first NUL even though Lua retains the
+            // complete byte string. Keep source bytes intact when editing.
+            let key = key.split('\0').next().unwrap_or_default().to_string();
             if key.len() > 256 {
                 if let Some(value) = field.child_by_field_name("value") {
                     self.ignored_expression(value);
@@ -789,6 +813,7 @@ impl Projection<'_> {
                 GestureAction::Builtin(name)
             };
             let spec = Spec {
+                legacy: false,
                 id: format!("source-gesture-{}", self.report.gestures.declarations.len()),
                 fingers,
                 direction,
@@ -1018,6 +1043,7 @@ impl Projection<'_> {
                 }
             }
             Ok(Declaration {
+                legacy: false,
                 id: format!(
                     "source-animation-{}",
                     self.report.animations.declarations.len()
@@ -1723,6 +1749,11 @@ impl Projection<'_> {
                     self.device(node)?;
                 } else if text(name, self.source) == "hl.monitor" && self.api_available {
                     self.monitor(node)?;
+                } else if ["hl.env", "hl.permission", "hl.exec_cmd", "hl.on"]
+                    .contains(&text(name, self.source))
+                    && self.api_available
+                {
+                    self.session_declaration(node)?;
                 } else if text(name, self.source) == "hl.config" && self.api_available {
                     let args = node
                         .child_by_field_name("arguments")
@@ -1776,12 +1807,9 @@ impl Projection<'_> {
         Ok(())
     }
 }
-pub fn parse(source: &str, version: &str, catalogue: &[Setting]) -> Result<LuaReport, String> {
+fn syntax_tree(source: &str) -> Result<tree_sitter::Tree, String> {
     if source.len() > MAX_DOCUMENT_BYTES {
         return Err("Lua document exceeds 1 MiB".into());
-    }
-    if ![BASELINE, AUDITED_MAIN].contains(&version) {
-        return Err("Unknown Lua catalogue snapshot".into());
     }
     let mut parser = Parser::new();
     parser
@@ -1804,8 +1832,18 @@ pub fn parse(source: &str, version: &str, catalogue: &[Setting]) -> Result<LuaRe
         )
         .ok_or("Lua parsing exceeded its time budget")?;
     if tree.root_node().has_error() {
-        return Err("Lua has syntax errors; no declarations were imported".into());
+        return Err("Lua has syntax errors; static inspection was stopped".into());
     }
+    Ok(tree)
+}
+pub fn parse(source: &str, version: &str, catalogue: &[Setting]) -> Result<LuaReport, String> {
+    if source.len() > MAX_DOCUMENT_BYTES {
+        return Err("Lua document exceeds 1 MiB".into());
+    }
+    if ![BASELINE, AUDITED_MAIN].contains(&version) {
+        return Err("Unknown Lua catalogue snapshot".into());
+    }
+    let tree = syntax_tree(source)?;
     let mut p = Projection {
         source,
         catalogue,
@@ -1820,6 +1858,7 @@ pub fn parse(source: &str, version: &str, catalogue: &[Setting]) -> Result<LuaRe
             rules: vec![],
             animations: Default::default(),
             gestures: Default::default(),
+            session: Default::default(),
             declarations: vec![],
             diagnostics: vec![],
             opaque_effects: false,
@@ -2051,6 +2090,34 @@ mod tests {
         .unwrap();
         assert!(r.draft.values.is_empty());
         assert!(r.declarations.iter().all(|d| !d.editable));
+    }
+    #[test]
+    fn native_nul_key_aliases_replace_prior_values_and_copy_preserves_their_source_spelling() {
+        let c = catalogue();
+        for version in [BASELINE, AUDITED_MAIN] {
+            let source="hl.config{general={border_size=3}};hl.config{['general\\0suffix']={['border_size\\000ignored']=9}}";
+            let report = parse(source, version, &c).unwrap();
+            assert_eq!(report.draft.values["general:border_size"], Value::Int(9));
+            let mut draft = report.draft.clone();
+            draft
+                .values
+                .insert("general:border_size".into(), Value::Int(7));
+            let doc = LuaDocument::from_report(source.into(), report, &c).unwrap();
+            let copy = doc.edited_copy(&draft, &c).unwrap();
+            assert_eq!(copy, source.replace("ignored']=9", "ignored']=7"));
+            let source = "hl.config{['general.border_size']=3,['general.border_size\\0suffix']=9}";
+            let report = parse(source, version, &c).unwrap();
+            assert!(report.draft.values.is_empty());
+            assert!(report.declarations.iter().all(|d| !d.editable));
+            let long = format!(
+                "hl.config{{['general.border_size\\0{}']=8}}",
+                "x".repeat(1000)
+            );
+            assert_eq!(
+                parse(&long, version, &c).unwrap().draft.values["general:border_size"],
+                Value::Int(8)
+            );
+        }
     }
     #[test]
     fn syntax_size_nul_and_nonfinite_rejection() {

@@ -49,6 +49,55 @@ pub enum Output {
     Connector(String),
     Description(String),
 }
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum LegacyOperation {
+    Replace,
+    Disable,
+    Transform,
+    Reserved,
+    Block,
+}
+impl LegacyOperation {
+    pub const ALL: [Self; 5] = [
+        Self::Replace,
+        Self::Disable,
+        Self::Transform,
+        Self::Reserved,
+        Self::Block,
+    ];
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::Replace => "Define monitor rule",
+            Self::Disable => "Disable output",
+            Self::Transform => "Update transform only",
+            Self::Reserved => "Update reserved space only",
+            Self::Block => "Monitor block (HDR and all fields)",
+        }
+    }
+    pub fn accepts(self, key: &str) -> bool {
+        match self {
+            Self::Replace => matches!(
+                key,
+                "mode"
+                    | "position"
+                    | "scale"
+                    | "mirror"
+                    | "bitdepth"
+                    | "cm"
+                    | "sdrsaturation"
+                    | "sdrbrightness"
+                    | "transform"
+                    | "vrr"
+                    | "icc"
+            ),
+            Self::Disable => key == "disabled",
+            Self::Transform => key == "transform",
+            Self::Reserved => matches!(key, "reserved" | "reserved_area"),
+            Self::Block => true,
+        }
+    }
+}
 impl Output {
     pub fn text(&self) -> String {
         match self {
@@ -77,6 +126,8 @@ impl Output {
 pub struct Rule {
     pub id: String,
     pub output: Output,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy_operation: Option<LegacyOperation>,
     #[serde(default, deserialize_with = "crate::unique_values")]
     pub fields: BTreeMap<String, Value>,
 }
@@ -85,6 +136,7 @@ impl Rule {
         Self {
             id: id.into(),
             output: Output::Fallback,
+            legacy_operation: None,
             fields: BTreeMap::new(),
         }
     }
@@ -102,6 +154,22 @@ impl Rule {
             return Err("Invalid monitor draft identity".into());
         }
         self.output.validate()?;
+        if self.legacy_operation == Some(LegacyOperation::Block) && self.output == Output::Fallback
+        {
+            return Err("Choose an explicit output name for a monitor block".into());
+        }
+        if let Some(operation) = self.legacy_operation {
+            if version != BASELINE || self.fields.keys().any(|key| !operation.accepts(key)) {
+                return Err(
+                    "This field is unavailable for the selected legacy monitor operation".into(),
+                );
+            }
+            if operation == LegacyOperation::Disable
+                && self.fields.get("disabled") != Some(&Value::Bool(true))
+            {
+                return Err("Disable output requires Disabled to remain enabled; choose Define monitor rule to re-enable it".into());
+            }
+        }
         let fields = catalogue(version);
         if self.fields.len() > 22 {
             return Err("Too many monitor fields".into());
@@ -146,7 +214,10 @@ impl Rule {
                     "sdr_eotf" if !TRANSFER.contains(&text.as_str()) => {
                         return Err("Transfer function is outside the audited choices".into())
                     }
-                    "icc" if text.is_empty() => {
+                    "icc"
+                        if text.is_empty()
+                            && self.legacy_operation != Some(LegacyOperation::Block) =>
+                    {
                         return Err("Choose an ICC path or remove the ICC field".into())
                     }
                     _ => {}
@@ -157,6 +228,9 @@ impl Rule {
     }
     pub fn export_lua(&self, version: &str) -> Result<String, String> {
         self.validate(version)?;
+        if self.legacy_operation.is_some() {
+            return Err("Use legacy source review for this monitor operation; implicit conversion to Lua is unavailable".into());
+        }
         let mut text = format!("hl.monitor({{ output = {}", quote_lua(&self.output.text()));
         for (key, value) in &self.fields {
             text.push_str(&format!(", [ {} ] = {}", quote_lua(key), value.lua()));

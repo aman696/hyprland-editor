@@ -1,0 +1,41 @@
+{
+  "format": "hye-legacy-session-schema-1",
+  "version": "0.56.2",
+  "upstream_commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+  "handler_source": "src/config/legacy/ConfigManager.cpp",
+  "handler_sha256": "9db68cf44048d86557d8a53068dcc40b9bd7347c7d95f38edc501565f65be62b",
+  "hyprlang_commit": "090117506ddc3d7f26e650ff344d378c2ec329cc",
+  "hyprlang_config_sha256": "868ac5a7c5600b71283c92fb10e39faf9c0b3d4e8cbcd2a2fef6aaab8e716002",
+  "hyprutils_commit": "5a7b8cf221914ce4714407950e4ffbdddcd8b66f",
+  "varlist_sha256": "b02df8d688519366e7f20de5c3c44d21c3832316e8262ced0d295e129b166a36",
+  "varlist2_sha256": "b8cacea741b2d6260ad6618be00e37bc01c4d092e655a7557f7cfbadb76cf26d",
+  "commands": {
+    "exec": [
+      "config_load",
+      false
+    ],
+    "execr": [
+      "config_load",
+      true
+    ],
+    "exec-once": [
+      "start",
+      false
+    ],
+    "execr-once": [
+      "start",
+      true
+    ],
+    "exec-shutdown": [
+      "shutdown",
+      false
+    ]
+  },
+  "environment": [
+    "env",
+    "envd"
+  ],
+  "permissions": "three CVarList2 fields: binary pattern, permission type, mode; keyboard and keeb are accepted",
+  "limits": "top-level known directives only; variable/expression expansion, conditionals, continuations and unsupported suffixes remain retained/unresolved; no includes or host environment access; 256 projected entries and 4096 reported unresolved line numbers",
+  "evidence": "exact pinned source inspection and selected Rust golden/roundtrip fixtures; not a complete native-parser, activation, environment or security certificate"
+}

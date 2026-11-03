@@ -1,0 +1,68 @@
+{
+  "format": "hye-native-build-profiles-1",
+  "scope": "Exact source CMake/version declarations; actual resolved compiler, standard-library behavior, linked Lua and selected compositor remain unobserved. pkg_search_module candidates are alternatives, not a combined Lua version range. CXX_STANDARD_REQUIRED is recorded as the source assignment, not a guarantee of effective target-property enforcement.",
+  "snapshots": [
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "source_version": "0.56.2",
+      "version_source": {
+        "url": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/VERSION",
+        "git_blob": "4425c37f1ff277ab4ae329affbfe3cc72ac9d180",
+        "sha256": "83983962d9161a0ec80cc585a3d3a1deb1f7e6c5ed8a5ba806f7dc338ebf790f"
+      },
+      "build_source": {
+        "url": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/CMakeLists.txt",
+        "git_blob": "cf7f53aa03e1de2e3ef5e4a475249c1895214bb2",
+        "sha256": "97b8028aa342cf6ee6f04b5db2e67e6e4fe6adf5d3fd67bad18005193db36516"
+      },
+      "requested_cpp_standard": 26,
+      "required_flag_assignment": {
+        "variable": "CXX_STANDARD_REQUIRED",
+        "value": "ON"
+      },
+      "lua_pkgconfig_candidates": [
+        "lua55",
+        "lua5.5",
+        "lua-55",
+        "lua-5.5",
+        "lua>=5.5",
+        "lua<5.6"
+      ],
+      "lua_selection": "first_successful_alternative_not_combined_version_range",
+      "selected_compiler_observed": false,
+      "selected_runtime_library_observed": false
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "source_version": "0.56.0",
+      "version_source": {
+        "url": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/VERSION",
+        "git_blob": "2f4c74eb2ddac0be8e75784c1ee8b00e3a83f8f2",
+        "sha256": "3fea81d177087f5d3380893d95b86573a803b34ed45419ec381bdd776f526cee"
+      },
+      "build_source": {
+        "url": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/CMakeLists.txt",
+        "git_blob": "4318f1a31dbdc95238f061f1bafc9af867825d1c",
+        "sha256": "92bd722255442d84c52781e696eff1a75b65652bcb4c19fd7502c7c9378cbf16"
+      },
+      "requested_cpp_standard": 26,
+      "required_flag_assignment": {
+        "variable": "CXX_STANDARD_REQUIRED",
+        "value": "ON"
+      },
+      "lua_pkgconfig_candidates": [
+        "lua55",
+        "lua5.5",
+        "lua-55",
+        "lua-5.5",
+        "lua>=5.5",
+        "lua<5.6"
+      ],
+      "lua_selection": "first_successful_alternative_not_combined_version_range",
+      "selected_compiler_observed": false,
+      "selected_runtime_library_observed": false
+    }
+  ]
+}

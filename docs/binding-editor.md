@@ -1,4 +1,6 @@
-# Binding and submap draft editor — 0.7
+# Binding and submap draft editor
+
+Imported `.conf` projects open the separate [native legacy shortcut editor](legacy-binding-editor.md), with ordered bind/submap/unbind declarations and combined source copies. The Lua forms described below remain available for Lua projects and older separate Lua drafts.
 
 Open **Menu → Edit Bindings**. This is a private draft editor: it never installs shortcuts, invokes dispatchers, grabs a seat or changes the running compositor. Choose a declaration and one of Shortcut, Options or Actions. Management controls and action preparation details are expandable so the ordinary editing view stays focused.
 

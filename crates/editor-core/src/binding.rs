@@ -186,6 +186,8 @@ pub struct Submap {
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Draft {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy: Option<crate::legacy_binding::Draft>,
     pub binds: Vec<Bind>,
     pub submaps: Vec<Submap>,
     #[serde(default)]
@@ -310,9 +312,18 @@ impl Bind {
 }
 impl Draft {
     pub fn is_empty(&self) -> bool {
-        self.binds.is_empty() && self.submaps.is_empty() && self.order.is_empty()
+        self.binds.is_empty()
+            && self.submaps.is_empty()
+            && self.order.is_empty()
+            && self
+                .legacy
+                .as_ref()
+                .is_none_or(crate::legacy_binding::Draft::is_empty)
     }
     pub fn validate(&self, version: &str) -> Result<(), String> {
+        if let Some(legacy) = &self.legacy {
+            legacy.validate(version)?;
+        }
         if self.binds.len() > 10000 || self.submaps.len() > 128 {
             return Err("Binding draft exceeds 10,000 binds / 128 submaps".into());
         }
@@ -364,6 +375,9 @@ impl Draft {
     }
     pub fn export_lua(&self, version: &str) -> Result<String, String> {
         self.validate(version)?;
+        if self.legacy.as_ref().is_some_and(|draft| !draft.is_empty()) {
+            return Err("Legacy bindings require legacy source review; implicit Lua conversion is unavailable".into());
+        }
         // Build per-scope ordered indexes once; avoid rescanning 10,000 bindings
         // for every declaration and nested scope.
         enum Node<'a> {
@@ -759,6 +773,7 @@ mod tests {
                 .unwrap(),
         ));
         let draft = Draft {
+            legacy: None,
             binds: vec![b],
             submaps: vec![],
             order: vec!["b".into()],
@@ -999,6 +1014,7 @@ mod tests {
     #[test]
     fn source_copy_equivalence_ignores_private_ids_but_never_accepts_invalid_graphs() {
         let a = Draft {
+            legacy: None,
             binds: vec![bind()],
             submaps: vec![],
             order: vec!["b".into()],
@@ -1015,6 +1031,7 @@ mod tests {
     #[test]
     fn graph_order_missing_parents_and_cycles_are_validated() {
         let mut d = Draft {
+            legacy: None,
             binds: vec![bind()],
             submaps: vec![],
             order: vec!["b".into()],
@@ -1040,6 +1057,7 @@ mod tests {
 /// An inverse retains changed records; a normal field edit does not duplicate the graph.
 #[derive(Clone, Debug)]
 pub struct Inverse {
+    pub legacy: Option<Option<crate::legacy_binding::Draft>>,
     pub binds: Vec<(String, Option<Bind>)>,
     pub submaps: Vec<(String, Option<Submap>)>,
     pub bind_ids: Option<Vec<String>>,
@@ -1081,6 +1099,7 @@ impl Inverse {
             .map(|m| m.id.clone())
             .collect::<Vec<_>>();
         Self {
+            legacy: (before.legacy != after.legacy).then(|| before.legacy.clone()),
             binds,
             submaps,
             bind_ids: (before_bind != after_bind).then_some(before_bind),
@@ -1089,6 +1108,9 @@ impl Inverse {
         }
     }
     pub fn restore(self, draft: &mut Draft) {
+        if let Some(legacy) = self.legacy {
+            draft.legacy = legacy;
+        }
         let bind_ids = self
             .bind_ids
             .unwrap_or_else(|| draft.binds.iter().map(|b| b.id.clone()).collect());

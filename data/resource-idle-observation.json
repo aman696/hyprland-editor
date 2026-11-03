@@ -1,0 +1,6929 @@
+{
+  "format": "hye-resource-observation-1",
+  "scenario": "idle empty GUI",
+  "binary_sha256": "623d7d5fabc12053f9dafb9417f49dddde4752361f9c0eecd192106b85fa9cb5",
+  "repository_revision_observed": "81890547f89b9f873bde5036480b61a13479bdc0",
+  "platform": {
+    "kernel": "7.2.8-2-cachyos",
+    "machine": "x86_64",
+    "clock_ticks_per_second": 100
+  },
+  "profile": {
+    "renderer": "cairo",
+    "display": "private Xvfb 1280x900x24",
+    "bus": "private dbus-run-session",
+    "state": "empty private HOME/XDG folders",
+    "settings": "in memory",
+    "settle_seconds": 2,
+    "sample_seconds": 60,
+    "interval_seconds": 0.5
+  },
+  "empty_idle_thresholds": {
+    "pss_kib": 102400,
+    "single_core_cpu_percent_below": 0.1,
+    "cpu_window_seconds_at_least": 60
+  },
+  "trials": [
+    {
+      "samples": [
+        {
+          "elapsed_seconds": 0.002815396999949371,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178720,
+                "Pss": 94479,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94479,
+          "total_rss_kib": 178720
+        },
+        {
+          "elapsed_seconds": 0.5068983319999916,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178720,
+                "Pss": 94479,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94479,
+          "total_rss_kib": 178720
+        },
+        {
+          "elapsed_seconds": 1.0103293379997922,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178720,
+                "Pss": 94479,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94479,
+          "total_rss_kib": 178720
+        },
+        {
+          "elapsed_seconds": 1.513817779999954,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178720,
+                "Pss": 94479,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94479,
+          "total_rss_kib": 178720
+        },
+        {
+          "elapsed_seconds": 2.0178733219997866,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178720,
+                "Pss": 94479,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94479,
+          "total_rss_kib": 178720
+        },
+        {
+          "elapsed_seconds": 2.5221346039998025,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178720,
+                "Pss": 94479,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94479,
+          "total_rss_kib": 178720
+        },
+        {
+          "elapsed_seconds": 3.0260303439999916,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178720,
+                "Pss": 94479,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94479,
+          "total_rss_kib": 178720
+        },
+        {
+          "elapsed_seconds": 3.5301241499998923,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178720,
+                "Pss": 94479,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94479,
+          "total_rss_kib": 178720
+        },
+        {
+          "elapsed_seconds": 4.033589983999946,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178720,
+                "Pss": 94479,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94479,
+          "total_rss_kib": 178720
+        },
+        {
+          "elapsed_seconds": 4.536819253999965,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178720,
+                "Pss": 94479,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94479,
+          "total_rss_kib": 178720
+        },
+        {
+          "elapsed_seconds": 5.040834999999788,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178720,
+                "Pss": 94479,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94479,
+          "total_rss_kib": 178720
+        },
+        {
+          "elapsed_seconds": 5.545454976999963,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178720,
+                "Pss": 94479,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94479,
+          "total_rss_kib": 178720
+        },
+        {
+          "elapsed_seconds": 6.048712502999933,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178720,
+                "Pss": 94479,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94479,
+          "total_rss_kib": 178720
+        },
+        {
+          "elapsed_seconds": 6.5519314269999995,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178720,
+                "Pss": 94479,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94479,
+          "total_rss_kib": 178720
+        },
+        {
+          "elapsed_seconds": 7.055071771999792,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178720,
+                "Pss": 94479,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94479,
+          "total_rss_kib": 178720
+        },
+        {
+          "elapsed_seconds": 7.558038504999786,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178720,
+                "Pss": 94479,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94479,
+          "total_rss_kib": 178720
+        },
+        {
+          "elapsed_seconds": 8.061599451999882,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178720,
+                "Pss": 94479,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94479,
+          "total_rss_kib": 178720
+        },
+        {
+          "elapsed_seconds": 8.564586590999852,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178720,
+                "Pss": 94479,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94479,
+          "total_rss_kib": 178720
+        },
+        {
+          "elapsed_seconds": 9.069186544999866,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178720,
+                "Pss": 94479,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94479,
+          "total_rss_kib": 178720
+        },
+        {
+          "elapsed_seconds": 9.572597550999944,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178720,
+                "Pss": 94479,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94479,
+          "total_rss_kib": 178720
+        },
+        {
+          "elapsed_seconds": 10.075717368999904,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178720,
+                "Pss": 94479,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94479,
+          "total_rss_kib": 178720
+        },
+        {
+          "elapsed_seconds": 10.57891605199984,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178720,
+                "Pss": 94479,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94479,
+          "total_rss_kib": 178720
+        },
+        {
+          "elapsed_seconds": 11.085378682999817,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178720,
+                "Pss": 94479,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94479,
+          "total_rss_kib": 178720
+        },
+        {
+          "elapsed_seconds": 11.589117417999887,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178720,
+                "Pss": 94479,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94479,
+          "total_rss_kib": 178720
+        },
+        {
+          "elapsed_seconds": 12.092910913999958,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178720,
+                "Pss": 94479,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94479,
+          "total_rss_kib": 178720
+        },
+        {
+          "elapsed_seconds": 12.598031437999907,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178720,
+                "Pss": 94479,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94479,
+          "total_rss_kib": 178720
+        },
+        {
+          "elapsed_seconds": 13.101706781999837,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178720,
+                "Pss": 94479,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94479,
+          "total_rss_kib": 178720
+        },
+        {
+          "elapsed_seconds": 13.609383247999858,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178720,
+                "Pss": 94479,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94479,
+          "total_rss_kib": 178720
+        },
+        {
+          "elapsed_seconds": 14.112568922999799,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 14.61654545899978,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 15.12066120999998,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 15.624470258999963,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 16.12835887899996,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 16.631754264999927,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 17.136037174999956,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 17.63980188299979,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 18.144046625999863,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 18.647392541999807,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 19.151254191999897,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 19.654986252999834,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 20.158546787999967,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 20.66260007699998,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 21.16885315799982,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 21.672493114999952,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 22.176061781999806,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 22.680709896999815,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 23.184868521999988,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 23.688307976999795,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 24.191650471999992,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 24.695498203999932,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 25.198875965999832,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 25.70278647699979,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 26.20608167699993,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 26.713275204999945,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 27.216863499999818,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 27.721275275999915,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 28.227754148999793,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 28.73139366999999,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 29.236522028999843,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 29.740422210999895,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 30.244231807999995,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 30.74795599899994,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 31.251536911999892,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 31.755330725999784,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 32.25996221799983,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 32.76356839699997,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 33.26676528499979,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 33.773506363999786,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 34.27706368599979,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 34.78359962699983,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 35.289316282999835,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 35.79269674999978,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 36.296140528999786,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 36.80044436999992,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 37.305272884999795,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 37.810130254999876,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 38.315386565999916,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 38.82046619499988,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 39.32738785399988,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 39.8307525849998,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 40.333990318999895,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 40.83738021799991,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 41.34004031299992,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 41.843194855999855,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 42.34654679799996,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 42.85028681099993,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 43.35607144599999,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 43.86044620499979,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 44.36395175099983,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 44.87118922399986,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 45.37391838799999,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 45.87763775799999,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 46.38121759499995,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 46.88461229599989,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 47.38901684699999,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 47.8923995629998,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 48.39740159799999,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 48.90141877999986,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 49.40697417399997,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 49.91110033599989,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 50.41492416099982,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 50.918726235999884,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 51.42255287399985,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 51.92904107199979,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 52.43242033499996,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 52.93594681499985,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 53.43905387099994,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94474,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94474,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 53.942696824999985,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 54.44901696299985,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 54.95241784799987,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 55.45608001599999,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 55.959209826999995,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 56.46313793799982,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 56.966795247999926,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 57.469830711999975,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 57.97295471099983,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 58.47701233099997,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 58.98034430099983,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 59.48367046499993,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 59.99190068499979,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        },
+        {
+          "elapsed_seconds": 60.00741489799998,
+          "processes": [
+            {
+              "pid": 17,
+              "start_ticks": 116512,
+              "cpu_ticks": 19,
+              "kib": {
+                "Rss": 178848,
+                "Pss": 94482,
+                "Private_Clean": 37392,
+                "Private_Dirty": 44844,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94482,
+          "total_rss_kib": 178848
+        }
+      ],
+      "max_observed_pss_kib": 94482,
+      "max_observed_rss_kib": 178848,
+      "observed_cpu_ticks": 0,
+      "observed_single_core_cpu_percent": 0.0,
+      "empty_idle_thresholds_met": true,
+      "idle_cpu_window_complete": true
+    },
+    {
+      "samples": [
+        {
+          "elapsed_seconds": 0.003146012000115661,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179820,
+                "Pss": 95502,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95502,
+          "total_rss_kib": 179820
+        },
+        {
+          "elapsed_seconds": 0.5085356419999698,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179820,
+                "Pss": 95507,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95507,
+          "total_rss_kib": 179820
+        },
+        {
+          "elapsed_seconds": 1.0127988310000546,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179820,
+                "Pss": 95507,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95507,
+          "total_rss_kib": 179820
+        },
+        {
+          "elapsed_seconds": 1.5170141309999963,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179820,
+                "Pss": 95507,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95507,
+          "total_rss_kib": 179820
+        },
+        {
+          "elapsed_seconds": 2.022603914000001,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179820,
+                "Pss": 95507,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95507,
+          "total_rss_kib": 179820
+        },
+        {
+          "elapsed_seconds": 2.526085924999961,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179820,
+                "Pss": 95507,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95507,
+          "total_rss_kib": 179820
+        },
+        {
+          "elapsed_seconds": 3.029723593999961,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179820,
+                "Pss": 95507,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95507,
+          "total_rss_kib": 179820
+        },
+        {
+          "elapsed_seconds": 3.533424739000111,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179820,
+                "Pss": 95507,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95507,
+          "total_rss_kib": 179820
+        },
+        {
+          "elapsed_seconds": 4.036772337000002,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179820,
+                "Pss": 95507,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95507,
+          "total_rss_kib": 179820
+        },
+        {
+          "elapsed_seconds": 4.5410550149999835,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179820,
+                "Pss": 95507,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95507,
+          "total_rss_kib": 179820
+        },
+        {
+          "elapsed_seconds": 5.044700589000058,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179820,
+                "Pss": 95507,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95507,
+          "total_rss_kib": 179820
+        },
+        {
+          "elapsed_seconds": 5.549101816000075,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179820,
+                "Pss": 95507,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95507,
+          "total_rss_kib": 179820
+        },
+        {
+          "elapsed_seconds": 6.053080703999967,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179820,
+                "Pss": 95507,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95507,
+          "total_rss_kib": 179820
+        },
+        {
+          "elapsed_seconds": 6.558586867000031,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179820,
+                "Pss": 95507,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95507,
+          "total_rss_kib": 179820
+        },
+        {
+          "elapsed_seconds": 7.062324948999958,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179820,
+                "Pss": 95507,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95507,
+          "total_rss_kib": 179820
+        },
+        {
+          "elapsed_seconds": 7.566138239000111,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179820,
+                "Pss": 95507,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95507,
+          "total_rss_kib": 179820
+        },
+        {
+          "elapsed_seconds": 8.069833508000102,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179820,
+                "Pss": 95507,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95507,
+          "total_rss_kib": 179820
+        },
+        {
+          "elapsed_seconds": 8.575643617999958,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179820,
+                "Pss": 95507,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95507,
+          "total_rss_kib": 179820
+        },
+        {
+          "elapsed_seconds": 9.079750683999919,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179820,
+                "Pss": 95507,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95507,
+          "total_rss_kib": 179820
+        },
+        {
+          "elapsed_seconds": 9.584886559000097,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179820,
+                "Pss": 95507,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95507,
+          "total_rss_kib": 179820
+        },
+        {
+          "elapsed_seconds": 10.08889529499993,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179820,
+                "Pss": 95507,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95507,
+          "total_rss_kib": 179820
+        },
+        {
+          "elapsed_seconds": 10.593795595000074,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179820,
+                "Pss": 95507,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95507,
+          "total_rss_kib": 179820
+        },
+        {
+          "elapsed_seconds": 11.09739175300001,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179820,
+                "Pss": 95507,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95507,
+          "total_rss_kib": 179820
+        },
+        {
+          "elapsed_seconds": 11.602391045000104,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179820,
+                "Pss": 95507,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95507,
+          "total_rss_kib": 179820
+        },
+        {
+          "elapsed_seconds": 12.107274621999977,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179820,
+                "Pss": 95507,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95507,
+          "total_rss_kib": 179820
+        },
+        {
+          "elapsed_seconds": 12.611353152999982,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179820,
+                "Pss": 95507,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95507,
+          "total_rss_kib": 179820
+        },
+        {
+          "elapsed_seconds": 13.115442726000083,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179820,
+                "Pss": 95507,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95507,
+          "total_rss_kib": 179820
+        },
+        {
+          "elapsed_seconds": 13.619328525000128,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179820,
+                "Pss": 95507,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95507,
+          "total_rss_kib": 179820
+        },
+        {
+          "elapsed_seconds": 14.126969530999986,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 14.631935368000086,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 15.135639614999945,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95472,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95472,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 15.643572317000007,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 16.14723248900009,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 16.654103808999935,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 17.157706651000126,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 17.66167412799996,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 18.16600365499994,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 18.671784145999936,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 19.17553956400002,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 19.67944668400014,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 20.18317279500002,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 20.6869181940001,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 21.19286152099994,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 21.697014437999997,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 22.20641293199992,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 22.7106529780001,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 23.214433535000126,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 23.71868829899995,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 24.222460370000135,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 24.729233241999964,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 25.232876153999996,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 25.737413425000113,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 26.241118438000058,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 26.74926425400008,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 27.252812934000076,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 27.75643442699993,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 28.260768655999982,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 28.764582722000114,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 29.27026689100012,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 29.774069053999938,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95509,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95509,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 30.277811561000135,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 30.781400493000092,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 31.285534075999976,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 31.788788522000004,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 32.29232557299997,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 32.79565020600012,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 33.2993780060001,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 33.805748397000116,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 34.30944476700006,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 34.81702353300011,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 35.320643305999965,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 35.82431951100011,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 36.32910030900007,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 36.83283366499995,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 37.33648150399995,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 37.84055797500014,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 38.349591292000014,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 38.852914228000145,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 39.356904259999965,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 39.860657889000095,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 40.36403473600012,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 40.86819186599996,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 41.37263553699995,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 41.87649620499997,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 42.38044730399997,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 42.887666914999954,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 43.391067180999926,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 43.89836197800014,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 44.40195716099993,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 44.90905859600002,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 45.41243179200001,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 45.91611259699994,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 46.42384370500008,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 46.92787738400011,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 47.43175233200009,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 47.93585194000002,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 48.439899191999984,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 48.944282088000136,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 49.44915856400007,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 49.95754282400003,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 50.461045686000034,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 50.964341013999956,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 51.46781087499994,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 51.973528504000114,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 52.47745201299995,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 52.98147363599992,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 53.48552529400013,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 53.990079939,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 54.49365503700005,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 54.998679821999986,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 55.504503978,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 56.008335880000004,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 56.51227632700011,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 57.0173954280001,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 57.522843629000135,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 58.026820885999996,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 58.5307047660001,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 59.03423891800003,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 59.538712079000106,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        },
+        {
+          "elapsed_seconds": 60.00683386100013,
+          "processes": [
+            {
+              "pid": 101,
+              "start_ticks": 122721,
+              "cpu_ticks": 20,
+              "kib": {
+                "Rss": 179948,
+                "Pss": 95516,
+                "Private_Clean": 37564,
+                "Private_Dirty": 45660,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 95516,
+          "total_rss_kib": 179948
+        }
+      ],
+      "max_observed_pss_kib": 95516,
+      "max_observed_rss_kib": 179948,
+      "observed_cpu_ticks": 0,
+      "observed_single_core_cpu_percent": 0.0,
+      "empty_idle_thresholds_met": true,
+      "idle_cpu_window_complete": true
+    },
+    {
+      "samples": [
+        {
+          "elapsed_seconds": 0.0035216839999065996,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179396,
+                "Pss": 94897,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94897,
+          "total_rss_kib": 179396
+        },
+        {
+          "elapsed_seconds": 0.5109253409998473,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179396,
+                "Pss": 94897,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94897,
+          "total_rss_kib": 179396
+        },
+        {
+          "elapsed_seconds": 1.015702661999967,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179396,
+                "Pss": 94897,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94897,
+          "total_rss_kib": 179396
+        },
+        {
+          "elapsed_seconds": 1.5222172129999763,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179396,
+                "Pss": 94897,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94897,
+          "total_rss_kib": 179396
+        },
+        {
+          "elapsed_seconds": 2.02600285099993,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179396,
+                "Pss": 94897,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94897,
+          "total_rss_kib": 179396
+        },
+        {
+          "elapsed_seconds": 2.5299566359999517,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179396,
+                "Pss": 94897,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94897,
+          "total_rss_kib": 179396
+        },
+        {
+          "elapsed_seconds": 3.034414242999901,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179396,
+                "Pss": 94897,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94897,
+          "total_rss_kib": 179396
+        },
+        {
+          "elapsed_seconds": 3.5383637420000014,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179396,
+                "Pss": 94897,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94897,
+          "total_rss_kib": 179396
+        },
+        {
+          "elapsed_seconds": 4.045783423999865,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179396,
+                "Pss": 94897,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94897,
+          "total_rss_kib": 179396
+        },
+        {
+          "elapsed_seconds": 4.549968829999898,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179396,
+                "Pss": 94897,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94897,
+          "total_rss_kib": 179396
+        },
+        {
+          "elapsed_seconds": 5.055503091999981,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179396,
+                "Pss": 94897,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94897,
+          "total_rss_kib": 179396
+        },
+        {
+          "elapsed_seconds": 5.559331990999908,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179396,
+                "Pss": 94897,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94897,
+          "total_rss_kib": 179396
+        },
+        {
+          "elapsed_seconds": 6.063618523999821,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179396,
+                "Pss": 94897,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94897,
+          "total_rss_kib": 179396
+        },
+        {
+          "elapsed_seconds": 6.569811582999819,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179396,
+                "Pss": 94897,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94897,
+          "total_rss_kib": 179396
+        },
+        {
+          "elapsed_seconds": 7.074297411999851,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179396,
+                "Pss": 94897,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94897,
+          "total_rss_kib": 179396
+        },
+        {
+          "elapsed_seconds": 7.582497219999823,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179396,
+                "Pss": 94897,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94897,
+          "total_rss_kib": 179396
+        },
+        {
+          "elapsed_seconds": 8.087086050999915,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179396,
+                "Pss": 94897,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94897,
+          "total_rss_kib": 179396
+        },
+        {
+          "elapsed_seconds": 8.594764362999967,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179396,
+                "Pss": 94897,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94897,
+          "total_rss_kib": 179396
+        },
+        {
+          "elapsed_seconds": 9.098633436,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179396,
+                "Pss": 94897,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94897,
+          "total_rss_kib": 179396
+        },
+        {
+          "elapsed_seconds": 9.602747092999834,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179396,
+                "Pss": 94897,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94897,
+          "total_rss_kib": 179396
+        },
+        {
+          "elapsed_seconds": 10.107056376999935,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179396,
+                "Pss": 94897,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94897,
+          "total_rss_kib": 179396
+        },
+        {
+          "elapsed_seconds": 10.611268736999818,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179396,
+                "Pss": 94897,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94897,
+          "total_rss_kib": 179396
+        },
+        {
+          "elapsed_seconds": 11.115800313999898,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179396,
+                "Pss": 94897,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94897,
+          "total_rss_kib": 179396
+        },
+        {
+          "elapsed_seconds": 11.620005541999944,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179396,
+                "Pss": 94897,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94897,
+          "total_rss_kib": 179396
+        },
+        {
+          "elapsed_seconds": 12.123873498999956,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179396,
+                "Pss": 94897,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94897,
+          "total_rss_kib": 179396
+        },
+        {
+          "elapsed_seconds": 12.627830259999882,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179396,
+                "Pss": 94897,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94897,
+          "total_rss_kib": 179396
+        },
+        {
+          "elapsed_seconds": 13.132549542999868,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179396,
+                "Pss": 94897,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94897,
+          "total_rss_kib": 179396
+        },
+        {
+          "elapsed_seconds": 13.63686265399997,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179396,
+                "Pss": 94897,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94897,
+          "total_rss_kib": 179396
+        },
+        {
+          "elapsed_seconds": 14.14146831999983,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 14.647589736999862,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 15.151865998999938,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 15.656105461999914,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 16.162367942999936,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 16.666807394999978,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 17.172400735999872,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94892,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94892,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 17.676847112999894,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 18.180943513999864,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 18.68493142899979,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 19.18883936799989,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 19.693546634999848,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 20.198215835999918,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 20.703989044999844,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 21.20815559799985,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 21.714112072999797,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 22.217809121999835,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 22.721724515999995,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94858,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94858,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 23.225218424999866,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 23.729962953999802,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 24.234373534999804,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 24.73866868799996,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 25.24320282099984,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 25.747275647999913,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 26.25180674699982,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 26.75636964299997,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 27.26056734099984,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 27.76489257099979,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 28.269291759999987,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 28.773495496999885,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 29.277466201999914,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 29.781467039999825,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 30.28962376300001,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 30.793556281999827,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 31.29749460999983,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 31.80125168299992,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 32.30712522999988,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 32.81163899799981,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 33.32027891199982,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 33.824379393999834,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 34.328967784999804,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 34.833549248999816,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 35.337808375999884,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 35.844087631999855,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 36.34795145899989,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 36.85180628499984,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 37.35610020599984,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 37.86057695599993,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 38.36817678499983,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 38.8726859909998,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 39.37760890199979,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 39.88234723400001,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 40.386772145999885,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 40.890687369999796,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 41.39484132199982,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 41.89885676299991,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 42.40286468499994,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 42.906885570999975,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 43.41096863099983,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 43.91542583199998,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 44.41953319300001,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 44.924981019999905,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 45.42926837099981,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 45.93794220199993,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 46.4424471169998,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 46.94650971499982,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 47.453286900999956,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 47.95811571199988,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 48.462424414,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 48.96700431699992,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 49.471089670999845,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 49.97480125099992,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 50.47857477499997,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 50.98219404999986,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 51.48740164799983,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 51.991491304999954,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 52.495731806999856,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 52.999646058999815,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 53.505343908999976,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 54.00984428499987,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 54.518468129999974,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 55.02415588399981,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 55.527987897,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 56.03248087599991,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 56.536169285999904,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 57.043648976999975,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 57.548813799999834,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 58.05367744299997,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 58.55784360099983,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 59.061738876999925,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 59.56606368600001,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        },
+        {
+          "elapsed_seconds": 60.006966751999926,
+          "processes": [
+            {
+              "pid": 185,
+              "start_ticks": 128929,
+              "cpu_ticks": 18,
+              "kib": {
+                "Rss": 179524,
+                "Pss": 94899,
+                "Private_Clean": 37452,
+                "Private_Dirty": 45084,
+                "SwapPss": 0
+              }
+            }
+          ],
+          "total_pss_kib": 94899,
+          "total_rss_kib": 179524
+        }
+      ],
+      "max_observed_pss_kib": 94899,
+      "max_observed_rss_kib": 179524,
+      "observed_cpu_ticks": 0,
+      "observed_single_core_cpu_percent": 0.0,
+      "empty_idle_thresholds_met": true,
+      "idle_cpu_window_complete": true
+    }
+  ],
+  "all_empty_idle_thresholds_met": true,
+  "limitations": [
+    "Empty workspace only; no source/review/history workload or physical Wayland driver",
+    "Sampled process-tree PSS/CPU; short-lived processes and between-sample peaks may be missed",
+    "Repository/pkg-config metadata is observational; binary identity is its independent SHA-256, not loaded-library certification",
+    "Private bus/display infrastructure excluded from application process totals",
+    "This is resource evidence, not full resource certification"
+  ],
+  "pkg_config_versions_observed": {
+    "gtk4": "4.22.5",
+    "libadwaita-1": "1.9.4"
+  }
+}

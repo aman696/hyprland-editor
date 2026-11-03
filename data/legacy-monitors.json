@@ -1,0 +1,45 @@
+{
+  "format": "hye-legacy-monitor-schema-2",
+  "version": "0.56.2",
+  "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+  "handler_sha256": "9db68cf44048d86557d8a53068dcc40b9bd7347c7d95f38edc501565f65be62b",
+  "operations": [
+    "replace",
+    "disable",
+    "transform",
+    "reserved",
+    "block"
+  ],
+  "replace_options": [
+    "mirror",
+    "bitdepth",
+    "cm",
+    "sdrsaturation",
+    "sdrbrightness",
+    "transform",
+    "vrr",
+    "icc"
+  ],
+  "reserved_legacy_order": [
+    "top",
+    "bottom",
+    "left",
+    "right"
+  ],
+  "fields_order": [
+    "top",
+    "right",
+    "bottom",
+    "left"
+  ],
+  "semantics": "Transform updates an existing matching rule only. Reserved mutates an existing matching rule; missing-target behavior remains upstream-defined. No implicit conversion to Lua. Static selected-file projection; includes, expansion, conditionals and native hardware behavior remain unverified.",
+  "parser_sha256": "616468fd0576d8b201ef00cd69289234f0ffb1c3137ae2a0ac954fabe37dd589",
+  "lexer_profile_sha256": "6b6470e609c79de79e72a97cd3849371382779cb56e7235ce243d4970dd25a77",
+  "block": {
+    "category": "monitorv2",
+    "key": "output",
+    "fields": "all 22 audited monitor field names, with reserved/reserved_area mapped to addreserved",
+    "processing": "keyed categories are processed after classic keyword parsing; declaration projection is not effective-state evaluation",
+    "limits": "bounded flat literal blocks; unknown fields, dynamic or conditional syntax remain retained/unresolved; repeated output blocks remain separate source declarations"
+  }
+}

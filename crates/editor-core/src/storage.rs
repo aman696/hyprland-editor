@@ -41,10 +41,9 @@ pub fn read_source(path: &Path) -> Result<crate::source::CapturedSource, String>
     let identity = SourceIdentity::captured(path, &meta, &content)?;
     Ok(crate::source::CapturedSource { content, identity })
 }
-pub(crate) fn read_bounded(
-    path: &Path,
-    limit: usize,
-) -> Result<(String, std::fs::Metadata), String> {
+/// Read one explicitly selected bounded regular file through its held inode.
+/// The returned bytes/metadata never authorize reopening another recorded path.
+pub fn read_bounded(path: &Path, limit: usize) -> Result<(String, std::fs::Metadata), String> {
     let p = c_path(path)?;
     // Inspect the node without opening a FIFO/device for I/O.
     let fd = unsafe {

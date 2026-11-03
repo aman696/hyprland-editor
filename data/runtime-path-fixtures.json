@@ -1,0 +1,838 @@
+{
+  "audit_manifest_sha256": "aa467186caf78b5e881eddd59e78d31ed4e2ede902a7885a2872d5ae0a562baa",
+  "format": "hye-runtime-path-fixtures-1",
+  "meaning": "Direct system Lua 5.4 package.searchpath C API and identical hash-pinned normalization helpers from both audited snapshots. Private files/directories only; no config execution, actual module loading, authorization, race, ABI or compositor certificate.",
+  "normalization": [
+    {
+      "normalized": "",
+      "path": ""
+    },
+    {
+      "normalized": ".",
+      "path": "."
+    },
+    {
+      "normalized": ".",
+      "path": "./"
+    },
+    {
+      "normalized": "..",
+      "path": ".."
+    },
+    {
+      "normalized": "..",
+      "path": "../"
+    },
+    {
+      "normalized": "..",
+      "path": "../."
+    },
+    {
+      "normalized": "a/",
+      "path": "a/."
+    },
+    {
+      "normalized": ".",
+      "path": "a/.."
+    },
+    {
+      "normalized": "a/",
+      "path": "a/b/.."
+    },
+    {
+      "normalized": "a/",
+      "path": "a/b/../"
+    },
+    {
+      "normalized": "../b",
+      "path": "a/../../b"
+    },
+    {
+      "normalized": "..",
+      "path": "a/../../"
+    },
+    {
+      "normalized": "/",
+      "path": "/"
+    },
+    {
+      "normalized": "//",
+      "path": "//"
+    },
+    {
+      "normalized": "/a/b/",
+      "path": "///a//b/"
+    },
+    {
+      "normalized": "/b",
+      "path": "/a/../../b"
+    },
+    {
+      "normalized": "/",
+      "path": "/a/../"
+    },
+    {
+      "normalized": "/a/b/",
+      "path": "/a/./b/."
+    },
+    {
+      "normalized": "/a/b.lua",
+      "path": "/a/link/../b.lua"
+    },
+    {
+      "normalized": "/",
+      "path": "/a/..//b/../."
+    },
+    {
+      "normalized": "/",
+      "path": "/.."
+    },
+    {
+      "normalized": "/",
+      "path": "/a/../.."
+    },
+    {
+      "normalized": "a/b.lua",
+      "path": "a//b.lua"
+    },
+    {
+      "normalized": "a.lua",
+      "path": "./a.lua"
+    },
+    {
+      "normalized": "b.lua",
+      "path": "a/../b.lua"
+    }
+  ],
+  "search": [
+    {
+      "missing_candidates": [
+        ""
+      ],
+      "module": "",
+      "package_path": "",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "",
+        ""
+      ],
+      "module": "",
+      "package_path": ";",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "",
+        "",
+        ""
+      ],
+      "module": "",
+      "package_path": ";;",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "x",
+        "",
+        "y",
+        ""
+      ],
+      "module": "",
+      "package_path": "x;;y;",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "",
+        "",
+        ""
+      ],
+      "module": "",
+      "package_path": ";?;",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "",
+        ".lua"
+      ],
+      "module": "",
+      "package_path": "?;?.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "fixed.lua"
+      ],
+      "module": "",
+      "package_path": "fixed.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "//.lua"
+      ],
+      "module": "",
+      "package_path": "?/?/?.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "<root>/config/.lua",
+        "<root>/config//init.lua"
+      ],
+      "module": "",
+      "package_path": "<root>/config/?.lua;<root>/config/?/init.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "<root>/missing/.lua",
+        "<root>/vendor/.lua"
+      ],
+      "module": "",
+      "package_path": "<root>/missing/?.lua;<root>/vendor/?.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        ""
+      ],
+      "module": ".",
+      "package_path": "",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "",
+        ""
+      ],
+      "module": ".",
+      "package_path": ";",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "",
+        "",
+        ""
+      ],
+      "module": ".",
+      "package_path": ";;",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "x",
+        "",
+        "y",
+        ""
+      ],
+      "module": ".",
+      "package_path": "x;;y;",
+      "selected": null
+    },
+    {
+      "missing_candidates": null,
+      "module": ".",
+      "package_path": ";?;",
+      "selected": "/"
+    },
+    {
+      "missing_candidates": null,
+      "module": ".",
+      "package_path": "?;?.lua",
+      "selected": "/"
+    },
+    {
+      "missing_candidates": [
+        "fixed.lua"
+      ],
+      "module": ".",
+      "package_path": "fixed.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "/////.lua"
+      ],
+      "module": ".",
+      "package_path": "?/?/?.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "<root>/config//.lua",
+        "<root>/config///init.lua"
+      ],
+      "module": ".",
+      "package_path": "<root>/config/?.lua;<root>/config/?/init.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "<root>/missing//.lua",
+        "<root>/vendor//.lua"
+      ],
+      "module": ".",
+      "package_path": "<root>/missing/?.lua;<root>/vendor/?.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        ""
+      ],
+      "module": "..",
+      "package_path": "",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "",
+        ""
+      ],
+      "module": "..",
+      "package_path": ";",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "",
+        "",
+        ""
+      ],
+      "module": "..",
+      "package_path": ";;",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "x",
+        "",
+        "y",
+        ""
+      ],
+      "module": "..",
+      "package_path": "x;;y;",
+      "selected": null
+    },
+    {
+      "missing_candidates": null,
+      "module": "..",
+      "package_path": ";?;",
+      "selected": "//"
+    },
+    {
+      "missing_candidates": null,
+      "module": "..",
+      "package_path": "?;?.lua",
+      "selected": "//"
+    },
+    {
+      "missing_candidates": [
+        "fixed.lua"
+      ],
+      "module": "..",
+      "package_path": "fixed.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "////////.lua"
+      ],
+      "module": "..",
+      "package_path": "?/?/?.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "<root>/config///.lua",
+        "<root>/config////init.lua"
+      ],
+      "module": "..",
+      "package_path": "<root>/config/?.lua;<root>/config/?/init.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "<root>/missing///.lua",
+        "<root>/vendor///.lua"
+      ],
+      "module": "..",
+      "package_path": "<root>/missing/?.lua;<root>/vendor/?.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        ""
+      ],
+      "module": "colors",
+      "package_path": "",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "",
+        ""
+      ],
+      "module": "colors",
+      "package_path": ";",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "",
+        "",
+        ""
+      ],
+      "module": "colors",
+      "package_path": ";;",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "x",
+        "",
+        "y",
+        ""
+      ],
+      "module": "colors",
+      "package_path": "x;;y;",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "",
+        "colors",
+        ""
+      ],
+      "module": "colors",
+      "package_path": ";?;",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "colors",
+        "colors.lua"
+      ],
+      "module": "colors",
+      "package_path": "?;?.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "fixed.lua"
+      ],
+      "module": "colors",
+      "package_path": "fixed.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "colors/colors/colors.lua"
+      ],
+      "module": "colors",
+      "package_path": "?/?/?.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": null,
+      "module": "colors",
+      "package_path": "<root>/config/?.lua;<root>/config/?/init.lua",
+      "selected": "<root>/config/colors.lua"
+    },
+    {
+      "missing_candidates": null,
+      "module": "colors",
+      "package_path": "<root>/missing/?.lua;<root>/vendor/?.lua",
+      "selected": "<root>/vendor/colors.lua"
+    },
+    {
+      "missing_candidates": [
+        ""
+      ],
+      "module": "colors.theme",
+      "package_path": "",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "",
+        ""
+      ],
+      "module": "colors.theme",
+      "package_path": ";",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "",
+        "",
+        ""
+      ],
+      "module": "colors.theme",
+      "package_path": ";;",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "x",
+        "",
+        "y",
+        ""
+      ],
+      "module": "colors.theme",
+      "package_path": "x;;y;",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "",
+        "colors/theme",
+        ""
+      ],
+      "module": "colors.theme",
+      "package_path": ";?;",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "colors/theme",
+        "colors/theme.lua"
+      ],
+      "module": "colors.theme",
+      "package_path": "?;?.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "fixed.lua"
+      ],
+      "module": "colors.theme",
+      "package_path": "fixed.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "colors/theme/colors/theme/colors/theme.lua"
+      ],
+      "module": "colors.theme",
+      "package_path": "?/?/?.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "<root>/config/colors/theme.lua",
+        "<root>/config/colors/theme/init.lua"
+      ],
+      "module": "colors.theme",
+      "package_path": "<root>/config/?.lua;<root>/config/?/init.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "<root>/missing/colors/theme.lua",
+        "<root>/vendor/colors/theme.lua"
+      ],
+      "module": "colors.theme",
+      "package_path": "<root>/missing/?.lua;<root>/vendor/?.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        ""
+      ],
+      "module": "./colors.lua",
+      "package_path": "",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "",
+        ""
+      ],
+      "module": "./colors.lua",
+      "package_path": ";",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "",
+        "",
+        ""
+      ],
+      "module": "./colors.lua",
+      "package_path": ";;",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "x",
+        "",
+        "y",
+        ""
+      ],
+      "module": "./colors.lua",
+      "package_path": "x;;y;",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "",
+        "//colors/lua",
+        ""
+      ],
+      "module": "./colors.lua",
+      "package_path": ";?;",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "//colors/lua",
+        "//colors/lua.lua"
+      ],
+      "module": "./colors.lua",
+      "package_path": "?;?.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "fixed.lua"
+      ],
+      "module": "./colors.lua",
+      "package_path": "fixed.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "//colors/lua///colors/lua///colors/lua.lua"
+      ],
+      "module": "./colors.lua",
+      "package_path": "?/?/?.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "<root>/config///colors/lua.lua",
+        "<root>/config///colors/lua/init.lua"
+      ],
+      "module": "./colors.lua",
+      "package_path": "<root>/config/?.lua;<root>/config/?/init.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "<root>/missing///colors/lua.lua",
+        "<root>/vendor///colors/lua.lua"
+      ],
+      "module": "./colors.lua",
+      "package_path": "<root>/missing/?.lua;<root>/vendor/?.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        ""
+      ],
+      "module": "nested/colors",
+      "package_path": "",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "",
+        ""
+      ],
+      "module": "nested/colors",
+      "package_path": ";",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "",
+        "",
+        ""
+      ],
+      "module": "nested/colors",
+      "package_path": ";;",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "x",
+        "",
+        "y",
+        ""
+      ],
+      "module": "nested/colors",
+      "package_path": "x;;y;",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "",
+        "nested/colors",
+        ""
+      ],
+      "module": "nested/colors",
+      "package_path": ";?;",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "nested/colors",
+        "nested/colors.lua"
+      ],
+      "module": "nested/colors",
+      "package_path": "?;?.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "fixed.lua"
+      ],
+      "module": "nested/colors",
+      "package_path": "fixed.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "nested/colors/nested/colors/nested/colors.lua"
+      ],
+      "module": "nested/colors",
+      "package_path": "?/?/?.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "<root>/config/nested/colors.lua",
+        "<root>/config/nested/colors/init.lua"
+      ],
+      "module": "nested/colors",
+      "package_path": "<root>/config/?.lua;<root>/config/?/init.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "<root>/missing/nested/colors.lua",
+        "<root>/vendor/nested/colors.lua"
+      ],
+      "module": "nested/colors",
+      "package_path": "<root>/missing/?.lua;<root>/vendor/?.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        ""
+      ],
+      "module": "?",
+      "package_path": "",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "",
+        ""
+      ],
+      "module": "?",
+      "package_path": ";",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "",
+        "",
+        ""
+      ],
+      "module": "?",
+      "package_path": ";;",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "x",
+        "",
+        "y",
+        ""
+      ],
+      "module": "?",
+      "package_path": "x;;y;",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "",
+        "?",
+        ""
+      ],
+      "module": "?",
+      "package_path": ";?;",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "?",
+        "?.lua"
+      ],
+      "module": "?",
+      "package_path": "?;?.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "fixed.lua"
+      ],
+      "module": "?",
+      "package_path": "fixed.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "?/?/?.lua"
+      ],
+      "module": "?",
+      "package_path": "?/?/?.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "<root>/config/?.lua",
+        "<root>/config/?/init.lua"
+      ],
+      "module": "?",
+      "package_path": "<root>/config/?.lua;<root>/config/?/init.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": [
+        "<root>/missing/?.lua",
+        "<root>/vendor/?.lua"
+      ],
+      "module": "?",
+      "package_path": "<root>/missing/?.lua;<root>/vendor/?.lua",
+      "selected": null
+    },
+    {
+      "missing_candidates": null,
+      "module": "colors",
+      "package_path": "<root>/config/?.lua;<root>/vendor/?.lua",
+      "selected": "<root>/config/colors.lua"
+    },
+    {
+      "missing_candidates": null,
+      "module": "directory",
+      "package_path": "<root>/config/?.lua;<root>/vendor/?.lua",
+      "selected": "<root>/config/directory.lua"
+    },
+    {
+      "missing_candidates": [
+        "<root>/config/unreadable.lua",
+        "<root>/vendor/unreadable.lua"
+      ],
+      "module": "unreadable",
+      "package_path": "<root>/config/?.lua;<root>/vendor/?.lua",
+      "selected": null
+    }
+  ]
+}

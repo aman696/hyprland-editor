@@ -1,0 +1,9 @@
+{
+  "format": "hye-legacy-workspace-schema-1",
+  "version": "0.56.2",
+  "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+  "source": "src/config/legacy/ConfigManager.cpp",
+  "handler_sha256": "9db68cf44048d86557d8a53068dcc40b9bd7347c7d95f38edc501565f65be62b",
+  "semantics": "Ordered literal source declarations, not effective workspace state. Invert border/shadow/rounding flags into no_* fields; native layoutopt values remain strings. Empty hooks remain raw command arguments, never cleaned, evaluated or executed by the editor. Unknown tokens retain the entire unresolved declaration. Native substring dispatch precedence is checked on encode/decode. No implicit Lua conversion.",
+  "unsupported": "float_gaps and enabled have no native handler fields; variables/includes/expressions/conditionals remain unresolved; physical/native effective matching is unverified."
+}

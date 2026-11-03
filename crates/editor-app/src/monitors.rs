@@ -2,7 +2,7 @@
 use super::{controls, label, presentation, Shared};
 use adw::prelude::*;
 use hyprland_editor_core::{
-    monitor::{self, Mode, Modeline, Output, Position, Rule},
+    monitor::{self, LegacyOperation, Mode, Modeline, Output, Position, Rule},
     Setting, Value,
 };
 use std::{
@@ -73,7 +73,7 @@ fn string_choice(
     let values = values.to_vec();
     Box::new(move || Ok(Value::String(values[picker.selected() as usize].into())))
 }
-fn builder(
+pub(super) fn builder(
     setting: &Setting,
     value: Option<Value>,
     panel: &gtk::Box,
@@ -416,6 +416,7 @@ fn builder(
                 ],
                 index,
             );
+            picker.set_widget_name("monitor-transform");
             Box::new(move || Ok(Value::Int(i64::from(picker.selected()))))
         }
         "vrr" => {
@@ -625,7 +626,24 @@ pub(super) fn connect(
         }
     });
 }
-fn show(window: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) -> adw::Window {
+pub(super) fn show(
+    window: &adw::ApplicationWindow,
+    state: &Shared,
+    status: &gtk::Label,
+) -> adw::Window {
+    show_with_outputs(
+        window,
+        state,
+        status,
+        std::sync::Arc::new(hyprland_editor_discovery::current_session_monitors),
+    )
+}
+fn show_with_outputs(
+    window: &adw::ApplicationWindow,
+    state: &Shared,
+    status: &gtk::Label,
+    provider: super::detected_outputs::Provider,
+) -> adw::Window {
     let dialog = adw::Window::builder()
         .title("Monitor Drafts")
         .transient_for(window)
@@ -645,7 +663,7 @@ fn show(window: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
     ] {
         setter(content.upcast_ref(), 16);
     }
-    content.append(&label("Arrange outputs and edit one field at a time. This layout is a draft; automatic modes and scaling are schematic until their dimensions are known."));
+    content.append(&label("Select a monitor rule and edit its fields. Changes stay in your draft until you export them."));
     let canvas = gtk::DrawingArea::builder()
         .content_height(180)
         .hexpand(true)
@@ -685,15 +703,35 @@ fn show(window: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
     let target_save = gtk::Button::with_label("Update Output Match");
     target.append(&target_save);
     let target_details = gtk::Expander::builder().label("Output Match").build();
+    target_details.set_widget_name("monitor-target-section");
     target_details.set_child(Some(&target));
     content.append(&target_details);
+    let legacy = state
+        .borrow()
+        .legacy_sources
+        .contains_key(&state.borrow().draft.version);
+    let operation_box = gtk::Box::new(gtk::Orientation::Vertical, 8);
+    let operation = choices(
+        &operation_box,
+        &LegacyOperation::ALL.map(LegacyOperation::label),
+        0,
+    );
+    operation.set_widget_name("monitor-legacy-operation");
+    let operation_save = gtk::Button::with_label("Change Monitor Operation");
+    operation_save.set_widget_name("monitor-legacy-operation-save");
+    operation_box.append(&operation_save);
+    let operation_details=gtk::Expander::builder().label("About Monitor Operations").child(&label("Changing operation keeps compatible fields. Undo restores the previous draft. Transform and reserved-space updates affect an existing matching rule; defining a monitor rule replaces its configuration. Monitor blocks are processed after classic rules, and repeated output blocks can combine fields. This list shows source declarations.")).build();
+    operation_box.append(&operation_details);
+    operation_box.set_visible(legacy);
+    content.append(&operation_box);
     let fields = monitor::catalogue(&state.borrow().draft.version);
     let names: Vec<_> = fields
         .iter()
         .map(|s| presentation::setting_name(&s.id))
         .collect();
     let refs: Vec<_> = names.iter().map(String::as_str).collect();
-    let property = gtk::DropDown::from_strings(&refs);
+    let property_model = gtk::StringList::new(&refs);
+    let property = gtk::DropDown::builder().model(&property_model).build();
     compact(&property);
     property.set_widget_name("monitor-field");
     content.append(&property);
@@ -702,7 +740,11 @@ fn show(window: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
     let feedback = label("");
     feedback.set_widget_name("monitor-feedback");
     content.append(&feedback);
-    let review = gtk::Button::with_label("Review Monitor Lua");
+    let review = gtk::Button::with_label(if legacy {
+        "Review Monitor Config"
+    } else {
+        "Review Monitor Lua"
+    });
     content.append(&review);
     root.append(
         &gtk::ScrolledWindow::builder()
@@ -720,6 +762,8 @@ fn show(window: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
         let selected = selected.clone();
         let property = property.clone();
         let fields = fields.clone();
+        let property_model = property_model.clone();
+        let operation = operation.clone();
         let model = rule_model.clone();
         let target_type = target_type.clone();
         let target_name = target_name.clone();
@@ -784,8 +828,46 @@ fn show(window: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
                 }
             }
             target_name.set_sensitive(target_type.selected() != 0);
+            let chosen_operation = rules.get(index).and_then(|r| r.legacy_operation);
+            operation.set_selected(
+                chosen_operation
+                    .and_then(|op| LegacyOperation::ALL.iter().position(|v| *v == op))
+                    .unwrap_or(0) as u32,
+            );
+            let eligible: Vec<_> = fields
+                .iter()
+                .filter(|field| chosen_operation.is_none_or(|op| op.accepts(&field.lua_key)))
+                .collect();
+            canvas.set_visible(chosen_operation.is_none_or(|op| {
+                op == LegacyOperation::Replace
+                    || (op == LegacyOperation::Block
+                        && rules
+                            .get(index)
+                            .is_some_and(|rule| rule.logical_size().is_some()))
+            }));
+            property.set_visible(eligible.len() > 1);
+            let field_names: Vec<_> = eligible
+                .iter()
+                .map(|field| presentation::setting_name(&field.id))
+                .collect();
+            let changed = property_model.n_items() as usize != field_names.len()
+                || field_names.iter().enumerate().any(|(n, name)| {
+                    property_model.string(n as u32).as_deref() != Some(name.as_str())
+                });
+            if changed {
+                let old = property_model.string(property.selected());
+                property_model.splice(
+                    0,
+                    property_model.n_items(),
+                    &field_names.iter().map(String::as_str).collect::<Vec<_>>(),
+                );
+                property.set_selected(
+                    old.and_then(|old| field_names.iter().position(|name| name == old.as_str()))
+                        .unwrap_or(0) as u32,
+                );
+            }
             if let (Some(win), Some(setting)) =
-                (win.upgrade(), fields.get(property.selected() as usize))
+                (win.upgrade(), eligible.get(property.selected() as usize))
             {
                 edit_field(
                     &panel,
@@ -854,7 +936,11 @@ fn show(window: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
                         };
                         rule.clone()
                     } else {
-                        Rule::new(&id)
+                        let mut rule = Rule::new(&id);
+                        if legacy {
+                            rule.legacy_operation = Some(LegacyOperation::Replace);
+                        }
+                        rule
                     };
                     rule.id = id;
                     rules.push(rule);
@@ -883,20 +969,44 @@ fn show(window: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
     let feedback_c = feedback.clone();
     let selected_c = selected.clone();
     let refresh_c = refresh.clone();
+    let target_type_c = target_type.clone();
+    let target_name_c = target_name.clone();
     target_save.connect_clicked(move |_| {
         let mut rules = current(&state_c);
         let Some(rule) = rules.get_mut(selected_c.selected() as usize) else {
             return;
         };
-        rule.output = match target_type.selected() {
-            1 => Output::Connector(target_name.text().into()),
-            2 => Output::Description(target_name.text().into()),
+        rule.output = match target_type_c.selected() {
+            1 => Output::Connector(target_name_c.text().into()),
+            2 => Output::Description(target_name_c.text().into()),
             _ => Output::Fallback,
         };
         if commit(&state_c, rules, &status_c, &feedback_c) {
             refresh_c();
         }
     });
+    {
+        let state = state.clone();
+        let status = status.clone();
+        let feedback = feedback.clone();
+        let selected = selected.clone();
+        let operation = operation.clone();
+        let refresh = refresh.clone();
+        operation_save.connect_clicked(move |_| {
+            let mut rules=current(&state);
+            let Some(rule)=rules.get_mut(selected.selected() as usize) else {return;};
+            let Some(op)=LegacyOperation::ALL.get(operation.selected() as usize).copied() else {return;};
+            rule.legacy_operation=Some(op);
+            rule.fields.retain(|key,_|op.accepts(key));
+            match op {
+                LegacyOperation::Disable=>{rule.fields.insert("disabled".into(),Value::Bool(true));}
+                LegacyOperation::Transform=>{rule.fields.entry("transform".into()).or_insert(Value::Int(0));}
+                LegacyOperation::Reserved=>{if !rule.fields.contains_key("reserved_area"){rule.fields.entry("reserved".into()).or_insert(Value::CssGap([0;4]));}}
+                LegacyOperation::Replace | LegacyOperation::Block=>{}
+            }
+            if commit(&state,rules,&status,&feedback) {refresh();feedback.set_text("Monitor operation updated. Incompatible fields were removed; Undo restores the previous draft.");}
+        });
+    }
     let undo = gtk::Button::with_label("Undo");
     let ordering = gtk::Box::new(gtk::Orientation::Horizontal, 6);
     for b in [&up, &down, &undo] {
@@ -927,11 +1037,11 @@ fn show(window: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
     let win = dialog.downgrade();
     review.connect_clicked(move|_|{
         let s=state_c.borrow();let rules=s.monitors.get(&s.draft.version).map(Vec::as_slice).unwrap_or(&[]);
-        let text=match monitor::export_lua(rules,&s.draft.version){Ok(text)=>text,Err(error)=>{if let Some(win)=win.upgrade(){let d=adw::MessageDialog::new(Some(&win),Some("Invalid monitor draft"),Some(&error));d.add_response("close","Close");d.present();}return;}};
-        let Some(win)=win.upgrade()else{return;};let review=adw::Window::builder().title("Review Monitor Lua").transient_for(&win).modal(true).default_width(680).default_height(500).build();
+        let text=match if legacy {hyprland_editor_core::legacy_monitor::export(rules)}else{monitor::export_lua(rules,&s.draft.version)}{Ok(text)=>text,Err(error)=>{if let Some(win)=win.upgrade(){let d=adw::MessageDialog::new(Some(&win),Some("Invalid monitor draft"),Some(&error));d.add_response("close","Close");d.present();}return;}};
+        let Some(win)=win.upgrade()else{return;};let review=adw::Window::builder().title(if legacy {"Review Monitor Config"}else{"Review Monitor Lua"}).transient_for(&win).modal(true).default_width(680).default_height(500).build();
         let box_=gtk::Box::new(gtk::Orientation::Vertical,12);box_.append(&label("These are ordered draft monitor declarations. Copying does not apply them. They must not replace a full configuration."));
         let view=gtk::TextView::builder().editable(false).monospace(true).wrap_mode(gtk::WrapMode::WordChar).build();view.buffer().set_text(&text);box_.append(&gtk::ScrolledWindow::builder().child(&view).vexpand(true).build());
-        let copy=gtk::Button::with_label("Copy Reviewed Monitor Lua");box_.append(&copy);let target=review.downgrade();copy.connect_clicked(move|_|{if let Some(win)=target.upgrade(){win.clipboard().set_text(&text);}});review.set_content(Some(&box_));review.present();
+        let copy=gtk::Button::with_label(if legacy {"Copy Reviewed Monitor Config"}else{"Copy Reviewed Monitor Lua"});box_.append(&copy);let target=review.downgrade();copy.connect_clicked(move|_|{if let Some(win)=target.upgrade(){win.clipboard().set_text(&text);}});review.set_content(Some(&box_));review.present();
     });
     let geometry = Rc::new(RefCell::new(Vec::<(String, f64, f64, f64, f64, f64)>::new()));
     let state_c = state.clone();
@@ -1068,8 +1178,226 @@ fn show(window: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
     });
     canvas.add_controller(drag);
     refresh();
+    let observed_state = state.clone();
+    let observed_selected = selected.clone();
+    let observed_status = status.clone();
+    let observed_feedback = feedback.clone();
+    let observed_refresh = refresh.clone();
+    let observed_version = state.borrow().draft.version.clone();
+    super::detected_outputs::append(
+        &target,
+        &dialog,
+        state,
+        (&target_type, &target_name),
+        provider,
+        move |connector, mode| {
+            if observed_state.borrow().draft.version != observed_version {
+                return Err("The selected version changed. Reopen the monitor editor before editing this draft.".into());
+            }
+            let mut rules = current(&observed_state);
+            let Some(rule) = rules.get_mut(observed_selected.selected() as usize) else {
+                return Err("Add a monitor rule, then choose its output match first.".into());
+            };
+            if rule.output != Output::Connector(connector.into()) {
+                return Err(format!("Update this rule's output match to {connector} before using its reported mode."));
+            }
+            rule.fields
+                .insert("mode".into(), Value::String(mode.into()));
+            if commit(&observed_state, rules, &observed_status, &observed_feedback) {
+                observed_refresh();
+                Ok(())
+            } else {
+                Err(observed_feedback.text().to_string())
+            }
+        },
+    );
     dialog.present();
     dialog
+}
+
+#[cfg(test)]
+pub(super) fn test_detected_outputs(parent: &adw::ApplicationWindow) {
+    use hyprland_editor_discovery::{MonitorSnapshot, SessionIdentity};
+    fn named(widget: &gtk::Widget, name: &str) -> gtk::Widget {
+        fn find(widget: &gtk::Widget, name: &str) -> Option<gtk::Widget> {
+            if widget.widget_name() == name {
+                return Some(widget.clone());
+            }
+            if let Some(expander) = widget.downcast_ref::<gtk::Expander>() {
+                if let Some(found) = expander.child().and_then(|child| find(&child, name)) {
+                    return Some(found);
+                }
+            }
+            let mut child = widget.first_child();
+            while let Some(widget) = child {
+                if let Some(found) = find(&widget, name) {
+                    return Some(found);
+                }
+                child = widget.next_sibling();
+            }
+            None
+        }
+        find(widget, name).unwrap_or_else(|| panic!("Widget {name}"))
+    }
+    fn click(window: &adw::Window, name: &str) {
+        named(window.upcast_ref(), name)
+            .downcast::<gtk::Button>()
+            .unwrap()
+            .emit_clicked();
+    }
+    fn wait(button: &gtk::Button) {
+        let context = gtk::glib::MainContext::default();
+        let started = std::time::Instant::now();
+        while !button.is_sensitive() {
+            while context.pending() {
+                context.iteration(false);
+            }
+            assert!(started.elapsed() < std::time::Duration::from_secs(6));
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+    }
+    let provider: super::detected_outputs::Provider = std::sync::Arc::new(|| {
+        Ok(MonitorSnapshot {
+        identity: SessionIdentity {signature:"private-ui-fixture".into(),pid:std::process::id(),uid:unsafe{libc::geteuid()},start_ticks:1,boot_id:"fixture".into(),binary_sha256:"0".repeat(64)},
+        commit:"unmapped-fixture".into(),version:None,sampled_unix_ms:0,duration_ms:1,
+        monitors:serde_json::from_str(r#"[{"name":"DP-1","description":"Fixture display","width":2560,"height":1440,"refreshRate":143.97,"disabled":false,"availableModes":["2560x1440@143.97Hz","2560x1440@143.97Hz","unmodeled-format","1920x1080@60.00Hz"]},{"name":"HDMI-A-1","disabled":true}]"#).unwrap(),
+    })
+    });
+    let state = super::initial_state();
+    state
+        .borrow_mut()
+        .replace_monitors(vec![Rule::new("detected-test")])
+        .unwrap();
+    let status = label("");
+    let window = show_with_outputs(parent, &state, &status, provider);
+    for name in ["monitor-target-section", "monitor-detected-section"] {
+        named(window.upcast_ref(), name)
+            .downcast::<gtk::Expander>()
+            .unwrap()
+            .set_expanded(true);
+    }
+    let refresh = named(window.upcast_ref(), "monitor-detect-refresh")
+        .downcast::<gtk::Button>()
+        .unwrap();
+    let generation = state.borrow().generation;
+    click(&window, "monitor-detect-refresh");
+    wait(&refresh);
+    assert_eq!(state.borrow().generation, generation);
+    assert_eq!(current(&state)[0].output, Output::Fallback);
+    let outputs = named(window.upcast_ref(), "monitor-detected-output")
+        .downcast::<gtk::DropDown>()
+        .unwrap();
+    assert_eq!(outputs.model().unwrap().n_items(), 3);
+    assert_eq!(outputs.selected(), 0, "Refresh keeps the prompt selected");
+    let target_kind = named(window.upcast_ref(), "monitor-target-kind")
+        .downcast::<gtk::DropDown>()
+        .unwrap();
+    let target_name = named(window.upcast_ref(), "monitor-target")
+        .downcast::<gtk::Entry>()
+        .unwrap();
+    assert!(target_name.text().is_empty());
+    assert_eq!(target_kind.selected(), 0);
+    outputs.set_selected(1);
+    assert_eq!(target_name.text(), "DP-1");
+    assert_eq!(target_kind.selected(), 1);
+    assert_eq!(current(&state)[0].output, Output::Fallback);
+    let modes = named(window.upcast_ref(), "monitor-detected-mode")
+        .downcast::<gtk::DropDown>()
+        .unwrap();
+    assert_eq!(modes.model().unwrap().n_items(), 3);
+    assert_eq!(
+        modes.selected(),
+        0,
+        "Reported modes require explicit selection"
+    );
+    modes.set_selected(1);
+    click(&window, "monitor-use-detected-mode");
+    assert_eq!(
+        state.borrow().generation,
+        generation,
+        "An unmatched output cannot receive its reported mode"
+    );
+    // The existing update action is deliberately required before keeping a mode.
+    fn button_with_label(widget: &gtk::Widget, label: &str) -> Option<gtk::Button> {
+        if let Some(button) = widget
+            .downcast_ref::<gtk::Button>()
+            .filter(|button| button.label().as_deref() == Some(label))
+        {
+            return Some(button.clone());
+        }
+        if let Some(expander) = widget.downcast_ref::<gtk::Expander>() {
+            if let Some(found) = expander
+                .child()
+                .and_then(|child| button_with_label(&child, label))
+            {
+                return Some(found);
+            }
+        }
+        let mut child = widget.first_child();
+        while let Some(widget) = child {
+            if let Some(button) = button_with_label(&widget, label) {
+                return Some(button);
+            }
+            child = widget.next_sibling();
+        }
+        None
+    }
+    button_with_label(window.upcast_ref(), "Update Output Match")
+        .unwrap()
+        .emit_clicked();
+    assert_eq!(current(&state)[0].output, Output::Connector("DP-1".into()));
+    click(&window, "monitor-use-detected-mode");
+    assert_eq!(
+        current(&state)[0].fields["mode"],
+        Value::String("2560x1440@143.97".into())
+    );
+    state.borrow_mut().undo_last();
+    assert!(!current(&state)[0].fields.contains_key("mode"));
+    click(&window, "monitor-detect-refresh");
+    state.borrow_mut().generation += 1;
+    wait(&refresh);
+    assert_eq!(outputs.model().unwrap().n_items(), 1);
+    assert!(named(window.upcast_ref(), "monitor-detected-status")
+        .downcast::<gtk::Label>()
+        .unwrap()
+        .text()
+        .contains("changed"));
+    let (minimum, _, _, _) = window
+        .content()
+        .unwrap()
+        .measure(gtk::Orientation::Horizontal, -1);
+    assert!(minimum <= 350, "Detected-output UI needs {minimum}px");
+    click(&window, "monitor-detect-refresh");
+    window.destroy();
+    wait(&refresh);
+    let context = gtk::glib::MainContext::default();
+    while context.pending() {
+        context.iteration(false);
+    }
+    assert_eq!(
+        outputs.model().unwrap().n_items(),
+        1,
+        "Closed windows cannot receive discovery results"
+    );
+    let error_window = show_with_outputs(
+        parent,
+        &state,
+        &status,
+        std::sync::Arc::new(|| Err("fixture unavailable".into())),
+    );
+    let refresh = named(error_window.upcast_ref(), "monitor-detect-refresh")
+        .downcast::<gtk::Button>()
+        .unwrap();
+    let generation = state.borrow().generation;
+    click(&error_window, "monitor-detect-refresh");
+    wait(&refresh);
+    assert_eq!(state.borrow().generation, generation);
+    assert!(named(error_window.upcast_ref(), "monitor-detected-status")
+        .downcast::<gtk::Label>()
+        .unwrap()
+        .text()
+        .contains("fixture unavailable"));
+    error_window.destroy();
 }
 
 #[cfg(test)]

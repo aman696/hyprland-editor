@@ -1,0 +1,480 @@
+{
+  "format": "hye-workspace-target-release-observation-1",
+  "profiles": [
+    {
+      "release": "5.5.0",
+      "archive_url": "https://www.lua.org/ftp/lua-5.5.0.tar.gz",
+      "archive_sha256": "57ccc32bbbd005cab75bcc52444052535af691789dba2b9016d5c50640d68b3d",
+      "library_sha256": "2c9fe9b5c7c047e18d0d2cc099de4636f5cd710e7f9bb313c22bc7f76c93558a",
+      "matrix": {
+        "format": "hye-workspace-runtime-observation-1",
+        "profiles": [
+          {
+            "cplusplus": 202302,
+            "header_release": 50409,
+            "runtime_abi": 504,
+            "libstdcpp_date": 20260810,
+            "to_string_feature": 0,
+            "example": "1.250000",
+            "negative_zero": "-0.000000",
+            "compiler_hex": "31362e322e31203230323630383130",
+            "identity_hex": "244c756156657273696f6e3a204c756120352e342e392020436f707972696768742028432920313939342d32303236204c75612e6f72672c205055432d52696f2024244c7561417574686f72733a20522e204965727573616c696d736368792c204c2e20482e206465204669677565697265646f2c20572e2043656c65732024",
+            "lua_family": "5.4",
+            "requested_cpp_standard": 23,
+            "number_text_profile": "fixed6",
+            "fixture_binaries": {
+              "lua54-cpp23-baseline-arguments": "01652ed8008cbfa82181c42770cb6de4f3b214b902b625f8c8a845d0d2a19fa0",
+              "lua54-cpp23-current-arguments": "ae2530d8a8ced86ea7695f729eac053ad48ce6eb6cfe3c26edc8e55a46c3c5e8",
+              "lua54-cpp23-baseline-objects": "0fb5fe72be4dcff473f58c4470f3d92dc87dbacc9cca88e25eb51a7a2f48a895",
+              "lua54-cpp23-current-objects": "9871514dd13e330930eeebd3d0530f1f859fb419d8723b1106fc18977bf2186d"
+            },
+            "cases_executed": 132
+          },
+          {
+            "cplusplus": 202400,
+            "header_release": 50409,
+            "runtime_abi": 504,
+            "libstdcpp_date": 20260810,
+            "to_string_feature": 202306,
+            "example": "1.25",
+            "negative_zero": "-0",
+            "compiler_hex": "31362e322e31203230323630383130",
+            "identity_hex": "244c756156657273696f6e3a204c756120352e342e392020436f707972696768742028432920313939342d32303236204c75612e6f72672c205055432d52696f2024244c7561417574686f72733a20522e204965727573616c696d736368792c204c2e20482e206465204669677565697265646f2c20572e2043656c65732024",
+            "lua_family": "5.4",
+            "requested_cpp_standard": 26,
+            "number_text_profile": "general",
+            "fixture_binaries": {
+              "lua54-cpp26-baseline-arguments": "adfceb61c95c2f283892ae4e65ad07b46a738bbb3602e1bbdbb51621ea5e3e34",
+              "lua54-cpp26-current-arguments": "1b73ef088c070c1691daea0f7dcf70c5bb449d5ada0d9d610af89af8140aacd1",
+              "lua54-cpp26-baseline-objects": "9f25c36fede06c1e4fcea0d6c832f728c7df5366a93a1822b61e53bd82d57c05",
+              "lua54-cpp26-current-objects": "ade28acc8ac01a94d6cce179907a4145c6f68dcfaabf8ebc24b3ec9b0483f3ae"
+            },
+            "cases_executed": 132
+          },
+          {
+            "cplusplus": 202302,
+            "header_release": 50500,
+            "runtime_abi": 505,
+            "libstdcpp_date": 20260810,
+            "to_string_feature": 0,
+            "example": "1.250000",
+            "negative_zero": "-0.000000",
+            "compiler_hex": "31362e322e31203230323630383130",
+            "identity_hex": "244c756156657273696f6e3a204c756120352e352e302020436f707972696768742028432920313939342d32303235204c75612e6f72672c205055432d52696f2024244c7561417574686f72733a20522e204965727573616c696d736368792c204c2e20482e206465204669677565697265646f2c20572e2043656c65732024",
+            "lua_family": "5.5",
+            "requested_cpp_standard": 23,
+            "number_text_profile": "fixed6",
+            "fixture_binaries": {
+              "lua55-cpp23-baseline-arguments": "e26999095d728424d61549085178d73e74b5c22346458b0fee71bd8af3c64019",
+              "lua55-cpp23-current-arguments": "96eb476e85f6f527eb2cf0d22e871947e82d6e9693402b049eee0478d5128a87",
+              "lua55-cpp23-baseline-objects": "e9ce6e05bafac2bfd900cefe2177972d682895c6260d01bb876d399b52ec5475",
+              "lua55-cpp23-current-objects": "a1699923a59e585d3a7b3535f0e635310eaac594edd71b2a2072a451385be39f"
+            },
+            "cases_executed": 132
+          },
+          {
+            "cplusplus": 202400,
+            "header_release": 50500,
+            "runtime_abi": 505,
+            "libstdcpp_date": 20260810,
+            "to_string_feature": 202306,
+            "example": "1.25",
+            "negative_zero": "-0",
+            "compiler_hex": "31362e322e31203230323630383130",
+            "identity_hex": "244c756156657273696f6e3a204c756120352e352e302020436f707972696768742028432920313939342d32303235204c75612e6f72672c205055432d52696f2024244c7561417574686f72733a20522e204965727573616c696d736368792c204c2e20482e206465204669677565697265646f2c20572e2043656c65732024",
+            "lua_family": "5.5",
+            "requested_cpp_standard": 26,
+            "number_text_profile": "general",
+            "fixture_binaries": {
+              "lua55-cpp26-baseline-arguments": "2a7f0550578519b9c2eea685aaae1c1e6c9c195e59ac54de48afd6cab8e13182",
+              "lua55-cpp26-current-arguments": "67e09b27218902c909c62bb298a52da78b2c9a9fc0d6b38c7206875a8987a14b",
+              "lua55-cpp26-baseline-objects": "e34f526e2a0db3ea5a3d9f85a873b568574c74d5e1e737a24e12e3df450d507f",
+              "lua55-cpp26-current-objects": "720f496a4c74d838c70e01f5814a4b257f9fe836d03b0ab208f814509332ac3f"
+            },
+            "cases_executed": 132
+          }
+        ],
+        "verified_semantic_profiles": [
+          "lua5.4-fixed6",
+          "lua5.4-general",
+          "lua5.5-fixed6",
+          "lua5.5-general"
+        ],
+        "fixtures_sha256": "935651eedeebc005bb45ad330a4597b909b0c7f9cfaa439b5cfd52269b56bc7c",
+        "tool_sources": {
+          "scripts/workspace_runtime_probe.py": "38a05d6db1c31a624094d39b439e7a2aeb24093efb913fe25695f708c5566f44",
+          "scripts/workspace_argument_probe.py": "353e5a8f2d2bd54e3b00723d0a3c322fb129042164bb376b1ae871c8359039cf",
+          "scripts/workspace_object_probe.py": "0b4a326115aea231897b1c3cb31a40bd0662ef79aa4e3dcef337745ac05d8950",
+          "scripts/config_table_probe.py": "b87a8a30082baa8e9f9ffbeffa33695b174eee379cf935c35d3d8a6c4eabda05",
+          "scripts/monitor_source_probe.py": "4973ce4e18560f5ebd8f37c275e2d545e8eed674ae24949b12d879948942d7c2",
+          "scripts/scalar_registration_probe.py": "0cdb64bdcaeb967d1496aeeceef2c89daa6b161319e87e49d3c9fb02d59e6dc0",
+          "docs/hyprland-implementation-contracts.json": "73f4cfb0e08112a0849864f7eb692e8b30e2daf441283a84cec33d4b92930d32"
+        },
+        "sources": [
+          {
+            "kind": "arguments",
+            "version": "baseline",
+            "url": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsConfigRules.cpp",
+            "sha256": "157c3e45b364f3e41b6fd7cf13fd19e7477e8c03a6a75c6c46fde5e2b5715be9"
+          },
+          {
+            "kind": "arguments",
+            "version": "current",
+            "url": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsConfigRules.cpp",
+            "sha256": "789b1425c25b5a26c82f25e4d5d0b8176a6f56481573fc6e658662d1de7ea5ae"
+          },
+          {
+            "kind": "objects",
+            "version": "baseline",
+            "url": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/objects/LuaWorkspaceRule.cpp",
+            "sha256": "ba53f1f5ec0ac46a7bb5a132cfdb351b3afc77018cdc5ff16adfe4ba3059abfb"
+          },
+          {
+            "kind": "objects",
+            "version": "current",
+            "url": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/objects/LuaWorkspaceRule.cpp",
+            "sha256": "98306b2d781d25dca8a0f81385b2ac7b4b1558ff91eab72a07c434d34b36e8f5"
+          }
+        ],
+        "selected_compositor_observed": false
+      },
+      "source_reference": {
+        "format": "hye-lua55-source-observation-1",
+        "release": "5.5.0",
+        "profiles": [
+          {
+            "cplusplus": 202302,
+            "header_release": 50500,
+            "runtime_abi": 505,
+            "libstdcpp_date": 20260810,
+            "to_string_feature": 0,
+            "example": "1.250000",
+            "negative_zero": "-0.000000",
+            "compiler_hex": "31362e322e31203230323630383130",
+            "identity_hex": "244c756156657273696f6e3a204c756120352e352e302020436f707972696768742028432920313939342d32303235204c75612e6f72672c205055432d52696f2024244c7561417574686f72733a20522e204965727573616c696d736368792c204c2e20482e206465204669677565697265646f2c20572e2043656c65732024",
+            "requested_cpp_standard": 23,
+            "references": {
+              "ordered-module-fixtures.json": {
+                "cases": 100,
+                "observations_sha256": "b1c3b0b7a86675b1533f78dc64e761009b0093ba826d70611d266ce8d8c7587d"
+              },
+              "runtime-path-fixtures.json": {
+                "cases": 108,
+                "observations_sha256": "1d0f7bbf953e7d521494db635644890c7e52279d77b6118c28bb908c901446f7"
+              },
+              "scalar-value-fixtures.json": {
+                "cases": 592,
+                "observations_sha256": "b91a2c4f63a3b6d8df87662d9e866a7cac5659a7aed78713c4c6db83bf073b35"
+              },
+              "complex-scalar-fixtures.json": {
+                "cases": 1064,
+                "observations_sha256": "5cb8cb46e304d6e601d7dd59ab5f891120750895a7f66c58a76ca15e9486500c"
+              },
+              "lua55-language-fixtures.json": {
+                "cases": 16,
+                "observations_sha256": "583d9f4ee23427f92ade57048c56dd4af0fcc6173367bb6770972596be643b73"
+              }
+            },
+            "profiler_sha256": "a74af67566eb77c967ee317b28b528e5e6fdd87b7abbbf0bf1a66c5c5ef519f7"
+          },
+          {
+            "cplusplus": 202400,
+            "header_release": 50500,
+            "runtime_abi": 505,
+            "libstdcpp_date": 20260810,
+            "to_string_feature": 202306,
+            "example": "1.25",
+            "negative_zero": "-0",
+            "compiler_hex": "31362e322e31203230323630383130",
+            "identity_hex": "244c756156657273696f6e3a204c756120352e352e302020436f707972696768742028432920313939342d32303235204c75612e6f72672c205055432d52696f2024244c7561417574686f72733a20522e204965727573616c696d736368792c204c2e20482e206465204669677565697265646f2c20572e2043656c65732024",
+            "requested_cpp_standard": 26,
+            "references": {
+              "ordered-module-fixtures.json": {
+                "cases": 100,
+                "observations_sha256": "b1c3b0b7a86675b1533f78dc64e761009b0093ba826d70611d266ce8d8c7587d"
+              },
+              "runtime-path-fixtures.json": {
+                "cases": 108,
+                "observations_sha256": "1d0f7bbf953e7d521494db635644890c7e52279d77b6118c28bb908c901446f7"
+              },
+              "scalar-value-fixtures.json": {
+                "cases": 592,
+                "observations_sha256": "b91a2c4f63a3b6d8df87662d9e866a7cac5659a7aed78713c4c6db83bf073b35"
+              },
+              "complex-scalar-fixtures.json": {
+                "cases": 1064,
+                "observations_sha256": "5cb8cb46e304d6e601d7dd59ab5f891120750895a7f66c58a76ca15e9486500c"
+              },
+              "lua55-language-fixtures.json": {
+                "cases": 16,
+                "observations_sha256": "583d9f4ee23427f92ade57048c56dd4af0fcc6173367bb6770972596be643b73"
+              }
+            },
+            "profiler_sha256": "e2aada69c341e925401a44105a11edfc7adff1200e792d32b540b18defc2fb30"
+          }
+        ],
+        "reference_inputs": {
+          "ordered-module-fixtures.json": "eb60b51f1957a1c0c8971e2aef914b29bd6d1d28b0728016b212623a7507cde2",
+          "runtime-path-fixtures.json": "7b1d72899a20772d8bcd6f8fb9b40c0ba649a4bd977f770c382b495b916f2c59",
+          "scalar-value-fixtures.json": "b91a2c4f63a3b6d8df87662d9e866a7cac5659a7aed78713c4c6db83bf073b35",
+          "complex-scalar-fixtures.json": "5cb8cb46e304d6e601d7dd59ab5f891120750895a7f66c58a76ca15e9486500c",
+          "lua55-language-fixtures.json": "583d9f4ee23427f92ade57048c56dd4af0fcc6173367bb6770972596be643b73"
+        },
+        "tools": {
+          "ordered_module_probe.py": "d738d8d3787326d88a4431fd7ed3ba956e7a030b3798c8f6ab074f3e7f74a7df",
+          "runtime_path_probe.py": "cc676a1c8fee623e25bcbb2de218891ae0c990a7a5b0ae5b35cd187c0b163654",
+          "scalar_value_probe.py": "c264a254f6fd80bdcd484d70dafd971d3a667709ee7311e27bb14c35761e8db4",
+          "complex_scalar_probe.py": "ecaaca738f8d9436a15d2c4faa69adf66f6cd6d9b89d306765db2c36af901c11",
+          "lua55_language_probe.py": "a64ba94781fd72a00daa6aef8802122cb2f184549c04b13a34bcb12e183443bf",
+          "native_fixture_context.py": "1285beef559135c465a99cc0271233cdd7ce63b3554d485fb7043bb7442c9430",
+          "lua55_source_probe.py": "3fa0d1dec4f259b0f5890a31fe93703dd9bb4ed45b4e8185f3d59c0a72d95ec5",
+          "workspace_runtime_probe.py": "38a05d6db1c31a624094d39b439e7a2aeb24093efb913fe25695f708c5566f44",
+          "module_load_probe.py": "534feb4dda9506d2164c96df21654bc43335049ef5c13df43d5c322f397d7cf9",
+          "source_graph_probe.py": "3b76a5654c4abf091aaf4de2b342959f501b02077b8bd3af94e1ec841f392a84",
+          "scalar_registration_probe.py": "0cdb64bdcaeb967d1496aeeceef2c89daa6b161319e87e49d3c9fb02d59e6dc0"
+        },
+        "application_worker_verified": false,
+        "complete_language_verified": false,
+        "selected_compositor_observed": false
+      }
+    },
+    {
+      "release": "5.5.1",
+      "archive_url": "https://www.lua.org/ftp/lua-5.5.1.tar.gz",
+      "archive_sha256": "1c4b4068d67061f2a2231ad2b5422e77acea1487ea9890f6320af614f4373dce",
+      "library_sha256": "a369bcfd5800bb52d4332d7be6e0e57dd4a83a8a454ee541383beda6622cc36d",
+      "matrix": {
+        "format": "hye-workspace-runtime-observation-1",
+        "profiles": [
+          {
+            "cplusplus": 202302,
+            "header_release": 50409,
+            "runtime_abi": 504,
+            "libstdcpp_date": 20260810,
+            "to_string_feature": 0,
+            "example": "1.250000",
+            "negative_zero": "-0.000000",
+            "compiler_hex": "31362e322e31203230323630383130",
+            "identity_hex": "244c756156657273696f6e3a204c756120352e342e392020436f707972696768742028432920313939342d32303236204c75612e6f72672c205055432d52696f2024244c7561417574686f72733a20522e204965727573616c696d736368792c204c2e20482e206465204669677565697265646f2c20572e2043656c65732024",
+            "lua_family": "5.4",
+            "requested_cpp_standard": 23,
+            "number_text_profile": "fixed6",
+            "fixture_binaries": {
+              "lua54-cpp23-baseline-arguments": "01652ed8008cbfa82181c42770cb6de4f3b214b902b625f8c8a845d0d2a19fa0",
+              "lua54-cpp23-current-arguments": "ae2530d8a8ced86ea7695f729eac053ad48ce6eb6cfe3c26edc8e55a46c3c5e8",
+              "lua54-cpp23-baseline-objects": "0fb5fe72be4dcff473f58c4470f3d92dc87dbacc9cca88e25eb51a7a2f48a895",
+              "lua54-cpp23-current-objects": "9871514dd13e330930eeebd3d0530f1f859fb419d8723b1106fc18977bf2186d"
+            },
+            "cases_executed": 132
+          },
+          {
+            "cplusplus": 202400,
+            "header_release": 50409,
+            "runtime_abi": 504,
+            "libstdcpp_date": 20260810,
+            "to_string_feature": 202306,
+            "example": "1.25",
+            "negative_zero": "-0",
+            "compiler_hex": "31362e322e31203230323630383130",
+            "identity_hex": "244c756156657273696f6e3a204c756120352e342e392020436f707972696768742028432920313939342d32303236204c75612e6f72672c205055432d52696f2024244c7561417574686f72733a20522e204965727573616c696d736368792c204c2e20482e206465204669677565697265646f2c20572e2043656c65732024",
+            "lua_family": "5.4",
+            "requested_cpp_standard": 26,
+            "number_text_profile": "general",
+            "fixture_binaries": {
+              "lua54-cpp26-baseline-arguments": "adfceb61c95c2f283892ae4e65ad07b46a738bbb3602e1bbdbb51621ea5e3e34",
+              "lua54-cpp26-current-arguments": "1b73ef088c070c1691daea0f7dcf70c5bb449d5ada0d9d610af89af8140aacd1",
+              "lua54-cpp26-baseline-objects": "9f25c36fede06c1e4fcea0d6c832f728c7df5366a93a1822b61e53bd82d57c05",
+              "lua54-cpp26-current-objects": "ade28acc8ac01a94d6cce179907a4145c6f68dcfaabf8ebc24b3ec9b0483f3ae"
+            },
+            "cases_executed": 132
+          },
+          {
+            "cplusplus": 202302,
+            "header_release": 50501,
+            "runtime_abi": 505,
+            "libstdcpp_date": 20260810,
+            "to_string_feature": 0,
+            "example": "1.250000",
+            "negative_zero": "-0.000000",
+            "compiler_hex": "31362e322e31203230323630383130",
+            "identity_hex": "244c756156657273696f6e3a204c756120352e352e312020436f707972696768742028432920313939342d32303236204c75612e6f72672c205055432d52696f2024244c7561417574686f72733a20522e204965727573616c696d736368792c204c2e20482e206465204669677565697265646f2c20572e2043656c65732024",
+            "lua_family": "5.5",
+            "requested_cpp_standard": 23,
+            "number_text_profile": "fixed6",
+            "fixture_binaries": {
+              "lua55-cpp23-baseline-arguments": "979b31b7df26e327f882d7588a79abbda3f96149430dfcd4395c75e8dbb80194",
+              "lua55-cpp23-current-arguments": "d4e33252f1aea931ef76b70d917a0182313835eb4303ffb17fc59ac31c1a0b32",
+              "lua55-cpp23-baseline-objects": "641b396170e02d3229a812cfb99cb1d5d090929284bf4bac9a24e0487e4517c0",
+              "lua55-cpp23-current-objects": "dbba66dda1488f7ecdad51618bcc4e546a0f3d2407dada69d6021cf27219e186"
+            },
+            "cases_executed": 132
+          },
+          {
+            "cplusplus": 202400,
+            "header_release": 50501,
+            "runtime_abi": 505,
+            "libstdcpp_date": 20260810,
+            "to_string_feature": 202306,
+            "example": "1.25",
+            "negative_zero": "-0",
+            "compiler_hex": "31362e322e31203230323630383130",
+            "identity_hex": "244c756156657273696f6e3a204c756120352e352e312020436f707972696768742028432920313939342d32303236204c75612e6f72672c205055432d52696f2024244c7561417574686f72733a20522e204965727573616c696d736368792c204c2e20482e206465204669677565697265646f2c20572e2043656c65732024",
+            "lua_family": "5.5",
+            "requested_cpp_standard": 26,
+            "number_text_profile": "general",
+            "fixture_binaries": {
+              "lua55-cpp26-baseline-arguments": "468b81b232cad6a00cdf48251cac40c9a618b54db0d268500390621060fae5f9",
+              "lua55-cpp26-current-arguments": "abde9e92e3a66fea7d3bf7283161ab24030bd2bd4f0430133e38ea477cdeeda2",
+              "lua55-cpp26-baseline-objects": "fdb915e5bacc67fe430902e97caaef9c1b37ad300c7da7c6a524fb343ba0c46f",
+              "lua55-cpp26-current-objects": "2e0a6fc8fbfa450da9f3536c5720b308070322fe5b9f3532e920805d686d4a11"
+            },
+            "cases_executed": 132
+          }
+        ],
+        "verified_semantic_profiles": [
+          "lua5.4-fixed6",
+          "lua5.4-general",
+          "lua5.5-fixed6",
+          "lua5.5-general"
+        ],
+        "fixtures_sha256": "935651eedeebc005bb45ad330a4597b909b0c7f9cfaa439b5cfd52269b56bc7c",
+        "tool_sources": {
+          "scripts/workspace_runtime_probe.py": "38a05d6db1c31a624094d39b439e7a2aeb24093efb913fe25695f708c5566f44",
+          "scripts/workspace_argument_probe.py": "353e5a8f2d2bd54e3b00723d0a3c322fb129042164bb376b1ae871c8359039cf",
+          "scripts/workspace_object_probe.py": "0b4a326115aea231897b1c3cb31a40bd0662ef79aa4e3dcef337745ac05d8950",
+          "scripts/config_table_probe.py": "b87a8a30082baa8e9f9ffbeffa33695b174eee379cf935c35d3d8a6c4eabda05",
+          "scripts/monitor_source_probe.py": "4973ce4e18560f5ebd8f37c275e2d545e8eed674ae24949b12d879948942d7c2",
+          "scripts/scalar_registration_probe.py": "0cdb64bdcaeb967d1496aeeceef2c89daa6b161319e87e49d3c9fb02d59e6dc0",
+          "docs/hyprland-implementation-contracts.json": "73f4cfb0e08112a0849864f7eb692e8b30e2daf441283a84cec33d4b92930d32"
+        },
+        "sources": [
+          {
+            "kind": "arguments",
+            "version": "baseline",
+            "url": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsConfigRules.cpp",
+            "sha256": "157c3e45b364f3e41b6fd7cf13fd19e7477e8c03a6a75c6c46fde5e2b5715be9"
+          },
+          {
+            "kind": "arguments",
+            "version": "current",
+            "url": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsConfigRules.cpp",
+            "sha256": "789b1425c25b5a26c82f25e4d5d0b8176a6f56481573fc6e658662d1de7ea5ae"
+          },
+          {
+            "kind": "objects",
+            "version": "baseline",
+            "url": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/objects/LuaWorkspaceRule.cpp",
+            "sha256": "ba53f1f5ec0ac46a7bb5a132cfdb351b3afc77018cdc5ff16adfe4ba3059abfb"
+          },
+          {
+            "kind": "objects",
+            "version": "current",
+            "url": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/objects/LuaWorkspaceRule.cpp",
+            "sha256": "98306b2d781d25dca8a0f81385b2ac7b4b1558ff91eab72a07c434d34b36e8f5"
+          }
+        ],
+        "selected_compositor_observed": false
+      },
+      "source_reference": {
+        "format": "hye-lua55-source-observation-1",
+        "release": "5.5.1",
+        "profiles": [
+          {
+            "cplusplus": 202302,
+            "header_release": 50501,
+            "runtime_abi": 505,
+            "libstdcpp_date": 20260810,
+            "to_string_feature": 0,
+            "example": "1.250000",
+            "negative_zero": "-0.000000",
+            "compiler_hex": "31362e322e31203230323630383130",
+            "identity_hex": "244c756156657273696f6e3a204c756120352e352e312020436f707972696768742028432920313939342d32303236204c75612e6f72672c205055432d52696f2024244c7561417574686f72733a20522e204965727573616c696d736368792c204c2e20482e206465204669677565697265646f2c20572e2043656c65732024",
+            "requested_cpp_standard": 23,
+            "references": {
+              "ordered-module-fixtures.json": {
+                "cases": 100,
+                "observations_sha256": "b1c3b0b7a86675b1533f78dc64e761009b0093ba826d70611d266ce8d8c7587d"
+              },
+              "runtime-path-fixtures.json": {
+                "cases": 108,
+                "observations_sha256": "1d0f7bbf953e7d521494db635644890c7e52279d77b6118c28bb908c901446f7"
+              },
+              "scalar-value-fixtures.json": {
+                "cases": 592,
+                "observations_sha256": "b91a2c4f63a3b6d8df87662d9e866a7cac5659a7aed78713c4c6db83bf073b35"
+              },
+              "complex-scalar-fixtures.json": {
+                "cases": 1064,
+                "observations_sha256": "5cb8cb46e304d6e601d7dd59ab5f891120750895a7f66c58a76ca15e9486500c"
+              },
+              "lua55-language-fixtures.json": {
+                "cases": 16,
+                "observations_sha256": "583d9f4ee23427f92ade57048c56dd4af0fcc6173367bb6770972596be643b73"
+              }
+            },
+            "profiler_sha256": "c60e628cc47c0cfb63b04be695d37ba1eb9c3f69d8c5bd266e6094d711c7129a"
+          },
+          {
+            "cplusplus": 202400,
+            "header_release": 50501,
+            "runtime_abi": 505,
+            "libstdcpp_date": 20260810,
+            "to_string_feature": 202306,
+            "example": "1.25",
+            "negative_zero": "-0",
+            "compiler_hex": "31362e322e31203230323630383130",
+            "identity_hex": "244c756156657273696f6e3a204c756120352e352e312020436f707972696768742028432920313939342d32303236204c75612e6f72672c205055432d52696f2024244c7561417574686f72733a20522e204965727573616c696d736368792c204c2e20482e206465204669677565697265646f2c20572e2043656c65732024",
+            "requested_cpp_standard": 26,
+            "references": {
+              "ordered-module-fixtures.json": {
+                "cases": 100,
+                "observations_sha256": "b1c3b0b7a86675b1533f78dc64e761009b0093ba826d70611d266ce8d8c7587d"
+              },
+              "runtime-path-fixtures.json": {
+                "cases": 108,
+                "observations_sha256": "1d0f7bbf953e7d521494db635644890c7e52279d77b6118c28bb908c901446f7"
+              },
+              "scalar-value-fixtures.json": {
+                "cases": 592,
+                "observations_sha256": "b91a2c4f63a3b6d8df87662d9e866a7cac5659a7aed78713c4c6db83bf073b35"
+              },
+              "complex-scalar-fixtures.json": {
+                "cases": 1064,
+                "observations_sha256": "5cb8cb46e304d6e601d7dd59ab5f891120750895a7f66c58a76ca15e9486500c"
+              },
+              "lua55-language-fixtures.json": {
+                "cases": 16,
+                "observations_sha256": "583d9f4ee23427f92ade57048c56dd4af0fcc6173367bb6770972596be643b73"
+              }
+            },
+            "profiler_sha256": "6848ad95cb4ebed59d0d47318940aae7b6d71569a418602797bd4afa21f29061"
+          }
+        ],
+        "reference_inputs": {
+          "ordered-module-fixtures.json": "eb60b51f1957a1c0c8971e2aef914b29bd6d1d28b0728016b212623a7507cde2",
+          "runtime-path-fixtures.json": "7b1d72899a20772d8bcd6f8fb9b40c0ba649a4bd977f770c382b495b916f2c59",
+          "scalar-value-fixtures.json": "b91a2c4f63a3b6d8df87662d9e866a7cac5659a7aed78713c4c6db83bf073b35",
+          "complex-scalar-fixtures.json": "5cb8cb46e304d6e601d7dd59ab5f891120750895a7f66c58a76ca15e9486500c",
+          "lua55-language-fixtures.json": "583d9f4ee23427f92ade57048c56dd4af0fcc6173367bb6770972596be643b73"
+        },
+        "tools": {
+          "ordered_module_probe.py": "d738d8d3787326d88a4431fd7ed3ba956e7a030b3798c8f6ab074f3e7f74a7df",
+          "runtime_path_probe.py": "cc676a1c8fee623e25bcbb2de218891ae0c990a7a5b0ae5b35cd187c0b163654",
+          "scalar_value_probe.py": "c264a254f6fd80bdcd484d70dafd971d3a667709ee7311e27bb14c35761e8db4",
+          "complex_scalar_probe.py": "ecaaca738f8d9436a15d2c4faa69adf66f6cd6d9b89d306765db2c36af901c11",
+          "lua55_language_probe.py": "a64ba94781fd72a00daa6aef8802122cb2f184549c04b13a34bcb12e183443bf",
+          "native_fixture_context.py": "1285beef559135c465a99cc0271233cdd7ce63b3554d485fb7043bb7442c9430",
+          "lua55_source_probe.py": "3fa0d1dec4f259b0f5890a31fe93703dd9bb4ed45b4e8185f3d59c0a72d95ec5",
+          "workspace_runtime_probe.py": "38a05d6db1c31a624094d39b439e7a2aeb24093efb913fe25695f708c5566f44",
+          "module_load_probe.py": "534feb4dda9506d2164c96df21654bc43335049ef5c13df43d5c322f397d7cf9",
+          "source_graph_probe.py": "3b76a5654c4abf091aaf4de2b342959f501b02077b8bd3af94e1ec841f392a84",
+          "scalar_registration_probe.py": "0cdb64bdcaeb967d1496aeeceef2c89daa6b161319e87e49d3c9fb02d59e6dc0"
+        },
+        "application_worker_verified": false,
+        "complete_language_verified": false,
+        "selected_compositor_observed": false
+      }
+    }
+  ],
+  "selected_compositor_observed": false
+}

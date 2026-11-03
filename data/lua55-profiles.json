@@ -1,0 +1,22 @@
+{
+  "format": "hye-lua55-source-profiles-1",
+  "scope": "Separate explicit native55 source model. Existing trusted 100 ordered, 592 primitive and 1064 complex observations match in both C++ contexts for each official release. Unknown CST/effects remain barriers; no selected-compositor/full-language certificate. Legacy profile bytes remain unchanged.",
+  "reference_observation_sha256": "f008f6edfcb82dde55a6d73977ac381d6695996c808d10e65cc391a9890e769b",
+  "profiles": [
+    {
+      "release": "5.5.0",
+      "archive_sha256": "57ccc32bbbd005cab75bcc52444052535af691789dba2b9016d5c50640d68b3d",
+      "error_call_line": "arguments",
+      "primitive_conversion_profile": "hye-primitive-coercions-1",
+      "ordered_overrides": []
+    },
+    {
+      "release": "5.5.1",
+      "archive_sha256": "1c4b4068d67061f2a2231ad2b5422e77acea1487ea9890f6320af614f4373dce",
+      "error_call_line": "arguments",
+      "primitive_conversion_profile": "hye-primitive-coercions-1",
+      "ordered_overrides": []
+    }
+  ],
+  "canonical_fixtures_sha256": "eb60b51f1957a1c0c8971e2aef914b29bd6d1d28b0728016b212623a7507cde2"
+}

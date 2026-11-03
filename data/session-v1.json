@@ -1,0 +1,16 @@
+{
+  "format": "hye-session-schema-1",
+  "versions": ["0.56.2", "audited-main"],
+  "entries": ["environment", "command", "permission"],
+  "command_triggers": {"config_load": null, "start": "hyprland.start", "reloaded": "config.reloaded", "shutdown": "hyprland.shutdown"},
+  "permission_types": ["screencopy", "cursorpos", "plugin", "keyboard", "input-capture"],
+  "permission_modes": ["ask", "allow", "deny"],
+  "environment": {"dbus": "optional boolean, preserving unspecified versus false", "name": "safe ASCII shell identifier, maximum 255 bytes", "value": "UTF-8 without NUL, empty preserved"},
+  "limits": {"entries": 256, "string_bytes": 16384, "rendered_bytes": 1048576},
+  "effects": {"environment": "process/child environment and optional external activation-service propagation", "command": "external effect, never executed by import/editor/ordinary preview", "permission": "first-launch-only rule registration; enforcement is separate"},
+  "source_files": {
+    "baseline": {"commit": "efb50993780079460b0cbed1363e2166a2de1d9f", "LuaBindingsConfigRules.cpp": "157c3e45b364f3e41b6fd7cf13fd19e7477e8c03a6a75c6c46fde5e2b5715be9", "LuaBindingsToplevel.cpp": "706b29eb52de087c1d6e64770cf85fb3ebc0f2fbe9ddcff086905499bcd332f5"},
+    "current": {"commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7", "LuaBindingsConfigRules.cpp": "789b1425c25b5a26c82f25e4d5d0b8176a6f56481573fc6e658662d1de7ea5ae", "LuaBindingsToplevel.cpp": "9b43410a1bd04174d0b6fb4d6844af0dfba426cd9341153de5cbf9481f6f8138"}
+  },
+  "limits_of_support": "Static strings and single-command lifecycle callbacks. Optional command launch-rule tables, arbitrary callbacks, dynamic environment evaluation, complete workflow programming and live enforcement remain unresolved. This schema is not a native acceptance or runtime certificate."
+}

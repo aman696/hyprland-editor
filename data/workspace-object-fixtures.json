@@ -1,0 +1,1124 @@
+{
+  "format": "hye-workspace-object-fixtures-1",
+  "scope": "Exact userdata allocation, weak-reference method bodies, equality, member lookup, required receiver/type checks and callback arity, using inert rule state, refresh and metatable registration adapters. Trusted ref/drop fixture functions model external object lifetime; no actual manager lifetime/reload, helper-protection policy, renderer, hardware or source-ownership certificate.",
+  "sources": [
+    {
+      "version": "baseline",
+      "url": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/objects/LuaWorkspaceRule.cpp",
+      "sha256": "ba53f1f5ec0ac46a7bb5a132cfdb351b3afc77018cdc5ff16adfe4ba3059abfb"
+    },
+    {
+      "version": "current",
+      "url": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/objects/LuaWorkspaceRule.cpp",
+      "sha256": "98306b2d781d25dca8a0f81385b2ac7b4b1558ff91eab72a07c434d34b36e8f5"
+    }
+  ],
+  "cases": [
+    {
+      "version": "baseline",
+      "case": "initial",
+      "lua": "local a=ref('a');return type(a),a:is_enabled()",
+      "observation": {
+        "returns": [
+          {
+            "type": "bytes",
+            "value": [
+              117,
+              115,
+              101,
+              114,
+              100,
+              97,
+              116,
+              97
+            ]
+          },
+          {
+            "type": "bool",
+            "value": true
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {
+          "a": true,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "disable",
+      "lua": "local a=ref('a');return select('#',a:set_enabled(false)),a:is_enabled()",
+      "observation": {
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          },
+          {
+            "type": "bool",
+            "value": false
+          }
+        ],
+        "setter_values": [
+          false
+        ],
+        "refresh_requests": 1,
+        "live_enabled": {
+          "a": false,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "enable_already_enabled",
+      "lua": "local a=ref('a');return select('#',a:set_enabled(true)),a:is_enabled()",
+      "observation": {
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          },
+          {
+            "type": "bool",
+            "value": true
+          }
+        ],
+        "setter_values": [
+          true
+        ],
+        "refresh_requests": 1,
+        "live_enabled": {
+          "a": true,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "get_extra_argument",
+      "lua": "return ref('a'):is_enabled('ignored')",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": true
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {
+          "a": true,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "set_extra_argument",
+      "lua": "local a=ref('a');a:set_enabled(false,'ignored');return a:is_enabled()",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": false
+          }
+        ],
+        "setter_values": [
+          false
+        ],
+        "refresh_requests": 1,
+        "live_enabled": {
+          "a": false,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "wrong_set_type",
+      "lua": "local a=ref('a');local ok,e=pcall(a.set_enabled,a,0);return ok,type(e),a:is_enabled()",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": false
+          },
+          {
+            "type": "bytes",
+            "value": [
+              115,
+              116,
+              114,
+              105,
+              110,
+              103
+            ]
+          },
+          {
+            "type": "bool",
+            "value": true
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {
+          "a": true,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "missing_set_argument",
+      "lua": "local a=ref('a');local ok,e=pcall(a.set_enabled,a);return ok,type(e),a:is_enabled()",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": false
+          },
+          {
+            "type": "bytes",
+            "value": [
+              115,
+              116,
+              114,
+              105,
+              110,
+              103
+            ]
+          },
+          {
+            "type": "bool",
+            "value": true
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {
+          "a": true,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "wrong_self",
+      "lua": "local a=ref('a');local ok,e=pcall(a.is_enabled,{});return ok,type(e)",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": false
+          },
+          {
+            "type": "bytes",
+            "value": [
+              115,
+              116,
+              114,
+              105,
+              110,
+              103
+            ]
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {
+          "a": true,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "dot_call_missing_self",
+      "lua": "local a=ref('a');local ok,e=pcall(a.set_enabled,false);return ok,type(e)",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": false
+          },
+          {
+            "type": "bytes",
+            "value": [
+              115,
+              116,
+              114,
+              105,
+              110,
+              103
+            ]
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {
+          "a": true,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "unknown_member",
+      "lua": "return type(ref('a').outside)",
+      "observation": {
+        "returns": [
+          {
+            "type": "bytes",
+            "value": [
+              110,
+              105,
+              108
+            ]
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {
+          "a": true,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "numeric_member",
+      "lua": "return type(ref('a')[3])",
+      "observation": {
+        "returns": [
+          {
+            "type": "bytes",
+            "value": [
+              110,
+              105,
+              108
+            ]
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {
+          "a": true,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "bad_member_type",
+      "lua": "local a=ref('a');local ok,e=pcall(function()return a[{}]end);return ok,type(e)",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": false
+          },
+          {
+            "type": "bytes",
+            "value": [
+              115,
+              116,
+              114,
+              105,
+              110,
+              103
+            ]
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {
+          "a": true,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "nul_method_alias",
+      "lua": "local a=ref('a');a['set_enabled\\0tail'](a,false);return a['is_enabled\\0tail'](a)",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": false
+          }
+        ],
+        "setter_values": [
+          false
+        ],
+        "refresh_requests": 1,
+        "live_enabled": {
+          "a": false,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "shared_rule_wrappers",
+      "lua": "local a,b=ref('a'),ref('a');a:set_enabled(false);return rawequal(a,b),a==b,b:is_enabled()",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": false
+          },
+          {
+            "type": "bool",
+            "value": true
+          },
+          {
+            "type": "bool",
+            "value": false
+          }
+        ],
+        "setter_values": [
+          false
+        ],
+        "refresh_requests": 1,
+        "live_enabled": {
+          "a": false,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "different_rules",
+      "lua": "return ref('a')==ref('b')",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": false
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {
+          "a": true,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "unbound_method",
+      "lua": "local a,b=ref('a'),ref('b');a.set_enabled(b,false);return a:is_enabled(),b:is_enabled()",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": true
+          },
+          {
+            "type": "bool",
+            "value": false
+          }
+        ],
+        "setter_values": [
+          false
+        ],
+        "refresh_requests": 1,
+        "live_enabled": {
+          "a": true,
+          "b": false
+        }
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "live_tostring",
+      "lua": "return string.match(tostring(ref('a')),'^HL%.WorkspaceRule%(')~=nil",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": true
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {
+          "a": true,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "expired_get_and_set",
+      "lua": "local a=ref('a');drop('a');return a:is_enabled(),select('#',a:set_enabled(false)),tostring(a)",
+      "observation": {
+        "returns": [
+          {
+            "type": "nil"
+          },
+          {
+            "type": "int",
+            "value": 0
+          },
+          {
+            "type": "bytes",
+            "value": [
+              72,
+              76,
+              46,
+              87,
+              111,
+              114,
+              107,
+              115,
+              112,
+              97,
+              99,
+              101,
+              82,
+              117,
+              108,
+              101,
+              40,
+              101,
+              120,
+              112,
+              105,
+              114,
+              101,
+              100,
+              41
+            ]
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "expired_wrong_set_type",
+      "lua": "local a=ref('a');drop('a');local ok,e=pcall(a.set_enabled,a,0);return ok,type(e)",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": false
+          },
+          {
+            "type": "bytes",
+            "value": [
+              115,
+              116,
+              114,
+              105,
+              110,
+              103
+            ]
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "both_expired_equal",
+      "lua": "local a,b=ref('a'),ref('b');drop('a');drop('b');return a==b",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": true
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {}
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "one_expired_different",
+      "lua": "local a,b=ref('a'),ref('b');drop('a');return a==b",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": false
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "current",
+      "case": "initial",
+      "lua": "local a=ref('a');return type(a),a:is_enabled()",
+      "observation": {
+        "returns": [
+          {
+            "type": "bytes",
+            "value": [
+              117,
+              115,
+              101,
+              114,
+              100,
+              97,
+              116,
+              97
+            ]
+          },
+          {
+            "type": "bool",
+            "value": true
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {
+          "a": true,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "current",
+      "case": "disable",
+      "lua": "local a=ref('a');return select('#',a:set_enabled(false)),a:is_enabled()",
+      "observation": {
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          },
+          {
+            "type": "bool",
+            "value": false
+          }
+        ],
+        "setter_values": [
+          false
+        ],
+        "refresh_requests": 1,
+        "live_enabled": {
+          "a": false,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "current",
+      "case": "enable_already_enabled",
+      "lua": "local a=ref('a');return select('#',a:set_enabled(true)),a:is_enabled()",
+      "observation": {
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          },
+          {
+            "type": "bool",
+            "value": true
+          }
+        ],
+        "setter_values": [
+          true
+        ],
+        "refresh_requests": 1,
+        "live_enabled": {
+          "a": true,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "current",
+      "case": "get_extra_argument",
+      "lua": "return ref('a'):is_enabled('ignored')",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": true
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {
+          "a": true,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "current",
+      "case": "set_extra_argument",
+      "lua": "local a=ref('a');a:set_enabled(false,'ignored');return a:is_enabled()",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": false
+          }
+        ],
+        "setter_values": [
+          false
+        ],
+        "refresh_requests": 1,
+        "live_enabled": {
+          "a": false,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "current",
+      "case": "wrong_set_type",
+      "lua": "local a=ref('a');local ok,e=pcall(a.set_enabled,a,0);return ok,type(e),a:is_enabled()",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": false
+          },
+          {
+            "type": "bytes",
+            "value": [
+              115,
+              116,
+              114,
+              105,
+              110,
+              103
+            ]
+          },
+          {
+            "type": "bool",
+            "value": true
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {
+          "a": true,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "current",
+      "case": "missing_set_argument",
+      "lua": "local a=ref('a');local ok,e=pcall(a.set_enabled,a);return ok,type(e),a:is_enabled()",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": false
+          },
+          {
+            "type": "bytes",
+            "value": [
+              115,
+              116,
+              114,
+              105,
+              110,
+              103
+            ]
+          },
+          {
+            "type": "bool",
+            "value": true
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {
+          "a": true,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "current",
+      "case": "wrong_self",
+      "lua": "local a=ref('a');local ok,e=pcall(a.is_enabled,{});return ok,type(e)",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": false
+          },
+          {
+            "type": "bytes",
+            "value": [
+              115,
+              116,
+              114,
+              105,
+              110,
+              103
+            ]
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {
+          "a": true,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "current",
+      "case": "dot_call_missing_self",
+      "lua": "local a=ref('a');local ok,e=pcall(a.set_enabled,false);return ok,type(e)",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": false
+          },
+          {
+            "type": "bytes",
+            "value": [
+              115,
+              116,
+              114,
+              105,
+              110,
+              103
+            ]
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {
+          "a": true,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "current",
+      "case": "unknown_member",
+      "lua": "return type(ref('a').outside)",
+      "observation": {
+        "returns": [
+          {
+            "type": "bytes",
+            "value": [
+              110,
+              105,
+              108
+            ]
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {
+          "a": true,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "current",
+      "case": "numeric_member",
+      "lua": "return type(ref('a')[3])",
+      "observation": {
+        "returns": [
+          {
+            "type": "bytes",
+            "value": [
+              110,
+              105,
+              108
+            ]
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {
+          "a": true,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "current",
+      "case": "bad_member_type",
+      "lua": "local a=ref('a');local ok,e=pcall(function()return a[{}]end);return ok,type(e)",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": false
+          },
+          {
+            "type": "bytes",
+            "value": [
+              115,
+              116,
+              114,
+              105,
+              110,
+              103
+            ]
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {
+          "a": true,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "current",
+      "case": "nul_method_alias",
+      "lua": "local a=ref('a');a['set_enabled\\0tail'](a,false);return a['is_enabled\\0tail'](a)",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": false
+          }
+        ],
+        "setter_values": [
+          false
+        ],
+        "refresh_requests": 1,
+        "live_enabled": {
+          "a": false,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "current",
+      "case": "shared_rule_wrappers",
+      "lua": "local a,b=ref('a'),ref('a');a:set_enabled(false);return rawequal(a,b),a==b,b:is_enabled()",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": false
+          },
+          {
+            "type": "bool",
+            "value": true
+          },
+          {
+            "type": "bool",
+            "value": false
+          }
+        ],
+        "setter_values": [
+          false
+        ],
+        "refresh_requests": 1,
+        "live_enabled": {
+          "a": false,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "current",
+      "case": "different_rules",
+      "lua": "return ref('a')==ref('b')",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": false
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {
+          "a": true,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "current",
+      "case": "unbound_method",
+      "lua": "local a,b=ref('a'),ref('b');a.set_enabled(b,false);return a:is_enabled(),b:is_enabled()",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": true
+          },
+          {
+            "type": "bool",
+            "value": false
+          }
+        ],
+        "setter_values": [
+          false
+        ],
+        "refresh_requests": 1,
+        "live_enabled": {
+          "a": true,
+          "b": false
+        }
+      }
+    },
+    {
+      "version": "current",
+      "case": "live_tostring",
+      "lua": "return string.match(tostring(ref('a')),'^HL%.WorkspaceRule%(')~=nil",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": true
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {
+          "a": true,
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "current",
+      "case": "expired_get_and_set",
+      "lua": "local a=ref('a');drop('a');return a:is_enabled(),select('#',a:set_enabled(false)),tostring(a)",
+      "observation": {
+        "returns": [
+          {
+            "type": "nil"
+          },
+          {
+            "type": "int",
+            "value": 0
+          },
+          {
+            "type": "bytes",
+            "value": [
+              72,
+              76,
+              46,
+              87,
+              111,
+              114,
+              107,
+              115,
+              112,
+              97,
+              99,
+              101,
+              82,
+              117,
+              108,
+              101,
+              40,
+              101,
+              120,
+              112,
+              105,
+              114,
+              101,
+              100,
+              41
+            ]
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "current",
+      "case": "expired_wrong_set_type",
+      "lua": "local a=ref('a');drop('a');local ok,e=pcall(a.set_enabled,a,0);return ok,type(e)",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": false
+          },
+          {
+            "type": "bytes",
+            "value": [
+              115,
+              116,
+              114,
+              105,
+              110,
+              103
+            ]
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {
+          "b": true
+        }
+      }
+    },
+    {
+      "version": "current",
+      "case": "both_expired_equal",
+      "lua": "local a,b=ref('a'),ref('b');drop('a');drop('b');return a==b",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": true
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {}
+      }
+    },
+    {
+      "version": "current",
+      "case": "one_expired_different",
+      "lua": "local a,b=ref('a'),ref('b');drop('a');return a==b",
+      "observation": {
+        "returns": [
+          {
+            "type": "bool",
+            "value": false
+          }
+        ],
+        "setter_values": [],
+        "refresh_requests": 0,
+        "live_enabled": {
+          "b": true
+        }
+      }
+    }
+  ]
+}

@@ -373,6 +373,8 @@ pub enum Operation {
 pub struct Declaration {
     pub id: String,
     pub operation: Operation,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub legacy: bool,
 }
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -393,6 +395,7 @@ impl Draft {
         let mut ids = BTreeSet::new();
         let mut beziers: BTreeSet<String> = ["default".into(), "linear".into()].into();
         let mut springs: BTreeSet<String> = ["default".into()].into();
+        let mut native_beziers: BTreeSet<String> = ["default".into(), "linear".into()].into();
         for declaration in &self.declarations {
             let id = &declaration.id;
             if id.is_empty()
@@ -403,6 +406,30 @@ impl Draft {
                 || !ids.insert(id)
             {
                 return Err("Invalid or duplicate animation declaration identity".into());
+            }
+            if declaration.legacy {
+                if version != BASELINE {
+                    return Err(
+                        "Native animation declarations require the baseline snapshot".into(),
+                    );
+                }
+                crate::legacy_animation::validate_operation(&declaration.operation)?;
+                match &declaration.operation {
+                    Operation::Curve(c) => {
+                        native_beziers.insert(c.name.clone());
+                    }
+                    Operation::Node(n) if enabled(&n.enabled)? => {
+                        if !n
+                            .bezier
+                            .as_ref()
+                            .is_some_and(|name| native_beziers.contains(name))
+                        {
+                            return Err("Native Bézier must be defined earlier in the native declaration view".into());
+                        }
+                    }
+                    _ => {}
+                }
+                continue;
             }
             match &declaration.operation {
                 Operation::Curve(c) => {
@@ -458,6 +485,9 @@ impl Draft {
         self.validate(version)?;
         let mut out = String::new();
         for declaration in &self.declarations {
+            if declaration.legacy {
+                return Err("Native animation declarations require explicit Lua conversion".into());
+            }
             out.push_str(&match &declaration.operation {
                 Operation::Curve(c) => c.export_lua()?,
                 Operation::Node(n) => n.export_lua(version)?,
@@ -471,10 +501,27 @@ impl Draft {
                 .declarations
                 .iter()
                 .zip(&other.declarations)
-                .all(|(a, b)| a.operation == b.operation)
+                .all(|(a, b)| {
+                    a.legacy == b.legacy
+                        && if a.legacy {
+                            match (
+                                crate::legacy_animation::encode(a),
+                                crate::legacy_animation::encode(b),
+                            ) {
+                                (Ok(a), Ok(b)) => a == b,
+                                _ => a.operation == b.operation,
+                            }
+                        } else {
+                            a.operation == b.operation
+                        }
+                })
     }
     pub fn resolve(&self, version: &str) -> Result<BTreeMap<String, Resolved>, String> {
         self.validate(version)?;
+        if self.declarations.iter().any(|d| d.legacy) && self.declarations.iter().any(|d| !d.legacy)
+        {
+            return Err("Separate native and Lua drafts need separate inheritance review".into());
+        }
         let nodes = catalogue(version);
         let mut own = BTreeMap::new();
         for n in &nodes {
@@ -527,7 +574,7 @@ impl Draft {
             match &d.operation {
                 Operation::Curve(c) => {
                     let kind = matches!(c.shape, CurveKind::Spring { .. });
-                    if !names.insert((kind, &c.name))
+                    if !names.insert((d.legacy, kind, &c.name))
                         || c.name == "default"
                         || (!kind && c.name == "linear")
                     {
@@ -535,7 +582,7 @@ impl Draft {
                     }
                 }
                 Operation::Node(n) => {
-                    if !leaves.insert(&n.leaf) {
+                    if !leaves.insert((d.legacy, &n.leaf)) {
                         messages.push(format!(
                             "{}: later declaration replaces the whole node override.",
                             d.id
@@ -719,6 +766,7 @@ mod tests {
         parent.speed = Some(Value::Float(3.));
         parent.style = Some("slide".into());
         draft.declarations.push(Declaration {
+            legacy: false,
             id: "p".into(),
             operation: Operation::Node(parent),
         });
@@ -728,6 +776,7 @@ mod tests {
         child.bezier = Some("unregistered-but-ignored".into());
         child.style = Some("ignored style".into());
         draft.declarations.push(Declaration {
+            legacy: false,
             id: "c".into(),
             operation: Operation::Node(child),
         });
@@ -768,6 +817,7 @@ mod tests {
         special.bezier = Some("spring:default".into());
         let draft = Draft {
             declarations: vec![Declaration {
+                legacy: false,
                 id: "prefix".into(),
                 operation: Operation::Node(special),
             }],

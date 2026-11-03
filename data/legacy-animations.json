@@ -1,0 +1,13 @@
+{
+  "format": "hye-legacy-animation-schema-1",
+  "version": "0.56.2",
+  "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+  "handler_sha256": "9db68cf44048d86557d8a53068dcc40b9bd7347c7d95f38edc501565f65be62b",
+  "hyprlang_commit": "090117506ddc3d7f26e650ff344d378c2ec329cc",
+  "hyprlang_sha256": "868ac5a7c5600b71283c92fb10e39faf9c0b3d4e8cbcd2a2fef6aaab8e716002",
+  "hyprutils_commit": "5a7b8cf221914ce4714407950e4ffbdddcd8b66f",
+  "varlist_sha256": "b02df8d688519366e7f20de5c3c44d21c3832316e8262ced0d295e129b166a36",
+  "animation_manager_sha256": "cd46df7bd7f8bfb193ace37b32370c99056e9c633cb88793045c32d6d4cdb097",
+  "semantics": "Literal top-level or flat ordinary animations category. CVarList splits all commas without escapes. Native finite float32 arguments have no Lua speed100/control-point bounds. Disabled nodes retain optional argument text but do not validate ignored speed/curve/style. Enabled nodes require a preceding known native B\u00e9zier. Separate native/Lua registries; no implicit conversion or execution.",
+  "limits": "Unknown source, includes, variables, expressions, conditionals, continuations, other category placements, arbitrary native numeric aliases and runtime/effective/interpolation/activation behavior remain unverified; unresolved bytes retained. No legacy spring handler."
+}

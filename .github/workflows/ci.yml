@@ -12,11 +12,15 @@ jobs:
         with:
           persist-credentials: false
       - name: Native dependencies
-        run: sudo apt-get update && sudo apt-get install -y libgtk-4-dev libadwaita-1-dev libxkbcommon-dev libre2-dev liblua5.4-dev pkg-config xvfb
+        run: sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update && sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 install -y libgtk-4-dev libadwaita-1-dev libxkbcommon-dev libre2-dev liblua5.4-dev pkg-config cmake xvfb dbus-daemon
       - name: Pinned toolchain
         run: rustup toolchain install 1.90.0 --profile minimal --component rustfmt --component clippy
       - run: cargo fmt --all --check
+      - run: python3 -B -m unittest discover -s scripts -p test_resource_probe.py
+      - run: python3 -B -m unittest discover -s scripts -p test_cgroup_kernel_probe.py
       - run: python3 scripts/check_catalogue.py
+      - run: python3 -B scripts/native_build_probe.py --check
+      - run: python3 -B scripts/native_selection_probe.py
       - run: python3 scripts/generate_catalogue.py --check
       - run: python3 scripts/generate_actions.py --check
       - run: python3 scripts/workspace_source_probe.py
@@ -24,9 +28,187 @@ jobs:
       - run: python3 scripts/rule_codec_source_probe.py --check
       - run: python3 scripts/animation_source_probe.py --check
       - run: python3 scripts/gesture_source_probe.py --check
+      - run: python3 scripts/preview_backend_probe.py --check
+      - run: python3 scripts/source_graph_probe.py --check
+      - run: python3 scripts/module_load_probe.py --check
+      - run: python3 scripts/ordered_module_probe.py --check
+      - run: python3 scripts/config_table_probe.py --check
+      - run: python3 -B scripts/monitor_source_probe.py --check
+      - run: python3 -B scripts/workspace_argument_probe.py --check
+      - run: python3 -B scripts/workspace_object_probe.py --check
+      - run: python3 scripts/scalar_value_probe.py --check
+      - run: python3 scripts/complex_scalar_probe.py --check
+      - run: python3 scripts/scalar_registration_probe.py --check
+      - run: python3 scripts/generate_scalar_semantics.py --check
+      - run: python3 scripts/generate_graph_model.py --check
+      - run: python3 scripts/lua_profile_probe.py --check
+      - name: Refuse mixed Lua releases before native construction
+        run: python3 -B scripts/lua_admission_probe.py --observation "$RUNNER_TEMP/lua-admission.json"
       - run: python3 scripts/implementation_report.py --check
       - run: cargo test --locked --workspace
       - name: Native graphical smoke test
-        run: xvfb-run -a env GDK_BACKEND=x11 GSK_RENDERER=cairo GSETTINGS_BACKEND=memory HYPRLAND_EDITOR_TEST_EXACT_RESIZE=1 cargo test --locked -p hyprland-editor -- --ignored --test-threads=1
+        timeout-minutes: 5
+        run: xvfb-run -a env GDK_BACKEND=x11 GSK_RENDERER=cairo GSETTINGS_BACKEND=memory HYPRLAND_EDITOR_TEST_EXACT_RESIZE=1 cargo test --locked -p hyprland-editor --bin hyprland-editor -- --ignored --test-threads=1
       - run: cargo clippy --locked --workspace --all-targets -- -D warnings
       - run: cargo build --locked --release
+
+  gnu-core-linker:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Native core dependencies
+        run: sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update && sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 install -y libgtk-4-dev libadwaita-1-dev libxkbcommon-dev libre2-dev liblua5.4-dev pkg-config g++ binutils
+      - name: Pinned toolchain
+        run: rustup toolchain install 1.90.0 --profile minimal
+      - name: Test the full core/application workspace with GNU archive resolution
+        env:
+          CARGO_TARGET_DIR: ${{ runner.temp }}/gnu-core-target
+          RUSTFLAGS: -C linker=c++ -C link-arg=-fuse-ld=bfd
+        run: cargo test --locked --workspace
+
+  numeric-compiler-references:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        release: ["5.4.6", "5.4.7", "5.4.8", "5.4.9"]
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Install private reference build dependencies
+        run: sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update && sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 install -y g++ make pkg-config libre2-dev libxkbcommon-dev
+      - name: Pinned reference toolchain
+        run: rustup toolchain install 1.90.0 --profile minimal
+      - name: Check official and narrowly patched compiler observations against restricted model
+        run: python3 -B scripts/lua_numeric_probe.py --check --model-reference --release "${{ matrix.release }}"
+
+  native-target-references:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        release: ["5.5.0", "5.5.1"]
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Install fixture compiler and legacy comparison headers
+        run: sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update && sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 install -y g++-15 make pkg-config cmake liblua5.4-dev libgtk-4-dev libadwaita-1-dev libxkbcommon-dev libre2-dev
+      - name: Pinned worker toolchain
+        run: rustup toolchain install 1.90.0 --profile minimal --component clippy
+      - name: Verify immutable source build requests
+        run: python3 -B scripts/native_build_probe.py --check
+      - name: Check private package search semantics
+        run: python3 -B scripts/native_selection_probe.py
+      - name: Check fixed numeric compiler fingerprints and native references
+        run: python3 -B scripts/lua_numeric_probe.py --check --model-reference --release "${{ matrix.release }}"
+      - name: Check private target release and explicit compiler/library contexts
+        run: python3 -B scripts/workspace_target_profile_probe.py --source-conformance --source-worker-conformance --worker-conformance --static-conformance --installed-conformance --release "${{ matrix.release }}" --compiler g++-15 --cpp26-standard c++2c --observation "$RUNNER_TEMP/workspace-target-observation.json"
+      - name: Record source, fixture, compiler and library identities
+        run: cat "$RUNNER_TEMP/workspace-target-observation.json"
+
+  cgroup-kernel:
+    # Independent ephemeral VM; never select or reconfigure a user's desktop.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Pinned test toolchain
+        run: rustup toolchain install 1.90.0 --profile minimal
+      - name: Install namespace constructor and compile trusted static boundary probe
+        run: |
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update && sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 install -y bubblewrap
+          cc -std=c11 -O2 -Wall -Wextra -Werror -static -o "$RUNNER_TEMP/hye-runtime-probe" crates/editor-preview/tests/fixtures/runtime_probe.c
+          cc -std=c11 -O2 -Wall -Wextra -Werror -static -o "$RUNNER_TEMP/hye-launch-probe" crates/editor-preview/tests/fixtures/launch_probe.c
+          test -z "$(readelf -l "$RUNNER_TEMP/hye-runtime-probe" | sed -n '/INTERP/p')"
+          test -z "$(readelf -l "$RUNNER_TEMP/hye-launch-probe" | sed -n '/INTERP/p')"
+          sha256sum /usr/bin/bwrap "$RUNNER_TEMP/hye-runtime-probe"
+          sha256sum "$RUNNER_TEMP/hye-launch-probe"
+          bwrap --version
+      - name: Check read-only provider prerequisites
+        run: python3 -I -S -B -m unittest discover -s scripts -p test_cgroup_kernel_probe.py
+      - name: Compile trusted resource fixture without executing it
+        run: |
+          cargo test --locked -p hyprland-editor-preview --lib --no-run --message-format=json > "$RUNNER_TEMP/hye-kernel-build.jsonl"
+          python3 -I -S - <<'PYCODE'
+          import json, os
+          from pathlib import Path
+          rows=[json.loads(line) for line in (Path(os.environ['RUNNER_TEMP'])/'hye-kernel-build.jsonl').read_text().splitlines()]
+          binaries={row['executable'] for row in rows if row.get('reason')=='compiler-artifact' and row.get('target',{}).get('name')=='hyprland_editor_preview' and row.get('executable')}
+          assert len(binaries)==1, 'Expected one exact preview library test executable'
+          (Path(os.environ['RUNNER_TEMP'])/'hye-kernel-executable').write_text(next(iter(binaries)))
+          PYCODE
+          sha256sum "$(cat "$RUNNER_TEMP/hye-kernel-executable")"
+      - name: Enforce limits and teardown in a fresh dedicated hierarchy
+        timeout-minutes: 2
+        run: |
+          sudo -- /usr/bin/python3 -I -S scripts/cgroup_kernel_probe.py --uid "$(id -u)" --gid "$(id -g)" --test-executable "$(cat "$RUNNER_TEMP/hye-kernel-executable")"
+      - name: Verify live process identity across a private PID namespace
+        timeout-minutes: 2
+        run: |
+          sudo -- /usr/bin/python3 -I -S scripts/cgroup_kernel_probe.py --namespace-channel --uid "$(id -u)" --gid "$(id -g)" --test-executable "$(cat "$RUNNER_TEMP/hye-kernel-executable")"
+      - name: Verify gated creation before constructor execution
+        timeout-minutes: 2
+        run: |
+          sudo -- /usr/bin/python3 -I -S scripts/cgroup_kernel_probe.py --gated-launch --probe-binary "$RUNNER_TEMP/hye-launch-probe" --uid "$(id -u)" --gid "$(id -g)" --test-executable "$(cat "$RUNNER_TEMP/hye-kernel-executable")"
+      - name: Verify constructor refusal before private execution on this restricted profile
+        timeout-minutes: 2
+        run: |
+          sudo -- /usr/bin/python3 -I -S scripts/cgroup_kernel_probe.py --runtime-image-probe --expect-runtime-unavailable --probe-binary "$RUNNER_TEMP/hye-runtime-probe" --uid "$(id -u)" --gid "$(id -g)" --test-executable "$(cat "$RUNNER_TEMP/hye-kernel-executable")"
+      - name: Verify translated credentials across private user and PID namespaces
+        timeout-minutes: 2
+        run: |
+          unshare --version
+          sha256sum /usr/bin/unshare /usr/bin/setpriv
+          sudo -- /usr/bin/python3 -I -S scripts/cgroup_kernel_probe.py --user-namespace-channel --uid "$(id -u)" --gid "$(id -g)" --test-executable "$(cat "$RUNNER_TEMP/hye-kernel-executable")"
+      - name: Verify gated runtime refusal and complete resource cleanup on this profile
+        timeout-minutes: 2
+        run: |
+          sudo -- /usr/bin/python3 -I -S scripts/cgroup_kernel_probe.py --gated-runtime-image --expect-runtime-unavailable --probe-binary "$RUNNER_TEMP/hye-runtime-probe" --uid "$(id -u)" --gid "$(id -g)" --test-executable "$(cat "$RUNNER_TEMP/hye-kernel-executable")"
+
+  runtime-image:
+    # Distinct compatibility profile. Never weaken Ubuntu 24.04 policy to pass.
+    runs-on: ubuntu-22.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Build reviewed constructor and trusted static fixture
+        run: |
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update && sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 install -y meson ninja-build libcap-dev
+          python3 -I -S scripts/build_bwrap_probe.py --output "$RUNNER_TEMP/hye-bwrap"
+          cc -std=c11 -O2 -Wall -Wextra -Werror -static -o "$RUNNER_TEMP/hye-runtime-probe" crates/editor-preview/tests/fixtures/runtime_probe.c
+          test -z "$(readelf -l "$RUNNER_TEMP/hye-runtime-probe" | sed -n '/INTERP/p')"
+          sha256sum "$RUNNER_TEMP/hye-bwrap" "$RUNNER_TEMP/hye-runtime-probe"
+          "$RUNNER_TEMP/hye-bwrap" --version
+      - name: Pinned test toolchain
+        run: rustup toolchain install 1.90.0 --profile minimal
+      - name: Compile trusted image driver without executing it
+        run: |
+          cargo test --locked -p hyprland-editor-preview --lib --no-run --message-format=json > "$RUNNER_TEMP/hye-image-build.jsonl"
+          python3 -I -S - <<'PYCODE'
+          import json, os
+          from pathlib import Path
+          rows=[json.loads(line) for line in (Path(os.environ['RUNNER_TEMP'])/'hye-image-build.jsonl').read_text().splitlines()]
+          binaries={row['executable'] for row in rows if row.get('reason')=='compiler-artifact' and row.get('target',{}).get('name')=='hyprland_editor_preview' and row.get('executable')}
+          assert len(binaries)==1, 'Expected one exact preview library test executable'
+          (Path(os.environ['RUNNER_TEMP'])/'hye-image-executable').write_text(next(iter(binaries)))
+          PYCODE
+          sha256sum "$(cat "$RUNNER_TEMP/hye-image-executable")"
+      - name: Test private runtime image and namespaces without a host security override
+        timeout-minutes: 2
+        run: |
+          sudo -- /usr/bin/python3 -I -S scripts/cgroup_kernel_probe.py --runtime-image-probe --constructor-binary "$RUNNER_TEMP/hye-bwrap" --probe-binary "$RUNNER_TEMP/hye-runtime-probe" --uid "$(id -u)" --gid "$(id -g)" --test-executable "$(cat "$RUNNER_TEMP/hye-image-executable")"
+      - name: Verify gated constructor with immutable runtime and private boundaries
+        timeout-minutes: 2
+        run: |
+          sudo -- /usr/bin/python3 -I -S scripts/cgroup_kernel_probe.py --gated-runtime-image --constructor-binary "$RUNNER_TEMP/hye-bwrap" --probe-binary "$RUNNER_TEMP/hye-runtime-probe" --uid "$(id -u)" --gid "$(id -g)" --test-executable "$(cat "$RUNNER_TEMP/hye-image-executable")"

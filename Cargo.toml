@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/editor-core", "crates/editor-app", "crates/editor-discovery"]
+members = ["crates/editor-core", "crates/editor-app", "crates/editor-discovery", "crates/editor-preview", "crates/editor-projection", "crates/editor-lua55"]
 resolver = "2"
 
 [workspace.package]
@@ -10,8 +10,8 @@ license = "MIT"
 repository = "https://github.com/aman696/hyprland-editor"
 
 [workspace.dependencies]
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+serde = { version = "1.0", features = ["derive", "rc"] }
+serde_json = { version = "1.0", features = ["float_roundtrip"] }
 
 [profile.release]
 lto = "thin"

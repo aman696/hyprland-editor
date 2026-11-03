@@ -1,0 +1,406 @@
+{
+  "format": "hye-preview-backend-observations-1",
+  "source_manifest_sha256": "5cd1c8fd54b5e085995bb3551d2919bc486dc4620e80d52320e5cfea13c9a9ed",
+  "scope": "Original CBackend start and headless start/FD methods; original Hyprland request construction. Inert session/timer/poll/DRM-reopen/GBM-allocation adapters; no GPU, compositor, frame or input runs.",
+  "lab_profile_certified": false,
+  "hyprland_requested_backends": {
+    "0.56.2": [
+      [
+        2,
+        0
+      ],
+      [
+        1,
+        1
+      ],
+      [
+        0,
+        2
+      ]
+    ],
+    "audited-main": [
+      [
+        2,
+        0
+      ],
+      [
+        1,
+        1
+      ],
+      [
+        0,
+        2
+      ]
+    ]
+  },
+  "observations": {
+    "0.15.0": [
+      {
+        "name": "headless-only",
+        "accepted": false,
+        "backend_ready": false,
+        "allocator": false,
+        "reopens": 0,
+        "allocations": 0,
+        "remaining": 1,
+        "notifications": 0,
+        "session_notifications": 0
+      },
+      {
+        "name": "headless-failed-drm-filtered",
+        "accepted": false,
+        "backend_ready": false,
+        "allocator": false,
+        "reopens": 0,
+        "allocations": 0,
+        "remaining": 1,
+        "notifications": 0,
+        "session_notifications": 0
+      },
+      {
+        "name": "headless-no-device",
+        "accepted": false,
+        "backend_ready": false,
+        "allocator": false,
+        "reopens": 0,
+        "allocations": 0,
+        "remaining": 2,
+        "notifications": 0,
+        "session_notifications": 0
+      },
+      {
+        "name": "headless-inert-device",
+        "accepted": true,
+        "backend_ready": true,
+        "allocator": true,
+        "reopens": 1,
+        "allocations": 1,
+        "remaining": 2,
+        "notifications": 2,
+        "session_notifications": 0
+      },
+      {
+        "name": "reopen-refused",
+        "accepted": false,
+        "backend_ready": false,
+        "allocator": false,
+        "reopens": 1,
+        "allocations": 0,
+        "remaining": 2,
+        "notifications": 0,
+        "session_notifications": 0
+      },
+      {
+        "name": "allocator-refused",
+        "accepted": false,
+        "backend_ready": false,
+        "allocator": false,
+        "reopens": 1,
+        "allocations": 1,
+        "remaining": 2,
+        "notifications": 0,
+        "session_notifications": 0
+      },
+      {
+        "name": "mandatory-failure",
+        "accepted": false,
+        "backend_ready": false,
+        "allocator": false,
+        "reopens": 0,
+        "allocations": 0,
+        "remaining": 0,
+        "notifications": 0,
+        "session_notifications": 0
+      },
+      {
+        "name": "optional-failure-nonempty-poll-retained",
+        "accepted": true,
+        "backend_ready": true,
+        "allocator": true,
+        "reopens": 1,
+        "allocations": 1,
+        "remaining": 2,
+        "notifications": 2,
+        "session_notifications": 0
+      },
+      {
+        "name": "null-only",
+        "accepted": true,
+        "backend_ready": true,
+        "allocator": false,
+        "reopens": 0,
+        "allocations": 0,
+        "remaining": 1,
+        "notifications": 1,
+        "session_notifications": 0
+      },
+      {
+        "name": "null-before-headless",
+        "accepted": true,
+        "backend_ready": true,
+        "allocator": false,
+        "reopens": 0,
+        "allocations": 0,
+        "remaining": 2,
+        "notifications": 2,
+        "session_notifications": 0
+      },
+      {
+        "name": "headless-before-null",
+        "accepted": false,
+        "backend_ready": false,
+        "allocator": false,
+        "reopens": 0,
+        "allocations": 0,
+        "remaining": 2,
+        "notifications": 0,
+        "session_notifications": 0
+      },
+      {
+        "name": "empty",
+        "accepted": false,
+        "backend_ready": false,
+        "allocator": false,
+        "reopens": 0,
+        "allocations": 0,
+        "remaining": 0,
+        "notifications": 0,
+        "session_notifications": 0
+      },
+      {
+        "name": "none-started",
+        "accepted": false,
+        "backend_ready": false,
+        "allocator": false,
+        "reopens": 0,
+        "allocations": 0,
+        "remaining": 1,
+        "notifications": 0,
+        "session_notifications": 0
+      },
+      {
+        "name": "all-poll-fds-empty",
+        "accepted": false,
+        "backend_ready": false,
+        "allocator": false,
+        "reopens": 0,
+        "allocations": 0,
+        "remaining": 0,
+        "notifications": 0,
+        "session_notifications": 0
+      },
+      {
+        "name": "first-allocator-failure-no-second-try",
+        "accepted": false,
+        "backend_ready": false,
+        "allocator": false,
+        "reopens": 1,
+        "allocations": 1,
+        "remaining": 2,
+        "notifications": 0,
+        "session_notifications": 0
+      },
+      {
+        "name": "inert-device-session",
+        "accepted": true,
+        "backend_ready": true,
+        "allocator": true,
+        "reopens": 1,
+        "allocations": 1,
+        "remaining": 2,
+        "notifications": 2,
+        "session_notifications": 1
+      },
+      {
+        "headless_fds": [
+          -1,
+          -1
+        ]
+      }
+    ],
+    "0.15.1": [
+      {
+        "name": "headless-only",
+        "accepted": false,
+        "backend_ready": false,
+        "allocator": false,
+        "reopens": 0,
+        "allocations": 0,
+        "remaining": 1,
+        "notifications": 0,
+        "session_notifications": 0
+      },
+      {
+        "name": "headless-failed-drm-filtered",
+        "accepted": false,
+        "backend_ready": false,
+        "allocator": false,
+        "reopens": 0,
+        "allocations": 0,
+        "remaining": 1,
+        "notifications": 0,
+        "session_notifications": 0
+      },
+      {
+        "name": "headless-no-device",
+        "accepted": false,
+        "backend_ready": false,
+        "allocator": false,
+        "reopens": 0,
+        "allocations": 0,
+        "remaining": 2,
+        "notifications": 0,
+        "session_notifications": 0
+      },
+      {
+        "name": "headless-inert-device",
+        "accepted": true,
+        "backend_ready": true,
+        "allocator": true,
+        "reopens": 1,
+        "allocations": 1,
+        "remaining": 2,
+        "notifications": 2,
+        "session_notifications": 0
+      },
+      {
+        "name": "reopen-refused",
+        "accepted": false,
+        "backend_ready": false,
+        "allocator": false,
+        "reopens": 1,
+        "allocations": 0,
+        "remaining": 2,
+        "notifications": 0,
+        "session_notifications": 0
+      },
+      {
+        "name": "allocator-refused",
+        "accepted": false,
+        "backend_ready": false,
+        "allocator": false,
+        "reopens": 1,
+        "allocations": 1,
+        "remaining": 2,
+        "notifications": 0,
+        "session_notifications": 0
+      },
+      {
+        "name": "mandatory-failure",
+        "accepted": false,
+        "backend_ready": false,
+        "allocator": false,
+        "reopens": 0,
+        "allocations": 0,
+        "remaining": 0,
+        "notifications": 0,
+        "session_notifications": 0
+      },
+      {
+        "name": "optional-failure-nonempty-poll-retained",
+        "accepted": true,
+        "backend_ready": true,
+        "allocator": true,
+        "reopens": 1,
+        "allocations": 1,
+        "remaining": 2,
+        "notifications": 2,
+        "session_notifications": 0
+      },
+      {
+        "name": "null-only",
+        "accepted": true,
+        "backend_ready": true,
+        "allocator": false,
+        "reopens": 0,
+        "allocations": 0,
+        "remaining": 1,
+        "notifications": 1,
+        "session_notifications": 0
+      },
+      {
+        "name": "null-before-headless",
+        "accepted": true,
+        "backend_ready": true,
+        "allocator": false,
+        "reopens": 0,
+        "allocations": 0,
+        "remaining": 2,
+        "notifications": 2,
+        "session_notifications": 0
+      },
+      {
+        "name": "headless-before-null",
+        "accepted": false,
+        "backend_ready": false,
+        "allocator": false,
+        "reopens": 0,
+        "allocations": 0,
+        "remaining": 2,
+        "notifications": 0,
+        "session_notifications": 0
+      },
+      {
+        "name": "empty",
+        "accepted": false,
+        "backend_ready": false,
+        "allocator": false,
+        "reopens": 0,
+        "allocations": 0,
+        "remaining": 0,
+        "notifications": 0,
+        "session_notifications": 0
+      },
+      {
+        "name": "none-started",
+        "accepted": false,
+        "backend_ready": false,
+        "allocator": false,
+        "reopens": 0,
+        "allocations": 0,
+        "remaining": 1,
+        "notifications": 0,
+        "session_notifications": 0
+      },
+      {
+        "name": "all-poll-fds-empty",
+        "accepted": false,
+        "backend_ready": false,
+        "allocator": false,
+        "reopens": 0,
+        "allocations": 0,
+        "remaining": 0,
+        "notifications": 0,
+        "session_notifications": 0
+      },
+      {
+        "name": "first-allocator-failure-no-second-try",
+        "accepted": false,
+        "backend_ready": false,
+        "allocator": false,
+        "reopens": 1,
+        "allocations": 1,
+        "remaining": 2,
+        "notifications": 0,
+        "session_notifications": 0
+      },
+      {
+        "name": "inert-device-session",
+        "accepted": true,
+        "backend_ready": true,
+        "allocator": true,
+        "reopens": 1,
+        "allocations": 1,
+        "remaining": 2,
+        "notifications": 2,
+        "session_notifications": 1
+      },
+      {
+        "headless_fds": [
+          -1,
+          -1
+        ]
+      }
+    ]
+  }
+}

@@ -55,14 +55,22 @@ fn number_form(
     original: Value,
     name: &str,
     bounds: Option<(f64, f64)>,
+    native: bool,
 ) -> (gtk::Entry, Rc<dyn Fn() -> Result<Value, String>>) {
     let display = match &original {
         Value::String(s) => s.clone(),
         Value::Bool(b) => if *b { "1" } else { "0" }.into(),
+        Value::Float(n) if native => (*n as f32).to_string(),
         v => v.lua(),
     };
     let e = entry(panel, title, &display, name);
-    if let Some((min, max)) = bounds {
+    if let Some((mut min, mut max)) = bounds {
+        if native {
+            if let Ok(n) = animation::number(&original, true) {
+                min = min.min(n);
+                max = max.max(n);
+            }
+        }
         let scale = gtk::Scale::with_range(gtk::Orientation::Horizontal, min, max, 0.01);
         scale.set_draw_value(false);
         scale.set_hexpand(true);
@@ -113,7 +121,22 @@ fn number_form(
         }),
     )
 }
-fn diagram(panel: &gtk::Box, fields: [gtk::Entry; 4]) {
+fn plot_domain(fields: &[gtk::Entry; 4], wide: bool) -> [f64; 4] {
+    let mut d = [-1.0f64, 2., -1., 2.];
+    if wide {
+        for (i, e) in fields.iter().enumerate() {
+            if let Ok(n) = e.text().parse::<f64>() {
+                if n.is_finite() && (n as f32).is_finite() {
+                    let at = if i % 2 == 0 { 0 } else { 2 };
+                    d[at] = d[at].min(n);
+                    d[at + 1] = d[at + 1].max(n);
+                }
+            }
+        }
+    }
+    d
+}
+fn diagram(panel: &gtk::Box, fields: [gtk::Entry; 4], wide: bool) {
     panel.append(&label("Bézier control points — drag either handle. This diagram shows curve geometry; it does not preview your desktop."));
     let area = gtk::DrawingArea::builder()
         .content_width(300)
@@ -126,7 +149,13 @@ fn diagram(panel: &gtk::Box, fields: [gtk::Entry; 4]) {
     area.set_draw_func(move |_, cr, width, height| {
         let w = f64::from(width);
         let h = f64::from(height);
-        let xy = |x: f64, y: f64| ((x + 1.) / 3. * w, (2. - y) / 3. * h);
+        let [xmin, xmax, ymin, ymax] = plot_domain(&entries, wide);
+        let xy = |x: f64, y: f64| {
+            (
+                (x - xmin) / (xmax - xmin) * w,
+                (ymax - y) / (ymax - ymin) * h,
+            )
+        };
         cr.set_source_rgb(0.15, 0.17, 0.22);
         let _ = cr.paint();
         cr.set_source_rgb(0.36, 0.4, 0.5);
@@ -147,7 +176,14 @@ fn diagram(panel: &gtk::Box, fields: [gtk::Entry; 4]) {
         let Ok(p) = points else {
             return;
         };
-        if p.iter().any(|n| !n.is_finite() || !(-1. ..=2.).contains(n)) {
+        if p.iter().any(|n| {
+            !n.is_finite()
+                || if wide {
+                    !(*n as f32).is_finite()
+                } else {
+                    !(-1. ..=2.).contains(n)
+                }
+        }) {
             return;
         }
         let c = Curve {
@@ -191,7 +227,7 @@ fn diagram(panel: &gtk::Box, fields: [gtk::Entry; 4]) {
         });
     }
     let gesture = gtk::GestureDrag::new();
-    let start = Rc::new(Cell::new(None::<(usize, f64, f64)>));
+    let start = Rc::new(Cell::new(None::<(usize, f64, f64, [f64; 4])>));
     let weak = area.downgrade();
     let entries = fields.clone();
     let selected = start.clone();
@@ -202,13 +238,17 @@ fn diagram(panel: &gtk::Box, fields: [gtk::Entry; 4]) {
         };
         let w = f64::from(area.width());
         let h = f64::from(area.height());
+        let domain = plot_domain(&entries, wide);
+        let [xmin, xmax, ymin, ymax] = domain;
         for i in [0, 2] {
             if let (Ok(px), Ok(py)) = (
                 entries[i].text().parse::<f64>(),
                 entries[i + 1].text().parse::<f64>(),
             ) {
-                if ((px + 1.) / 3. * w - x).hypot((2. - py) / 3. * h - y) <= 18. {
-                    selected.set(Some((i, x, y)));
+                if ((px - xmin) / (xmax - xmin) * w - x).hypot((ymax - py) / (ymax - ymin) * h - y)
+                    <= 18.
+                {
+                    selected.set(Some((i, x, y, domain)));
                     break;
                 }
             }
@@ -216,7 +256,8 @@ fn diagram(panel: &gtk::Box, fields: [gtk::Entry; 4]) {
     });
     let weak = area.downgrade();
     gesture.connect_drag_update(move |_, dx, dy| {
-        let (Some((i, x, y)), Some(area)) = (start.get(), weak.upgrade()) else {
+        let (Some((i, x, y, [xmin, xmax, ymin, ymax])), Some(area)) = (start.get(), weak.upgrade())
+        else {
             return;
         };
         if area.width() == 0 || area.height() == 0 {
@@ -224,11 +265,11 @@ fn diagram(panel: &gtk::Box, fields: [gtk::Entry; 4]) {
         }
         fields[i].set_text(&format!(
             "{:.6}",
-            ((x + dx) / f64::from(area.width()) * 3. - 1.).clamp(-1., 2.)
+            ((x + dx) / f64::from(area.width()) * (xmax - xmin) + xmin).clamp(xmin, xmax)
         ));
         fields[i + 1].set_text(&format!(
             "{:.6}",
-            (2. - (y + dy) / f64::from(area.height()) * 3.).clamp(-1., 2.)
+            (ymax - (y + dy) / f64::from(area.height()) * (ymax - ymin)).clamp(ymin, ymax)
         ));
     });
     area.add_controller(gesture);
@@ -242,6 +283,9 @@ fn editor(
     update_inheritance: &Rc<dyn Fn()>,
 ) -> Getter {
     let version = state.borrow().draft.version.clone();
+    if declaration.legacy {
+        panel.append(&label("Imported .conf animation. Review Source Copy includes these edits; no desktop animation is activated."));
+    }
     let get: Rc<dyn Fn() -> Result<Operation, String>> = match &declaration.operation {
         Operation::Curve(curve) => {
             let name = entry(panel, "Curve name", &curve.name, "animation-name");
@@ -270,11 +314,12 @@ fn editor(
                             points[i / 2][i % 2].clone(),
                             &format!("animation-point-{i}"),
                             Some((-1., 2.)),
+                            declaration.legacy,
                         );
                         entries.push(e);
                         getters.push(g);
                     }
-                    diagram(panel, entries.try_into().unwrap());
+                    diagram(panel, entries.try_into().unwrap(), declaration.legacy);
                     Rc::new(move || {
                         Ok(Operation::Curve(Curve {
                             name: name.text().into(),
@@ -300,10 +345,18 @@ fn editor(
                         stiffness.clone(),
                         "animation-stiffness",
                         None,
+                        false,
                     );
-                    let (_, d) =
-                        number_form(panel, "Damping", damping.clone(), "animation-damping", None);
-                    let (_, m) = number_form(panel, "Mass", mass.clone(), "animation-mass", None);
+                    let (_, d) = number_form(
+                        panel,
+                        "Damping",
+                        damping.clone(),
+                        "animation-damping",
+                        None,
+                        false,
+                    );
+                    let (_, m) =
+                        number_form(panel, "Mass", mass.clone(), "animation-mass", None, false);
                     let alias = *dampening_alias;
                     Rc::new(move || {
                         Ok(Operation::Curve(Curve {
@@ -341,6 +394,7 @@ fn editor(
                 node.speed.clone().unwrap_or(Value::Float(8.)),
                 "animation-speed",
                 Some((0.01, 100.)),
+                declaration.legacy,
             );
             fields.append(&label("Bézier duration = speed × 100 ms. Disabled overrides keep optional fields but use the compositor's disabled defaults."));
             let draft = current(state);
@@ -349,12 +403,14 @@ fn editor(
                 .iter()
                 .position(|d| d.id == declaration.id)
                 .unwrap();
-            let mut curves = vec![
-                (false, "default".to_string()),
-                (false, "linear".into()),
-                (true, "default".into()),
-            ];
+            let mut curves = vec![(false, "default".to_string()), (false, "linear".into())];
+            if !declaration.legacy {
+                curves.push((true, "default".into()));
+            }
             for d in &draft.declarations[..index] {
+                if d.legacy != declaration.legacy {
+                    continue;
+                }
                 if let Operation::Curve(c) = &d.operation {
                     let item = (matches!(c.shape, CurveKind::Spring { .. }), c.name.clone());
                     if !curves.contains(&item) {
@@ -544,7 +600,11 @@ pub(super) fn connect(
         }
     });
 }
-fn show(parent: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) -> adw::Window {
+pub(super) fn show(
+    parent: &impl IsA<gtk::Window>,
+    state: &Shared,
+    status: &gtk::Label,
+) -> adw::Window {
     let win = adw::Window::builder()
         .title("Animations")
         .transient_for(parent)
@@ -570,8 +630,20 @@ fn show(parent: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
     compact(&pick);
     pick.set_widget_name("animation-declaration");
     content.append(&pick);
-    let add_row = gtk::Box::new(gtk::Orientation::Horizontal, 6);
-    let controls = gtk::Box::new(gtk::Orientation::Horizontal, 6);
+    let add_row = gtk::FlowBox::builder()
+        .selection_mode(gtk::SelectionMode::None)
+        .min_children_per_line(1)
+        .max_children_per_line(3)
+        .row_spacing(6)
+        .column_spacing(6)
+        .build();
+    let controls = gtk::FlowBox::builder()
+        .selection_mode(gtk::SelectionMode::None)
+        .min_children_per_line(1)
+        .max_children_per_line(3)
+        .row_spacing(6)
+        .column_spacing(6)
+        .build();
     let buttons = [
         "Add Branch",
         "Add Bézier",
@@ -583,14 +655,27 @@ fn show(parent: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
         "Undo",
     ]
     .map(gtk::Button::with_label);
+    buttons[2].set_visible(
+        !state
+            .borrow()
+            .legacy_sources
+            .contains_key(&state.borrow().draft.version),
+    );
     for b in &buttons[..3] {
-        add_row.append(b);
+        add_row.insert(b, -1);
     }
     for b in &buttons[3..] {
-        controls.append(b);
+        controls.insert(b, -1);
     }
-    content.append(&add_row);
-    content.append(&controls);
+    let management = gtk::Box::new(gtk::Orientation::Vertical, 6);
+    management.append(&add_row);
+    management.append(&controls);
+    let manage = gtk::Expander::builder()
+        .label("Manage Animations")
+        .child(&management)
+        .build();
+    manage.set_widget_name("animation-management");
+    content.append(&manage);
     let tree = gtk::Box::new(gtk::Orientation::Vertical, 6);
     let nodes = animation::catalogue(&state.borrow().draft.version);
     let inspect =
@@ -703,7 +788,11 @@ fn show(parent: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
                 return;
             }
             let draft = current(&state);
-            let index = (active.get() as usize).min(draft.declarations.len().saturating_sub(1));
+            let index = if active.get() == gtk::INVALID_LIST_POSITION {
+                0
+            } else {
+                (active.get() as usize).min(draft.declarations.len().saturating_sub(1))
+            };
             let titles = draft
                 .declarations
                 .iter()
@@ -793,7 +882,14 @@ fn show(parent: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
                         };
                         let id = unique(&draft);
                         target = draft.declarations.len();
-                        draft.declarations.push(Declaration { id, operation });
+                        draft.declarations.push(Declaration {
+                            id,
+                            operation,
+                            legacy: state
+                                .borrow()
+                                .legacy_sources
+                                .contains_key(&state.borrow().draft.version),
+                        });
                     }
                     3 => {
                         let Some(d) = draft.declarations.get(index) else {
@@ -864,6 +960,7 @@ fn show(parent: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
             gtk::glib::Propagation::Proceed
         }
     });
+    gtk::prelude::GtkWindowExt::set_focus(&win, Some(&pick));
     win.present();
     win
 }
@@ -891,6 +988,12 @@ pub(super) fn test_editor(parent: &adw::ApplicationWindow) {
             .unwrap()
     }
     fn click(win: &adw::Window, name: &str) {
+        for expander in descendants(win.upcast_ref())
+            .into_iter()
+            .filter_map(|w| w.downcast::<gtk::Expander>().ok())
+        {
+            expander.set_expanded(true);
+        }
         descendants(win.upcast_ref())
             .into_iter()
             .filter_map(|w| w.downcast::<gtk::Button>().ok())

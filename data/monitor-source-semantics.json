@@ -1,0 +1,334 @@
+{
+  "format": "hye-monitor-source-semantics-1",
+  "scope": "Declared factory arguments, not effective/default/application values",
+  "snapshots": [
+    {
+      "version": "baseline",
+      "source": {
+        "version": "baseline",
+        "url": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsConfigRules.cpp",
+        "sha256": "157c3e45b364f3e41b6fd7cf13fd19e7477e8c03a6a75c6c46fde5e2b5715be9"
+      },
+      "fields": [
+        {
+          "key": "mode",
+          "kind": "String",
+          "declared_default_cpp": "\"preferred\"",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "position",
+          "kind": "String",
+          "declared_default_cpp": "\"auto\"",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "scale",
+          "kind": "String",
+          "declared_default_cpp": "\"auto\"",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "reserved",
+          "kind": "CssGap",
+          "declared_default_cpp": "0",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "reserved_area",
+          "kind": "CssGap",
+          "declared_default_cpp": "0",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "disabled",
+          "kind": "Bool",
+          "declared_default_cpp": "false",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "transform",
+          "kind": "Int",
+          "declared_default_cpp": "0",
+          "minimum": 0,
+          "maximum": 7
+        },
+        {
+          "key": "mirror",
+          "kind": "String",
+          "declared_default_cpp": "STRVAL_EMPTY",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "bitdepth",
+          "kind": "Int",
+          "declared_default_cpp": "8",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "cm",
+          "kind": "String",
+          "declared_default_cpp": "\"srgb\"",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "sdr_eotf",
+          "kind": "String",
+          "declared_default_cpp": "\"default\"",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "sdrbrightness",
+          "kind": "Float",
+          "declared_default_cpp": "1.F",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "sdrsaturation",
+          "kind": "Float",
+          "declared_default_cpp": "1.F",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "vrr",
+          "kind": "Int",
+          "declared_default_cpp": "-1",
+          "minimum": -1,
+          "maximum": 3
+        },
+        {
+          "key": "icc",
+          "kind": "String",
+          "declared_default_cpp": "STRVAL_EMPTY",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "supports_wide_color",
+          "kind": "Int",
+          "declared_default_cpp": "0",
+          "minimum": -1,
+          "maximum": 1
+        },
+        {
+          "key": "supports_hdr",
+          "kind": "Int",
+          "declared_default_cpp": "0",
+          "minimum": -1,
+          "maximum": 1
+        },
+        {
+          "key": "sdr_min_luminance",
+          "kind": "Float",
+          "declared_default_cpp": "0.2F",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "sdr_max_luminance",
+          "kind": "Int",
+          "declared_default_cpp": "80",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "min_luminance",
+          "kind": "Float",
+          "declared_default_cpp": "-1.F",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "max_luminance",
+          "kind": "Int",
+          "declared_default_cpp": "-1",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "max_avg_luminance",
+          "kind": "Int",
+          "declared_default_cpp": "-1",
+          "minimum": null,
+          "maximum": null
+        }
+      ]
+    },
+    {
+      "version": "current",
+      "source": {
+        "version": "current",
+        "url": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsConfigRules.cpp",
+        "sha256": "789b1425c25b5a26c82f25e4d5d0b8176a6f56481573fc6e658662d1de7ea5ae"
+      },
+      "fields": [
+        {
+          "key": "mode",
+          "kind": "String",
+          "declared_default_cpp": "\"preferred\"",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "position",
+          "kind": "String",
+          "declared_default_cpp": "\"auto\"",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "scale",
+          "kind": "String",
+          "declared_default_cpp": "\"auto\"",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "reserved",
+          "kind": "CssGap",
+          "declared_default_cpp": "0",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "reserved_area",
+          "kind": "CssGap",
+          "declared_default_cpp": "0",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "disabled",
+          "kind": "Bool",
+          "declared_default_cpp": "false",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "transform",
+          "kind": "Int",
+          "declared_default_cpp": "0",
+          "minimum": 0,
+          "maximum": 7
+        },
+        {
+          "key": "mirror",
+          "kind": "String",
+          "declared_default_cpp": "STRVAL_EMPTY",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "bitdepth",
+          "kind": "Int",
+          "declared_default_cpp": "8",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "cm",
+          "kind": "String",
+          "declared_default_cpp": "\"srgb\"",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "sdr_eotf",
+          "kind": "String",
+          "declared_default_cpp": "\"default\"",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "sdrbrightness",
+          "kind": "Float",
+          "declared_default_cpp": "1.F",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "sdrsaturation",
+          "kind": "Float",
+          "declared_default_cpp": "1.F",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "vrr",
+          "kind": "Int",
+          "declared_default_cpp": "-1",
+          "minimum": -1,
+          "maximum": 3
+        },
+        {
+          "key": "icc",
+          "kind": "String",
+          "declared_default_cpp": "STRVAL_EMPTY",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "supports_wide_color",
+          "kind": "Int",
+          "declared_default_cpp": "0",
+          "minimum": -1,
+          "maximum": 1
+        },
+        {
+          "key": "supports_hdr",
+          "kind": "Int",
+          "declared_default_cpp": "0",
+          "minimum": -1,
+          "maximum": 1
+        },
+        {
+          "key": "sdr_min_luminance",
+          "kind": "Float",
+          "declared_default_cpp": "0.2F",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "sdr_max_luminance",
+          "kind": "Int",
+          "declared_default_cpp": "80",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "min_luminance",
+          "kind": "Float",
+          "declared_default_cpp": "-1.F",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "max_luminance",
+          "kind": "Int",
+          "declared_default_cpp": "-1",
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "key": "max_avg_luminance",
+          "kind": "Int",
+          "declared_default_cpp": "-1",
+          "minimum": null,
+          "maximum": null
+        }
+      ]
+    }
+  ]
+}

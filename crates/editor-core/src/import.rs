@@ -1,7 +1,8 @@
 //! Conservative legacy literal import. Includes, variables and commands are never followed.
 use crate::{parse_color, Draft, Setting, Value, BASELINE, MAX_DOCUMENT_BYTES};
 
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ImportReport {
     pub draft: Draft,
     pub skipped: Vec<usize>,
@@ -100,6 +101,11 @@ pub fn legacy(text: &str, catalogue: &[Setting]) -> Result<ImportReport, String>
         skipped: vec![],
         duplicate_keys: vec![],
     };
+    let by_key: std::collections::BTreeMap<_, _> = catalogue
+        .iter()
+        .filter(|s| s.version == BASELINE)
+        .map(|s| (s.id.as_str(), s))
+        .collect();
     let mut blocks: Vec<String> = vec![];
     for (index, line) in text.lines().enumerate() {
         let line = without_comment(line).trim();
@@ -112,7 +118,11 @@ pub fn legacy(text: &str, catalogue: &[Setting]) -> Result<ImportReport, String>
             }
             continue;
         }
-        if let Some(name) = line.strip_suffix('{').map(str::trim) {
+        if let Some(name) = line
+            .strip_suffix('{')
+            .filter(|_| !line.contains('='))
+            .map(str::trim)
+        {
             if blocks.len() >= 16
                 || name.is_empty()
                 || !name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
@@ -132,10 +142,7 @@ pub fn legacy(text: &str, catalogue: &[Setting]) -> Result<ImportReport, String>
         } else {
             format!("{}:{key}", blocks.join(":"))
         };
-        let Some(setting) = catalogue
-            .iter()
-            .find(|s| s.version == BASELINE && s.id == full)
-        else {
+        let Some(setting) = by_key.get(full.as_str()) else {
             report.skipped.push(index + 1);
             continue;
         };
