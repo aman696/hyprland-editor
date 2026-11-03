@@ -44,9 +44,10 @@ pub fn compatible_schema(pin: &str, specs: &[Spec]) -> bool {
         || pin == LEGACY_SCHEMA
             && crate::lua::source_hash(BASE_FIELDS) == LEGACY_SCHEMA
             && specs.iter().all(|s| {
-                s.fields
-                    .keys()
-                    .all(|key| !ADDED_KEYS.contains(&key.as_str()))
+                !s.legacy
+                    && s.fields
+                        .keys()
+                        .all(|key| !ADDED_KEYS.contains(&key.as_str()))
             })
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -131,6 +132,8 @@ pub fn relevance(key: &str) -> &'static [Kind] {
 #[serde(deny_unknown_fields)]
 pub struct Spec {
     pub id: String,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub legacy: bool,
     pub name: String,
     #[serde(default)]
     pub kind: Kind,
@@ -141,6 +144,7 @@ impl Spec {
     pub fn new(id: &str, name: &str) -> Self {
         Self {
             id: id.into(),
+            legacy: false,
             name: name.into(),
             kind: Kind::Unknown,
             fields: BTreeMap::new(),
@@ -167,6 +171,9 @@ impl Spec {
             || self.name.chars().any(char::is_control)
         {
             return Err("Choose a nonempty device name without control characters".into());
+        }
+        if self.legacy {
+            return crate::legacy_device::validate_spec(self, version);
         }
         let c = catalogue(version);
         if self.fields.len() > c.len() {
@@ -198,6 +205,9 @@ impl Spec {
     }
     pub fn export_lua(&self, version: &str) -> Result<String, String> {
         self.validate(version)?;
+        if self.legacy {
+            return Err("Native device declarations require explicit Lua conversion".into());
+        }
         let mut text = format!("hl.device({{ name = {}", quote_lua(&self.name));
         for (key, value) in &self.fields {
             text.push_str(&format!(", [ {} ] = {}", quote_lua(key), value.lua()));
@@ -207,13 +217,18 @@ impl Spec {
     }
     pub fn findings(&self) -> Vec<String> {
         let mut result = vec![];
-        if self.normalized_name() != self.name {
+        if self.legacy && self.normalized_name() != self.name {
+            result.push("Native device keys are stored literally. Spaces may differ from the live device lookup normalization; matching is unverified.".into());
+        } else if self.normalized_name() != self.name {
             result.push(format!(
                 "Hyprland matches this name as {}",
                 self.normalized_name()
             ));
         }
-        if self.fields.get("enabled") == Some(&Value::Bool(false)) {
+        if matches!(
+            self.fields.get("enabled"),
+            Some(Value::Bool(false) | Value::Int(0))
+        ) {
             result.push("This declaration disables a matching device. A future apply operation requires a usable input/recovery plan.".into());
         }
         if matches!(self.fields.get("scroll_points"),Some(Value::String(s))if !s.is_empty())
@@ -256,9 +271,20 @@ pub fn validate(specs: &[Spec], version: &str) -> Result<(), String> {
 }
 pub fn same_declarations(a: &[Spec], b: &[Spec]) -> bool {
     a.len() == b.len()
-        && a.iter()
-            .zip(b)
-            .all(|(a, b)| a.name == b.name && a.fields == b.fields)
+        && a.iter().zip(b).all(|(a, b)| {
+            a.legacy == b.legacy
+                && if a.legacy {
+                    match (
+                        crate::legacy_device::encode(a),
+                        crate::legacy_device::encode(b),
+                    ) {
+                        (Ok(a), Ok(b)) => a == b,
+                        _ => false,
+                    }
+                } else {
+                    a.name == b.name && a.fields == b.fields
+                }
+        })
 }
 pub fn export_lua(specs: &[Spec], version: &str) -> Result<String, String> {
     validate(specs, version)?;

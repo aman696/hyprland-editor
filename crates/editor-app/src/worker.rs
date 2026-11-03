@@ -37,6 +37,7 @@ pub enum Request {
         workspaces: Vec<hyprland_editor_core::workspace_rule::Rule>,
         animations: hyprland_editor_core::animation::Draft,
         gestures: hyprland_editor_core::gesture::Draft,
+        devices: Vec<hyprland_editor_core::device::Spec>,
     },
     ExpandLegacyBindings {
         source: String,
@@ -465,6 +466,7 @@ pub fn entry() {
                 workspaces,
                 animations,
                 gestures,
+                devices,
             } => hyprland_editor_core::legacy::Document::new_with_binding_mode(
                 source,
                 &c,
@@ -479,6 +481,7 @@ pub fn entry() {
                     workspaces: &workspaces,
                     animations: &animations,
                     gestures: &gestures,
+                    devices: &devices,
                 },
                 &c,
             )

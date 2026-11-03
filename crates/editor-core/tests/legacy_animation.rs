@@ -70,6 +70,7 @@ fn ordered_native_animation_add_duplicate_remove_reorder_and_all_family_copy_rep
                 workspaces: &doc.workspaces.rules,
                 animations: &target,
                 gestures: &doc.gestures.draft,
+                devices: &doc.devices.devices,
             },
             &catalogue(),
         )

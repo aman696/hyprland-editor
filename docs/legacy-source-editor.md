@@ -43,3 +43,6 @@ Literal top-level and flat `animations` category declarations now populate the g
 ## Gestures
 
 Literal native gestures now populate matching/action controls and join the combined source copy. Native inhibition flags, modifier/scale prefixes, builtin parameter order and inert dispatcher arguments remain distinct from Lua callbacks. Save/reopen and undo preserve deliberate empty targets and older separate drafts. See [gesture editing](gesture-editor.md) for supported forms, registration identities and remaining limits.
+
+
+**Edit Devices** now opens literal flat `device` blocks with all 47 registered fields and exact native values alongside guided controls. Native aliases, explicit unset/duplicate semantics and comments are retained. Device edits join the combined eight-group source review, with private save/reopen and intentional empty-target markers. Unknown/dynamic blocks remain unresolved, and repeated names do not establish effective hardware state. See [native device editing](device-editor.md#native-device-blocks).

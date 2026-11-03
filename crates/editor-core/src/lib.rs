@@ -13,6 +13,8 @@ pub mod import;
 pub mod legacy;
 pub mod legacy_animation;
 pub mod legacy_binding;
+mod legacy_blocks;
+pub mod legacy_device;
 pub mod legacy_gesture;
 pub mod legacy_monitor;
 pub mod legacy_session;

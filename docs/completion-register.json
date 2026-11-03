@@ -14,6 +14,35 @@
   },
   "foundations": [
     {
+      "area": "graphical native device blocks with all registered fields and pending-form retention",
+      "code": [
+        "crates/editor-core/src/legacy_device.rs",
+        "crates/editor-core/src/legacy_blocks.rs",
+        "crates/editor-core/src/legacy_monitor/blocks.rs",
+        "crates/editor-core/src/device.rs",
+        "crates/editor-core/src/legacy.rs",
+        "crates/editor-core/src/workspace.rs",
+        "crates/editor-app/src/devices.rs",
+        "crates/editor-app/src/device_forms/native.rs",
+        "crates/editor-app/src/legacy_source.rs",
+        "crates/editor-app/src/worker.rs",
+        "crates/editor-app/src/workflow.rs",
+        "crates/editor-projection/src/lib.rs",
+        "data/legacy-devices.json"
+      ],
+      "test_references": [
+        "every_native_device_registration_and_raw_range_has_a_lossless_graphical_model",
+        "device_field_updates_keep_aliases_duplicates_comments_native_values_and_unset_presence",
+        "native_device_order_duplicates_removal_and_all_eight_source_groups_reparse_together",
+        "unsupported_device_blocks_stay_whole_and_do_not_hide_following_supported_blocks",
+        "native_device_project_markers_retain_empty_targets_and_refuse_old_schema_authority",
+        "native_devices_omit_names_keymap_paths_outputs_and_tag_payloads",
+        "workflow::test_legacy_session_editing",
+        "native_forms_and_draft_workflow"
+      ],
+      "limits": "47 literal native device fields with tap-to-click/tap-and-drag aliases, exact signed integers including nonboolean switch values, finite normal float32/vector and literal strings without Lua descriptor bounds; guided/native field controls retain unchanged values and companion-field absence; pending field/name flush before navigation/review/save/metadata/close, invalid forms retained; per-field duplicate/unset/comment preservation, all-eight-group combined source copy reparse, captured source/codec markers preserve deliberate empties and older separate Lua drafts, no implicit format conversion; bounded shared flat-block scanner and payload-free native preview omission, 117-input model/35 reviewed predecessors preserve captured inputs/compiler observations. No general variables/includes/qualified/dynamic blocks or uncommon numeric aliases, complete effective fallback/hardware/keymap semantics, actual compositor preview/live apply/recovery or full resource/accessibility/security/release acceptance"
+    },
+    {
       "area": "graphical native gesture editing with inert dispatchers and exact native registration identities",
       "code": [
         "crates/editor-core/src/legacy_gesture.rs",

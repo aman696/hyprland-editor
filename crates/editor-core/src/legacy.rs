@@ -17,6 +17,7 @@ pub struct Document {
     pub workspaces: crate::legacy_workspace::Report,
     pub animations: crate::legacy_animation::Report,
     pub gestures: crate::legacy_gesture::Report,
+    pub devices: crate::legacy_device::Report,
 }
 
 pub struct Edits<'a> {
@@ -27,6 +28,7 @@ pub struct Edits<'a> {
     pub workspaces: &'a [crate::workspace_rule::Rule],
     pub animations: &'a crate::animation::Draft,
     pub gestures: &'a crate::gesture::Draft,
+    pub devices: &'a [crate::device::Spec],
 }
 
 struct Assignment {
@@ -158,6 +160,7 @@ pub struct Report {
     pub workspaces: crate::legacy_workspace::Report,
     pub animations: crate::legacy_animation::Report,
     pub gestures: crate::legacy_gesture::Report,
+    pub devices: crate::legacy_device::Report,
 }
 impl Document {
     pub fn into_report(self) -> Report {
@@ -170,6 +173,7 @@ impl Document {
             workspaces: self.workspaces,
             animations: self.animations,
             gestures: self.gestures,
+            devices: self.devices,
         }
     }
     pub fn edited_with_session(
@@ -224,6 +228,7 @@ impl Document {
                 workspaces,
                 animations: &self.animations.draft,
                 gestures: &self.gestures.draft,
+                devices: &self.devices.devices,
             },
             catalogue,
         )
@@ -237,6 +242,7 @@ impl Document {
             workspaces,
             animations,
             gestures,
+            devices,
         } = edits;
         let scalars = self.edited_copy(draft, catalogue)?;
         let sessions = legacy_session::edited_copy(&scalars, session)?;
@@ -245,6 +251,7 @@ impl Document {
         let output = crate::legacy_workspace::edited_copy(&output, workspaces)?;
         let output = crate::legacy_animation::edited_copy(&output, animations)?;
         let output = crate::legacy_gesture::edited_copy(&output, gestures)?;
+        let output = crate::legacy_device::edited_copy(&output, devices)?;
         // env with unspecified versus explicitly false activation both encode
         // as the same native directive. Compare the native projection, while
         // private projects retain that presence distinction.
@@ -261,6 +268,8 @@ impl Document {
                 != legacy_monitor::export(monitors)?
             || crate::legacy_workspace::export(&crate::legacy_workspace::inspect(&output)?.rules)?
                 != crate::legacy_workspace::export(workspaces)?
+            || crate::legacy_device::export(&crate::legacy_device::inspect(&output)?.devices)?
+                != crate::legacy_device::export(devices)?
             || crate::legacy_gesture::export(&crate::legacy_gesture::inspect(&output)?.draft)?
                 != crate::legacy_gesture::export(gestures)?
             || crate::legacy_animation::export(&crate::legacy_animation::inspect(&output)?.draft)?
@@ -300,6 +309,7 @@ impl Document {
         let workspaces = crate::legacy_workspace::inspect(&content)?;
         let animations = crate::legacy_animation::inspect(&content)?;
         let gestures = crate::legacy_gesture::inspect(&content)?;
+        let devices = crate::legacy_device::inspect(&content)?;
         Ok(Self {
             content,
             report,
@@ -309,6 +319,7 @@ impl Document {
             workspaces,
             animations,
             gestures,
+            devices,
         })
     }
 

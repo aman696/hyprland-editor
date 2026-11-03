@@ -79,6 +79,7 @@ fn native_gesture_registration_unset_add_duplicate_order_and_all_family_copy_rem
                 workspaces: &doc.workspaces.rules,
                 animations: &doc.animations.draft,
                 gestures: &target,
+                devices: &doc.devices.devices,
             },
             &catalogue(),
         )

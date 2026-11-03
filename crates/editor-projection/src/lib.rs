@@ -314,6 +314,10 @@ pub fn compile(workspace: &Workspace, scenario: &Scenario) -> Result<Projection,
         builder.append(&projected.export_lua(version)?)?;
     }
     for original in &workspace.devices {
+        if original.legacy {
+            builder.record(format!("device/{}",original.id),Fidelity::Unsupported,"Native device declaration omitted; explicit synthetic mapping and conversion are required")?;
+            continue;
+        }
         let Some(target) = scenario.device_targets.get(&original.id) else {
             builder.record(
                 format!("device/{}", original.id),
@@ -530,6 +534,7 @@ pub fn model_sha256() -> String {
         include_str!("../../editor-core/src/legacy_workspace.rs"),
         include_str!("../../editor-core/src/legacy_animation.rs"),
         include_str!("../../editor-core/src/legacy_gesture.rs"),
+        include_str!("../../editor-core/src/legacy_device.rs"),
         include_str!("../../editor-core/src/session.rs"),
         include_str!("../../../data/session.json")
     ))
@@ -540,6 +545,7 @@ fn schema_pins(workspace: &Workspace) -> BTreeMap<String, String> {
         ("monitor", monitor::schema_hash()),
         ("legacy-monitor", editor_core::legacy_monitor::schema_hash()),
         ("legacy-binding", editor_core::legacy_binding::schema_hash()),
+        ("legacy-device", editor_core::legacy_device::schema_hash()),
         ("legacy-gesture", editor_core::legacy_gesture::schema_hash()),
         (
             "legacy-animation",

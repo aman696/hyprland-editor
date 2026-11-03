@@ -10,6 +10,7 @@ pub(super) struct Document {
     pub workspaces: hyprland_editor_core::legacy_workspace::Report,
     pub animations: hyprland_editor_core::legacy_animation::Report,
     pub gestures: hyprland_editor_core::legacy_gesture::Report,
+    pub devices: hyprland_editor_core::legacy_device::Report,
 }
 impl Document {
     pub fn new(content: String, catalogue: &[Setting]) -> Result<Self, String> {
@@ -44,6 +45,9 @@ impl Document {
             || parsed.bindings.draft.local_variables != local_variables
             || parsed.bindings.source_sha256 != parsed.source_sha256
             || parsed.bindings.sites.len() != parsed.bindings.draft.entries.len()
+            || parsed.devices.schema_sha256 != hyprland_editor_core::legacy_device::schema_hash()
+            || parsed.devices.source_sha256 != parsed.source_sha256
+            || parsed.devices.sites.len() != parsed.devices.devices.len()
             || parsed.gestures.schema_sha256 != hyprland_editor_core::legacy_gesture::schema_hash()
             || parsed.gestures.source_sha256 != parsed.source_sha256
             || parsed.gestures.sites.len() != parsed.gestures.draft.declarations.len()
@@ -62,6 +66,7 @@ impl Document {
                 .monitors
                 .sites
                 .iter()
+                .chain(&parsed.devices.sites)
                 .chain(&parsed.gestures.sites)
                 .chain(&parsed.animations.sites)
                 .chain(&parsed.workspaces.sites)
@@ -111,6 +116,7 @@ impl Document {
         hyprland_editor_core::workspace_rule::validate(&parsed.workspaces.rules, BASELINE)?;
         parsed.animations.draft.validate(BASELINE)?;
         parsed.gestures.draft.validate(BASELINE)?;
+        hyprland_editor_core::device::validate(&parsed.devices.devices, BASELINE)?;
         let mut report = parsed.scalar;
         let session_lines: std::collections::BTreeSet<_> = parsed
             .session
@@ -122,10 +128,11 @@ impl Document {
             .chain(&parsed.gestures.sites)
             .map(|site| site.line)
             .collect();
-        let monitor_lines: Vec<_> = parsed
+        let mut monitor_lines: Vec<_> = parsed
             .monitors
             .sites
             .iter()
+            .chain(&parsed.devices.sites)
             .map(|site| {
                 (
                     site.line,
@@ -137,6 +144,7 @@ impl Document {
                 )
             })
             .collect();
+        monitor_lines.sort_by_key(|(start, _)| *start);
         report.skipped.retain(|line| {
             let index = monitor_lines.partition_point(|(start, _)| start <= line);
             !session_lines.contains(line) && (index == 0 || *line > monitor_lines[index - 1].1)
@@ -150,6 +158,7 @@ impl Document {
             workspaces: parsed.workspaces,
             animations: parsed.animations,
             gestures: parsed.gestures,
+            devices: parsed.devices,
         })
     }
     pub fn edited_copy(
@@ -165,6 +174,7 @@ impl Document {
             workspaces: workspace.workspace_rules.clone(),
             animations: workspace.animations.clone(),
             gestures: workspace.gestures.clone(),
+            devices: workspace.devices.clone(),
         })? {
             super::worker::Response::Copy(source) => Ok(source),
             _ => Err("Unexpected legacy copy response".into()),

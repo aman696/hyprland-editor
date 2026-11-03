@@ -66,15 +66,28 @@ struct FieldContext<'a> {
     feedback: &'a gtk::Label,
     registry: Option<Arc<Registry>>,
 }
-fn field(panel: &gtk::Box, index: usize, setting: &Setting, ctx: FieldContext<'_>) {
+type Flush = Rc<dyn Fn() -> Result<(), String>>;
+fn field(panel: &gtk::Box, index: usize, setting: &Setting, ctx: FieldContext<'_>) -> Flush {
     while let Some(child) = panel.first_child() {
         panel.remove(&child);
     }
     let specs = current(ctx.state);
     let Some(spec) = specs.get(index) else {
         panel.append(&label("Add a device draft to begin."));
-        return;
+        return Rc::new(|| Ok(()));
     };
+    if spec.legacy {
+        panel.append(&label("Imported device block. Review Source Copy includes these edits; hardware and keymap files are unchanged."));
+    }
+    if spec.legacy
+        && specs
+            .iter()
+            .filter(|s| s.legacy && s.name == spec.name)
+            .count()
+            > 1
+    {
+        panel.append(&label("This name has multiple source blocks. Removing a field here can expose an earlier override."));
+    }
     let relevant = device::relevance(&setting.lua_key);
     if spec.kind != Kind::Unknown && !relevant.contains(&spec.kind) {
         panel.append(&label("This field usually belongs to another device type. It remains available; actual hardware capabilities are unknown."));
@@ -98,30 +111,41 @@ fn field(panel: &gtk::Box, index: usize, setting: &Setting, ctx: FieldContext<'_
     let state = ctx.state.clone();
     let status = ctx.status.clone();
     let feedback = ctx.feedback.clone();
-    apply.connect_clicked(move |_| {
+    let version = ctx.state.borrow().draft.version.clone();
+    let submit: Flush = Rc::new(move || {
+        if state.borrow().draft.version != version {
+            return Err("The selected settings version changed; reopen the device editor".into());
+        }
         let mut specs = current(&state);
-        let Some(spec) = specs.iter_mut().find(|s| s.id == id) else {
-            return;
-        };
+        let spec = specs
+            .iter_mut()
+            .find(|s| s.id == id)
+            .ok_or("Device declaration was removed")?;
         if enabled.is_active() {
-            match get() {
-                Ok(values) => spec.fields.extend(values),
-                Err(e) => {
-                    feedback.set_text(&e);
-                    return;
-                }
-            }
+            spec.fields.extend(get()?);
         } else {
             spec.fields.remove(&key);
         }
         let messages = spec.findings().join("\n");
-        if commit(&state, specs, (&status, &feedback)) {
-            findings.set_text(&messages);
+        state.borrow_mut().replace_devices(specs)?;
+        super::summary(&state, &status);
+        findings.set_text(&messages);
+        Ok(())
+    });
+    let weak = Rc::downgrade(&submit);
+    apply.connect_clicked(move |_| {
+        if let Some(get) = weak.upgrade() {
+            match get() {
+                Ok(()) => feedback.set_text("Device draft updated; hardware was not changed."),
+                Err(e) => feedback.set_text(&e),
+            }
         }
     });
     let details = gtk::Expander::builder().label("Field Details").build();
-    details.set_child(Some(&label(&format!("Field: {}\nAudited default: {}\nVersion: {}\nSource: {}\nUnset fields inherit global/device defaults. Device categories are draft hints; they do not certify capability.",setting.lua_key,setting.default_expression,setting.version,setting.source))));
+    details.set_child(Some(&label(&if spec.legacy{format!("Native field: {}\nGuided baseline: {}\nUnset can reveal earlier keyed blocks or global/device defaults. Effective fallback and hardware behavior are unverified.",hyprland_editor_core::legacy_device::native_key(&setting.lua_key),setting.default_expression)}else{format!("Field: {}\nAudited default: {}\nVersion: {}\nSource: {}\nUnset fields inherit global/device defaults. Device categories are draft hints; they do not certify capability.",setting.lua_key,setting.default_expression,setting.version,setting.source)})));
+
     panel.append(&details);
+    submit
 }
 pub(super) fn connect(
     button: &gtk::Button,
@@ -203,7 +227,7 @@ fn show_with_devices(
     }
     content.append(&order);
     let match_panel = gtk::Box::new(gtk::Orientation::Vertical, 8);
-    let name = gtk::Entry::new();
+    let name = gtk::Entry::builder().max_length(4096).build();
     name.set_widget_name("device-name");
     name.set_placeholder_text(Some("Hyprland device name"));
     match_panel.append(&name);
@@ -213,7 +237,7 @@ fn show_with_devices(
         0,
     );
     kind.set_widget_name("device-kind");
-    match_panel.append(&label("The category guides field relevance and is not a hardware observation. Hyprland converts spaces in a name to hyphens."));
+    match_panel.append(&label("The category guides field relevance; it is not hardware detection. Native keys retain their literal spelling, while live device lookup can normalize spaces."));
     let target = gtk::Button::with_label("Update Device Match");
     match_panel.append(&target);
     let expander = gtk::Expander::builder()
@@ -251,18 +275,6 @@ fn show_with_devices(
             .is::<adw::ApplicationWindow>(),
     );
     content.append(&save);
-    let parent = window.downgrade();
-    save.connect_clicked(move |_| {
-        if let Some(parent) = parent.upgrade() {
-            if let Some(a) = parent
-                .upcast_ref::<gtk::Window>()
-                .downcast_ref::<adw::ApplicationWindow>()
-                .and_then(|window| window.lookup_action("save-draft"))
-            {
-                a.activate(None);
-            }
-        }
-    });
     root.append(
         &gtk::ScrolledWindow::builder()
             .child(&content)
@@ -272,6 +284,22 @@ fn show_with_devices(
     );
     win.set_content(Some(&root));
     let busy = Rc::new(Cell::new(false));
+    let field_submit = Rc::new(RefCell::new(None::<Flush>));
+    let match_submit = Rc::new(RefCell::new(None::<Flush>));
+    let active = Rc::new(Cell::new((gtk::INVALID_LIST_POSITION, 0u32)));
+    let flush: Flush = Rc::new({
+        let field = field_submit.clone();
+        let matching = match_submit.clone();
+        move || {
+            for slot in [&field, &matching] {
+                let get = slot.borrow().clone();
+                if let Some(get) = get {
+                    get()?;
+                }
+            }
+            Ok(())
+        }
+    });
     let refresh: Rc<dyn Fn()> = Rc::new({
         let state = state.clone();
         let status = status.clone();
@@ -286,12 +314,19 @@ fn show_with_devices(
         let win = win.downgrade();
         let registry = registry.clone();
         let busy = busy.clone();
+        let field_submit = field_submit.clone();
+        let match_submit = match_submit.clone();
+        let active = active.clone();
         move || {
             if busy.replace(true) {
                 return;
             }
             let specs = current(&state);
-            let index = (selected.selected() as usize).min(specs.len().saturating_sub(1));
+            let index = if selected.selected() == gtk::INVALID_LIST_POSITION {
+                0
+            } else {
+                (selected.selected() as usize).min(specs.len().saturating_sub(1))
+            };
             let names: Vec<String> = specs
                 .iter()
                 .enumerate()
@@ -320,14 +355,42 @@ fn show_with_devices(
             } else {
                 index as u32
             });
+            *match_submit.borrow_mut() = None;
+            *field_submit.borrow_mut() = None;
             if let Some(s) = specs.get(index) {
                 name.set_text(&s.name);
                 kind.set_selected(Kind::ALL.iter().position(|k| *k == s.kind).unwrap_or(0) as u32);
+                let id = s.id.clone();
+                let state = state.clone();
+                let name = name.clone();
+                let kind = kind.clone();
+                let status = status.clone();
+                let version = state.borrow().draft.version.clone();
+                *match_submit.borrow_mut() = Some(Rc::new(move || {
+                    if state.borrow().draft.version != version {
+                        return Err("Settings version changed; reopen the device editor".into());
+                    }
+                    let mut specs = current(&state);
+                    let s = specs
+                        .iter_mut()
+                        .find(|s| s.id == id)
+                        .ok_or("Device declaration was removed")?;
+                    s.name = name.text().into();
+                    s.kind = *Kind::ALL
+                        .get(kind.selected() as usize)
+                        .ok_or("Choose a device category")?;
+                    state.borrow_mut().replace_devices(specs)?;
+                    super::summary(&state, &status);
+                    Ok(())
+                }));
+            } else {
+                name.set_text("");
+                kind.set_selected(0);
             }
             if let (Some(win), Some(setting)) =
                 (win.upgrade(), fields.get(picker.selected() as usize))
             {
-                field(
+                *field_submit.borrow_mut() = Some(field(
                     &panel,
                     index,
                     setting,
@@ -338,16 +401,35 @@ fn show_with_devices(
                         feedback: &feedback,
                         registry: registry.borrow().clone(),
                     },
-                );
+                ));
             }
+            active.set((selected.selected(), picker.selected()));
             busy.set(false);
         }
     });
     for p in [&selected, &picker] {
         let weak = Rc::downgrade(&refresh);
+        let flush = flush.clone();
+        let selected = selected.clone();
+        let picker = picker.clone();
+        let active = active.clone();
+        let busy = busy.clone();
+        let feedback = feedback.clone();
         p.connect_selected_notify(move |_| {
-            if let Some(refresh) = weak.upgrade() {
-                refresh();
+            if busy.get() {
+                return;
+            }
+            if let Err(e) = flush() {
+                busy.set(true);
+                let (s, f) = active.get();
+                selected.set_selected(s);
+                picker.set_selected(f);
+                busy.set(false);
+                feedback.set_text(&e);
+                return;
+            }
+            if let Some(r) = weak.upgrade() {
+                r();
             }
         });
     }
@@ -363,7 +445,14 @@ fn show_with_devices(
         let status = status.clone();
         let feedback = feedback.clone();
         let refresh = refresh.clone();
+        let flush = flush.clone();
         b.connect_clicked(move |_| {
+            if op != 2 {
+                if let Err(e) = flush() {
+                    feedback.set_text(&e);
+                    return;
+                }
+            }
             let mut specs = current(&state);
             let index = selected.selected() as usize;
             match op {
@@ -382,7 +471,12 @@ fn show_with_devices(
                         };
                         s.clone()
                     } else {
-                        Spec::new(&id, "new-device")
+                        let mut s = Spec::new(&id, "new-device");
+                        s.legacy = state
+                            .borrow()
+                            .legacy_sources
+                            .contains_key(&state.borrow().draft.version);
+                        s
                     };
                     spec.id = id;
                     specs.push(spec);
@@ -405,21 +499,12 @@ fn show_with_devices(
             }
         });
     }
-    let state_c = state.clone();
-    let selected_c = selected.clone();
+    let flush_c = flush.clone();
     let refresh_c = refresh.clone();
-    let status_c = status.clone();
     let feedback_c = feedback.clone();
-    target.connect_clicked(move |_| {
-        let mut specs = current(&state_c);
-        let Some(s) = specs.get_mut(selected_c.selected() as usize) else {
-            return;
-        };
-        s.name = name.text().into();
-        s.kind = Kind::ALL[kind.selected() as usize];
-        if commit(&state_c, specs, (&status_c, &feedback_c)) {
-            refresh_c();
-        }
+    target.connect_clicked(move |_| match flush_c() {
+        Ok(()) => refresh_c(),
+        Err(e) => feedback_c.set_text(&e),
     });
     let state_c = state.clone();
     let status_c = status.clone();
@@ -429,20 +514,80 @@ fn show_with_devices(
         super::summary(&state_c, &status_c);
         refresh_c();
     });
-    let panel_c = panel.clone();
+    let panel_c = content.clone();
     let feedback_c = feedback.clone();
     let win_c = win.downgrade();
     let refresh_c = refresh.clone();
+    let flush_c = flush.clone();
     load.connect_clicked(move|b|{
+        if let Err(e)=flush_c(){feedback_c.set_text(&e);return;}
         b.set_sensitive(false);panel_c.set_sensitive(false);feedback_c.set_text("Reading installed evdev metadata; controls will rebuild from the staged draft…");let button=b.downgrade();let panel=panel_c.downgrade();let win=win_c.clone();let feedback=feedback_c.clone();let registry=registry.clone();let refresh=refresh_c.clone();
         workflow::background(read_registry,move|result:Result<Registry,String>|{if win.upgrade().is_none(){return;}
 if let Some(b)=button.upgrade(){b.set_sensitive(true);}
 if let Some(p)=panel.upgrade(){p.set_sensitive(true);}match result{Ok(r)=>{feedback.set_text(&format!("Loaded {} layouts and {} option groups from installed evdev metadata. Hardware layout was not changed.",r.layouts.len(),r.groups.len()));*registry.borrow_mut()=Some(Arc::new(r));refresh();},Err(e)=>feedback.set_text(&format!("Keyboard choices unavailable: {e}. Existing identifiers remain editable.")),}});
     });
     let state_c = state.clone();
-    let win_c = win.downgrade();
-    review.connect_clicked(move |_|{let s=state_c.borrow();let specs=s.devices.get(&s.draft.version).map(Vec::as_slice).unwrap_or(&[]);let text=match device::export_lua(specs,&s.draft.version){Ok(t)=>t,Err(_)=>return};let Some(parent)=win_c.upgrade()else{return;};let review=adw::Window::builder().title("Review Device Lua").transient_for(&parent).modal(true).default_width(680).default_height(500).build();let b=gtk::Box::new(gtk::Orientation::Vertical,12);b.append(&label("Ordered device draft declarations. Copying does not apply them. This fragment must not replace a full configuration."));let view=gtk::TextView::builder().editable(false).monospace(true).wrap_mode(gtk::WrapMode::WordChar).build();view.buffer().set_text(&text);b.append(&gtk::ScrolledWindow::builder().child(&view).vexpand(true).build());let copy=gtk::Button::with_label("Copy Reviewed Device Lua");b.append(&copy);let weak=review.downgrade();copy.connect_clicked(move |_|{if let Some(win)=weak.upgrade(){win.clipboard().set_text(&text);}});review.set_content(Some(&b));review.present();});
+    let weak = win.downgrade();
+    let flush_c = flush.clone();
+    let feedback_c = feedback.clone();
+    review.set_label(
+        if state
+            .borrow()
+            .legacy_sources
+            .contains_key(&state.borrow().draft.version)
+        {
+            "Review Device Config"
+        } else {
+            "Review Device Lua"
+        },
+    );
+    review.connect_clicked(move |_|{
+        if let Err(e)=flush_c(){feedback_c.set_text(&e);return;}let Some(parent)=weak.upgrade()else{return;};let s=state_c.borrow();let specs=s.devices.get(&s.draft.version).map(Vec::as_slice).unwrap_or(&[]);
+        let native=if specs.is_empty(){s.legacy_sources.contains_key(&s.draft.version)}else{specs.iter().all(|s|s.legacy)};let text=if native{hyprland_editor_core::legacy_device::export(specs)}else if specs.iter().all(|s|!s.legacy){device::export_lua(specs,&s.draft.version)}else{Err("Native and separate Lua device drafts need explicit format conversion. Save the project to retain both views.".into())};drop(s);
+        match text{Ok(text)=>{super::text_export::review(&parent,if native{"Review Device Config"}else{"Review Device Lua"},"Ordered device declaration fragment only. This must not replace a full configuration; reviewing never changes hardware.",if native{"devices-edited.conf"}else{"devices-edited.lua"},text);},Err(e)=>{let dialog=adw::MessageDialog::new(Some(&parent),Some("Cannot review device configuration"),Some(&e));dialog.add_response("close","Close");dialog.present();}}
+    });
+    let parent = window.downgrade();
+    let flush_c = flush.clone();
+    let feedback_c = feedback.clone();
+    save.connect_clicked(move |_| {
+        if let Err(e) = flush_c() {
+            feedback_c.set_text(&e);
+            return;
+        }
+        if let Some(parent) = parent.upgrade() {
+            if let Some(a) = parent
+                .upcast_ref::<gtk::Window>()
+                .downcast_ref::<adw::ApplicationWindow>()
+                .and_then(|w| w.lookup_action("save-draft"))
+            {
+                a.activate(None);
+            }
+        }
+    });
+    let flush_c = flush.clone();
+    win.connect_close_request(move |w| match flush_c() {
+        Ok(()) => gtk::glib::Propagation::Proceed,
+        Err(e) => {
+            let d =
+                adw::MessageDialog::new(Some(w), Some("Discard invalid form changes?"), Some(&e));
+            d.add_response("keep", "Keep Editing");
+            d.add_response("discard", "Discard Form Changes");
+            d.set_default_response(Some("keep"));
+            d.set_close_response("keep");
+            let weak = w.downgrade();
+            d.connect_response(None, move |_, response| {
+                if response == "discard" {
+                    if let Some(w) = weak.upgrade() {
+                        w.destroy();
+                    }
+                }
+            });
+            d.present();
+            gtk::glib::Propagation::Stop
+        }
+    });
     refresh();
+    gtk::prelude::GtkWindowExt::set_focus(&win, Some(&selected));
     win.present();
     win
 }

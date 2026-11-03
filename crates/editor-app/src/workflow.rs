@@ -151,6 +151,22 @@ fn read_import_for_review(
                     );
                 }
             }
+            if workspace.legacy_device_origin_sha256.is_none() {
+                let mut rebuilt = doc.devices.devices.clone();
+                for (n, spec) in rebuilt.iter_mut().enumerate() {
+                    let mut serial = n;
+                    while workspace.devices.iter().any(|old| old.id == spec.id) {
+                        spec.id = format!("rebuilt-device-{serial}");
+                        serial += 1;
+                    }
+                }
+                rebuilt.append(&mut workspace.devices);
+                hyprland_editor_core::device::validate(&rebuilt, &workspace.draft.version)?;
+                workspace.devices = rebuilt;
+                if !doc.devices.devices.is_empty() {
+                    legacy_projection_changed = true;
+                }
+            }
             if workspace.legacy_gesture_origin_sha256.is_none() {
                 let mut rebuilt = doc.gestures.draft.declarations.clone();
                 for (n, spec) in rebuilt.iter_mut().enumerate() {
@@ -277,7 +293,7 @@ fn read_import_for_review(
     };
     match path.extension().and_then(|s|s.to_str()) {
         Some("json")=>Draft::from_json(&captured.content,&catalogue).map(|draft|Imported{migration:None,graph:None,draft,source:None,legacy:None,origin:None,monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),session:Default::default(),message:"Validated value-only draft loaded".into(),saved_json:true}),
-        Some("conf")=>super::legacy_source::Document::new(captured.content,&catalogue).map(|doc|Imported{migration:None,graph:None,message:format!("Retained {} scalar overrides, {} session entries and {} monitor declarations and {} binding operations and {} workspace declarations and {} animation declarations and {} gestures; {} lines unresolved; {} repeated keys. Known local shortcut values are projected; includes and other variable uses remain unresolved. Review Source Copy includes supported scalar, session, monitor, workspace, animation, gesture and binding edits.",doc.report.draft.values.len(),doc.session.draft.entries.len(),doc.monitors.rules.len(),doc.bindings.draft.entries.len(),doc.workspaces.rules.len(),doc.animations.draft.declarations.len(),doc.gestures.draft.declarations.len(),doc.report.skipped.len(),doc.report.duplicate_keys.len()),draft:doc.report.draft.clone(),session:doc.session.draft.clone(),monitors:doc.monitors.rules.clone(),source:None,origin:Some(captured.identity),devices:vec![],bindings:hyprland_editor_core::binding::Draft{legacy:Some(doc.bindings.draft.clone()),..Default::default()},workspace_rules:doc.workspaces.rules.clone(),rules:vec![],animations:doc.animations.draft.clone(),gestures:doc.gestures.draft.clone(),saved_json:false,legacy:Some(doc)}),
+        Some("conf")=>super::legacy_source::Document::new(captured.content,&catalogue).map(|doc|Imported{migration:None,graph:None,message:format!("Retained {} scalar overrides, {} session entries and {} monitor declarations and {} binding operations and {} workspace declarations and {} animation declarations and {} gestures and {} devices; {} lines unresolved; {} repeated keys. Known local shortcut values are projected; includes and other variable uses remain unresolved. Review Source Copy includes supported scalar, session, monitor, workspace, animation, gesture, device and binding edits.",doc.report.draft.values.len(),doc.session.draft.entries.len(),doc.monitors.rules.len(),doc.bindings.draft.entries.len(),doc.workspaces.rules.len(),doc.animations.draft.declarations.len(),doc.gestures.draft.declarations.len(),doc.devices.devices.len(),doc.report.skipped.len(),doc.report.duplicate_keys.len()),draft:doc.report.draft.clone(),session:doc.session.draft.clone(),monitors:doc.monitors.rules.clone(),source:None,origin:Some(captured.identity),devices:doc.devices.devices.clone(),bindings:hyprland_editor_core::binding::Draft{legacy:Some(doc.bindings.draft.clone()),..Default::default()},workspace_rules:doc.workspaces.rules.clone(),rules:vec![],animations:doc.animations.draft.clone(),gestures:doc.gestures.draft.clone(),saved_json:false,legacy:Some(doc)}),
         Some("lua")=>{
             let doc=parse_source(captured.content,version,&catalogue)?;
             let mut message=format!("Imported {} scalar declarations, {} monitor rules and {} device rules; {} diagnostics. Effective values are not inferred by executing Lua.",doc.report.draft.values.len(),doc.report.monitors.len(),doc.report.devices.len(),doc.report.diagnostics.len());
@@ -385,6 +401,10 @@ pub(super) fn captured_workspace(s: &super::State) -> Result<Workspace, String> 
                 hyprland_editor_core::legacy_binding::schema_hash,
                 hyprland_editor_core::legacy_binding::draft_schema_hash,
             ));
+        snapshot.legacy_device_origin_sha256 =
+            Some(hyprland_editor_core::lua::source_hash(&doc.content));
+        snapshot.legacy_device_schema_sha256 =
+            Some(hyprland_editor_core::legacy_device::schema_hash());
         snapshot.legacy_gesture_origin_sha256 =
             Some(hyprland_editor_core::lua::source_hash(&doc.content));
         snapshot.legacy_gesture_schema_sha256 =
@@ -644,8 +664,8 @@ pub(super) fn connect_source_copy(
         if s.source_graphs.contains_key(&s.draft.version) {drop(s);super::project_copy::show(&window,&state);return;}
         if let Some(doc)=s.legacy_sources.get(&s.draft.version).cloned(){
             let snapshot=match captured_workspace(&s){Ok(snapshot)=>snapshot,Err(error)=>{drop(s);notice(&window,"Cannot prepare legacy copy",&error);return;}};
-            if !snapshot.devices.is_empty() || (!snapshot.bindings.binds.is_empty() || !snapshot.bindings.submaps.is_empty() || !snapshot.bindings.order.is_empty()) || snapshot.workspace_rules.iter().any(|r| !r.legacy) || !snapshot.rules.is_empty() || snapshot.animations.declarations.iter().any(|d|!d.legacy) || snapshot.gestures.declarations.iter().any(|s|!s.legacy) {
-                drop(s);notice(&window,"Structured legacy export pending","This source copy includes supported scalar, session, monitor, workspace, animation, gesture and legacy binding edits. Separate Lua bindings and other structured draft groups need their legacy codecs; save the project to retain them.");return;
+            if snapshot.devices.iter().any(|d|!d.legacy) || (!snapshot.bindings.binds.is_empty() || !snapshot.bindings.submaps.is_empty() || !snapshot.bindings.order.is_empty()) || snapshot.workspace_rules.iter().any(|r| !r.legacy) || !snapshot.rules.is_empty() || snapshot.animations.declarations.iter().any(|d|!d.legacy) || snapshot.gestures.declarations.iter().any(|s|!s.legacy) {
+                drop(s);notice(&window,"Structured legacy export pending","This source copy includes supported scalar, session, monitor, workspace, animation, gesture, device and legacy binding edits. Separate Lua bindings and other structured draft groups need their legacy codecs; save the project to retain them.");return;
             }
             let generation=s.generation;drop(s);let state=state.clone();let win=window.downgrade();let button=button.downgrade();if let Some(button)=button.upgrade(){button.set_sensitive(false);}
             background(move||doc.edited_copy(&snapshot),move|result|{
@@ -1617,7 +1637,7 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     let root = super::test_support::TempDir::new("legacy-session-ui");
     let original = root.path().join("original.conf");
     let marker = root.path().join("never-run");
-    let source=format!("# retained café\r\n$mainMod = SUPER\r\n$terminal = old application\r\nenv = GTK_THEME,Nord # environment\r\nexec-once = touch {} # startup\r\npermission = ^/usr/bin/application$,screencopy,ask # policy\r\ngeneral:border_size = 2\r\nworkspace = name:work,monitor:DP-1,border:false,layoutopt:orientation:left # workspace\r\nworkspace = 2,persistent:true,on-created-empty:never-run-workspace # hook\r\nmonitor = DP-1,2560x1440@144,0x0,1 # display\r\nmonitor = HDMI-A-1,disable\r\nmonitor = DP-1,transform,1 # rotation\r\nmonitor = DP-1,addreserved,10,20,30,40 # reserved\r\nmonitorv2 {{ # HDR block\r\n output = DP-2\r\n supports_hdr = 1 # keep HDR\r\n max_luminance = 1000 # luminance\r\n}} # close HDR\r\nanimations {{ # motion\r\n bezier = ease,0.1,0.2,0.3,0.4 # curve\r\n animation = windows,1,8,ease,popin # branch\r\n animation = windowsOut,0,ignored,missing,ignored # off\r\n}} # close motion\r\ngesturep = 3,horizontal,mod:SUPER,scale:2,workspace # swipe\r\ngesture = 4,pinch,cursorZoom,2.5,mult # zoom\r\ngesture = 3,up,dispatcher,exec,old gesture app # gesture command\r\nbind = $mainMod,Return,exec,$terminal # shortcut\r\nsubmap = resize\r\nbind = SUPER,catchall,submap,reset\r\nsubmap = reset\r\nunbind = SUPER,Q\r\nexec = $unresolved\r\nsource = missing.conf\r\n",marker.display());
+    let source=format!("# retained café\r\n$mainMod = SUPER\r\n$terminal = old application\r\nenv = GTK_THEME,Nord # environment\r\nexec-once = touch {} # startup\r\npermission = ^/usr/bin/application$,screencopy,ask # policy\r\ngeneral:border_size = 2\r\nworkspace = name:work,monitor:DP-1,border:false,layoutopt:orientation:left # workspace\r\nworkspace = 2,persistent:true,on-created-empty:never-run-workspace # hook\r\nmonitor = DP-1,2560x1440@144,0x0,1 # display\r\nmonitor = HDMI-A-1,disable\r\nmonitor = DP-1,transform,1 # rotation\r\nmonitor = DP-1,addreserved,10,20,30,40 # reserved\r\nmonitorv2 {{ # HDR block\r\n output = DP-2\r\n supports_hdr = 1 # keep HDR\r\n max_luminance = 1000 # luminance\r\n}} # close HDR\r\nanimations {{ # motion\r\n bezier = ease,0.1,0.2,0.3,0.4 # curve\r\n animation = windows,1,8,ease,popin # branch\r\n animation = windowsOut,0,ignored,missing,ignored # off\r\n}} # close motion\r\ndevice {{ # pointer block\r\n name = fixture-pointer\r\n sensitivity = 0.2 # sensitivity\r\n scroll_factor = -1 # native sentinel\r\n enabled = 2 # raw flag\r\n repeat_rate = 25 # rate\r\n tap-to-click = yes # native alias\r\n}} # close pointer\r\ndevice {{\r\n name = fixture-tablet\r\n pressure_range_min = -2 # native pressure\r\n region_size = -1 2 # native region\r\n}}\r\ngesturep = 3,horizontal,mod:SUPER,scale:2,workspace # swipe\r\ngesture = 4,pinch,cursorZoom,2.5,mult # zoom\r\ngesture = 3,up,dispatcher,exec,old gesture app # gesture command\r\nbind = $mainMod,Return,exec,$terminal # shortcut\r\nsubmap = resize\r\nbind = SUPER,catchall,submap,reset\r\nsubmap = reset\r\nunbind = SUPER,Q\r\nexec = $unresolved\r\nsource = missing.conf\r\n",marker.display());
     std::fs::write(&original, &source).unwrap();
     let catalogue = hyprland_editor_core::catalogue();
     let imported = read_import(original.clone(), catalogue.clone(), BASELINE.into()).unwrap();
@@ -1636,6 +1656,8 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     assert_eq!(imported.animations.declarations.len(), 3);
     assert_eq!(parsed.gestures.draft, imported.gestures);
     assert_eq!(imported.gestures.declarations.len(), 3);
+    assert_eq!(parsed.devices.devices, imported.devices);
+    assert_eq!(imported.devices.len(), 2);
     assert_eq!(imported.workspace_rules.len(), 2);
     assert_eq!(parsed.bindings.draft.entries.len(), 5);
     assert_eq!(
@@ -2155,6 +2177,114 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     }
     gesture_editor.destroy();
     let expected_gestures = state.borrow().gestures[BASELINE].clone();
+    let device_editor = super::devices::show(parent, &state, &status, None);
+    let pick: gtk::DropDown = named(device_editor.upcast_ref(), "device-rule");
+    assert_eq!(pick.selected(), 0);
+    let field: gtk::DropDown = named(device_editor.upcast_ref(), "device-field");
+    let fields = hyprland_editor_core::device::catalogue(BASELINE);
+    assert_eq!(field.model().unwrap().n_items(), 47);
+    let index = |key: &str| fields.iter().position(|s| s.lua_key == key).unwrap() as u32;
+    field.set_selected(index("scroll_factor"));
+    let number: gtk::Entry = named(device_editor.upcast_ref(), "device-native-number");
+    assert_eq!(number.text(), "-1");
+    number.set_text("invalid");
+    field.set_selected(index("repeat_rate"));
+    assert_eq!(field.selected(), index("scroll_factor"));
+    assert_eq!(number.text(), "invalid");
+    assert_eq!(
+        state.borrow().devices[BASELINE][0].fields["scroll_factor"],
+        Value::Float(-1.)
+    );
+    number.set_text("2.5");
+    field.set_selected(index("repeat_rate"));
+    assert_eq!(
+        state.borrow().devices[BASELINE][0].fields["scroll_factor"],
+        Value::Float(2.5)
+    );
+    named::<gtk::CheckButton>(device_editor.upcast_ref(), "device-native-value-mode")
+        .set_active(true);
+    named::<gtk::Entry>(device_editor.upcast_ref(), "device-native-number").set_text("500");
+    field.set_selected(index("enabled"));
+    assert_eq!(
+        state.borrow().devices[BASELINE][0].fields["repeat_rate"],
+        Value::Int(500)
+    );
+    assert!(
+        named::<gtk::CheckButton>(device_editor.upcast_ref(), "device-native-value-mode")
+            .is_active()
+    );
+    named::<gtk::Entry>(device_editor.upcast_ref(), "device-native-number").set_text("3");
+    button(device_editor.upcast_ref(), "Update Device Draft").emit_clicked();
+    assert_eq!(
+        state.borrow().devices[BASELINE][0].fields["enabled"],
+        Value::Int(3)
+    );
+    named::<gtk::Expander>(device_editor.upcast_ref(), "device-target-section").set_expanded(true);
+    let name: gtk::Entry = named(device_editor.upcast_ref(), "device-name");
+    name.set_text("");
+    pick.set_selected(1);
+    assert_eq!(pick.selected(), 0);
+    assert_eq!(name.text(), "");
+    name.set_text("renamed-pointer");
+    pick.set_selected(1);
+    assert_eq!(state.borrow().devices[BASELINE][0].name, "renamed-pointer");
+    field.set_selected(index("region_size"));
+    named::<gtk::Entry>(device_editor.upcast_ref(), "device-native-x").set_text("-2.5");
+    named::<gtk::Entry>(device_editor.upcast_ref(), "device-native-y").set_text("3.25");
+    field.set_selected(index("pressure_range_min"));
+    assert_eq!(
+        state.borrow().devices[BASELINE][1].fields["region_size"],
+        Value::Vec2([-2.5, 3.25])
+    );
+    named::<gtk::Entry>(device_editor.upcast_ref(), "device-native-number").set_text("-3");
+    button(device_editor.upcast_ref(), "Update Device Draft").emit_clicked();
+    assert_eq!(
+        state.borrow().devices[BASELINE][1].fields["pressure_range_min"],
+        Value::Float(-3.)
+    );
+    button(device_editor.upcast_ref(), "Duplicate").emit_clicked();
+    assert_eq!(state.borrow().devices[BASELINE].len(), 3);
+    button(device_editor.upcast_ref(), "Undo").emit_clicked();
+    assert_eq!(state.borrow().devices[BASELINE].len(), 2);
+    if let Some(path) = std::env::var_os("HYPRLAND_EDITOR_TEST_CAPTURE") {
+        pick.set_selected(0);
+        field.set_selected(index("enabled"));
+        named::<gtk::Expander>(device_editor.upcast_ref(), "device-target-section")
+            .set_expanded(false);
+        let (min, _, _, _) = device_editor
+            .content()
+            .unwrap()
+            .measure(gtk::Orientation::Horizontal, -1);
+        assert!(min <= 350, "Native device form requires {min}px");
+        device_editor.set_default_size(360, 760);
+        for _ in 0..10 {
+            let context = gtk::glib::MainContext::default();
+            while context.pending() {
+                context.iteration(false);
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        assert!(
+            device_editor.width() <= 360,
+            "Device width {}",
+            device_editor.width()
+        );
+        let paintable = gtk::WidgetPaintable::new(Some(&device_editor));
+        let snap = gtk::Snapshot::new();
+        paintable.snapshot(
+            &snap,
+            device_editor.width() as f64,
+            device_editor.height() as f64,
+        );
+        device_editor
+            .renderer()
+            .unwrap()
+            .render_texture(snap.to_node().unwrap(), None)
+            .save_to_png(format!("{}.legacy-devices.png", path.to_string_lossy()))
+            .unwrap();
+    }
+    device_editor.destroy();
+    let expected_devices = state.borrow().devices[BASELINE].clone();
     let expected = state.borrow().session[BASELINE].clone();
     let snapshot = captured_workspace(&state.borrow()).unwrap();
     assert!(snapshot.legacy_session_origin_sha256.is_some());
@@ -2164,6 +2294,7 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     assert!(snapshot.legacy_workspace_schema_sha256.is_some());
     assert!(snapshot.legacy_animation_schema_sha256.is_some());
     assert!(snapshot.legacy_gesture_schema_sha256.is_some());
+    assert!(snapshot.legacy_device_schema_sha256.is_some());
     let expected_monitors = state.borrow().monitors[BASELINE].clone();
     let saved = root.path().join("current.hye");
     std::fs::write(&saved, snapshot.to_json(&catalogue).unwrap()).unwrap();
@@ -2174,6 +2305,7 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     assert_eq!(imported.workspace_rules, expected_workspaces);
     assert_eq!(imported.animations, expected_animations);
     assert_eq!(imported.gestures, expected_gestures);
+    assert_eq!(imported.devices, expected_devices);
     assert!(imported.saved_json);
     let copy = gtk::Button::new();
     connect_source_copy(&copy, parent, &state);
@@ -2246,6 +2378,18 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
         )
         .unwrap(),
         hyprland_editor_core::legacy_gesture::export(&expected_gestures).unwrap()
+    );
+    assert!(output.contains("repeat_rate = 500 # rate\r\n"));
+    assert!(output.contains("enabled = 3 # raw flag\r\n"));
+    assert!(output.contains("tap-to-click = yes # native alias\r\n"));
+    assert_eq!(
+        hyprland_editor_core::legacy_device::export(
+            &hyprland_editor_core::legacy_device::inspect(&output)
+                .unwrap()
+                .devices
+        )
+        .unwrap(),
+        hyprland_editor_core::legacy_device::export(&expected_devices).unwrap()
     );
     assert!(output.contains("# startup\r\n"));
     assert!(output.contains("exec = $unresolved\r\n"));
@@ -2490,6 +2634,29 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
         reopened.gestures.declarations[3].id
     );
     assert!(!reopened.gestures.declarations[3].legacy);
+    assert!(!reopened.saved_json);
+    assert_eq!(std::fs::read(path).unwrap(), bytes);
+    let mut empty = snapshot.clone();
+    empty.devices.clear();
+    let path = root.path().join("empty-devices.hye");
+    std::fs::write(&path, empty.to_json(&catalogue).unwrap()).unwrap();
+    let reopened = read_import(path, catalogue.clone(), BASELINE.into()).unwrap();
+    assert!(reopened.devices.is_empty());
+    assert!(reopened.saved_json);
+    let mut old_devices = snapshot.clone();
+    old_devices.legacy_device_origin_sha256 = None;
+    old_devices.legacy_device_schema_sha256 = None;
+    old_devices.devices = vec![hyprland_editor_core::device::Spec::new(
+        "legacy-device-0",
+        "old-separate",
+    )];
+    let path = root.path().join("old-devices.hye");
+    let bytes = old_devices.to_json(&catalogue).unwrap();
+    std::fs::write(&path, &bytes).unwrap();
+    let reopened = read_import(path.clone(), catalogue.clone(), BASELINE.into()).unwrap();
+    assert_eq!(reopened.devices.len(), 3);
+    assert_ne!(reopened.devices[0].id, reopened.devices[2].id);
+    assert!(!reopened.devices[2].legacy);
     assert!(!reopened.saved_json);
     assert_eq!(std::fs::read(path).unwrap(), bytes);
     let mut old = snapshot;

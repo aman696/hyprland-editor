@@ -15,6 +15,7 @@ use std::{
     rc::Rc,
     sync::Arc,
 };
+mod native;
 pub(super) type Getter = Box<dyn Fn() -> Result<BTreeMap<String, Value>, String>>;
 fn selected_text(spec: &Spec, key: &str, default: &str) -> String {
     match spec.fields.get(key) {
@@ -402,6 +403,19 @@ fn options(panel: &gtk::Box, text: &str, registry: Arc<Registry>) -> Getter {
     })
 }
 pub(super) fn form(
+    setting: &Setting,
+    spec: &Spec,
+    panel: &gtk::Box,
+    window: &adw::Window,
+    registry: Option<Arc<Registry>>,
+) -> Getter {
+    if spec.legacy {
+        native::form(setting, spec, panel, window, registry)
+    } else {
+        guided(setting, spec, panel, window, registry)
+    }
+}
+fn guided(
     setting: &Setting,
     spec: &Spec,
     panel: &gtk::Box,
