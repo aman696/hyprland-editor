@@ -90,6 +90,10 @@ pub struct Workspace {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub legacy_gesture_origin_sha256: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy_rule_origin_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy_rule_schema_sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub legacy_device_origin_sha256: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub legacy_device_schema_sha256: Option<String>,
@@ -143,6 +147,8 @@ impl Workspace {
             legacy_animation_origin_sha256: None,
             legacy_gesture_origin_sha256: None,
             legacy_device_origin_sha256: None,
+            legacy_rule_origin_sha256: None,
+            legacy_rule_schema_sha256: None,
             legacy_device_schema_sha256: None,
             legacy_gesture_schema_sha256: None,
             legacy_animation_schema_sha256: None,
@@ -329,6 +335,24 @@ impl Workspace {
             && self.legacy_device_origin_sha256.is_none()
         {
             return Err("Native device drafts require captured source and codec identities".into());
+        }
+        if let Some(hash) = &self.legacy_rule_origin_sha256 {
+            if self
+                .root()
+                .is_none_or(|r| r.language != SourceLanguage::Legacy || r.origin.sha256 != *hash)
+                || self.source_graph.is_some()
+                || self.draft.version != crate::BASELINE
+                || self.legacy_rule_schema_sha256.as_deref()
+                    != Some(&crate::legacy_rule::schema_hash())
+            {
+                return Err("Native rule marker does not match captured source and codec".into());
+            }
+        }
+        if (self.legacy_rule_schema_sha256.is_some()
+            || self.rules.iter().any(|r| r.legacy.is_some()))
+            && self.legacy_rule_origin_sha256.is_none()
+        {
+            return Err("Native rule drafts require captured source and codec identities".into());
         }
         self.draft.validate(catalogue)?;
         self.animations.validate(&self.draft.version)?;

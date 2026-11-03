@@ -14,6 +14,35 @@
   },
   "foundations": [
     {
+      "area": "graphical native window and layer rules with exact string values and ordered inline effects",
+      "code": [
+        "crates/editor-core/src/legacy_rule.rs",
+        "crates/editor-core/src/rule.rs",
+        "crates/editor-core/src/legacy.rs",
+        "crates/editor-core/src/workspace.rs",
+        "crates/editor-app/src/rules.rs",
+        "crates/editor-app/src/rules/native.rs",
+        "crates/editor-app/src/legacy_source.rs",
+        "crates/editor-app/src/worker.rs",
+        "crates/editor-app/src/workflow.rs",
+        "crates/editor-projection/src/lib.rs",
+        "crates/editor-projection/src/wire.rs",
+        "data/legacy-rules.json"
+      ],
+      "test_references": [
+        "all_native_rule_registrations_keep_literal_values_and_separate_lua_semantics",
+        "native_block_fields_keep_comments_duplicates_enable_presence_and_empty_values",
+        "inline_effect_duplicates_keep_order_and_refuse_implicit_block_collapse",
+        "source_copy_reorders_converts_adds_removes_and_rechecks_all_nine_groups",
+        "unsupported_rule_syntax_is_retained_and_unresolved_detail_is_bounded",
+        "native_rule_source_markers_preserve_empty_targets_and_refuse_missing_provenance",
+        "native_rules_omit_names_conditions_effect_values_and_output_payloads",
+        "workflow::test_legacy_session_editing",
+        "native_forms_and_draft_workflow"
+      ],
+      "limits": "literal flat native windowrule/layerrule blocks and top-level inline declarations; all57 baseline window effects/10 layer effects/18 registered match properties compared with primary source, native string values distinct from Lua, ordered repeated inline effects with last-occurrence editing and all-occurrence unset, native keyed-block last-field patches preserve duplicates/comments/line endings; explicit named-block/inline choice refuses duplicate-effect collapse and retains integer enable presence with pinned window-zero/layer-nonzero suppression distinction. Guided forms preserve untouched spelling and expose raw native text; all-nine-group combined source copy/reparse, captured source/codec markers preserve deliberate empty targets and older separate Lua drafts with collision-free identities; payload-free preview omission and19-schema transport,119-input model/36 reviewed predecessors retain captured inputs/compiler observations. Raw values are not certified runtime accepted; no old windowrulev2 translation/general variables/includes/dynamic/qualified syntax, effective named-block merging/order/matcher/effect or plugin conformance, full geometry/selectors/styles, actual isolated preview/live apply/recovery or full resource/accessibility/security/release acceptance"
+    },
+    {
       "area": "graphical native device blocks with all registered fields and pending-form retention",
       "code": [
         "crates/editor-core/src/legacy_device.rs",

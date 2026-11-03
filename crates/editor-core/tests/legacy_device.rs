@@ -94,6 +94,7 @@ fn native_device_order_duplicates_removal_and_all_eight_source_groups_reparse_to
                 animations: &doc.animations.draft,
                 gestures: &doc.gestures.draft,
                 devices: &target,
+                rules: &doc.rules.rules,
             },
             &catalogue(),
         )

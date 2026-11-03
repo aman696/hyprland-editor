@@ -17,6 +17,7 @@ mod legacy_blocks;
 pub mod legacy_device;
 pub mod legacy_gesture;
 pub mod legacy_monitor;
+pub mod legacy_rule;
 pub mod legacy_session;
 mod legacy_syntax;
 pub mod legacy_workspace;

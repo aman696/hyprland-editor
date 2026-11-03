@@ -108,7 +108,10 @@ const LEGACY_GESTURE_MODEL: &str =
 const LEGACY_DEVICE_FROM: &str = "90e008915477e0dda0d09f99ea73459bc42615127e9ea31b0cc81f4248e95b53";
 const LEGACY_DEVICE_MODEL: &str =
     include_str!("../../../data/migrations/graph-model-before-legacy-devices.json");
-const TO: &str = "3200ca91024c2d8a05afeb7dd30f1a54b4b4a2441a57deadb58b6eed90005d73";
+const LEGACY_RULE_FROM: &str = "3200ca91024c2d8a05afeb7dd30f1a54b4b4a2441a57deadb58b6eed90005d73";
+const LEGACY_RULE_MODEL: &str =
+    include_str!("../../../data/migrations/graph-model-before-legacy-rules.json");
+const TO: &str = "b530faf1d5b8b0d528cec402c96ad44224d8f0880a04a4e42a635ccf725806e4";
 const OLD: &str = include_str!("../../../data/migrations/graph-model-before-projection.json");
 const FROM_PROJECTION: &str = "046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371";
 const PROJECTION: &str = include_str!("../../../data/migrations/graph-model-projection.json");
@@ -1629,9 +1632,9 @@ fn before_legacy_device_transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
-fn transition(from: &str) -> Result<(), String> {
+fn before_legacy_rule_transition(from: &str) -> Result<(), String> {
     if lua::source_hash(LEGACY_DEVICE_MODEL) != LEGACY_DEVICE_FROM
-        || lua::source_hash(CURRENT) != TO
+        || lua::source_hash(LEGACY_RULE_MODEL) != LEGACY_RULE_FROM
     {
         return Err("No reviewed native device transition to this model is available".into());
     }
@@ -1640,7 +1643,8 @@ fn transition(from: &str) -> Result<(), String> {
     }
     let old: serde_json::Value =
         serde_json::from_str(LEGACY_DEVICE_MODEL).map_err(|e| e.to_string())?;
-    let new: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let new: serde_json::Value =
+        serde_json::from_str(LEGACY_RULE_MODEL).map_err(|e| e.to_string())?;
     let old = old["inputs"]
         .as_object()
         .ok_or("Invalid preceding device model")?;
@@ -1674,6 +1678,50 @@ fn transition(from: &str) -> Result<(), String> {
             ]
     {
         return Err("Native devices differ from their reviewed shared block scanner, native value/provenance codec, additive markers and restricted worker; captured inputs and compiler observations must remain exact".into());
+    }
+    Ok(())
+}
+fn transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(LEGACY_RULE_MODEL) != LEGACY_RULE_FROM || lua::source_hash(CURRENT) != TO {
+        return Err("No reviewed native rule transition to this model is available".into());
+    }
+    if from != LEGACY_RULE_FROM {
+        before_legacy_rule_transition(from)?;
+    }
+    let old: serde_json::Value =
+        serde_json::from_str(LEGACY_RULE_MODEL).map_err(|e| e.to_string())?;
+    let new: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let old = old["inputs"]
+        .as_object()
+        .ok_or("Invalid preceding rule model")?;
+    let new = new["inputs"].as_object().ok_or("Invalid rule model")?;
+    let added: Vec<_> = new
+        .keys()
+        .filter(|k| !old.contains_key(*k))
+        .map(String::as_str)
+        .collect();
+    let changed: Vec<_> = old
+        .keys()
+        .filter(|k| new.get(*k) != Some(&old[*k]))
+        .map(String::as_str)
+        .collect();
+    if old.len() != 117
+        || new.len() != 119
+        || added
+            != [
+                "crates/editor-core/src/legacy_rule.rs",
+                "data/legacy-rules.json",
+            ]
+        || changed
+            != [
+                "crates/editor-app/src/worker.rs",
+                "crates/editor-core/src/legacy.rs",
+                "crates/editor-core/src/lib.rs",
+                "crates/editor-core/src/rule.rs",
+                "crates/editor-core/src/workspace.rs",
+            ]
+    {
+        return Err("Native rules differ from reviewed native string/order provenance, combined source codec, additive markers and restricted worker; captured inputs and compiler observations must remain exact".into());
     }
     Ok(())
 }
@@ -1711,6 +1759,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != MONITOR_BLOCK_FROM
         && previous != LEGACY_BINDING_FROM
         && previous != LEGACY_DEVICE_FROM
+        && previous != LEGACY_RULE_FROM
         && previous != LEGACY_GESTURE_FROM
         && previous != LEGACY_ANIMATION_FROM
         && previous != LEGACY_WORKSPACE_FROM
@@ -1733,6 +1782,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != MONITOR_BLOCK_FROM
         && previous != LEGACY_BINDING_FROM
         && previous != LEGACY_DEVICE_FROM
+        && previous != LEGACY_RULE_FROM
         && previous != LEGACY_GESTURE_FROM
         && previous != LEGACY_ANIMATION_FROM
         && previous != LEGACY_WORKSPACE_FROM
@@ -1770,6 +1820,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != MONITOR_BLOCK_FROM
         && previous != LEGACY_BINDING_FROM
         && previous != LEGACY_DEVICE_FROM
+        && previous != LEGACY_RULE_FROM
         && previous != LEGACY_GESTURE_FROM
         && previous != LEGACY_ANIMATION_FROM
         && previous != LEGACY_WORKSPACE_FROM
@@ -1899,6 +1950,7 @@ mod tests {
         transition(LEGACY_ANIMATION_FROM).unwrap();
         transition(LEGACY_GESTURE_FROM).unwrap();
         transition(LEGACY_DEVICE_FROM).unwrap();
+        transition(LEGACY_RULE_FROM).unwrap();
         assert!(transition(&"0".repeat(64)).is_err());
         assert_ne!(FROM, TO);
         assert_eq!(lua::source_hash(CURRENT), TO);

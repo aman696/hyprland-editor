@@ -46,3 +46,6 @@ Literal native gestures now populate matching/action controls and join the combi
 
 
 **Edit Devices** now opens literal flat `device` blocks with all 47 registered fields and exact native values alongside guided controls. Native aliases, explicit unset/duplicate semantics and comments are retained. Device edits join the combined eight-group source review, with private save/reopen and intentional empty-target markers. Unknown/dynamic blocks remain unresolved, and repeated names do not establish effective hardware state. See [native device editing](device-editor.md#native-device-blocks).
+
+
+**Edit Window / Layer Rules** now projects literal native inline declarations and flat named blocks into the rule editor. All baseline registered effects and match fields remain available, with native strings/order and version-specific integer enable handling. Rule edits join the combined nine-group source review. Unknown syntax stays inert. See [native rules](rule-editor.md#native-configuration-rules).

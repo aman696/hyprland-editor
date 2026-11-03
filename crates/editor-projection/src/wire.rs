@@ -2,7 +2,7 @@
 //! authenticity or execution safety. A decoded result authorizes no launch.
 use super::*;
 pub const MAX_RESULT_BYTES: usize = 12 * MAX_DOCUMENT_BYTES;
-const MAX_SCHEMA_PINS: usize = 18;
+const MAX_SCHEMA_PINS: usize = 19;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]

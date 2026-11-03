@@ -151,6 +151,22 @@ fn read_import_for_review(
                     );
                 }
             }
+            if workspace.legacy_rule_origin_sha256.is_none() {
+                let mut rebuilt = doc.rules.rules.clone();
+                for (n, rule) in rebuilt.iter_mut().enumerate() {
+                    let mut serial = n;
+                    while workspace.rules.iter().any(|old| old.id == rule.id) {
+                        rule.id = format!("rebuilt-rule-{serial}");
+                        serial += 1;
+                    }
+                }
+                rebuilt.append(&mut workspace.rules);
+                hyprland_editor_core::rule::validate(&rebuilt, &workspace.draft.version)?;
+                workspace.rules = rebuilt;
+                if !doc.rules.rules.is_empty() {
+                    legacy_projection_changed = true;
+                }
+            }
             if workspace.legacy_device_origin_sha256.is_none() {
                 let mut rebuilt = doc.devices.devices.clone();
                 for (n, spec) in rebuilt.iter_mut().enumerate() {
@@ -293,7 +309,7 @@ fn read_import_for_review(
     };
     match path.extension().and_then(|s|s.to_str()) {
         Some("json")=>Draft::from_json(&captured.content,&catalogue).map(|draft|Imported{migration:None,graph:None,draft,source:None,legacy:None,origin:None,monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),session:Default::default(),message:"Validated value-only draft loaded".into(),saved_json:true}),
-        Some("conf")=>super::legacy_source::Document::new(captured.content,&catalogue).map(|doc|Imported{migration:None,graph:None,message:format!("Retained {} scalar overrides, {} session entries and {} monitor declarations and {} binding operations and {} workspace declarations and {} animation declarations and {} gestures and {} devices; {} lines unresolved; {} repeated keys. Known local shortcut values are projected; includes and other variable uses remain unresolved. Review Source Copy includes supported scalar, session, monitor, workspace, animation, gesture, device and binding edits.",doc.report.draft.values.len(),doc.session.draft.entries.len(),doc.monitors.rules.len(),doc.bindings.draft.entries.len(),doc.workspaces.rules.len(),doc.animations.draft.declarations.len(),doc.gestures.draft.declarations.len(),doc.devices.devices.len(),doc.report.skipped.len(),doc.report.duplicate_keys.len()),draft:doc.report.draft.clone(),session:doc.session.draft.clone(),monitors:doc.monitors.rules.clone(),source:None,origin:Some(captured.identity),devices:doc.devices.devices.clone(),bindings:hyprland_editor_core::binding::Draft{legacy:Some(doc.bindings.draft.clone()),..Default::default()},workspace_rules:doc.workspaces.rules.clone(),rules:vec![],animations:doc.animations.draft.clone(),gestures:doc.gestures.draft.clone(),saved_json:false,legacy:Some(doc)}),
+        Some("conf")=>super::legacy_source::Document::new(captured.content,&catalogue).map(|doc|Imported{migration:None,graph:None,message:format!("Retained {} scalar overrides, {} session entries and {} monitor declarations and {} binding operations and {} workspace declarations and {} animation declarations and {} gestures and {} devices; {} lines unresolved; {} repeated keys. Known local shortcut values are projected; includes and other variable uses remain unresolved. Review Source Copy includes supported scalar, session, monitor, workspace, animation, gesture, device, rule and binding edits.",doc.report.draft.values.len(),doc.session.draft.entries.len(),doc.monitors.rules.len(),doc.bindings.draft.entries.len(),doc.workspaces.rules.len(),doc.animations.draft.declarations.len(),doc.gestures.draft.declarations.len(),doc.devices.devices.len(),doc.report.skipped.len(),doc.report.duplicate_keys.len()),draft:doc.report.draft.clone(),session:doc.session.draft.clone(),monitors:doc.monitors.rules.clone(),source:None,origin:Some(captured.identity),devices:doc.devices.devices.clone(),bindings:hyprland_editor_core::binding::Draft{legacy:Some(doc.bindings.draft.clone()),..Default::default()},workspace_rules:doc.workspaces.rules.clone(),rules:doc.rules.rules.clone(),animations:doc.animations.draft.clone(),gestures:doc.gestures.draft.clone(),saved_json:false,legacy:Some(doc)}),
         Some("lua")=>{
             let doc=parse_source(captured.content,version,&catalogue)?;
             let mut message=format!("Imported {} scalar declarations, {} monitor rules and {} device rules; {} diagnostics. Effective values are not inferred by executing Lua.",doc.report.draft.values.len(),doc.report.monitors.len(),doc.report.devices.len(),doc.report.diagnostics.len());
@@ -401,6 +417,9 @@ pub(super) fn captured_workspace(s: &super::State) -> Result<Workspace, String> 
                 hyprland_editor_core::legacy_binding::schema_hash,
                 hyprland_editor_core::legacy_binding::draft_schema_hash,
             ));
+        snapshot.legacy_rule_origin_sha256 =
+            Some(hyprland_editor_core::lua::source_hash(&doc.content));
+        snapshot.legacy_rule_schema_sha256 = Some(hyprland_editor_core::legacy_rule::schema_hash());
         snapshot.legacy_device_origin_sha256 =
             Some(hyprland_editor_core::lua::source_hash(&doc.content));
         snapshot.legacy_device_schema_sha256 =
@@ -664,7 +683,7 @@ pub(super) fn connect_source_copy(
         if s.source_graphs.contains_key(&s.draft.version) {drop(s);super::project_copy::show(&window,&state);return;}
         if let Some(doc)=s.legacy_sources.get(&s.draft.version).cloned(){
             let snapshot=match captured_workspace(&s){Ok(snapshot)=>snapshot,Err(error)=>{drop(s);notice(&window,"Cannot prepare legacy copy",&error);return;}};
-            if snapshot.devices.iter().any(|d|!d.legacy) || (!snapshot.bindings.binds.is_empty() || !snapshot.bindings.submaps.is_empty() || !snapshot.bindings.order.is_empty()) || snapshot.workspace_rules.iter().any(|r| !r.legacy) || !snapshot.rules.is_empty() || snapshot.animations.declarations.iter().any(|d|!d.legacy) || snapshot.gestures.declarations.iter().any(|s|!s.legacy) {
+            if snapshot.devices.iter().any(|d|!d.legacy) || (!snapshot.bindings.binds.is_empty() || !snapshot.bindings.submaps.is_empty() || !snapshot.bindings.order.is_empty()) || snapshot.workspace_rules.iter().any(|r| !r.legacy) || snapshot.rules.iter().any(|r|r.legacy.is_none()) || snapshot.animations.declarations.iter().any(|d|!d.legacy) || snapshot.gestures.declarations.iter().any(|s|!s.legacy) {
                 drop(s);notice(&window,"Structured legacy export pending","This source copy includes supported scalar, session, monitor, workspace, animation, gesture, device and legacy binding edits. Separate Lua bindings and other structured draft groups need their legacy codecs; save the project to retain them.");return;
             }
             let generation=s.generation;drop(s);let state=state.clone();let win=window.downgrade();let button=button.downgrade();if let Some(button)=button.upgrade(){button.set_sensitive(false);}
@@ -1637,7 +1656,7 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     let root = super::test_support::TempDir::new("legacy-session-ui");
     let original = root.path().join("original.conf");
     let marker = root.path().join("never-run");
-    let source=format!("# retained café\r\n$mainMod = SUPER\r\n$terminal = old application\r\nenv = GTK_THEME,Nord # environment\r\nexec-once = touch {} # startup\r\npermission = ^/usr/bin/application$,screencopy,ask # policy\r\ngeneral:border_size = 2\r\nworkspace = name:work,monitor:DP-1,border:false,layoutopt:orientation:left # workspace\r\nworkspace = 2,persistent:true,on-created-empty:never-run-workspace # hook\r\nmonitor = DP-1,2560x1440@144,0x0,1 # display\r\nmonitor = HDMI-A-1,disable\r\nmonitor = DP-1,transform,1 # rotation\r\nmonitor = DP-1,addreserved,10,20,30,40 # reserved\r\nmonitorv2 {{ # HDR block\r\n output = DP-2\r\n supports_hdr = 1 # keep HDR\r\n max_luminance = 1000 # luminance\r\n}} # close HDR\r\nanimations {{ # motion\r\n bezier = ease,0.1,0.2,0.3,0.4 # curve\r\n animation = windows,1,8,ease,popin # branch\r\n animation = windowsOut,0,ignored,missing,ignored # off\r\n}} # close motion\r\ndevice {{ # pointer block\r\n name = fixture-pointer\r\n sensitivity = 0.2 # sensitivity\r\n scroll_factor = -1 # native sentinel\r\n enabled = 2 # raw flag\r\n repeat_rate = 25 # rate\r\n tap-to-click = yes # native alias\r\n}} # close pointer\r\ndevice {{\r\n name = fixture-tablet\r\n pressure_range_min = -2 # native pressure\r\n region_size = -1 2 # native region\r\n}}\r\ngesturep = 3,horizontal,mod:SUPER,scale:2,workspace # swipe\r\ngesture = 4,pinch,cursorZoom,2.5,mult # zoom\r\ngesture = 3,up,dispatcher,exec,old gesture app # gesture command\r\nbind = $mainMod,Return,exec,$terminal # shortcut\r\nsubmap = resize\r\nbind = SUPER,catchall,submap,reset\r\nsubmap = reset\r\nunbind = SUPER,Q\r\nexec = $unresolved\r\nsource = missing.conf\r\n",marker.display());
+    let source=format!("# retained café\r\n$mainMod = SUPER\r\n$terminal = old application\r\nenv = GTK_THEME,Nord # environment\r\nexec-once = touch {} # startup\r\npermission = ^/usr/bin/application$,screencopy,ask # policy\r\ngeneral:border_size = 2\r\nworkspace = name:work,monitor:DP-1,border:false,layoutopt:orientation:left # workspace\r\nworkspace = 2,persistent:true,on-created-empty:never-run-workspace # hook\r\nmonitor = DP-1,2560x1440@144,0x0,1 # display\r\nmonitor = HDMI-A-1,disable\r\nmonitor = DP-1,transform,1 # rotation\r\nmonitor = DP-1,addreserved,10,20,30,40 # reserved\r\nmonitorv2 {{ # HDR block\r\n output = DP-2\r\n supports_hdr = 1 # keep HDR\r\n max_luminance = 1000 # luminance\r\n}} # close HDR\r\nanimations {{ # motion\r\n bezier = ease,0.1,0.2,0.3,0.4 # curve\r\n animation = windows,1,8,ease,popin # branch\r\n animation = windowsOut,0,ignored,missing,ignored # off\r\n}} # close motion\r\ndevice {{ # pointer block\r\n name = fixture-pointer\r\n sensitivity = 0.2 # sensitivity\r\n scroll_factor = -1 # native sentinel\r\n enabled = 2 # raw flag\r\n repeat_rate = 25 # rate\r\n tap-to-click = yes # native alias\r\n}} # close pointer\r\ndevice {{\r\n name = fixture-tablet\r\n pressure_range_min = -2 # native pressure\r\n region_size = -1 2 # native region\r\n}}\r\nwindowrule {{ # browser rule\r\n name = fixture-browser\r\n match:class = ^firefox$ # class\r\n opacity = 0.9 override # alpha\r\n float = yes\r\n}}\r\nlayerrule {{ # layer rule\r\n name = fixture-panel\r\n match:namespace = ^waybar$\r\n enable = 1 # layer disable\r\n blur = on\r\n}}\r\nwindowrule = match:class ^foot$, tag +a, tag +b # ordered effects\r\ngesturep = 3,horizontal,mod:SUPER,scale:2,workspace # swipe\r\ngesture = 4,pinch,cursorZoom,2.5,mult # zoom\r\ngesture = 3,up,dispatcher,exec,old gesture app # gesture command\r\nbind = $mainMod,Return,exec,$terminal # shortcut\r\nsubmap = resize\r\nbind = SUPER,catchall,submap,reset\r\nsubmap = reset\r\nunbind = SUPER,Q\r\nexec = $unresolved\r\nsource = missing.conf\r\n",marker.display());
     std::fs::write(&original, &source).unwrap();
     let catalogue = hyprland_editor_core::catalogue();
     let imported = read_import(original.clone(), catalogue.clone(), BASELINE.into()).unwrap();
@@ -1658,6 +1677,8 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     assert_eq!(imported.gestures.declarations.len(), 3);
     assert_eq!(parsed.devices.devices, imported.devices);
     assert_eq!(imported.devices.len(), 2);
+    assert_eq!(parsed.rules.rules, imported.rules);
+    assert_eq!(imported.rules.len(), 3);
     assert_eq!(imported.workspace_rules.len(), 2);
     assert_eq!(parsed.bindings.draft.entries.len(), 5);
     assert_eq!(
@@ -2284,6 +2305,135 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
             .unwrap();
     }
     device_editor.destroy();
+    let rule_editor = super::rules::show(parent, &state, &status);
+    fn expand_rule_metadata(root: &gtk::Widget) {
+        for w in widgets(root) {
+            if let Ok(e) = w.downcast::<gtk::Expander>() {
+                if e.label().as_deref() == Some("Name and Enabled State") {
+                    e.set_expanded(true);
+                }
+            }
+        }
+    }
+    expand_rule_metadata(rule_editor.upcast_ref());
+
+    let pick: gtk::DropDown = named(rule_editor.upcast_ref(), "match-effect-rule");
+    pick.set_selected(0);
+    let section: gtk::DropDown = named(rule_editor.upcast_ref(), "rule-section");
+    section.set_selected(1);
+    let field: gtk::DropDown = named(rule_editor.upcast_ref(), "rule-field");
+    let window_fields =
+        hyprland_editor_core::rule::catalogue(hyprland_editor_core::rule::Kind::Window, BASELINE);
+    assert_eq!(field.model().unwrap().n_items(), 57);
+    field.set_selected(
+        window_fields
+            .iter()
+            .position(|f| f.lua_key == "opacity")
+            .unwrap() as u32,
+    );
+    named::<gtk::CheckButton>(rule_editor.upcast_ref(), "rule-native-text-mode").set_active(true);
+    named::<gtk::Entry>(rule_editor.upcast_ref(), "rule-native-text").set_text("0.5 0.25 override");
+    button(rule_editor.upcast_ref(), "Update Rule Draft").emit_clicked();
+    assert_eq!(
+        state.borrow().rules[BASELINE][0]
+            .effects
+            .iter()
+            .find(|e| e.key == "opacity")
+            .unwrap()
+            .value,
+        hyprland_editor_core::rule::EffectValue::Literal(Value::String("0.5 0.25 override".into()))
+    );
+    // Invalid named-block edits must stay visible across attempted rule navigation.
+    expand_rule_metadata(rule_editor.upcast_ref());
+    named::<gtk::Entry>(rule_editor.upcast_ref(), "rule-name").set_text("");
+    pick.set_selected(1);
+    assert_eq!(pick.selected(), 0);
+    assert_eq!(
+        named::<gtk::Entry>(rule_editor.upcast_ref(), "rule-name").text(),
+        ""
+    );
+    named::<gtk::Entry>(rule_editor.upcast_ref(), "rule-name").set_text("renamed-browser");
+    pick.set_selected(1);
+    assert_eq!(pick.selected(), 1);
+    assert_eq!(
+        state.borrow().rules[BASELINE][0].name.as_deref(),
+        Some("renamed-browser")
+    );
+    expand_rule_metadata(rule_editor.upcast_ref());
+    named::<gtk::DropDown>(rule_editor.upcast_ref(), "rule-native-enable-mode").set_selected(1);
+    button(rule_editor.upcast_ref(), "Update Rule Draft").emit_clicked();
+    assert_eq!(
+        state.borrow().rules[BASELINE][1]
+            .legacy
+            .as_ref()
+            .unwrap()
+            .enable,
+        Some(0)
+    );
+    pick.set_selected(2);
+    named::<gtk::DropDown>(rule_editor.upcast_ref(), "rule-section").set_selected(1);
+    named::<gtk::DropDown>(rule_editor.upcast_ref(), "rule-field").set_selected(
+        window_fields
+            .iter()
+            .position(|f| f.lua_key == "tag")
+            .unwrap() as u32,
+    );
+    named::<gtk::CheckButton>(rule_editor.upcast_ref(), "rule-native-text-mode").set_active(true);
+    named::<gtk::Entry>(rule_editor.upcast_ref(), "rule-native-text").set_text("+c");
+    button(rule_editor.upcast_ref(), "Update Rule Draft").emit_clicked();
+    assert_eq!(
+        state.borrow().rules[BASELINE][2].effects[0].value,
+        hyprland_editor_core::rule::EffectValue::Literal(Value::String("+a".into()))
+    );
+    assert_eq!(
+        state.borrow().rules[BASELINE][2].effects[1].value,
+        hyprland_editor_core::rule::EffectValue::Literal(Value::String("+c".into()))
+    );
+    button(rule_editor.upcast_ref(), "Duplicate").emit_clicked();
+    assert_eq!(state.borrow().rules[BASELINE].len(), 4);
+    button(rule_editor.upcast_ref(), "Undo").emit_clicked();
+    assert_eq!(state.borrow().rules[BASELINE].len(), 3);
+    if let Some(path) = std::env::var_os("HYPRLAND_EDITOR_TEST_CAPTURE") {
+        pick.set_selected(0);
+        named::<gtk::DropDown>(rule_editor.upcast_ref(), "rule-section").set_selected(1);
+        named::<gtk::DropDown>(rule_editor.upcast_ref(), "rule-field").set_selected(
+            window_fields
+                .iter()
+                .position(|f| f.lua_key == "opacity")
+                .unwrap() as u32,
+        );
+        named::<gtk::CheckButton>(rule_editor.upcast_ref(), "rule-native-text-mode")
+            .set_active(true);
+        let (min, _, _, _) = rule_editor
+            .content()
+            .unwrap()
+            .measure(gtk::Orientation::Horizontal, -1);
+        assert!(min <= 350, "Native rule requires {min}px");
+        rule_editor.set_default_size(360, 760);
+        for _ in 0..10 {
+            let c = gtk::glib::MainContext::default();
+            while c.pending() {
+                c.iteration(false);
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        assert!(rule_editor.width() <= 360);
+        let p = gtk::WidgetPaintable::new(Some(&rule_editor));
+        let snap = gtk::Snapshot::new();
+        p.snapshot(
+            &snap,
+            rule_editor.width() as f64,
+            rule_editor.height() as f64,
+        );
+        rule_editor
+            .renderer()
+            .unwrap()
+            .render_texture(snap.to_node().unwrap(), None)
+            .save_to_png(format!("{}.legacy-rules.png", path.to_string_lossy()))
+            .unwrap();
+    }
+    rule_editor.destroy();
+    let expected_rules = state.borrow().rules[BASELINE].clone();
     let expected_devices = state.borrow().devices[BASELINE].clone();
     let expected = state.borrow().session[BASELINE].clone();
     let snapshot = captured_workspace(&state.borrow()).unwrap();
@@ -2295,6 +2445,7 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     assert!(snapshot.legacy_animation_schema_sha256.is_some());
     assert!(snapshot.legacy_gesture_schema_sha256.is_some());
     assert!(snapshot.legacy_device_schema_sha256.is_some());
+    assert!(snapshot.legacy_rule_schema_sha256.is_some());
     let expected_monitors = state.borrow().monitors[BASELINE].clone();
     let saved = root.path().join("current.hye");
     std::fs::write(&saved, snapshot.to_json(&catalogue).unwrap()).unwrap();
@@ -2306,6 +2457,7 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     assert_eq!(imported.animations, expected_animations);
     assert_eq!(imported.gestures, expected_gestures);
     assert_eq!(imported.devices, expected_devices);
+    assert_eq!(imported.rules, expected_rules);
     assert!(imported.saved_json);
     let copy = gtk::Button::new();
     connect_source_copy(&copy, parent, &state);
@@ -2606,6 +2758,12 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     assert!(!reopened.animations.declarations[3].legacy);
     assert!(!reopened.saved_json);
     assert_eq!(std::fs::read(path).unwrap(), bytes);
+    assert!(hyprland_editor_core::rule::same_declarations(
+        &hyprland_editor_core::legacy_rule::inspect(&output)
+            .unwrap()
+            .rules,
+        &expected_rules
+    ));
     let mut empty = snapshot.clone();
     empty.gestures.declarations.clear();
     let path = root.path().join("empty-gestures.hye");
@@ -2657,6 +2815,29 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     assert_eq!(reopened.devices.len(), 3);
     assert_ne!(reopened.devices[0].id, reopened.devices[2].id);
     assert!(!reopened.devices[2].legacy);
+    assert!(!reopened.saved_json);
+    assert_eq!(std::fs::read(path).unwrap(), bytes);
+    let mut empty = snapshot.clone();
+    empty.rules.clear();
+    let path = root.path().join("empty-rules.hye");
+    std::fs::write(&path, empty.to_json(&catalogue).unwrap()).unwrap();
+    let reopened = read_import(path, catalogue.clone(), BASELINE.into()).unwrap();
+    assert!(reopened.rules.is_empty());
+    assert!(reopened.saved_json);
+    let mut old_rules = snapshot.clone();
+    old_rules.legacy_rule_origin_sha256 = None;
+    old_rules.legacy_rule_schema_sha256 = None;
+    old_rules.rules = vec![hyprland_editor_core::rule::Rule::new(
+        "legacy-rule-0",
+        hyprland_editor_core::rule::Kind::Window,
+    )];
+    let path = root.path().join("older-rules.hye");
+    let bytes = old_rules.to_json(&catalogue).unwrap();
+    std::fs::write(&path, &bytes).unwrap();
+    let reopened = read_import(path.clone(), catalogue.clone(), BASELINE.into()).unwrap();
+    assert_eq!(reopened.rules.len(), 4);
+    assert_ne!(reopened.rules[0].id, reopened.rules[3].id);
+    assert!(reopened.rules[3].legacy.is_none());
     assert!(!reopened.saved_json);
     assert_eq!(std::fs::read(path).unwrap(), bytes);
     let mut old = snapshot;

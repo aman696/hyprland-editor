@@ -355,6 +355,10 @@ pub fn compile(workspace: &Workspace, scenario: &Scenario) -> Result<Projection,
         builder.append(&projected.export_lua(version)?)?;
     }
     for original in &workspace.rules {
+        if original.legacy.is_some() {
+            builder.record(format!("rule/{}", original.id), Fidelity::Unsupported, "Native rule requires explicit preview conversion; predicate/effect/name payloads omitted")?;
+            continue;
+        }
         let mut projected = original.clone();
         projected.effects.retain(|effect| effect.key != "monitor");
         if projected.effects.len() != original.effects.len() {
@@ -535,6 +539,7 @@ pub fn model_sha256() -> String {
         include_str!("../../editor-core/src/legacy_animation.rs"),
         include_str!("../../editor-core/src/legacy_gesture.rs"),
         include_str!("../../editor-core/src/legacy_device.rs"),
+        include_str!("../../editor-core/src/legacy_rule.rs"),
         include_str!("../../editor-core/src/session.rs"),
         include_str!("../../../data/session.json")
     ))
@@ -560,6 +565,7 @@ fn schema_pins(workspace: &Workspace) -> BTreeMap<String, String> {
         ("binding", editor_core::binding::schema_hash()),
         ("workspace", editor_core::workspace_rule::schema_hash()),
         ("rule", editor_core::rule::schema_hash()),
+        ("legacy-rule", editor_core::legacy_rule::schema_hash()),
         ("animation", editor_core::animation::schema_hash()),
         ("gesture", gesture::schema_hash()),
         ("session", editor_core::session::schema_hash()),

@@ -11,6 +11,7 @@ pub(super) struct Document {
     pub animations: hyprland_editor_core::legacy_animation::Report,
     pub gestures: hyprland_editor_core::legacy_gesture::Report,
     pub devices: hyprland_editor_core::legacy_device::Report,
+    pub rules: hyprland_editor_core::legacy_rule::Report,
 }
 impl Document {
     pub fn new(content: String, catalogue: &[Setting]) -> Result<Self, String> {
@@ -45,6 +46,9 @@ impl Document {
             || parsed.bindings.draft.local_variables != local_variables
             || parsed.bindings.source_sha256 != parsed.source_sha256
             || parsed.bindings.sites.len() != parsed.bindings.draft.entries.len()
+            || parsed.rules.schema_sha256 != hyprland_editor_core::legacy_rule::schema_hash()
+            || parsed.rules.source_sha256 != parsed.source_sha256
+            || parsed.rules.sites.len() != parsed.rules.rules.len()
             || parsed.devices.schema_sha256 != hyprland_editor_core::legacy_device::schema_hash()
             || parsed.devices.source_sha256 != parsed.source_sha256
             || parsed.devices.sites.len() != parsed.devices.devices.len()
@@ -67,6 +71,7 @@ impl Document {
                 .sites
                 .iter()
                 .chain(&parsed.devices.sites)
+                .chain(&parsed.rules.sites)
                 .chain(&parsed.gestures.sites)
                 .chain(&parsed.animations.sites)
                 .chain(&parsed.workspaces.sites)
@@ -81,6 +86,7 @@ impl Document {
         {
             return Err("Legacy projection does not match the captured source".into());
         }
+        hyprland_editor_core::rule::validate(&parsed.rules.rules, BASELINE)?;
         parsed.scalar.draft.validate(catalogue)?;
         parsed.session.draft.validate(BASELINE)?;
         parsed.bindings.draft.validate(BASELINE)?;
@@ -133,6 +139,7 @@ impl Document {
             .sites
             .iter()
             .chain(&parsed.devices.sites)
+            .chain(&parsed.rules.sites)
             .map(|site| {
                 (
                     site.line,
@@ -159,6 +166,7 @@ impl Document {
             animations: parsed.animations,
             gestures: parsed.gestures,
             devices: parsed.devices,
+            rules: parsed.rules,
         })
     }
     pub fn edited_copy(
@@ -175,6 +183,7 @@ impl Document {
             animations: workspace.animations.clone(),
             gestures: workspace.gestures.clone(),
             devices: workspace.devices.clone(),
+            rules: workspace.rules.clone(),
         })? {
             super::worker::Response::Copy(source) => Ok(source),
             _ => Err("Unexpected legacy copy response".into()),
