@@ -31,6 +31,7 @@ fn issue_text(kind: IssueKind) -> &'static str {
         IssueKind::IncludeDepth => "Include depth limit reached",
         IssueKind::Conditional => "Parser condition needs evaluation",
         IssueKind::ComputedKey => "Setting or directive name needs expansion",
+        IssueKind::VariableContext => "Variable name or definition context is unresolved",
         IssueKind::Syntax => "Scope or syntax could not be verified",
         IssueKind::Limit => "Trace limit reached",
     }
@@ -138,6 +139,7 @@ pub(super) fn open(
             let last = trace.and_then(|trace| trace.assignments.back());
             let title = match (snapshot.report.issue_count, last.map(|a| a.kind)) {
                 (0, Some(ValueKind::Literal)) => "Last captured literal",
+                (0, Some(ValueKind::Resolved)) => "Last value resolved from source",
                 (0, Some(ValueKind::Expansion)) => "Last assignment needs expansion",
                 (0, Some(ValueKind::Unverified)) => "Last assignment needs syntax review",
                 (0, None) => "No captured assignment",
@@ -386,12 +388,28 @@ fn show_history(snapshot: &Snapshot, trace: Option<&effective::History>, view: &
             let location = snapshot.location(assignment.file, assignment.line);
             let value = display_path_bytes(assignment.value.as_bytes());
             let note = match assignment.kind {
-                ValueKind::Literal => "",
+                ValueKind::Literal | ValueKind::Resolved => "",
                 ValueKind::Expansion => "  (needs expansion)",
                 ValueKind::Unverified => "  (needs syntax review)",
             };
             let shown = if value.is_empty() { "(empty)" } else { &value };
-            let _ = writeln!(text, "{shown}{note}\n{location}\n");
+            if let Some(expanded) = &assignment.expanded {
+                let computed = display_path_bytes(expanded.value.as_bytes());
+                let computed = if computed.is_empty() {
+                    "(empty)"
+                } else {
+                    &computed
+                };
+                let _ = writeln!(text, "{shown} → {computed}{note}\n{location}");
+                for origin in &expanded.definitions {
+                    let at = snapshot.location(origin.file, origin.line);
+                    let name = display_path_bytes(origin.name.as_bytes());
+                    let _ = writeln!(text, "  ${name} · {at}");
+                }
+                let _ = writeln!(text);
+            } else {
+                let _ = writeln!(text, "{shown}{note}\n{location}\n");
+            }
         }
         let omitted = trace.total - trace.assignments.len();
         if omitted != 0 {

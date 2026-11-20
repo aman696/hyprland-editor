@@ -1,11 +1,10 @@
 //! Ordered references derived from retained native source bytes.
-use super::scan;
 use crate::{
     legacy_syntax, legacy_variables::Revision, source::CapturedSource, MAX_DOCUMENT_BYTES,
 };
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::{BTreeMap, BTreeSet},
+    collections::BTreeSet,
     ffi::OsStr,
     os::unix::ffi::OsStrExt,
     path::{Component, Path, PathBuf},
@@ -14,7 +13,7 @@ use std::{
 pub const MAX_FILES: usize = 31;
 pub const MAX_BYTES: usize = 2 * MAX_DOCUMENT_BYTES;
 pub(super) const MAX_DEPTH: usize = 16;
-const MAX_REFERENCES: usize = 1024;
+pub(super) const MAX_REFERENCES: usize = 1024;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Outcome {
@@ -31,6 +30,7 @@ pub struct Reference {
     pub parent: Option<usize>,
     pub line: usize,
     pub template: String,
+    pub resolved: Option<String>,
     pub expected: Option<PathBuf>,
     pub outcome: Outcome,
 }
@@ -140,115 +140,13 @@ pub(super) fn literal_path(parent: &[u8], template: &str) -> Option<PathBuf> {
     absolute_components(&parent.join(path))
 }
 
-struct Target {
-    line: usize,
-    template: String,
-    expected: Option<PathBuf>,
-}
-
-struct File {
-    targets: Vec<Target>,
-    opaque: usize,
-}
-
-fn index_file(path: &[u8], source: &str) -> Result<File, String> {
-    let parsed = scan(source)?;
-    let targets = parsed
-        .rows
-        .into_iter()
-        .zip(parsed.lines)
-        .map(|(row, line)| {
-            let expected = literal_path(path, &row.template);
-            Target {
-                line,
-                template: row.template,
-                expected,
-            }
-        })
-        .collect();
-    Ok(File {
-        targets,
-        opaque: parsed.unresolved,
-    })
-}
-
 pub fn inspect(
     root_path: &[u8],
     root_content: &str,
     files: &[CapturedSource],
     revisions: &[LinkedRevision],
 ) -> Result<References, String> {
-    let root_path = absolute_components(Path::new(OsStr::from_bytes(root_path)))
-        .ok_or("Invalid including path.")?;
-    let root = index_file(root_path.as_os_str().as_bytes(), root_content)?;
-    let mut by_path = BTreeMap::new();
-    let mut indexed = Vec::with_capacity(files.len());
-    for (index, file) in files.iter().enumerate() {
-        let path = Path::new(OsStr::from_bytes(&file.identity.selected_path));
-        let path = absolute_components(path).ok_or("Invalid snapshot path.")?;
-        by_path.insert(path, index);
-        indexed.push(
-            index_file(
-                &file.identity.selected_path,
-                effective_text(file, revisions),
-            )
-            .unwrap_or(File {
-                targets: Vec::new(),
-                opaque: 1,
-            }),
-        );
-    }
-
-    let mut traversal = Traversal {
-        by_path,
-        root_path,
-        ancestry: Vec::new(),
-        result: References::default(),
-    };
-    traversal.visit(None, &root, &indexed);
-    Ok(traversal.result)
-}
-
-struct Traversal {
-    by_path: BTreeMap<PathBuf, usize>,
-    root_path: PathBuf,
-    ancestry: Vec<usize>,
-    result: References,
-}
-
-impl Traversal {
-    fn visit(&mut self, parent: Option<usize>, file: &File, indexed: &[File]) {
-        self.result.opaque_directives += file.opaque;
-        for target in &file.targets {
-            if self.result.rows.len() >= MAX_REFERENCES {
-                self.result.truncated = true;
-                break;
-            }
-            let outcome = match &target.expected {
-                None => Outcome::UnresolvedTemplate,
-                Some(path) if *path == self.root_path => Outcome::RootCycle,
-                Some(path) => match self.by_path.get(path).copied() {
-                    None => Outcome::NeedsSelection,
-                    Some(index) if self.ancestry.contains(&index) => Outcome::Cycle(index),
-                    Some(_) if self.ancestry.len() >= MAX_DEPTH => Outcome::DepthLimit,
-                    Some(index) => Outcome::Captured(index),
-                },
-            };
-            self.result.rows.push(Reference {
-                parent,
-                line: target.line,
-                template: target.template.clone(),
-                expected: target.expected.clone(),
-                outcome,
-            });
-            if let Outcome::Captured(index) = outcome {
-                self.result.reached.insert(index);
-                self.ancestry.push(index);
-                self.visit(Some(index), &indexed[index], indexed);
-                self.ancestry.pop();
-            }
-        }
-    }
+    super::effective::references(root_path, root_content, files, revisions)
 }
 
 #[cfg(test)]
@@ -486,5 +384,160 @@ mod tests {
             .issues
             .iter()
             .any(|issue| issue.kind == IssueKind::Limit));
+    }
+
+    #[test]
+    fn ordered_variables_follow_nested_includes_and_keep_definition_provenance() {
+        use crate::legacy_includes::effective::{self, ValueKind};
+        let source = concat!(
+            "$dir = parts\n",
+            "$target = $dir/theme.conf\n",
+            "$size = 4\n",
+            "source = $target\n",
+            "general:border_size = {{ size + 1 }}\n",
+            "source = $palette\n",
+            "source = $target\n",
+            "general:border_size = $size\n",
+        );
+        let files = [
+            file(
+                "/config/parts/theme.conf",
+                "general:border_size = $size\n$size = {{ size + 2 }}\n$palette = parts/palette.conf\n",
+            ),
+            file("/config/parts/palette.conf", "general:border_size = $size\n"),
+        ];
+        let report = effective::inspect(
+            b"/config/root.conf",
+            source,
+            &files,
+            &[],
+            &crate::catalogue(),
+        )
+        .unwrap();
+        assert_eq!(report.issue_count, 0);
+        let trace = &report.settings["general:border_size"];
+        let expanded = trace
+            .assignments
+            .iter()
+            .map(|value| {
+                assert_eq!(value.kind, ValueKind::Resolved);
+                value.expanded.as_ref().unwrap().value.as_ref()
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(expanded, ["4", "7", "6", "6", "8"]);
+        let origins = &trace
+            .assignments
+            .back()
+            .unwrap()
+            .expanded
+            .as_ref()
+            .unwrap()
+            .definitions;
+        assert_eq!(
+            origins
+                .iter()
+                .map(|origin| (origin.name.as_ref(), origin.file, origin.line))
+                .collect::<Vec<_>>(),
+            [("size", None, 3), ("size", Some(0), 2)],
+        );
+        let refs = effective::references(b"/config/root.conf", source, &files, &[]).unwrap();
+        assert_eq!(refs.rows.len(), 3);
+        assert_eq!(refs.rows[1].template, "$palette");
+        assert_eq!(refs.rows[1].resolved.as_deref(), Some("parts/palette.conf"));
+        assert_eq!(refs.rows[1].outcome, Outcome::Captured(1));
+    }
+
+    #[test]
+    fn unresolved_includes_block_later_variable_path_suggestions_until_captured() {
+        use crate::legacy_includes::effective;
+        let source = concat!(
+            "$first = first.conf\n",
+            "$next = fallback.conf\n",
+            "source = $first\n",
+            "source = $next\n",
+            "source = literal.conf\n",
+        );
+        let root = b"/config/root.conf";
+        let refs = effective::references(root, source, &[], &[]).unwrap();
+        assert_eq!(
+            refs.rows.iter().map(|row| row.outcome).collect::<Vec<_>>(),
+            [
+                Outcome::NeedsSelection,
+                Outcome::UnresolvedTemplate,
+                Outcome::NeedsSelection
+            ],
+        );
+        assert_eq!(
+            refs.rows[0].expected.as_deref(),
+            Some(Path::new("/config/first.conf"))
+        );
+        assert!(refs.rows[1].expected.is_none());
+        let first = file("/config/first.conf", "$next = later.conf\n");
+        let refs = effective::references(root, source, &[first], &[]).unwrap();
+        assert_eq!(refs.rows[0].outcome, Outcome::Captured(0));
+        assert_eq!(
+            refs.rows[1].expected.as_deref(),
+            Some(Path::new("/config/later.conf"))
+        );
+    }
+
+    #[test]
+    fn ordered_variables_match_longest_prefix_and_bound_unverified_expressions() {
+        use crate::legacy_includes::effective::{self, ValueKind};
+        let report = effective::inspect(
+            b"/config/root.conf",
+            concat!(
+                "$k = us\n",
+                "$kb = fr\n",
+                "input:kb_layout = $kbSuffix\n",
+                "$kbSuffix = $unknown\n",
+                "input:kb_layout = $kbSuffix\n",
+                "input:kb_layout = $k$kb\n",
+                "input:kb_layout = {{ 4060.28125 + 0 }}\n",
+                "input:kb_layout = {{ 1 / 0 }}\n",
+                "input:kb_layout = {{ 100000 + 0 }}\n",
+                "input:kb_layout = {{ 1e-1000 + 1 }}\n"
+            ),
+            &[],
+            &[],
+            &crate::catalogue(),
+        )
+        .unwrap();
+        let trace = &report.settings["input:kb_layout"].assignments;
+        assert_eq!(
+            trace[0].expanded.as_ref().unwrap().value.as_ref(),
+            "frSuffix"
+        );
+        assert_eq!(trace[1].kind, ValueKind::Expansion);
+        assert_eq!(trace[2].kind, ValueKind::Expansion);
+        assert_eq!(
+            trace[3].expanded.as_ref().unwrap().value.as_ref(),
+            "4060.2812"
+        );
+        assert_eq!(trace[4].kind, ValueKind::Expansion);
+        assert_eq!(trace[5].kind, ValueKind::Expansion);
+        assert_eq!(trace[6].kind, ValueKind::Expansion);
+    }
+
+    #[test]
+    fn variable_include_export_rewrites_stable_paths_and_refuses_conflicting_visits() {
+        use crate::legacy_includes::project_copy;
+        let files = [
+            file("/config/parts/includes.conf", "source = $target # keep\n"),
+            file("/config/parts/a.conf", "general:border_size = 5\n"),
+            file("/config/parts/b.conf", "general:border_size = 7\n"),
+        ];
+        let root = b"/config/root.conf";
+        let prefix = "$target = a.conf\nsource = parts/includes.conf\n";
+        let copy = project_copy::prepare(root, prefix, &files, &[]).unwrap();
+        assert_eq!(copy.include_count, 2);
+        assert_eq!(copy.detached_count, 1);
+        assert_eq!(copy.files[1].content, "source = 02-a.conf # keep\n");
+        let conflict = format!("{prefix}$target = b.conf\nsource = parts/includes.conf\n");
+        let error = project_copy::prepare(root, &conflict, &files, &[])
+            .err()
+            .unwrap();
+        assert!(error.contains("/config/parts/includes.conf:1"));
+        assert!(error.contains("different files on repeated visits"));
     }
 }

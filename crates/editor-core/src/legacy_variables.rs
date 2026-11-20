@@ -57,7 +57,7 @@ impl Revision {
         Ok(())
     }
 }
-fn identifier(s: &str) -> bool {
+pub(crate) fn identifier(s: &str) -> bool {
     !s.is_empty() && s.len() <= 256 && s.chars().all(|c| c.is_alphanumeric() || c == '_')
 }
 pub(crate) fn value(raw: &str) -> Result<String, String> {

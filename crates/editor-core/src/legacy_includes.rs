@@ -10,6 +10,7 @@ use std::{collections::BTreeSet, ops::Range};
 pub mod captures;
 pub mod effective;
 pub mod project_copy;
+mod variables;
 
 pub const MAX_ROWS: usize = 1024;
 pub const MAX_PATH: usize = 4096;

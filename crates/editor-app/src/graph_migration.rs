@@ -132,7 +132,11 @@ const LEGACY_TREE_MODEL: &str =
 const NATIVE_TRACE_FROM: &str = "90751352aee549158c892ecc9607bb01d4a7787478a4f27615ea8fbd4fb8461d";
 const NATIVE_TRACE_MODEL: &str =
     include_str!("../../../data/migrations/graph-model-before-native-setting-trace.json");
-const TO: &str = "1049ed50ff5dfb43afa5b911299478e8ab4e2626460c291945074a6a5f3f38f4";
+const ORDERED_VARIABLES_FROM: &str =
+    "1049ed50ff5dfb43afa5b911299478e8ab4e2626460c291945074a6a5f3f38f4";
+const ORDERED_VARIABLES_MODEL: &str =
+    include_str!("../../../data/migrations/graph-model-before-native-ordered-variables.json");
+const TO: &str = "ac840f25325c44d81cd850ae16e97d8d49502277d74cf133bb69335f88cb4e6d";
 const OLD: &str = include_str!("../../../data/migrations/graph-model-before-projection.json");
 const FROM_PROJECTION: &str = "046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371";
 const PROJECTION: &str = include_str!("../../../data/migrations/graph-model-projection.json");
@@ -1955,8 +1959,9 @@ fn before_native_trace_transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
-fn transition(from: &str) -> Result<(), String> {
-    if lua::source_hash(NATIVE_TRACE_MODEL) != NATIVE_TRACE_FROM || lua::source_hash(CURRENT) != TO
+fn before_ordered_variables_transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(NATIVE_TRACE_MODEL) != NATIVE_TRACE_FROM
+        || lua::source_hash(ORDERED_VARIABLES_MODEL) != ORDERED_VARIABLES_FROM
     {
         return Err("No reviewed native assignment trace transition is available".into());
     }
@@ -1965,7 +1970,8 @@ fn transition(from: &str) -> Result<(), String> {
     }
     let old: serde_json::Value =
         serde_json::from_str(NATIVE_TRACE_MODEL).map_err(|e| e.to_string())?;
-    let new: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let new: serde_json::Value =
+        serde_json::from_str(ORDERED_VARIABLES_MODEL).map_err(|e| e.to_string())?;
     let old = old["inputs"].as_object().ok_or("Invalid prior model")?;
     let new = new["inputs"].as_object().ok_or("Invalid current model")?;
     let added: Vec<_> = new
@@ -1990,6 +1996,48 @@ fn transition(from: &str) -> Result<(), String> {
     {
         return Err(
             "The native assignment trace model differs from its reviewed transition.".into(),
+        );
+    }
+    Ok(())
+}
+fn transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(ORDERED_VARIABLES_MODEL) != ORDERED_VARIABLES_FROM
+        || lua::source_hash(CURRENT) != TO
+    {
+        return Err("No reviewed ordered native variable transition is available".into());
+    }
+    if from != ORDERED_VARIABLES_FROM {
+        before_ordered_variables_transition(from)?;
+    }
+    let old: serde_json::Value =
+        serde_json::from_str(ORDERED_VARIABLES_MODEL).map_err(|e| e.to_string())?;
+    let new: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let old = old["inputs"].as_object().ok_or("Invalid prior model")?;
+    let new = new["inputs"].as_object().ok_or("Invalid current model")?;
+    let added: Vec<_> = new
+        .keys()
+        .filter(|k| !old.contains_key(*k))
+        .map(String::as_str)
+        .collect();
+    let changed: Vec<_> = old
+        .keys()
+        .filter(|k| new.get(*k) != Some(&old[*k]))
+        .map(String::as_str)
+        .collect();
+    if old.len() != 125
+        || new.len() != 126
+        || added != ["crates/editor-core/src/legacy_includes/variables.rs"]
+        || changed
+            != [
+                "crates/editor-core/src/legacy_includes.rs",
+                "crates/editor-core/src/legacy_includes/captures.rs",
+                "crates/editor-core/src/legacy_includes/effective.rs",
+                "crates/editor-core/src/legacy_includes/project_copy.rs",
+                "crates/editor-core/src/legacy_variables.rs",
+            ]
+    {
+        return Err(
+            "The ordered native variable model differs from its reviewed transition.".into(),
         );
     }
     Ok(())
@@ -2035,6 +2083,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != LINKED_EDIT_FROM
         && previous != LEGACY_TREE_FROM
         && previous != NATIVE_TRACE_FROM
+        && previous != ORDERED_VARIABLES_FROM
         && previous != LEGACY_GESTURE_FROM
         && previous != LEGACY_ANIMATION_FROM
         && previous != LEGACY_WORKSPACE_FROM
@@ -2064,6 +2113,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != LINKED_EDIT_FROM
         && previous != LEGACY_TREE_FROM
         && previous != NATIVE_TRACE_FROM
+        && previous != ORDERED_VARIABLES_FROM
         && previous != LEGACY_GESTURE_FROM
         && previous != LEGACY_ANIMATION_FROM
         && previous != LEGACY_WORKSPACE_FROM
@@ -2108,6 +2158,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != LINKED_EDIT_FROM
         && previous != LEGACY_TREE_FROM
         && previous != NATIVE_TRACE_FROM
+        && previous != ORDERED_VARIABLES_FROM
         && previous != LEGACY_GESTURE_FROM
         && previous != LEGACY_ANIMATION_FROM
         && previous != LEGACY_WORKSPACE_FROM
@@ -2244,6 +2295,7 @@ mod tests {
         transition(LINKED_EDIT_FROM).unwrap();
         transition(LEGACY_TREE_FROM).unwrap();
         transition(NATIVE_TRACE_FROM).unwrap();
+        transition(ORDERED_VARIABLES_FROM).unwrap();
         assert!(transition(&"0".repeat(64)).is_err());
         assert_ne!(FROM, TO);
         assert_eq!(lua::source_hash(CURRENT), TO);

@@ -1,4 +1,4 @@
-//! A self-contained copy of explicitly captured literal native includes.
+//! A self-contained copy of explicitly captured native includes.
 use super::{captures, edit, scan};
 use crate::{
     legacy_syntax, lua::source_hash, source::display_path_bytes, source::CapturedSource,
@@ -30,10 +30,14 @@ pub fn prepare(
     files: &[CapturedSource],
     revisions: &[LinkedRevision],
 ) -> Result<Prepared, String> {
-    captures::validate(files)?;
-    captures::validate_revisions(files, revisions)?;
     let root_label = display_path_bytes(root_path);
     let report = captures::inspect(root_path, root, files, revisions)?;
+    check_continuations(root).map_err(|error| format!("{root_label}{error}"))?;
+    for &index in &report.reached {
+        let file = &files[index];
+        check_continuations(captures::effective_text(file, revisions))
+            .map_err(|error| format!("{}{error}", file.identity.display_path()))?;
+    }
     let mut order = Vec::new();
     let mut names = BTreeMap::new();
     let mut edges = BTreeMap::<Option<usize>, BTreeMap<usize, usize>>::new();
@@ -48,7 +52,7 @@ pub fn prepare(
                 let remedy = match other {
                     Outcome::NeedsSelection => "Choose its file in Linked File Snapshots.",
                     Outcome::UnresolvedTemplate => {
-                        "Use a supported literal path or review this file on its own."
+                        "Use a supported literal path or an earlier source-defined path."
                     }
                     Outcome::Cycle(_) | Outcome::RootCycle => "Remove the cycle before exporting.",
                     Outcome::DepthLimit => "This chain exceeds the 16-file inclusion depth.",
@@ -71,11 +75,18 @@ pub fn prepare(
             .insert(row.line, target)
             .is_some_and(|previous| previous != target)
         {
-            return Err("A repeated file has conflicting include targets.".into());
+            let path = row.parent.map_or_else(
+                || root_label.clone(),
+                |index| files[index].identity.display_path(),
+            );
+            return Err(format!(
+                "{path}:{} · This include resolves to different files on repeated visits. A single exported copy cannot preserve those targets.",
+                row.line,
+            ));
         }
     }
     if report.truncated {
-        return Err("The include traversal exceeds 1,024 references. Reduce repeated or nested includes before exporting.".into());
+        return Err("The include traversal exceeded its export budget. Reduce repeated or nested includes before exporting.".into());
     }
     let mut output = Vec::with_capacity(order.len() + 1);
     let mut bytes = 0;
@@ -131,15 +142,6 @@ fn relocate(
     outgoing: Option<&BTreeMap<usize, usize>>,
     names: &BTreeMap<usize, String>,
 ) -> Result<String, String> {
-    if let Some(line) = source
-        .split('\n')
-        .position(|line| line.trim_end_matches('\r').ends_with('\\'))
-    {
-        return Err(format!(
-            ":{} · Continued lines may hide include directives. Review this file on its own.",
-            line + 1,
-        ));
-    }
     let mut dynamic_key = None;
     legacy_syntax::walk(source, |statement| {
         if !statement.key.starts_with('$') && statement.key.contains('$') {
@@ -170,6 +172,19 @@ fn relocate(
         row.template.clone_from(target);
     }
     edit(source, parsed, &replaced).map_err(|error| format!(" · {error}"))
+}
+
+fn check_continuations(source: &str) -> Result<(), String> {
+    if let Some(line) = source
+        .split('\n')
+        .position(|line| line.trim_end_matches('\r').ends_with('\\'))
+    {
+        return Err(format!(
+            ":{} · Continued lines may hide include directives. Review this file on its own.",
+            line + 1,
+        ));
+    }
+    Ok(())
 }
 
 #[cfg(test)]

@@ -1,6 +1,8 @@
 # Reviewed saved-graph migration
 
-The current target is `1049ed50ff5dfb43afa5b911299478e8ab4e2626460c291945074a6a5f3f38f4` (125 inputs), with 42 reviewed predecessors. `data/migrations/graph-model-before-native-setting-trace.json` freezes the preceding model. The transition adds the bounded native assignment trace and shares path and literal parsing with the existing native editor. Saved Lua source and compiler inputs are preserved.
+The current target is `ac840f25325c44d81cd850ae16e97d8d49502277d74cf133bb69335f88cb4e6d` (126 inputs), with 43 reviewed predecessors. `data/migrations/graph-model-before-native-ordered-variables.json` freezes the preceding model. The transition adds ordered shared definitions and uses the same captured include resolution for the trace, file picker and folder export. Saved Lua source and compiler inputs are preserved.
+
+The preceding target is `1049ed50ff5dfb43afa5b911299478e8ab4e2626460c291945074a6a5f3f38f4` (125 inputs), with 42 reviewed predecessors. `data/migrations/graph-model-before-native-setting-trace.json` freezes the preceding model. The transition adds the bounded native assignment trace and shares path and literal parsing with the existing native editor. Saved Lua source and compiler inputs are preserved.
 
 The preceding target is `90751352aee549158c892ecc9607bb01d4a7787478a4f27615ea8fbd4fb8461d` (124 inputs), with 41 reviewed predecessors. `data/migrations/graph-model-before-legacy-tree-export.json` freezes the preceding model. The transition adds the native folder copy planner and records the first unresolved include position. It preserves existing Lua capture and compiler inputs.
 

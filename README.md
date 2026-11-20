@@ -69,6 +69,8 @@ Use **Review Entire Configuration Folder…** in **Linked File Snapshots…** to
 
 Use **Trace This Setting…** in the native settings panel to see the last captured assignment and the files and lines that set it earlier. The trace follows includes at the point they occur and marks incomplete source evidence. Open a linked assignment directly in its editor. [Native setting trace](docs/legacy-source-editor.md#trace-a-setting-across-files)
 
+The native trace expands supported shared variables and simple arithmetic across captured files. It shows the original expression, the resolved value and the definitions it used. **Linked File Snapshots…** can also suggest paths built from source-defined variables. [Shared variables across files](docs/legacy-source-editor.md#resolve-shared-variables-across-files)
+
 ## Not available yet
 
 Complete Lua interpretation/include graphs, general multi-file source-field insertion/deletion, complete editable multi-file source graphs and reconciliation, event-based live refresh, multi-instance selection, complete rule semantics/builders, complete animation and gesture semantics/builders and other structured editors, complete workspace/layout/workflow codecs, complete binding selectors/workflows and live behavior, complete device/monitor source editing and hardware inspection, plugins, live apply, display recovery, sandboxed compositor preview, distribution packages and release certification. Unknown defaults stay visibly unresolved. Bounds are literal source metadata, not a guarantee that combinations are valid on your system. Hardware behavior has not been tested.

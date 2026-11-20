@@ -140,11 +140,13 @@ fn rows(state: &State) -> Result<(Vec<Row>, String), String> {
             Outcome::UnresolvedTemplate => ("Unresolved path", None, false),
             Outcome::DepthLimit => ("Depth limit", None, false),
         };
+        let mut template = source::display_path_bytes(reference.template.as_bytes());
+        if let Some(resolved) = reference.resolved.as_deref().filter(|_| selectable) {
+            template.push_str(" → ");
+            template.push_str(&source::display_path_bytes(resolved.as_bytes()));
+        }
         rows.push(Row {
-            label: format!(
-                "{status}  ·  {}  ·  {location}:{}",
-                reference.template, reference.line
-            ),
+            label: format!("{status}  ·  {template}  ·  {location}:{}", reference.line),
             expected: reference.expected.filter(|_| selectable),
             captured,
         });

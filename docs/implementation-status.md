@@ -1,5 +1,13 @@
 # Execution plan and acceptance gates
 
+## Shared native variables across captured files
+
+The setting trace resolves preceding source-defined variables, longest captured identifier prefixes, redefinitions, aliases and simple arithmetic. It keeps the raw assignment and shows each contributing definition with its file and line. A missing include or parser condition interrupts further variable resolution because it may change those definitions.
+
+The linked-file browser uses the same traversal to offer paths derived from captured variables. Selecting the exact file remains required. Folder export rewrites stable resolved include paths in the copy and reports when a repeated include site resolves to different targets. Variable definitions, comments and line endings stay in the reviewed copy.
+
+The workspace suite passed 626 tests with nine ignored. Strict Clippy and the private graphical workflow passed. The graphical test checked that a variable-backed target was offered before its file existed, captured it, removed the original and verified both the setting trace and the exported path. The native parser fixture agreed on both scalar values and all three variable-backed include visits. A separate decimal test matched 45,447 in-range float spellings against the native formatting primitive. Model 126 has 43 reviewed predecessors. Ambient and forward references, wildcard paths, computed keys, general expressions, structured settings and runtime acceptance remain open. [Shared variables across files](legacy-source-editor.md#resolve-shared-variables-across-files)
+
 ## Native setting trace across captured files
 
 **Trace This Setting…** in the native settings panel and **Trace Source Settings…** in the linked-file browser show ordered scalar assignments from the materialized root and kept child revisions. Each linked file is visited where its include appears, including repeated visits. The last captured literal and earlier assignments retain file and line provenance. Expansion, unresolved includes, cycles, conditional parsing, computed keys and traversal limits surface as uncertainty. The latest visible linked assignment can open directly in its graphical editor.

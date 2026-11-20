@@ -3500,6 +3500,66 @@ pub(super) fn test_legacy_variable_editing(parent: &adw::ApplicationWindow) {
     files.destroy();
     include_editor.destroy();
 
+    // A source-defined include is selectable before its file exists in the
+    // draft. Accept only the exact path and continue from the captured bytes.
+    let (current, draft) = {
+        let s = state.borrow();
+        (s.legacy_sources[BASELINE].clone(), draft_workspace(&s))
+    };
+    let materialized = current.edited_copy(&draft).unwrap();
+    let mut ordered = super::legacy_source::Document::new(
+        format!(
+            "{materialized}\r\n$ordered_file = expanded.conf\r\n$ordered_px = 12\r\nsource = $ordered_file\r\n"
+        ),
+        &catalogue,
+    )
+    .unwrap();
+    ordered.original = Some(current.original.clone().unwrap_or(current));
+    super::legacy_variables::keep(&mut state.borrow_mut(), std::sync::Arc::new(ordered)).unwrap();
+    let include_editor = super::legacy_includes::open(parent, &state, &status).unwrap();
+    let files = super::legacy_capture::open(&include_editor, &state, &status).unwrap();
+    let picker: gtk::DropDown = named(files.upcast_ref(), "include-capture-picker");
+    assert_eq!(picker.model().unwrap().n_items(), 3);
+    picker.set_selected(2);
+    let expected: gtk::Label = named(files.upcast_ref(), "include-capture-path");
+    let chosen = root.path().join("expanded.conf");
+    assert_eq!(expected.text().as_str(), chosen.to_str().unwrap());
+    assert!(!chosen.exists());
+    assert!(button(files.upcast_ref(), "Choose Linked File…").is_sensitive());
+    std::fs::write(&chosen, "general:border_size = {{ ordered_px + 2 }}\n").unwrap();
+    let captured = super::capture_worker::read_selected(&chosen).unwrap();
+    super::legacy_capture::accept(&mut state.borrow_mut(), &chosen, captured).unwrap();
+    std::fs::remove_file(&chosen).unwrap();
+    button(files.upcast_ref(), "Trace Source Settings…").emit_clicked();
+    let trace = find_window("Source Setting Trace").unwrap();
+    let query: gtk::SearchEntry = named(trace.upcast_ref(), "source-trace-search");
+    query.set_text("general:border_size");
+    query.emit_by_name::<()>("search-changed", &[]);
+    let result: gtk::Label = named(trace.upcast_ref(), "source-trace-result");
+    wait(|| result.text().contains("Last value resolved from source"));
+    let view: gtk::TextView = named(trace.upcast_ref(), "source-trace-history");
+    let buffer = view.buffer();
+    let summary = buffer.text(&buffer.start_iter(), &buffer.end_iter(), true);
+    assert!(summary.starts_with("{{ ordered_px + 2 }} → 14\n"));
+    assert!(summary.contains("expanded.conf:1"));
+    assert!(summary.contains("$ordered_px · "));
+    assert!(summary.contains("original.conf:"));
+    trace.destroy();
+    button(files.upcast_ref(), "Review Entire Configuration Folder…").emit_clicked();
+    wait(|| find_window("Review Native Configuration Folder").is_some());
+    let review = find_window("Review Native Configuration Folder").unwrap();
+    let output: gtk::TextView = named(review.upcast_ref(), "native-folder-copy-source");
+    let text = output.buffer().text(
+        &output.buffer().start_iter(),
+        &output.buffer().end_iter(),
+        true,
+    );
+    assert!(text.contains("$ordered_file = expanded.conf"));
+    assert!(text.ends_with("source = 03-expanded.conf\r\n"));
+    review.destroy();
+    files.destroy();
+    include_editor.destroy();
+
     assert!(!marker.exists());
     assert!(!original.exists());
 }
