@@ -212,6 +212,9 @@ pub fn compile(workspace: &Workspace, scenario: &Scenario) -> Result<Projection,
         entries: vec![],
     };
     builder.record("source-layers".into(), Fidelity::Unsupported, "Only explicit typed draft values are projected; source/override resolution and effective defaults remain separate required gates")?;
+    if workspace.legacy_revision.is_some() {
+        builder.record("source/legacy-revision".into(),Fidelity::Unsupported,"Private native source and variable templates are retained outside this typed projection; their text is never emitted or executed")?;
+    }
     for source in &workspace.sources {
         builder.record(
             format!("source/{}", source.id),
@@ -540,6 +543,7 @@ pub fn model_sha256() -> String {
         include_str!("../../editor-core/src/legacy_gesture.rs"),
         include_str!("../../editor-core/src/legacy_device.rs"),
         include_str!("../../editor-core/src/legacy_rule.rs"),
+        include_str!("../../editor-core/src/legacy_variables.rs"),
         include_str!("../../editor-core/src/session.rs"),
         include_str!("../../../data/session.json")
     ))
@@ -566,6 +570,10 @@ fn schema_pins(workspace: &Workspace) -> BTreeMap<String, String> {
         ("workspace", editor_core::workspace_rule::schema_hash()),
         ("rule", editor_core::rule::schema_hash()),
         ("legacy-rule", editor_core::legacy_rule::schema_hash()),
+        (
+            "legacy-variables",
+            editor_core::legacy_variables::schema_hash(),
+        ),
         ("animation", editor_core::animation::schema_hash()),
         ("gesture", gesture::schema_hash()),
         ("session", editor_core::session::schema_hash()),

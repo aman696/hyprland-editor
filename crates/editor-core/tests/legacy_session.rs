@@ -197,3 +197,24 @@ fn schema_v1_projects_remain_readable_but_cannot_claim_new_launch_modes() {
     workspace.session = legacy;
     assert!(workspace.validate(&catalogue()).is_err());
 }
+
+#[test]
+fn native_equivalent_environment_presence_keeps_bytes_stable_across_repeated_copies() {
+    let source = "env = THEME,Nord # keep exact\r\nexec-once = old application # command\r\n";
+    let mut target = legacy_session::inspect(source).unwrap().draft;
+    let Entry::Environment { dbus, .. } = &mut target.entries[0] else {
+        panic!()
+    };
+    *dbus = Some(false);
+    assert_eq!(
+        legacy_session::edited_copy(source, &target).unwrap(),
+        source
+    );
+    let Entry::LegacyCommand { command, .. } = &mut target.entries[1] else {
+        panic!()
+    };
+    *command = "new application".into();
+    let once = legacy_session::edited_copy(source, &target).unwrap();
+    assert!(once.starts_with("env = THEME,Nord # keep exact\r\n"));
+    assert_eq!(legacy_session::edited_copy(&once, &target).unwrap(), once);
+}

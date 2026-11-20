@@ -239,7 +239,7 @@ fn every_family_projects_in_order_with_explicit_synthetic_identity_and_fidelity(
         let first = projection.lua().find("hl.curve(").unwrap();
         let second = projection.lua().find("hl.animation(").unwrap();
         assert!(first < second);
-        assert_eq!(projection.report().schema_pins.len(), 19);
+        assert_eq!(projection.report().schema_pins.len(), 20);
         assert_eq!(
             projection.report().schema_pins["legacy-workspace"],
             editor_core::legacy_workspace::schema_hash()
@@ -728,4 +728,52 @@ fn native_rules_omit_names_conditions_effect_values_and_output_payloads() {
         .entries
         .iter()
         .any(|e| e.subject == "rule/legacy-rule-0" && e.fidelity == Fidelity::Unsupported));
+}
+
+#[test]
+fn private_native_revision_templates_are_omitted_from_projection_and_payload_free_reports() {
+    use editor_core::{legacy_variables, workspace::SourceLanguage};
+    let original = "# retained original\n";
+    let hash = editor_core::lua::source_hash(original);
+    let identity = SourceIdentity {
+        selected_path: b"/never-open/original.conf".to_vec(),
+        resolved_path: None,
+        links: vec![],
+        device: 1,
+        inode: 2,
+        owner: 1000,
+        mode: 0o100600,
+        size: original.len() as u64,
+        modified_seconds: 0,
+        modified_nanoseconds: 0,
+        changed_seconds: 0,
+        changed_nanoseconds: 0,
+        sha256: hash,
+        recorded_ownership: RecordedOwnership::UserOwned,
+    };
+    let mut w = workspace(BASELINE).with_root(original.into(), identity);
+    w.sources[0].language = SourceLanguage::Legacy;
+    w.legacy_revision = Some(
+        legacy_variables::Revision::new(
+            original,
+            "$PRIVATE_VARIABLE = PRIVATE_PAYLOAD $PRIVATE_ENV {{PRIVATE_EXPRESSION}}\n".into(),
+        )
+        .unwrap(),
+    );
+    let p = compile(&w, &Scenario::default()).unwrap();
+    let report = serde_json::to_string(p.report()).unwrap();
+    for text in [
+        "PRIVATE_VARIABLE",
+        "PRIVATE_PAYLOAD",
+        "PRIVATE_ENV",
+        "PRIVATE_EXPRESSION",
+    ] {
+        assert!(!p.lua().contains(text));
+        assert!(!report.contains(text));
+    }
+    assert!(p
+        .report()
+        .entries
+        .iter()
+        .any(|e| e.subject == "source/legacy-revision" && e.fidelity == Fidelity::Unsupported));
 }

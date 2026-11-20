@@ -19,6 +19,7 @@ mod graph_transaction_tests;
 mod history;
 mod legacy_binding_editor;
 mod legacy_source;
+mod legacy_variables;
 mod monitors;
 mod native_build;
 mod presentation;
@@ -73,6 +74,7 @@ struct State {
     category: Option<String>,
     sources: BTreeMap<String, Arc<hyprland_editor_core::lua::LuaDocument>>,
     legacy_sources: BTreeMap<String, Arc<legacy_source::Document>>,
+    saved_legacy_sources: BTreeMap<String, Option<String>>,
     source_origins: BTreeMap<String, SourceIdentity>,
     source_graphs: BTreeMap<String, Arc<source_graph::Saved>>,
     saved_source_graphs: BTreeMap<String, Option<String>>,
@@ -182,6 +184,14 @@ impl State {
                     .get(version)
                     .and_then(Option::as_deref)
             || source_changed
+            || self
+                .legacy_sources
+                .get(version)
+                .map(|d| d.session.source_sha256.as_str())
+                != self
+                    .saved_legacy_sources
+                    .get(version)
+                    .and_then(Option::as_deref)
             || monitors != saved_monitors
             || self.devices.get(version).map(Vec::as_slice).unwrap_or(&[])
                 != self
@@ -383,6 +393,9 @@ impl State {
             return;
         };
         match operation {
+            history::Undo::LegacyRevision { previous, .. } => {
+                legacy_variables::restore(self, *previous)
+            }
             history::Undo::Graph {
                 previous,
                 source,
@@ -1002,6 +1015,7 @@ fn initial_state() -> Shared {
         category: None,
         sources: BTreeMap::new(),
         legacy_sources: BTreeMap::new(),
+        saved_legacy_sources: BTreeMap::new(),
         source_origins: BTreeMap::new(),
         source_graphs: BTreeMap::new(),
         saved_source_graphs: BTreeMap::new(),
@@ -1355,6 +1369,8 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     source_modules::connect(&source_modules, &window, &state);
     let reattach = gtk::Button::with_label("Verify Source File");
     let reconcile = gtk::Button::with_label("Compare Changed Source");
+    let variable_editor = gtk::Button::with_label("Shared Variables");
+    legacy_variables::connect(&variable_editor, &window, &state, &status);
     let binding_editor = gtk::Button::with_label("Edit Bindings");
     bindings::connect(&binding_editor, &window, &state, &status);
     let session_editor = gtk::Button::with_label("Environment and Startup");
@@ -1393,6 +1409,7 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
         ("monitors", &monitor_editor),
         ("devices", &device_editor),
         ("bindings", &binding_editor),
+        ("variables", &variable_editor),
         ("workspaces", &workspace_editor),
         ("rules", &rule_editor),
         ("animations", &animation_editor),
@@ -1923,6 +1940,7 @@ mod tests {
         workflow::test_combined_source_copy(&window);
         workflow::test_legacy_persistence(&window);
         workflow::test_legacy_session_editing(&window);
+        workflow::test_legacy_variable_editing(&window);
         workflow::test_graph_migration(&window);
         compiler_check::test_ui(&window);
         preview_preparation::test_preparation(&window);

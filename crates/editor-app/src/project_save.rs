@@ -54,6 +54,13 @@ impl Snapshot {
             .saved_session
             .insert(version.clone(), workspace.session);
         state.saved_source_origins.insert(version.clone(), origin);
+        let legacy_hash = state
+            .legacy_sources
+            .get(&version)
+            .map(|d| d.session.source_sha256.clone());
+        state
+            .saved_legacy_sources
+            .insert(version.clone(), legacy_hash);
         state.saved_source_graphs.insert(version, self.graph);
         true
     }

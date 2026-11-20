@@ -142,7 +142,9 @@ pub fn edited_copy(content: &str, target: &Draft) -> Result<String, String> {
     let mut edits = vec![];
     for (index, site) in before.sites.iter().enumerate() {
         let replacement = if let Some(entry) = target.entries.get(index) {
-            if before.draft.entries[index] == *entry {
+            if before.draft.entries[index] == *entry
+                || encode(&before.draft.entries[index])? == encode(entry)?
+            {
                 continue;
             }
             format!("{} ", encode(entry)?)

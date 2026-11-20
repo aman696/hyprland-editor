@@ -19,6 +19,7 @@ pub struct Document {
     pub gestures: crate::legacy_gesture::Report,
     pub devices: crate::legacy_device::Report,
     pub rules: crate::legacy_rule::Report,
+    pub variables: crate::legacy_variables::Report,
 }
 
 pub struct Edits<'a> {
@@ -164,6 +165,7 @@ pub struct Report {
     pub gestures: crate::legacy_gesture::Report,
     pub devices: crate::legacy_device::Report,
     pub rules: crate::legacy_rule::Report,
+    pub variables: crate::legacy_variables::Report,
 }
 impl Document {
     pub fn into_report(self) -> Report {
@@ -178,6 +180,7 @@ impl Document {
             gestures: self.gestures,
             devices: self.devices,
             rules: self.rules,
+            variables: self.variables,
         }
     }
     pub fn edited_with_session(
@@ -319,6 +322,7 @@ impl Document {
         let gestures = crate::legacy_gesture::inspect(&content)?;
         let devices = crate::legacy_device::inspect(&content)?;
         let rules = crate::legacy_rule::inspect(&content)?;
+        let variables = crate::legacy_variables::inspect(&content)?;
         Ok(Self {
             content,
             report,
@@ -330,6 +334,7 @@ impl Document {
             gestures,
             devices,
             rules,
+            variables,
         })
     }
 

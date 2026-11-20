@@ -49,3 +49,6 @@ Literal native gestures now populate matching/action controls and join the combi
 
 
 **Edit Window / Layer Rules** now projects literal native inline declarations and flat named blocks into the rule editor. All baseline registered effects and match fields remain available, with native strings/order and version-specific integer enable handling. Rule edits join the combined nine-group source review. Unknown syntax stays inert. See [native rules](rule-editor.md#native-configuration-rules).
+
+
+**Edit Shared Variables…** edits ordered source definitions with color/number/modifier/switch helpers. Review includes other staged native edits, reparses supported values and keeps an undoable private source revision. The immutable original capture stays separate; source-copy review uses the current revision. See [shared variables](legacy-variable-editor.md).

@@ -2,6 +2,7 @@
 use hyprland_editor_core::{import, legacy_monitor, legacy_session, Setting, BASELINE};
 #[derive(Debug)]
 pub(super) struct Document {
+    pub original: Option<std::sync::Arc<Document>>,
     pub content: String,
     pub report: import::ImportReport,
     pub session: legacy_session::Report,
@@ -12,6 +13,7 @@ pub(super) struct Document {
     pub gestures: hyprland_editor_core::legacy_gesture::Report,
     pub devices: hyprland_editor_core::legacy_device::Report,
     pub rules: hyprland_editor_core::legacy_rule::Report,
+    pub variables: hyprland_editor_core::legacy_variables::Report,
 }
 impl Document {
     pub fn new(content: String, catalogue: &[Setting]) -> Result<Self, String> {
@@ -46,6 +48,10 @@ impl Document {
             || parsed.bindings.draft.local_variables != local_variables
             || parsed.bindings.source_sha256 != parsed.source_sha256
             || parsed.bindings.sites.len() != parsed.bindings.draft.entries.len()
+            || parsed.variables.schema_sha256
+                != hyprland_editor_core::legacy_variables::schema_hash()
+            || parsed.variables.source_sha256 != parsed.source_sha256
+            || parsed.variables.sites.len() != parsed.variables.definitions.len()
             || parsed.rules.schema_sha256 != hyprland_editor_core::legacy_rule::schema_hash()
             || parsed.rules.source_sha256 != parsed.source_sha256
             || parsed.rules.sites.len() != parsed.rules.rules.len()
@@ -76,6 +82,7 @@ impl Document {
                 .chain(&parsed.animations.sites)
                 .chain(&parsed.workspaces.sites)
                 .chain(&parsed.session.sites)
+                .chain(&parsed.variables.sites)
                 .chain(&parsed.bindings.sites)
                 .any(|site| content.get(site.statement.clone()).is_none())
             || parsed.session.schema_sha256 != legacy_session::schema_hash()
@@ -87,6 +94,7 @@ impl Document {
             return Err("Legacy projection does not match the captured source".into());
         }
         hyprland_editor_core::rule::validate(&parsed.rules.rules, BASELINE)?;
+        hyprland_editor_core::legacy_variables::validate(&parsed.variables.definitions)?;
         parsed.scalar.draft.validate(catalogue)?;
         parsed.session.draft.validate(BASELINE)?;
         parsed.bindings.draft.validate(BASELINE)?;
@@ -132,6 +140,7 @@ impl Document {
             .chain(&parsed.workspaces.sites)
             .chain(&parsed.animations.sites)
             .chain(&parsed.gestures.sites)
+            .chain(&parsed.variables.sites)
             .map(|site| site.line)
             .collect();
         let mut monitor_lines: Vec<_> = parsed
@@ -157,6 +166,7 @@ impl Document {
             !session_lines.contains(line) && (index == 0 || *line > monitor_lines[index - 1].1)
         });
         Ok(Self {
+            original: None,
             content,
             report,
             session: parsed.session,
@@ -167,6 +177,7 @@ impl Document {
             gestures: parsed.gestures,
             devices: parsed.devices,
             rules: parsed.rules,
+            variables: parsed.variables,
         })
     }
     pub fn edited_copy(

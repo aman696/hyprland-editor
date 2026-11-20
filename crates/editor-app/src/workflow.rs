@@ -108,12 +108,24 @@ fn read_import_for_review(
                     if workspace.draft.version != BASELINE || graph.is_some() {
                         return Err("Legacy source snapshots require the baseline pack and cannot be a Lua source graph.".into());
                     }
-                    let doc = super::legacy_source::Document::new_with_binding_mode(
-                        root.content.clone(),
+                    let mut doc = super::legacy_source::Document::new_with_binding_mode(
+                        workspace
+                            .legacy_content()
+                            .ok_or("Legacy source missing")?
+                            .into(),
                         &catalogue,
                         workspace.legacy_binding_schema_sha256.as_deref()
                             == Some(&hyprland_editor_core::legacy_binding::schema_hash()),
                     )?;
+                    if workspace.legacy_revision.is_some() {
+                        doc.original = Some(std::sync::Arc::new(
+                            super::legacy_source::Document::new_with_binding_mode(
+                                root.content.clone(),
+                                &catalogue,
+                                doc.bindings.draft.local_variables,
+                            )?,
+                        ));
+                    }
                     (None, Some(doc), Some(root.origin.clone()))
                 }
             }
@@ -444,11 +456,21 @@ pub(super) fn captured_workspace(s: &super::State) -> Result<Workspace, String> 
             Some(hyprland_editor_core::lua::source_hash(&doc.content));
         snapshot.legacy_session_schema_sha256 =
             Some(hyprland_editor_core::legacy_session::schema_hash());
+        if let Some(original) = &doc.original {
+            snapshot.legacy_revision = Some(hyprland_editor_core::legacy_variables::Revision::new(
+                &original.content,
+                doc.content.clone(),
+            )?);
+        }
         snapshot.root_source = Some("root".into());
         snapshot.sources.push(workspace::SourceSnapshot {
             id: "root".into(),
             language: SourceLanguage::Legacy,
-            content: doc.content.clone(),
+            content: doc
+                .original
+                .as_ref()
+                .map_or(&doc.content, |d| &d.content)
+                .clone(),
             origin: origin.clone(),
         });
     }
@@ -752,6 +774,14 @@ fn apply_import(
             .insert(imported.draft.version.clone(), std::sync::Arc::new(doc));
     } else {
         s.legacy_sources.remove(&imported.draft.version);
+    }
+    if imported.saved_json {
+        let hash = s
+            .legacy_sources
+            .get(&imported.draft.version)
+            .map(|d| d.session.source_sha256.clone());
+        s.saved_legacy_sources
+            .insert(imported.draft.version.clone(), hash);
     }
     if imported.saved_json {
         s.saved.insert(
@@ -2864,4 +2894,294 @@ pub(super) fn test_legacy_session_editing(parent: &adw::ApplicationWindow) {
     assert_eq!(std::fs::read(old_path).unwrap(), old_bytes);
     assert!(!original.exists());
     assert!(!marker.exists());
+}
+
+#[cfg(test)]
+pub(super) fn test_legacy_variable_editing(parent: &adw::ApplicationWindow) {
+    super::legacy_variables::test_template_boundaries();
+    fn widgets(w: &gtk::Widget) -> Vec<gtk::Widget> {
+        let mut all = vec![w.clone()];
+        let mut c = w.first_child();
+        while let Some(w) = c {
+            all.extend(widgets(&w));
+            c = w.next_sibling();
+        }
+        all
+    }
+    fn named<
+        T: gtk::glib::object::IsA<gtk::Widget>
+            + gtk::glib::object::IsA<gtk::glib::Object>
+            + gtk::prelude::StaticType
+            + Clone,
+    >(
+        w: &gtk::Widget,
+        name: &str,
+    ) -> T {
+        widgets(w)
+            .into_iter()
+            .find(|w| w.widget_name() == name)
+            .unwrap_or_else(|| panic!("Missing variable widget {name}"))
+            .downcast()
+            .ok()
+            .unwrap()
+    }
+    fn button(w: &gtk::Widget, name: &str) -> gtk::Button {
+        widgets(w)
+            .into_iter()
+            .filter_map(|w| w.downcast::<gtk::Button>().ok())
+            .find(|b| b.label().as_deref() == Some(name))
+            .unwrap_or_else(|| panic!("Missing variable button {name}"))
+    }
+    fn wait(test: impl Fn() -> bool) {
+        let start = std::time::Instant::now();
+        while !test() {
+            let c = gtk::glib::MainContext::default();
+            while c.pending() {
+                c.iteration(false);
+            }
+            assert!(start.elapsed() < Duration::from_secs(12));
+            std::thread::sleep(Duration::from_millis(10));
+        }
+    }
+    fn proposal() -> Option<gtk::Window> {
+        gtk::Window::list_toplevels()
+            .into_iter()
+            .filter_map(|w| w.downcast::<gtk::Window>().ok())
+            .find(|w| w.title().as_deref() == Some("Review Variable Changes") && w.is_visible())
+    }
+    let root = super::test_support::TempDir::new("native-variables-ui");
+    let original = root.path().join("original.conf");
+    let marker = root.path().join("never-execute");
+    let source=format!("# keep café\r\n$mainMod = SUPER # modifier\r\n$terminal = old application # command\r\n$accent = rgba(112233ff) # color\r\nbind = $mainMod,Q,exec,$terminal # first\r\nbind = $mainMod,W,exec,$terminal # second\r\ngeneral:border_size = 2\r\nenv = THEME,Nord\r\nexec-once = touch {}\r\nmonitor = DP-1,preferred,auto,1\r\ndevice {{\r\n name = fixture-keyboard\r\n kb_layout = us\r\n}}\r\nworkspace = 1,border:true\r\nwindowrule {{\r\n name = fixture-window\r\n match:class = ^foot$\r\n opacity = 0.9 override\r\n}}\r\nbezier = ease,0,0,1,1\r\nanimation = windows,1,8,ease\r\ngesture = 3,left,workspace\r\ngeneral:col.active_border = $accent # unresolved color reference\r\nsource = missing.conf\r\n",marker.display());
+    std::fs::write(&original, &source).unwrap();
+    let catalogue = hyprland_editor_core::catalogue();
+    let imported = read_import(original.clone(), catalogue.clone(), BASELINE.into()).unwrap();
+    std::fs::remove_file(&original).unwrap();
+    let state = super::initial_state();
+    {
+        let mut s = state.borrow_mut();
+        s.draft = imported.draft;
+        s.source_origins
+            .insert(BASELINE.into(), imported.origin.unwrap());
+        s.legacy_sources.insert(
+            BASELINE.into(),
+            std::sync::Arc::new(imported.legacy.unwrap()),
+        );
+        s.monitors.insert(BASELINE.into(), imported.monitors);
+        s.devices.insert(BASELINE.into(), imported.devices);
+        s.bindings.insert(BASELINE.into(), imported.bindings);
+        s.workspace_rules
+            .insert(BASELINE.into(), imported.workspace_rules);
+        s.rules.insert(BASELINE.into(), imported.rules);
+        s.animations.insert(BASELINE.into(), imported.animations);
+        s.gestures.insert(BASELINE.into(), imported.gestures);
+        s.session.insert(BASELINE.into(), imported.session);
+        s.devices.get_mut(BASELINE).unwrap()[0].kind = hyprland_editor_core::device::Kind::Keyboard;
+        let hyprland_editor_core::session::Entry::Environment { dbus, .. } =
+            &mut s.session.get_mut(BASELINE).unwrap().entries[0]
+        else {
+            panic!()
+        };
+        *dbus = Some(false);
+        let hyprland_editor_core::legacy_binding::Entry::Bind { argument, .. } = &mut s
+            .bindings
+            .get_mut(BASELINE)
+            .unwrap()
+            .legacy
+            .as_mut()
+            .unwrap()
+            .entries[0]
+        else {
+            panic!()
+        };
+        *argument = "explicit chosen application".into();
+    }
+    let saved = super::project_save::Snapshot::capture(&state.borrow()).unwrap();
+    assert!(saved.mark_saved(&state));
+    assert!(!state.borrow().dirty());
+    let status = gtk::Label::new(None);
+    let editor = super::legacy_variables::show(parent, &state, &status).unwrap();
+    let pick: gtk::DropDown = named(editor.upcast_ref(), "variable-declaration");
+    assert_eq!(pick.selected(), 0);
+    assert_eq!(
+        named::<gtk::DropDown>(editor.upcast_ref(), "variable-value-helper").selected(),
+        3
+    );
+    for (label, active) in [("SUPER", false), ("CTRL", true), ("SHIFT", true)] {
+        let toggle = widgets(editor.upcast_ref())
+            .into_iter()
+            .filter_map(|w| w.downcast::<gtk::CheckButton>().ok())
+            .find(|b| b.label().as_deref() == Some(label))
+            .unwrap();
+        toggle.set_active(active);
+    }
+    pick.set_selected(1);
+    named::<gtk::Entry>(editor.upcast_ref(), "variable-name").set_text("");
+    pick.set_selected(2);
+    assert_eq!(pick.selected(), 1);
+    assert_eq!(
+        named::<gtk::Entry>(editor.upcast_ref(), "variable-name").text(),
+        ""
+    );
+    named::<gtk::Entry>(editor.upcast_ref(), "variable-name").set_text("terminal");
+    named::<gtk::TextView>(editor.upcast_ref(), "variable-template")
+        .buffer()
+        .set_text("updated application");
+    pick.set_selected(2);
+    assert_eq!(
+        named::<gtk::DropDown>(editor.upcast_ref(), "variable-value-helper").selected(),
+        1
+    );
+    named::<gtk::ColorDialogButton>(editor.upcast_ref(), "variable-color")
+        .set_rgba(&gtk::gdk::RGBA::new(0.1, 0.2, 0.3, 1.));
+    named::<gtk::Expander>(editor.upcast_ref(), "variable-management").set_expanded(true);
+    button(editor.upcast_ref(), "Duplicate").emit_clicked();
+    assert_eq!(pick.model().unwrap().n_items(), 4);
+    button(editor.upcast_ref(), "Remove").emit_clicked();
+    assert_eq!(pick.model().unwrap().n_items(), 3);
+    button(editor.upcast_ref(), "Add").emit_clicked();
+    named::<gtk::Entry>(editor.upcast_ref(), "variable-name").set_text("custom_toggle");
+    named::<gtk::DropDown>(editor.upcast_ref(), "variable-value-helper").set_selected(4);
+    named::<gtk::Switch>(editor.upcast_ref(), "variable-switch").set_active(true);
+    button(editor.upcast_ref(), "↑").emit_clicked();
+    button(editor.upcast_ref(), "↓").emit_clicked();
+    let initial_generation = state.borrow().generation;
+    button(editor.upcast_ref(), "Review Variable Changes").emit_clicked();
+    wait(|| proposal().is_some());
+    let review = proposal().unwrap();
+    button(review.upcast_ref(), "Keep Editing").emit_clicked();
+    assert_eq!(state.borrow().generation, initial_generation);
+    assert_eq!(state.borrow().legacy_sources[BASELINE].content, source);
+    button(editor.upcast_ref(), "Review Variable Changes").emit_clicked();
+    wait(|| proposal().is_some());
+    let review = proposal().unwrap();
+    {
+        let mut s = state.borrow_mut();
+        s.draft.values.insert(
+            "general:border_size".into(),
+            hyprland_editor_core::Value::Int(5),
+        );
+        s.generation += 1;
+    }
+    button(review.upcast_ref(), "Keep Private Changes").emit_clicked();
+    assert!(
+        named::<gtk::Label>(review.upcast_ref(), "variable-review-feedback")
+            .text()
+            .contains("changed")
+    );
+    assert_eq!(state.borrow().legacy_sources[BASELINE].content, source);
+    review.destroy();
+    let before = captured_workspace(&state.borrow())
+        .unwrap()
+        .to_json(&catalogue)
+        .unwrap();
+    let late_save = super::project_save::Snapshot::capture(&state.borrow()).unwrap();
+    button(editor.upcast_ref(), "Review Variable Changes").emit_clicked();
+    wait(|| proposal().is_some());
+    let review = proposal().unwrap();
+    button(review.upcast_ref(), "Keep Private Changes").emit_clicked();
+    assert!(
+        !editor.is_visible(),
+        "{}",
+        named::<gtk::Label>(review.upcast_ref(), "variable-review-feedback").text()
+    );
+    assert!(!late_save.mark_saved(&state));
+    assert!(state.borrow().dirty());
+    let kept = state.borrow().legacy_sources[BASELINE].clone();
+    assert_eq!(kept.original.as_ref().unwrap().content, source);
+    assert!(kept
+        .content
+        .contains("$terminal = updated application # command"));
+    assert!(kept.content.contains("$custom_toggle = true\r\nbind ="));
+    assert!(kept
+        .content
+        .contains("general:col.active_border = $accent # unresolved color reference"));
+    assert!(kept.content.contains("general:border_size = 5"));
+    assert!(!marker.exists());
+    assert!(!original.exists());
+    let s = state.borrow();
+    assert_eq!(
+        s.devices[BASELINE][0].kind,
+        hyprland_editor_core::device::Kind::Keyboard
+    );
+    let hyprland_editor_core::session::Entry::Environment { dbus, .. } =
+        &s.session[BASELINE].entries[0]
+    else {
+        panic!()
+    };
+    assert_eq!(*dbus, Some(false));
+    let binding = s.bindings[BASELINE].legacy.as_ref().unwrap();
+    let hyprland_editor_core::legacy_binding::Entry::Bind {
+        chord, argument, ..
+    } = &binding.entries[0]
+    else {
+        panic!()
+    };
+    assert_eq!(chord.modifiers.len(), 2);
+    assert!(chord.modifiers.contains(&"CTRL".into()));
+    assert!(chord.modifiers.contains(&"SHIFT".into()));
+    assert_eq!(argument, "explicit chosen application");
+    let hyprland_editor_core::legacy_binding::Entry::Bind { argument, .. } = &binding.entries[1]
+    else {
+        panic!()
+    };
+    assert_eq!(argument, "updated application");
+    drop(s);
+    state.borrow_mut().undo_last();
+    assert_eq!(
+        captured_workspace(&state.borrow())
+            .unwrap()
+            .to_json(&catalogue)
+            .unwrap(),
+        before
+    );
+    super::legacy_variables::keep(&mut state.borrow_mut(), kept.clone()).unwrap();
+    let snapshot = captured_workspace(&state.borrow()).unwrap();
+    assert_eq!(snapshot.root().unwrap().content, source);
+    assert_eq!(snapshot.legacy_content(), Some(kept.content.as_str()));
+    assert!(snapshot.legacy_revision.is_some());
+    let path = root.path().join("variables.hye");
+    std::fs::write(&path, snapshot.to_json(&catalogue).unwrap()).unwrap();
+    let imported = read_import(path, catalogue.clone(), BASELINE.into()).unwrap();
+    let reopened = imported.legacy.unwrap();
+    assert_eq!(reopened.content, kept.content);
+    assert_eq!(reopened.original.unwrap().content, source);
+    assert_eq!(imported.devices, snapshot.devices);
+    assert_eq!(imported.session, snapshot.session);
+    assert_eq!(imported.bindings, snapshot.bindings);
+    assert!(imported.saved_json);
+    assert_eq!(kept.edited_copy(&snapshot).unwrap(), kept.content);
+    let saved = super::project_save::Snapshot::capture(&state.borrow()).unwrap();
+    assert!(saved.mark_saved(&state));
+    assert!(!state.borrow().dirty());
+    let editor = super::legacy_variables::show(parent, &state, &status).unwrap();
+    named::<gtk::DropDown>(editor.upcast_ref(), "variable-declaration").set_selected(2);
+    if let Some(path) = std::env::var_os("HYPRLAND_EDITOR_TEST_CAPTURE") {
+        let (min, _, _, _) = editor
+            .content()
+            .unwrap()
+            .measure(gtk::Orientation::Horizontal, -1);
+        assert!(min <= 350, "Variable editor requires {min}px");
+        editor.set_default_size(360, 760);
+        for _ in 0..10 {
+            let c = gtk::glib::MainContext::default();
+            while c.pending() {
+                c.iteration(false);
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        assert!(editor.width() <= 360);
+        let p = gtk::WidgetPaintable::new(Some(&editor));
+        let snap = gtk::Snapshot::new();
+        p.snapshot(&snap, editor.width() as f64, editor.height() as f64);
+        editor
+            .renderer()
+            .unwrap()
+            .render_texture(snap.to_node().unwrap(), None)
+            .save_to_png(format!("{}.legacy-variables.png", path.to_string_lossy()))
+            .unwrap();
+    }
+    editor.destroy();
+    assert!(!marker.exists());
+    assert!(!original.exists());
 }

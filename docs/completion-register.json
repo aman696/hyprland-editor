@@ -14,6 +14,39 @@
   },
   "foundations": [
     {
+      "area": "graphical native shared definitions with reviewed private source revisions and atomic undo",
+      "code": [
+        "crates/editor-core/src/legacy_variables.rs",
+        "crates/editor-core/src/legacy.rs",
+        "crates/editor-core/src/legacy_session.rs",
+        "crates/editor-core/src/workspace.rs",
+        "crates/editor-app/src/legacy_variables.rs",
+        "crates/editor-app/src/legacy_source.rs",
+        "crates/editor-app/src/history.rs",
+        "crates/editor-app/src/workflow.rs",
+        "crates/editor-app/src/worker.rs",
+        "crates/editor-app/src/project_save.rs",
+        "crates/editor-app/src/main.rs",
+        "crates/editor-projection/src/lib.rs",
+        "crates/editor-projection/src/wire.rs",
+        "data/legacy-variables.json"
+      ],
+      "test_references": [
+        "ordered_definition_templates_preserve_aliases_duplicates_hashes_and_reference_boundaries",
+        "definition_add_duplicate_remove_reorder_and_rename_keep_untouched_source",
+        "variable_proposals_include_independent_edits_and_rebuild_only_supported_source_values",
+        "private_native_revisions_keep_original_identity_and_bind_markers_to_current_bytes",
+        "unsupported_definition_contexts_and_growth_bounds_do_not_hide_source",
+        "native_equivalent_environment_presence_keeps_bytes_stable_across_repeated_copies",
+        "oversized_native_revision_inverse_refuses_before_source_or_draft_changes",
+        "private_native_revision_templates_are_omitted_from_projection_and_payload_free_reports",
+        "test_template_boundaries",
+        "test_legacy_variable_editing",
+        "native_forms_and_draft_workflow"
+      ],
+      "limits": "ordered literal top-level identifier definition CRUD, preserved aliases/raw templates/hash escaping/comments/line endings, one selected form with color/number/modifier/switch helpers and unchanged-spelling retention, full64KiB UTF8 text boundary and oversized insertion/replacement refusal with selected text restored; review materializes supported native drafts before definition edits, preserves explicit literal shortcut changes, reparses known local shortcuts and all supported source groups, retains other-family unresolved references without inventing values, stale/cancel guards; private native source revision stores immutable original plus codec/base-hash-bound current text, original-free save/reopen, native markers bind current bytes, source-hash dirty tracking and late-save guard, one bounded atomic inverse restores all nine groups/source/metadata, memory preflight refuses before mutation; equivalent env false/unset native encodings no longer accumulate whitespace; native revision templates omitted without payload disclosure,20schema transport,121-input model/37 reviewed predecessors preserve captured originals/compiler observations. No general native variable/prefix/ambient/expression resolution, nested/conditional/continued names, global reference rename, native include/multifile editing, effective matching, actual isolated preview/live apply/recovery or full resource/accessibility/security/release acceptance"
+    },
+    {
       "area": "graphical native window and layer rules with exact string values and ordered inline effects",
       "code": [
         "crates/editor-core/src/legacy_rule.rs",

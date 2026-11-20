@@ -1,0 +1,12 @@
+{
+  "format": "hye-legacy-variables-1",
+  "hyprlang_commit": "090117506ddc3d7f26e650ff344d378c2ec329cc",
+  "hyprlang_config_sha256": "868ac5a7c5600b71283c92fb10e39faf9c0b3d4e8cbcd2a2fef6aaab8e716002",
+  "scope": "ordered top-level identifier definitions with retained raw source templates",
+  "max_definitions": 1024,
+  "max_name_bytes": 256,
+  "max_value_bytes": 65536,
+  "max_source_bytes": 1048576,
+  "revision_format": "hye-private-legacy-source-1",
+  "authority": "captured source only; no environment, includes, expressions or commands are evaluated"
+}

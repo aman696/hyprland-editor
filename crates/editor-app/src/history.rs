@@ -14,6 +14,10 @@ pub(super) struct SourceInverse {
     document_bytes: usize,
 }
 pub(super) enum Undo {
+    LegacyRevision {
+        previous: Box<super::legacy_variables::Snapshot>,
+        retained_bytes: usize,
+    },
     Graph {
         previous: Option<Arc<super::source_graph::Saved>>,
         source: Option<SourceInverse>,
@@ -373,7 +377,8 @@ impl Undo {
                         + changes_bytes(changes)
                         + source.as_ref().map_or(0, |s| origin_bytes(&s.origin))
                 }
-                Self::Session { retained_bytes, .. }
+                Self::LegacyRevision { retained_bytes, .. }
+                | Self::Session { retained_bytes, .. }
                 | Self::Gestures { retained_bytes, .. }
                 | Self::Animations { retained_bytes, .. }
                 | Self::Rules { retained_bytes, .. }
@@ -526,6 +531,16 @@ impl History {
             })
             .sum::<usize>()
             + self.entries.capacity() * size_of::<Undo>()
+    }
+    pub fn legacy_revision(
+        &mut self,
+        previous: super::legacy_variables::Snapshot,
+        retained_bytes: usize,
+    ) -> Result<(), String> {
+        self.push(Undo::LegacyRevision {
+            previous: Box::new(previous),
+            retained_bytes,
+        })
     }
     fn push(&mut self, entry: Undo) -> Result<(), String> {
         let single = entry.bytes()

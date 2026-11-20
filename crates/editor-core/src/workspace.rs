@@ -49,6 +49,8 @@ pub struct SourceSnapshot {
 #[serde(deny_unknown_fields)]
 pub struct Workspace {
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy_revision: Option<crate::legacy_variables::Revision>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_graph: Option<crate::workspace_graph::Graph>,
     pub format: String,
     pub schema: SchemaPin,
@@ -124,6 +126,7 @@ impl Workspace {
     pub fn new(draft: Draft) -> Self {
         Self {
             source_graph: None,
+            legacy_revision: None,
             format: WORKSPACE_FORMAT.into(),
             schema: SchemaPin::for_version(&draft.version),
             draft,
@@ -173,15 +176,36 @@ impl Workspace {
         });
         self
     }
+    pub fn legacy_content(&self) -> Option<&str> {
+        self.root()
+            .filter(|r| r.language == SourceLanguage::Legacy)
+            .map(|r| {
+                self.legacy_revision
+                    .as_ref()
+                    .map_or(r.content.as_str(), |v| v.content.as_str())
+            })
+    }
     pub fn validate(&self, catalogue: &[Setting]) -> Result<(), String> {
         if self.format != WORKSPACE_FORMAT || self.sources.len() > MAX_SOURCE_DOCUMENTS {
             return Err("Unsupported workspace format or source count".into());
         }
-        if let Some(hash) = &self.legacy_binding_origin_sha256 {
-            if self
-                .root()
-                .is_none_or(|r| r.language != SourceLanguage::Legacy || r.origin.sha256 != *hash)
+        if let Some(revision) = &self.legacy_revision {
+            let root = self.root().ok_or("Native revision needs a captured root")?;
+            if root.language != SourceLanguage::Legacy
                 || self.source_graph.is_some()
+                || self.sources.len() != 1
+                || self.draft.version != crate::BASELINE
+            {
+                return Err("Private native revision requires one captured legacy root".into());
+            }
+            revision.validate(&root.content)?;
+        }
+        let legacy_hash = self.legacy_content().map(crate::lua::source_hash);
+        if let Some(hash) = &self.legacy_binding_origin_sha256 {
+            if self.root().is_none_or(|r| {
+                r.language != SourceLanguage::Legacy
+                    || legacy_hash.as_deref() != Some(hash.as_str())
+            }) || self.source_graph.is_some()
                 || self.draft.version != crate::BASELINE
                 || !self
                     .legacy_binding_schema_sha256
@@ -209,10 +233,10 @@ impl Workspace {
             );
         }
         if let Some(hash) = &self.legacy_session_origin_sha256 {
-            if self
-                .root()
-                .is_none_or(|r| r.language != SourceLanguage::Legacy || r.origin.sha256 != *hash)
-                || self.source_graph.is_some()
+            if self.root().is_none_or(|r| {
+                r.language != SourceLanguage::Legacy
+                    || legacy_hash.as_deref() != Some(hash.as_str())
+            }) || self.source_graph.is_some()
                 || self.draft.version != crate::BASELINE
                 || self.legacy_session_schema_sha256.as_deref()
                     != Some(&crate::legacy_session::schema_hash())
@@ -228,10 +252,10 @@ impl Workspace {
             return Err("Legacy session schema has no captured source marker".into());
         }
         if let Some(hash) = &self.legacy_monitor_origin_sha256 {
-            if self
-                .root()
-                .is_none_or(|r| r.language != SourceLanguage::Legacy || r.origin.sha256 != *hash)
-                || self.source_graph.is_some()
+            if self.root().is_none_or(|r| {
+                r.language != SourceLanguage::Legacy
+                    || legacy_hash.as_deref() != Some(hash.as_str())
+            }) || self.source_graph.is_some()
                 || self.draft.version != crate::BASELINE
                 || !self
                     .legacy_monitor_schema_sha256
@@ -252,10 +276,10 @@ impl Workspace {
             );
         }
         if let Some(hash) = &self.legacy_workspace_origin_sha256 {
-            if self
-                .root()
-                .is_none_or(|r| r.language != SourceLanguage::Legacy || r.origin.sha256 != *hash)
-                || self.source_graph.is_some()
+            if self.root().is_none_or(|r| {
+                r.language != SourceLanguage::Legacy
+                    || legacy_hash.as_deref() != Some(hash.as_str())
+            }) || self.source_graph.is_some()
                 || self.draft.version != crate::BASELINE
                 || self.legacy_workspace_schema_sha256.as_deref()
                     != Some(&crate::legacy_workspace::schema_hash())
@@ -274,10 +298,10 @@ impl Workspace {
             );
         }
         if let Some(hash) = &self.legacy_animation_origin_sha256 {
-            if self
-                .root()
-                .is_none_or(|r| r.language != SourceLanguage::Legacy || r.origin.sha256 != *hash)
-                || self.source_graph.is_some()
+            if self.root().is_none_or(|r| {
+                r.language != SourceLanguage::Legacy
+                    || legacy_hash.as_deref() != Some(hash.as_str())
+            }) || self.source_graph.is_some()
                 || self.draft.version != crate::BASELINE
                 || self.legacy_animation_schema_sha256.as_deref()
                     != Some(&crate::legacy_animation::schema_hash())
@@ -296,10 +320,10 @@ impl Workspace {
             );
         }
         if let Some(hash) = &self.legacy_gesture_origin_sha256 {
-            if self
-                .root()
-                .is_none_or(|r| r.language != SourceLanguage::Legacy || r.origin.sha256 != *hash)
-                || self.source_graph.is_some()
+            if self.root().is_none_or(|r| {
+                r.language != SourceLanguage::Legacy
+                    || legacy_hash.as_deref() != Some(hash.as_str())
+            }) || self.source_graph.is_some()
                 || self.draft.version != crate::BASELINE
                 || self.legacy_gesture_schema_sha256.as_deref()
                     != Some(&crate::legacy_gesture::schema_hash())
@@ -318,10 +342,10 @@ impl Workspace {
             );
         }
         if let Some(hash) = &self.legacy_device_origin_sha256 {
-            if self
-                .root()
-                .is_none_or(|r| r.language != SourceLanguage::Legacy || r.origin.sha256 != *hash)
-                || self.source_graph.is_some()
+            if self.root().is_none_or(|r| {
+                r.language != SourceLanguage::Legacy
+                    || legacy_hash.as_deref() != Some(hash.as_str())
+            }) || self.source_graph.is_some()
                 || self.draft.version != crate::BASELINE
                 || self.legacy_device_schema_sha256.as_deref()
                     != Some(&crate::legacy_device::schema_hash())
@@ -337,10 +361,10 @@ impl Workspace {
             return Err("Native device drafts require captured source and codec identities".into());
         }
         if let Some(hash) = &self.legacy_rule_origin_sha256 {
-            if self
-                .root()
-                .is_none_or(|r| r.language != SourceLanguage::Legacy || r.origin.sha256 != *hash)
-                || self.source_graph.is_some()
+            if self.root().is_none_or(|r| {
+                r.language != SourceLanguage::Legacy
+                    || legacy_hash.as_deref() != Some(hash.as_str())
+            }) || self.source_graph.is_some()
                 || self.draft.version != crate::BASELINE
                 || self.legacy_rule_schema_sha256.as_deref()
                     != Some(&crate::legacy_rule::schema_hash())
