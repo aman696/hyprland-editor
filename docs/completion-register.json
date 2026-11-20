@@ -14,6 +14,22 @@
   },
   "foundations": [
     {
+      "area": "graphical native include directives through reviewed private source revisions",
+      "code": [
+        "crates/editor-core/src/legacy_includes.rs",
+        "crates/editor-app/src/legacy_includes.rs",
+        "crates/editor-app/src/legacy_variables.rs",
+        "crates/editor-app/src/worker.rs"
+      ],
+      "test_references": [
+        "selected_removal_and_order_keep_comments_local_and_accept_native_templates",
+        "opaque_directives_remain_and_invalid_or_duplicated_slots_are_refused",
+        "test_legacy_variable_editing",
+        "native_forms_and_draft_workflow"
+      ],
+      "limits": "Top-level native source directive editing with ordered add/duplicate/remove/move, raw path templates, source slots and comments preserved, staged native draft materialization, worker review, private save/reopen and atomic undo. Linked file capture, child-file editing, wildcard expansion, runtime load order and full multi-file compatibility remain open"
+    },
+    {
       "area": "graphical native shared definitions with reviewed private source revisions and atomic undo",
       "code": [
         "crates/editor-core/src/legacy_variables.rs",

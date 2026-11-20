@@ -60,7 +60,7 @@ impl Revision {
 fn identifier(s: &str) -> bool {
     !s.is_empty() && s.len() <= 256 && s.chars().all(|c| c.is_alphanumeric() || c == '_')
 }
-fn value(raw: &str) -> Result<String, String> {
+pub(crate) fn value(raw: &str) -> Result<String, String> {
     if raw.len() > 65536
         || raw != trim(raw)
         || raw.chars().any(char::is_control)
@@ -267,10 +267,34 @@ pub fn prepare(
     target: &[Definition],
     catalogue: &[crate::Setting],
 ) -> Result<String, String> {
-    workspace.validate(catalogue)?;
     let content = workspace
         .legacy_content()
         .ok_or("Import a native configuration before editing variables")?;
+    let copy = materialize(workspace, catalogue)?;
+    if !same(&inspect(content)?.definitions, &inspect(&copy)?.definitions) {
+        return Err("Staged edits changed variable declarations; review the source again".into());
+    }
+    let output = edited_copy(&copy, target)?;
+    crate::legacy::Document::new_with_binding_mode(
+        output.clone(),
+        catalogue,
+        workspace
+            .bindings
+            .legacy
+            .as_ref()
+            .is_some_and(|draft| draft.local_variables),
+    )?;
+    Ok(output)
+}
+
+pub(crate) fn materialize(
+    workspace: &crate::workspace::Workspace,
+    catalogue: &[crate::Setting],
+) -> Result<String, String> {
+    workspace.validate(catalogue)?;
+    let content = workspace
+        .legacy_content()
+        .ok_or("Import a native configuration before editing source directives")?;
     let bindings = workspace
         .bindings
         .legacy
@@ -281,7 +305,7 @@ pub fn prepare(
         || !workspace.bindings.order.is_empty()
     {
         return Err(
-            "Separate Lua drafts require explicit review before variable source edits".into(),
+            "Separate Lua drafts require explicit review before native source edits".into(),
         );
     }
     let original = crate::legacy::Document::new_with_binding_mode(
@@ -289,7 +313,7 @@ pub fn prepare(
         catalogue,
         bindings.local_variables,
     )?;
-    let copy = original.edited_groups(
+    original.edited_groups(
         crate::legacy::Edits {
             draft: &workspace.draft,
             session: &workspace.session,
@@ -302,15 +326,5 @@ pub fn prepare(
             rules: &workspace.rules,
         },
         catalogue,
-    )?;
-    if !same(&inspect(content)?.definitions, &inspect(&copy)?.definitions) {
-        return Err("Staged edits changed variable declarations; review the source again".into());
-    }
-    let output = edited_copy(&copy, target)?;
-    crate::legacy::Document::new_with_binding_mode(
-        output.clone(),
-        catalogue,
-        bindings.local_variables,
-    )?;
-    Ok(output)
+    )
 }

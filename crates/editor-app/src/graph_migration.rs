@@ -115,7 +115,11 @@ const LEGACY_VARIABLE_FROM: &str =
     "b530faf1d5b8b0d528cec402c96ad44224d8f0880a04a4e42a635ccf725806e4";
 const LEGACY_VARIABLE_MODEL: &str =
     include_str!("../../../data/migrations/graph-model-before-legacy-variables.json");
-const TO: &str = "7cdb0c835eb0a129a4465717975a86ffab808b970f68ac3ac0fbe93cbebba364";
+const LEGACY_INCLUDE_FROM: &str =
+    "7cdb0c835eb0a129a4465717975a86ffab808b970f68ac3ac0fbe93cbebba364";
+const LEGACY_INCLUDE_MODEL: &str =
+    include_str!("../../../data/migrations/graph-model-before-legacy-includes.json");
+const TO: &str = "4dbdd7807eadc06054fc3770db52816ab62c1c268306efc82752944edb58c568";
 const OLD: &str = include_str!("../../../data/migrations/graph-model-before-projection.json");
 const FROM_PROJECTION: &str = "046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371";
 const PROJECTION: &str = include_str!("../../../data/migrations/graph-model-projection.json");
@@ -1732,9 +1736,9 @@ fn before_legacy_variable_transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
-fn transition(from: &str) -> Result<(), String> {
+fn before_legacy_include_transition(from: &str) -> Result<(), String> {
     if lua::source_hash(LEGACY_VARIABLE_MODEL) != LEGACY_VARIABLE_FROM
-        || lua::source_hash(CURRENT) != TO
+        || lua::source_hash(LEGACY_INCLUDE_MODEL) != LEGACY_INCLUDE_FROM
     {
         return Err("No reviewed native variable transition to this model is available".into());
     }
@@ -1743,7 +1747,8 @@ fn transition(from: &str) -> Result<(), String> {
     }
     let old: serde_json::Value =
         serde_json::from_str(LEGACY_VARIABLE_MODEL).map_err(|e| e.to_string())?;
-    let new: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let new: serde_json::Value =
+        serde_json::from_str(LEGACY_INCLUDE_MODEL).map_err(|e| e.to_string())?;
     let old = old["inputs"]
         .as_object()
         .ok_or("Invalid preceding variable model")?;
@@ -1775,6 +1780,48 @@ fn transition(from: &str) -> Result<(), String> {
             ]
     {
         return Err("Native variables differ from reviewed definition editing, additive private native source revisions, combined source materialization and restricted worker; captured inputs and compiler observations must remain exact".into());
+    }
+    Ok(())
+}
+fn transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(LEGACY_INCLUDE_MODEL) != LEGACY_INCLUDE_FROM
+        || lua::source_hash(CURRENT) != TO
+    {
+        return Err("No reviewed native include transition to this model is available".into());
+    }
+    if from != LEGACY_INCLUDE_FROM {
+        before_legacy_include_transition(from)?;
+    }
+    let old: serde_json::Value =
+        serde_json::from_str(LEGACY_INCLUDE_MODEL).map_err(|e| e.to_string())?;
+    let new: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let old = old["inputs"]
+        .as_object()
+        .ok_or("Invalid preceding include model")?;
+    let new = new["inputs"].as_object().ok_or("Invalid include model")?;
+    let added: Vec<_> = new
+        .keys()
+        .filter(|k| !old.contains_key(*k))
+        .map(String::as_str)
+        .collect();
+    let changed: Vec<_> = old
+        .keys()
+        .filter(|k| new.get(*k) != Some(&old[*k]))
+        .map(String::as_str)
+        .collect();
+    if old.len() != 121
+        || new.len() != 122
+        || added != ["crates/editor-core/src/legacy_includes.rs"]
+        || changed
+            != [
+                "crates/editor-app/src/worker.rs",
+                "crates/editor-core/src/legacy_variables.rs",
+                "crates/editor-core/src/lib.rs",
+            ]
+    {
+        return Err(
+            "The native include writer differs from the reviewed source-edit transition.".into(),
+        );
     }
     Ok(())
 }
@@ -1814,6 +1861,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != LEGACY_DEVICE_FROM
         && previous != LEGACY_RULE_FROM
         && previous != LEGACY_VARIABLE_FROM
+        && previous != LEGACY_INCLUDE_FROM
         && previous != LEGACY_GESTURE_FROM
         && previous != LEGACY_ANIMATION_FROM
         && previous != LEGACY_WORKSPACE_FROM
@@ -1838,6 +1886,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != LEGACY_DEVICE_FROM
         && previous != LEGACY_RULE_FROM
         && previous != LEGACY_VARIABLE_FROM
+        && previous != LEGACY_INCLUDE_FROM
         && previous != LEGACY_GESTURE_FROM
         && previous != LEGACY_ANIMATION_FROM
         && previous != LEGACY_WORKSPACE_FROM
@@ -1877,6 +1926,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != LEGACY_DEVICE_FROM
         && previous != LEGACY_RULE_FROM
         && previous != LEGACY_VARIABLE_FROM
+        && previous != LEGACY_INCLUDE_FROM
         && previous != LEGACY_GESTURE_FROM
         && previous != LEGACY_ANIMATION_FROM
         && previous != LEGACY_WORKSPACE_FROM
@@ -2008,6 +2058,7 @@ mod tests {
         transition(LEGACY_DEVICE_FROM).unwrap();
         transition(LEGACY_RULE_FROM).unwrap();
         transition(LEGACY_VARIABLE_FROM).unwrap();
+        transition(LEGACY_INCLUDE_FROM).unwrap();
         assert!(transition(&"0".repeat(64)).is_err());
         assert_ne!(FROM, TO);
         assert_eq!(lua::source_hash(CURRENT), TO);

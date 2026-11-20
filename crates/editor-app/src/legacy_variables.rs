@@ -120,7 +120,7 @@ fn rebuilt(previous: &Workspace, doc: &Document) -> Result<Workspace, String> {
 }
 pub(super) fn keep(state: &mut State, doc: Arc<Document>) -> Result<(), String> {
     if state.draft.version != BASELINE || state.source_graphs.contains_key(BASELINE) {
-        return Err("Native variable revision belongs to a single legacy source project".into());
+        return Err("Native source revision belongs to a single legacy source project".into());
     }
     let old = state
         .legacy_sources
@@ -139,7 +139,7 @@ pub(super) fn keep(state: &mut State, doc: Arc<Document>) -> Result<(), String> 
         .map_or(doc.content.as_str(), |d| d.content.as_str())
         != base
     {
-        return Err("Variable proposal belongs to a different source capture".into());
+        return Err("Source proposal belongs to a different source capture".into());
     }
     let next_bytes = next.to_json(&state.catalogue)?;
     drop(next_bytes);
@@ -809,7 +809,7 @@ pub(super) fn show(
                     return;
                 }
                 match result {
-                    Ok(doc) => review_proposal(&parent, &state, &status, doc, epoch),
+                    Ok(doc) => review_proposal(&parent, &state, &status, doc, epoch, None),
                     Err(e) => fb.set_text(&e),
                 }
             },
@@ -864,18 +864,23 @@ fn unique(defs: &[Definition]) -> String {
         .find(|id| defs.iter().all(|d| d.id != *id))
         .unwrap()
 }
-fn review_proposal(
+pub(super) fn review_proposal(
     parent: &adw::Window,
     state: &Shared,
     status: &gtk::Label,
     doc: Arc<Document>,
     epoch: u64,
+    include_impact: Option<String>,
 ) {
     let Some(before) = state.borrow().legacy_sources.get(BASELINE).cloned() else {
         return;
     };
     let review = adw::Window::builder()
-        .title("Review Variable Changes")
+        .title(if include_impact.is_some() {
+            "Review Include Changes"
+        } else {
+            "Review Variable Changes"
+        })
         .transient_for(parent)
         .modal(true)
         .default_width(680)
@@ -897,38 +902,7 @@ fn review_proposal(
     root.append(&body);
     review.set_content(Some(&root));
     body.append(&super::label("Review the resulting source before keeping it. Other staged native edits are included; your original capture stays unchanged. Save the project afterwards to retain this revision."));
-    let mut impact=format!("Definitions: {} → {}\nSupported shortcut operations: {} → {}\nUnresolved scalar/source lines: {} → {}\n\nThese are captured-source projections, not effective compositor observations. Includes, ambient variables and expressions remain unresolved. Renaming changes the definition only; inspect its remaining references.\n\n",before.variables.definitions.len(),doc.variables.definitions.len(),before.bindings.draft.entries.len(),doc.bindings.draft.entries.len(),before.report.skipped.len(),doc.report.skipped.len());
-    let short = |s: &str| {
-        let mut out = s.chars().take(160).collect::<String>();
-        if s.chars().count() > 160 {
-            out.push('…');
-        }
-        out
-    };
-    for i in 0..before
-        .variables
-        .definitions
-        .len()
-        .max(doc.variables.definitions.len())
-    {
-        let a = before.variables.definitions.get(i);
-        let b = doc.variables.definitions.get(i);
-        if a.map(|d| (&d.name, &d.value)) != b.map(|d| (&d.name, &d.value)) {
-            impact.push_str(&format!(
-                "{} → {}\n",
-                a.map_or("(added)".into(), |d| format!(
-                    "${} = {}",
-                    d.name,
-                    short(&d.value)
-                )),
-                b.map_or("(removed)".into(), |d| format!(
-                    "${} = {}",
-                    d.name,
-                    short(&d.value)
-                ))
-            ));
-        }
-    }
+    let mut impact = include_impact.unwrap_or_else(|| variable_impact(&before, &doc));
     impact.push_str("\nResulting supported shortcuts (literal source projection; not executed):\n");
     for entry in &doc.bindings.draft.entries {
         if impact.len() > 512 * 1024 {
@@ -1000,6 +974,42 @@ fn review_proposal(
     });
     review.present();
     cancel.grab_focus();
+}
+
+fn variable_impact(before: &Document, doc: &Document) -> String {
+    let mut impact=format!("Definitions: {} → {}\nSupported shortcut operations: {} → {}\nUnresolved scalar/source lines: {} → {}\n\nThese are captured-source projections, not effective compositor observations. Includes, ambient variables and expressions remain unresolved. Renaming changes the definition only; inspect its remaining references.\n\n",before.variables.definitions.len(),doc.variables.definitions.len(),before.bindings.draft.entries.len(),doc.bindings.draft.entries.len(),before.report.skipped.len(),doc.report.skipped.len());
+    let short = |s: &str| {
+        let mut out = s.chars().take(160).collect::<String>();
+        if s.chars().count() > 160 {
+            out.push('…');
+        }
+        out
+    };
+    for i in 0..before
+        .variables
+        .definitions
+        .len()
+        .max(doc.variables.definitions.len())
+    {
+        let a = before.variables.definitions.get(i);
+        let b = doc.variables.definitions.get(i);
+        if a.map(|d| (&d.name, &d.value)) != b.map(|d| (&d.name, &d.value)) {
+            impact.push_str(&format!(
+                "{} → {}\n",
+                a.map_or("(added)".into(), |d| format!(
+                    "${} = {}",
+                    d.name,
+                    short(&d.value)
+                )),
+                b.map_or("(removed)".into(), |d| format!(
+                    "${} = {}",
+                    d.name,
+                    short(&d.value)
+                ))
+            ));
+        }
+    }
+    impact
 }
 
 #[cfg(test)]

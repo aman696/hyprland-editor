@@ -1,5 +1,15 @@
 # Execution plan and acceptance gates
 
+## Native include directives — 20 November 2026
+
+**Edit Included Files…** edits the ordered top-level `source` directives in an imported `.conf` project. The editor accepts paths and unresolved path templates, including variables and globs. Removing an entry targets its original slot and preserves its comment. Reordering retains the placement of intervening settings. Unsupported contexts remain in the captured text.
+
+The include editor materializes pending edits with the same restricted worker and private revision flow as the variable editor. Review shows the resulting source, original capture and edited bytes remain distinct, and keep/undo/save/reopen use the existing source transaction. The reviewed graph transition covers 122 inputs and retains support for the 121-input writer.
+
+The workspace suite passed 613 tests. Strict Clippy and the separate private GTK workflow passed. The GTK workflow exercises review acceptance, reopen without the original and atomic undo.
+
+Capturing included file contents, editing each participating file and observing effective cross-file values and load order remain open. [Native source editor guide](legacy-source-editor.md#included-files)
+
 ## Shared native variables and private source revisions — 3 November 2026
 
 Ordered top-level identifier definitions now have a graphical editor with add/duplicate/remove/reorder, preserved raw templates and color/number/modifier/switch helpers. Unchanged helpers retain source spelling. One selected form is resident; the compact 360px rendering was inspected. The text helper retains the full 64 KiB UTF-8 boundary, refuses oversized insertions and restores selected text on oversized replacement. Invalid forms remain visible and prevent navigation/review. The value helpers do not infer runtime types or evaluate templates. See [shared variables](legacy-variable-editor.md).

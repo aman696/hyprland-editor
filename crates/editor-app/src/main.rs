@@ -18,6 +18,7 @@ mod graph_migration;
 mod graph_transaction_tests;
 mod history;
 mod legacy_binding_editor;
+mod legacy_includes;
 mod legacy_source;
 mod legacy_variables;
 mod monitors;
@@ -1369,6 +1370,8 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
     source_modules::connect(&source_modules, &window, &state);
     let reattach = gtk::Button::with_label("Verify Source File");
     let reconcile = gtk::Button::with_label("Compare Changed Source");
+    let include_editor = gtk::Button::with_label("Included Files");
+    legacy_includes::connect(&include_editor, &window, &state, &status);
     let variable_editor = gtk::Button::with_label("Shared Variables");
     legacy_variables::connect(&variable_editor, &window, &state, &status);
     let binding_editor = gtk::Button::with_label("Edit Bindings");
@@ -1410,6 +1413,7 @@ fn build(app: &adw::Application) -> adw::ApplicationWindow {
         ("devices", &device_editor),
         ("bindings", &binding_editor),
         ("variables", &variable_editor),
+        ("includes", &include_editor),
         ("workspaces", &workspace_editor),
         ("rules", &rule_editor),
         ("animations", &animation_editor),

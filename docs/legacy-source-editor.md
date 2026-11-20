@@ -52,3 +52,12 @@ Literal native gestures now populate matching/action controls and join the combi
 
 
 **Edit Shared Variables…** edits ordered source definitions with color/number/modifier/switch helpers. Review includes other staged native edits, reparses supported values and keeps an undoable private source revision. The immutable original capture stays separate; source-copy review uses the current revision. See [shared variables](legacy-variable-editor.md).
+
+
+## Included files
+
+Choose **Edit Included Files…** after importing a `.conf` project. Add, duplicate, remove, edit or reorder top-level `source` directives. Enter the path as a Hyprland template, which can include variables or a wildcard. The editor preserves the template and leaves matching and file loading to Hyprland. The pinned compositor resolves relative paths against the including file and processes matched files while reading each directive. [Pinned Hyprland source handler](https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/legacy/ConfigManager.cpp#L1670-L1717)
+
+Removing a directive clears its selected source slot and retains its comment. Reordering fills the surviving slots in the requested order, with comments attached to their original positions. New directives go before the next surviving slot or after the last original directive. On a file with no editable include directives, new ones start at the top. The review shows the full materialized source before and after the change, including other staged edits. Inspect the positions when a directive moves across a definition or setting. The editor preserves unsupported include contexts in the source.
+
+**Keep Private Changes** records the proposal in the project's current source revision. Undo restores the previous source and typed drafts together. Save and reopen work from captured bytes. Project-wide capture, editing files reached through these directives, and verification of wildcard expansion and effective load order remain open work.

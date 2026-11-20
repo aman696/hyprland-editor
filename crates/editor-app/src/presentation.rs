@@ -122,6 +122,7 @@ pub fn menu_model() -> gtk::gio::Menu {
     files.append(Some("Edit Devices…"), Some("win.devices"));
     files.append(Some("Edit Bindings…"), Some("win.bindings"));
     files.append(Some("Edit Shared Variables…"), Some("win.variables"));
+    files.append(Some("Edit Included Files…"), Some("win.includes"));
     files.append(Some("Edit Workspaces…"), Some("win.workspaces"));
     files.append(Some("Edit Rules…"), Some("win.rules"));
     files.append(Some("Edit Animations…"), Some("win.animations"));

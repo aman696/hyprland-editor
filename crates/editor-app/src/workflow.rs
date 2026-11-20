@@ -3182,6 +3182,44 @@ pub(super) fn test_legacy_variable_editing(parent: &adw::ApplicationWindow) {
             .unwrap();
     }
     editor.destroy();
+    let includes = super::legacy_includes::open(parent, &state, &status).unwrap();
+    let path: gtk::Entry = named(includes.upcast_ref(), "include-path");
+    assert_eq!(path.text(), "missing.conf");
+    path.set_text("themes/*.conf");
+    button(includes.upcast_ref(), "Duplicate").emit_clicked();
+    path.set_text("$theme/overrides.conf");
+    button(includes.upcast_ref(), "Move Up").emit_clicked();
+    let review = || {
+        gtk::Window::list_toplevels()
+            .into_iter()
+            .filter_map(|w| w.downcast::<gtk::Window>().ok())
+            .find(|w| w.title().as_deref() == Some("Review Include Changes") && w.is_visible())
+    };
+    button(includes.upcast_ref(), "Review Include Changes").emit_clicked();
+    wait(|| review().is_some());
+    assert!(!state.borrow().dirty());
+    button(review().unwrap().upcast_ref(), "Keep Private Changes").emit_clicked();
+    assert!(!includes.is_visible());
+    let included = captured_workspace(&state.borrow()).unwrap();
+    assert_eq!(included.root().unwrap().content, source);
+    assert!(included
+        .legacy_content()
+        .unwrap()
+        .ends_with("source = $theme/overrides.conf\r\nsource = themes/*.conf\r\n"));
+    assert!(state.borrow().dirty());
+    let saved_include = root.path().join("includes.hye");
+    std::fs::write(&saved_include, included.to_json(&catalogue).unwrap()).unwrap();
+    let reopened = read_import(saved_include, catalogue.clone(), BASELINE.into()).unwrap();
+    assert_eq!(
+        reopened.legacy.unwrap().content,
+        included.legacy_content().unwrap()
+    );
+    state.borrow_mut().undo_last();
+    assert!(!state.borrow().dirty());
+    assert_eq!(
+        state.borrow().legacy_sources[BASELINE].content,
+        kept.content
+    );
     assert!(!marker.exists());
     assert!(!original.exists());
 }

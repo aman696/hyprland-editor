@@ -40,6 +40,10 @@ pub enum Request {
         devices: Vec<hyprland_editor_core::device::Spec>,
         rules: Vec<hyprland_editor_core::rule::Rule>,
     },
+    EditLegacyIncludes {
+        workspace: Box<hyprland_editor_core::workspace::Workspace>,
+        includes: Vec<hyprland_editor_core::legacy_includes::Include>,
+    },
     EditLegacyVariables {
         workspace: Box<hyprland_editor_core::workspace::Workspace>,
         definitions: Vec<hyprland_editor_core::legacy_variables::Definition>,
@@ -493,6 +497,11 @@ pub fn entry() {
                 &c,
             )
             .map(Response::Copy),
+            Request::EditLegacyIncludes {
+                workspace,
+                includes,
+            } => hyprland_editor_core::legacy_includes::prepare(&workspace, &includes, &c)
+                .map(Response::Copy),
             Request::EditLegacyVariables {
                 workspace,
                 definitions,
