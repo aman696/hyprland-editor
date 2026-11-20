@@ -41,7 +41,7 @@ fn color(s: &str) -> Result<u32, String> {
     }
     parse_color(s)
 }
-fn literal(s: &Setting, raw: &str) -> Option<Value> {
+pub(crate) fn literal(s: &Setting, raw: &str) -> Option<Value> {
     if raw.contains('$') || raw.contains('\0') {
         return None;
     }

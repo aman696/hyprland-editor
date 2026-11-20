@@ -22,6 +22,7 @@ mod legacy_capture;
 mod legacy_file_editor;
 mod legacy_includes;
 mod legacy_source;
+mod legacy_trace;
 mod legacy_tree_export;
 mod legacy_variables;
 mod monitors;
@@ -841,6 +842,31 @@ fn detail(state: &Shared, panel: &gtk::Box, setting: &Setting, status: &gtk::Lab
     };
     group.set_description(Some(&origin));
     panel.append(&group);
+    if state.borrow().legacy_sources.contains_key(&setting.version)
+        && panel
+            .root()
+            .and_downcast::<adw::ApplicationWindow>()
+            .is_some()
+    {
+        let trace = gtk::Button::with_label("Trace This Setting…");
+        trace.set_halign(gtk::Align::Start);
+        trace.add_css_class("flat");
+        let (panel_ref, state, status, id) = (
+            panel.downgrade(),
+            state.clone(),
+            status.clone(),
+            setting.id.clone(),
+        );
+        trace.connect_clicked(move |_| {
+            if let Some(parent) = panel_ref
+                .upgrade()
+                .and_then(|panel| panel.root().and_downcast::<adw::ApplicationWindow>())
+            {
+                legacy_trace::open(&parent, &state, &status, Some(&id));
+            }
+        });
+        panel.append(&trace);
+    }
     let message = label("");
     message.set_visible(false);
     panel.append(&message);

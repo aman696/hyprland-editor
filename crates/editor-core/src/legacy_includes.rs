@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::{collections::BTreeSet, ops::Range};
 
 pub mod captures;
+pub mod effective;
 pub mod project_copy;
 
 pub const MAX_ROWS: usize = 1024;

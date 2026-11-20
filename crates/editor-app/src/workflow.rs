@@ -3384,6 +3384,22 @@ pub(super) fn test_legacy_variable_editing(parent: &adw::ApplicationWindow) {
     let files = super::legacy_capture::open(&include_editor, &state, &status).unwrap();
     let export = button(files.upcast_ref(), "Review Entire Configuration Folder…");
     let feedback: gtk::Label = named(files.upcast_ref(), "include-capture-feedback");
+    let trace_button = button(files.upcast_ref(), "Trace Source Settings…");
+    trace_button.emit_clicked();
+    let trace = find_window("Source Setting Trace").unwrap();
+    let query: gtk::SearchEntry = named(trace.upcast_ref(), "source-trace-search");
+    query.set_text("general:border_size");
+    query.emit_by_name::<()>("search-changed", &[]);
+    let result: gtk::Label = named(trace.upcast_ref(), "source-trace-result");
+    let history: gtk::TextView = named(trace.upcast_ref(), "source-trace-history");
+    wait(|| result.text().contains("Trace is incomplete"));
+    let trace_text = || {
+        let buffer = history.buffer();
+        buffer.text(&buffer.start_iter(), &buffer.end_iter(), true)
+    };
+    assert!(trace_text().contains("Include cycle"));
+    assert!(trace_text().contains("palette.conf:2"));
+    trace.destroy();
     export.emit_clicked();
     wait(|| feedback.text().contains("Remove the cycle"));
     assert!(feedback.text().contains("palette.conf:2"));
@@ -3435,6 +3451,52 @@ pub(super) fn test_legacy_variable_editing(parent: &adw::ApplicationWindow) {
     let export_status: gtk::Label = named(review.upcast_ref(), "native-folder-copy-status");
     assert!(export_status.text().contains("draft changed"));
     review.destroy();
+
+    // Route the last source assignment to the specific linked setting.
+    trace_button.emit_clicked();
+    let trace = find_window("Source Setting Trace").unwrap();
+    let query: gtk::SearchEntry = named(trace.upcast_ref(), "source-trace-search");
+    query.set_text("general:border_size");
+    query.emit_by_name::<()>("search-changed", &[]);
+    let result: gtk::Label = named(trace.upcast_ref(), "source-trace-result");
+    wait(|| result.text().contains("Last captured literal"));
+    let trace_history: gtk::TextView = named(trace.upcast_ref(), "source-trace-history");
+    let trace_text = || {
+        let buffer = trace_history.buffer();
+        buffer.text(&buffer.start_iter(), &buffer.end_iter(), true)
+    };
+    assert!(trace_text().starts_with("9\n"));
+    assert!(trace_text().contains("palette.conf:1"));
+    assert!(trace_text().contains("\n7\n"));
+    let edit = button(trace.upcast_ref(), "Edit in Linked File…");
+    assert!(edit.is_sensitive());
+    edit.emit_clicked();
+    wait(|| find_window("Edit Linked File").is_some());
+    let child = find_window("Edit Linked File").unwrap();
+    let search: gtk::SearchEntry = named(child.upcast_ref(), "linked-setting-search");
+    assert_eq!(search.text(), "general:border_size");
+    let spin = widgets(child.upcast_ref())
+        .into_iter()
+        .find_map(|widget| widget.downcast::<gtk::SpinButton>().ok())
+        .unwrap();
+    assert_eq!(spin.value_as_int(), 9);
+    spin.set_value(11.0);
+    button(child.upcast_ref(), "Update Draft").emit_clicked();
+    button(child.upcast_ref(), "Review File Changes").emit_clicked();
+    wait(|| find_window("Review Linked File Changes").is_some());
+    button(
+        find_window("Review Linked File Changes")
+            .unwrap()
+            .upcast_ref(),
+        "Keep Linked File Changes",
+    )
+    .emit_clicked();
+    wait(|| trace_text().starts_with("11\n"));
+    assert_eq!(
+        state.borrow().draft.values["general:border_size"],
+        hyprland_editor_core::Value::Int(7)
+    );
+    trace.destroy();
     files.destroy();
     include_editor.destroy();
 

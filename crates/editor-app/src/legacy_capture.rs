@@ -231,11 +231,28 @@ pub(super) fn open(
     actions.insert(&forget, -1);
     body.append(&actions);
     let export_tree = gtk::Button::with_label("Review Entire Configuration Folder…");
-    body.append(&export_tree);
+    let trace = gtk::Button::with_label("Trace Source Settings…");
+    let project_actions = gtk::FlowBox::builder()
+        .selection_mode(gtk::SelectionMode::None)
+        .max_children_per_line(2)
+        .row_spacing(6)
+        .column_spacing(6)
+        .build();
+    project_actions.insert(&trace, -1);
+    project_actions.insert(&export_tree, -1);
+    body.append(&project_actions);
     let feedback = super::label("");
     feedback.set_widget_name("include-capture-feedback");
     body.append(&feedback);
     super::legacy_tree_export::connect(&export_tree, &window, state, &feedback);
+    {
+        let (parent, state, status) = (window.downgrade(), state.clone(), status.clone());
+        trace.connect_clicked(move |_| {
+            if let Some(parent) = parent.upgrade() {
+                super::legacy_trace::open(&parent, &state, &status, None);
+            }
+        });
+    }
     let preview = gtk::TextView::builder()
         .editable(false)
         .monospace(true)
@@ -560,7 +577,9 @@ pub(super) fn open(
                         return;
                     }
                     if let Err(error) = result.and_then(|prepared| {
-                        super::legacy_file_editor::open(&window, &state, &status, prepared, refresh)
+                        super::legacy_file_editor::open(
+                            &window, &state, &status, prepared, refresh, None,
+                        )
                     }) {
                         feedback.set_text(&error);
                     } else {

@@ -1,6 +1,8 @@
 # Reviewed saved-graph migration
 
-The current target is `90751352aee549158c892ecc9607bb01d4a7787478a4f27615ea8fbd4fb8461d` (124 inputs), with 41 reviewed predecessors. `data/migrations/graph-model-before-legacy-tree-export.json` freezes the preceding model. The transition adds the native folder copy planner and records the first unresolved include position. It preserves existing Lua capture and compiler inputs.
+The current target is `1049ed50ff5dfb43afa5b911299478e8ab4e2626460c291945074a6a5f3f38f4` (125 inputs), with 42 reviewed predecessors. `data/migrations/graph-model-before-native-setting-trace.json` freezes the preceding model. The transition adds the bounded native assignment trace and shares path and literal parsing with the existing native editor. Saved Lua source and compiler inputs are preserved.
+
+The preceding target is `90751352aee549158c892ecc9607bb01d4a7787478a4f27615ea8fbd4fb8461d` (124 inputs), with 41 reviewed predecessors. `data/migrations/graph-model-before-legacy-tree-export.json` freezes the preceding model. The transition adds the native folder copy planner and records the first unresolved include position. It preserves existing Lua capture and compiler inputs.
 
 The preceding target is `c35772a1fc736871e78778ed6d22e2271b93c19c30fde2583d83d8ab37c2641f` (123 inputs), with 40 reviewed predecessors. `data/migrations/graph-model-before-linked-file-edits.json` freezes the preceding model. The transition adds validation for linked revisions against captured file identity and bytes, and uses their revised contents in reference inspection. Lua graph migration retains its original capture and compiler inputs.
 

@@ -1,12 +1,18 @@
 # Execution plan and acceptance gates
 
+## Native setting trace across captured files
+
+**Trace This Setting…** in the native settings panel and **Trace Source Settings…** in the linked-file browser show ordered scalar assignments from the materialized root and kept child revisions. Each linked file is visited where its include appears, including repeated visits. The last captured literal and earlier assignments retain file and line provenance. Expansion, unresolved includes, cycles, conditional parsing, computed keys and traversal limits surface as uncertainty. The latest visible linked assignment can open directly in its graphical editor.
+
+The workspace suite passed 622 tests with nine ignored. Strict Clippy and the private GTK workflow passed. The graphical test identified a cycle at its source line, opened a linked setting from the trace, kept a revision and showed the new value while retaining the root assignment. An independent hyprlang 0.6.8 fixture matched repeated include order and the final scalar values in both a nested-file winner and a later root winner. Model 125 has 42 reviewed predecessors. The trace uses captured configuration evidence. Full variable and include expansion, structured settings and runtime acceptance remain open. [Native setting trace](legacy-source-editor.md#trace-a-setting-across-files)
+
 ## Native configuration folder export
 
 **Review Entire Configuration Folder…** materializes staged native root changes and shows one proposed file at a time, including kept revisions of reachable captured files. It rewrites supported literal include paths within their original source slots. Numbered filenames distinguish matching basenames, and repeated and nested includes retain their order. The shared folder writer creates private files in an unused destination. Missing captures, cycles, unresolved paths and stale reviews stop the export.
 
 The workspace suite passed 619 tests with nine ignored. Strict Clippy and the private GTK workflow passed. The graphical workflow reviewed root and child edits after their original paths were removed, reported a cycle with its source line, measured the review at a 360 px layout and refused a stale review. An independent hyprlang 0.6.8 fixture loaded all five nested and repeated includes from the moved export in order and read the expected final value. Model 124 has 41 reviewed predecessors.
 
-Include expansion, effective values and assignment ownership across files remain open. Other resource paths and commands retain their original text. The parser fixture does not cover real isolated compositor preview, live configuration discovery or apply and recovery. [Native folder export guide](legacy-source-editor.md#export-the-configuration-folder)
+Include expansion and relocation of other resources remain open. Other resource paths and commands retain their original text. [Native folder export guide](legacy-source-editor.md#export-the-configuration-folder)
 
 ## Native linked-file editing
 

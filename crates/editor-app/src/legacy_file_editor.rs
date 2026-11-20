@@ -69,6 +69,7 @@ pub(super) fn open(
     status: &gtk::Label,
     prepared: Prepared,
     refresh: Rc<dyn Fn()>,
+    initial_setting: Option<&str>,
 ) -> Result<adw::Window, String> {
     let original_path = prepared.file.identity.selected_path.clone();
     let file_name = prepared.file.identity.display_path();
@@ -190,7 +191,10 @@ pub(super) fn open(
             show_setting(selected.selected());
         }
     };
-    search_settings("");
+    if let Some(id) = initial_setting {
+        search.set_text(id);
+    }
+    search_settings(search.text().as_str());
     search.connect_search_changed(move |entry| search_settings(entry.text().as_str()));
     {
         let (child, local_status, selected) =

@@ -13,7 +13,7 @@ use std::{
 
 pub const MAX_FILES: usize = 31;
 pub const MAX_BYTES: usize = 2 * MAX_DOCUMENT_BYTES;
-const MAX_DEPTH: usize = 16;
+pub(super) const MAX_DEPTH: usize = 16;
 const MAX_REFERENCES: usize = 1024;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -104,7 +104,7 @@ pub fn validate(files: &[CapturedSource]) -> Result<(), String> {
     Ok(())
 }
 
-fn absolute_components(path: &Path) -> Option<PathBuf> {
+pub(super) fn absolute_components(path: &Path) -> Option<PathBuf> {
     if !path.is_absolute() {
         return None;
     }
@@ -123,7 +123,7 @@ pub fn matches_selection(expected: &Path, selected: &Path) -> bool {
     absolute_components(selected).as_deref() == Some(expected)
 }
 
-fn literal_path(parent: &[u8], template: &str) -> Option<PathBuf> {
+pub(super) fn literal_path(parent: &[u8], template: &str) -> Option<PathBuf> {
     // Expansion, glob escaping and symlink-sensitive parent traversal need
     // separate resolution evidence. This matcher consumes capture metadata only.
     if template.ends_with('/')
@@ -366,5 +366,125 @@ mod tests {
         assert!(validate(&[captured.clone(), duplicate]).is_err());
         captured.content.push('!');
         assert!(validate(&[captured]).is_err());
+    }
+
+    #[test]
+    fn source_setting_trace_interleaves_repeated_files_and_kept_revisions() {
+        use crate::legacy_includes::effective::{self, ValueKind};
+        let files = [
+            file(
+                "/config/leaf.conf",
+                "general {\r\n border_size = 5\r\n}\r\n",
+            ),
+            file("/config/layout.conf", "general:border_size = 3\n"),
+            file("/config/detached.conf", "source = never-read.conf\n"),
+        ];
+        let revision = LinkedRevision {
+            path: files[1].identity.selected_path.clone(),
+            revision: Revision::new(
+                &files[1].content,
+                "general:border_size = 4\nsource = leaf.conf\n".into(),
+            )
+            .unwrap(),
+        };
+        let report = effective::inspect(
+            b"/config/root.conf",
+            "general:border_size = 2\nsource = layout.conf\ngeneral:border_size = 8\nsource = /config/layout.conf\n",
+            &files,
+            &[revision],
+            &crate::catalogue(),
+        )
+        .unwrap();
+        assert_eq!(report.issue_count, 0);
+        let history = &report.settings["general:border_size"];
+        assert_eq!(history.total, 6);
+        assert_eq!(
+            history
+                .assignments
+                .iter()
+                .map(|a| (a.file, a.line, a.value.as_ref(), a.kind))
+                .collect::<Vec<_>>(),
+            [
+                (None, 1, "2", ValueKind::Literal),
+                (Some(1), 1, "4", ValueKind::Literal),
+                (Some(0), 2, "5", ValueKind::Literal),
+                (None, 3, "8", ValueKind::Literal),
+                (Some(1), 1, "4", ValueKind::Literal),
+                (Some(0), 2, "5", ValueKind::Literal),
+            ]
+        );
+    }
+
+    #[test]
+    fn source_setting_trace_retains_uncertain_assignments_and_their_locations() {
+        use crate::legacy_includes::effective::{self, IssueKind, ValueKind};
+        let files = [file("/config/child.conf", "source = root.conf\n")];
+        let report = effective::inspect(
+            b"/config/root.conf",
+            concat!(
+                "general:border_size = 4\n",
+                "source = child.conf\n",
+                "source = missing.conf\n",
+                "source = $path/*.conf\n",
+                "# hyprlang if FLAG\n",
+                "general:border_size = $size\n",
+                "# hyprlang endif\n",
+                "general:bord\\\ner_size = 9\n",
+                "so$name = path.conf\n",
+                "general:gaps_in = nonsense\n"
+            ),
+            &files,
+            &[],
+            &crate::catalogue(),
+        )
+        .unwrap();
+        assert_eq!(report.issue_count, 6);
+        assert_eq!(
+            report
+                .issues
+                .iter()
+                .map(|issue| (issue.file, issue.line, issue.kind))
+                .collect::<Vec<_>>(),
+            [
+                (Some(0), Some(1), IssueKind::IncludeCycle),
+                (None, Some(3), IssueKind::MissingInclude),
+                (None, Some(4), IssueKind::UnresolvedInclude),
+                (None, Some(5), IssueKind::Conditional),
+                (None, Some(7), IssueKind::Conditional),
+                (None, Some(10), IssueKind::ComputedKey),
+            ],
+        );
+        let assignments = &report.settings["general:border_size"].assignments;
+        assert_eq!(assignments[1].kind, ValueKind::Expansion);
+        assert_eq!(
+            (assignments[2].line, assignments[2].value.as_ref()),
+            (8, "9")
+        );
+        assert_eq!(
+            report.settings["general:gaps_in"].assignments[0].kind,
+            ValueKind::Unverified
+        );
+    }
+
+    #[test]
+    fn source_setting_trace_bounds_repeated_history_and_marks_truncated_traversal() {
+        use crate::legacy_includes::effective::{self, IssueKind};
+        let source = "general:border_size = 3\n".repeat(2_000);
+        let files = [file("/config/child.conf", &source)];
+        let report = effective::inspect(
+            b"/config/root.conf",
+            &"source = child.conf\n".repeat(9),
+            &files,
+            &[],
+            &crate::catalogue(),
+        )
+        .unwrap();
+        let history = &report.settings["general:border_size"];
+        assert!(history.total > 16_000 && history.total < 18_000);
+        assert_eq!(history.assignments.len(), 32);
+        assert!(report
+            .issues
+            .iter()
+            .any(|issue| issue.kind == IssueKind::Limit));
     }
 }
