@@ -50,6 +50,8 @@ pub struct SourceSnapshot {
 pub struct Workspace {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub legacy_revision: Option<crate::legacy_variables::Revision>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub legacy_include_files: Vec<crate::source::CapturedSource>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_graph: Option<crate::workspace_graph::Graph>,
     pub format: String,
@@ -127,6 +129,7 @@ impl Workspace {
         Self {
             source_graph: None,
             legacy_revision: None,
+            legacy_include_files: Vec::new(),
             format: WORKSPACE_FORMAT.into(),
             schema: SchemaPin::for_version(&draft.version),
             draft,
@@ -188,6 +191,16 @@ impl Workspace {
     pub fn validate(&self, catalogue: &[Setting]) -> Result<(), String> {
         if self.format != WORKSPACE_FORMAT || self.sources.len() > MAX_SOURCE_DOCUMENTS {
             return Err("Unsupported workspace format or source count".into());
+        }
+        if !self.legacy_include_files.is_empty() {
+            if self.draft.version != crate::BASELINE
+                || self.source_graph.is_some()
+                || self.sources.len() != 1
+                || self.legacy_content().is_none()
+            {
+                return Err("Linked file snapshots require a native root source.".into());
+            }
+            crate::legacy_includes::captures::validate(&self.legacy_include_files)?;
         }
         if let Some(revision) = &self.legacy_revision {
             let root = self.root().ok_or("Native revision needs a captured root")?;

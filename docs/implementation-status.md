@@ -1,5 +1,13 @@
 # Execution plan and acceptance gates
 
+## Native linked-file snapshots
+
+**Linked File Snapshots…** attaches explicitly selected files to literal include paths in a native project. It checks the captured identity and bytes, derives an ordered reference list with nested and repeated links, and marks cycles and unresolved templates. Files detached by a root edit remain available for inspection and removal. The private draft supports save, reopen without original files and undoable capture, refresh and removal. Typed root settings and linked-file contents remain separate until cross-file settings projection is implemented.
+
+The workspace suite passed 615 tests. Strict Clippy and the private GTK workflow passed. The GTK workflow uses the isolated capture worker, checks nested preview and undo, and reopens after both linked files are deleted.
+
+The captured file set uses a 31-file and 2 MiB text limit as well as the overall project limit. Its validation is recorded in model 123 with 39 reviewed predecessors. Per-file editing, tree export, effective cross-file values and template expansion remain open. [Native source editor guide](legacy-source-editor.md#linked-file-snapshots)
+
 ## Native include directives — 20 November 2026
 
 **Edit Included Files…** edits the ordered top-level `source` directives in an imported `.conf` project. The editor accepts paths and unresolved path templates, including variables and globs. Removing an entry targets its original slot and preserves its comment. Reordering retains the placement of intervening settings. Unsupported contexts remain in the captured text.

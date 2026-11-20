@@ -61,6 +61,12 @@ impl Snapshot {
         state
             .saved_legacy_sources
             .insert(version.clone(), legacy_hash);
+        if version == hyprland_editor_core::BASELINE {
+            state.saved_legacy_include_files = state
+                .legacy_include_files
+                .as_ref()
+                .map(|snapshot| snapshot.fingerprint.clone());
+        }
         state.saved_source_graphs.insert(version, self.graph);
         true
     }

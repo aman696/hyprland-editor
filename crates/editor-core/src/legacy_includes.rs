@@ -7,6 +7,8 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeSet, ops::Range};
 
+pub mod captures;
+
 pub const MAX_ROWS: usize = 1024;
 pub const MAX_PATH: usize = 4096;
 const MAX_TEXT: usize = 256 * 1024;
@@ -22,6 +24,7 @@ pub struct Include {
 struct Scan {
     rows: Vec<Include>,
     sites: Vec<Range<usize>>,
+    lines: Vec<usize>,
     unresolved: usize,
 }
 
@@ -29,6 +32,7 @@ fn scan(content: &str) -> Result<Scan, String> {
     let mut result = Scan {
         rows: Vec::new(),
         sites: Vec::new(),
+        lines: Vec::new(),
         unresolved: 0,
     };
     let mut total = 0;
@@ -47,6 +51,7 @@ fn scan(content: &str) -> Result<Scan, String> {
                 template: statement.value.to_owned(),
             });
             result.sites.push(statement.statement);
+            result.lines.push(statement.line);
         } else {
             result.unresolved += 1;
         }

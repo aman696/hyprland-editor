@@ -14,6 +14,22 @@
   },
   "foundations": [
     {
+      "area": "persistent native linked-file snapshots with ordered reference inspection",
+      "code": [
+        "crates/editor-core/src/legacy_includes/captures.rs",
+        "crates/editor-core/src/workspace.rs",
+        "crates/editor-app/src/legacy_capture.rs",
+        "crates/editor-app/src/workflow.rs"
+      ],
+      "test_references": [
+        "traverses_saved_literal_edges_in_order_and_keeps_detached_files",
+        "validates_capture_bytes_and_rejects_duplicate_or_ambiguous_paths",
+        "test_legacy_variable_editing",
+        "native_forms_and_draft_workflow"
+      ],
+      "limits": "Explicit local file selection for literal native includes, path and content identity validation, bounded ordered nested reference inspection with repeated occurrences, cycles and unresolved paths, private snapshots with undo and reload from saved bytes. Child-file edits, multi-file export, template expansion, effective native configuration and runtime acceptance remain open"
+    },
+    {
       "area": "graphical native include directives through reviewed private source revisions",
       "code": [
         "crates/editor-core/src/legacy_includes.rs",

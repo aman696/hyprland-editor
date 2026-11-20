@@ -36,6 +36,7 @@ struct Imported {
     draft: Draft,
     source: Option<LuaDocument>,
     legacy: Option<super::legacy_source::Document>,
+    legacy_include_files: Option<std::sync::Arc<super::legacy_capture::Snapshot>>,
     origin: Option<SourceIdentity>,
     message: String,
     saved_json: bool,
@@ -308,7 +309,10 @@ fn read_import_for_review(
             }
         }
         let saved_json = migration.is_none() && !legacy_projection_changed;
-        return Ok(Imported { migration,graph,draft:workspace.draft,source,legacy,origin,saved_json,monitors:workspace.monitors,devices:workspace.devices,bindings:workspace.bindings,workspace_rules:workspace.workspace_rules,rules:workspace.rules,animations:workspace.animations,gestures:workspace.gestures,session:workspace.session,
+        let legacy_include_files = super::legacy_capture::Snapshot::new(std::mem::take(
+            &mut workspace.legacy_include_files,
+        ))?;
+        return Ok(Imported { migration,graph,draft:workspace.draft,source,legacy,legacy_include_files,origin,saved_json,monitors:workspace.monitors,devices:workspace.devices,bindings:workspace.bindings,workspace_rules:workspace.workspace_rules,rules:workspace.rules,animations:workspace.animations,gestures:workspace.gestures,session:workspace.session,
             message:format!("{} with {diagnostics} source diagnostics. Source snapshots were reparsed; recorded original paths were not opened. Desktop state is separate.", if saved_json { "Saved draft reopened" } else if legacy_projection_changed {"Legacy views rebuilt from retained source; older separate drafts appended for review. Save a new project copy"} else { "Rebuilt copy loaded; save it as a new private workspace" }) });
     }
     let captured = if path
@@ -320,13 +324,13 @@ fn read_import_for_review(
         storage::read_source(&path)?
     };
     match path.extension().and_then(|s|s.to_str()) {
-        Some("json")=>Draft::from_json(&captured.content,&catalogue).map(|draft|Imported{migration:None,graph:None,draft,source:None,legacy:None,origin:None,monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),session:Default::default(),message:"Validated value-only draft loaded".into(),saved_json:true}),
-        Some("conf")=>super::legacy_source::Document::new(captured.content,&catalogue).map(|doc|Imported{migration:None,graph:None,message:format!("Retained {} scalar overrides, {} session entries and {} monitor declarations and {} binding operations and {} workspace declarations and {} animation declarations and {} gestures and {} devices; {} lines unresolved; {} repeated keys. Known local shortcut values are projected; includes and other variable uses remain unresolved. Review Source Copy includes supported scalar, session, monitor, workspace, animation, gesture, device, rule and binding edits.",doc.report.draft.values.len(),doc.session.draft.entries.len(),doc.monitors.rules.len(),doc.bindings.draft.entries.len(),doc.workspaces.rules.len(),doc.animations.draft.declarations.len(),doc.gestures.draft.declarations.len(),doc.devices.devices.len(),doc.report.skipped.len(),doc.report.duplicate_keys.len()),draft:doc.report.draft.clone(),session:doc.session.draft.clone(),monitors:doc.monitors.rules.clone(),source:None,origin:Some(captured.identity),devices:doc.devices.devices.clone(),bindings:hyprland_editor_core::binding::Draft{legacy:Some(doc.bindings.draft.clone()),..Default::default()},workspace_rules:doc.workspaces.rules.clone(),rules:doc.rules.rules.clone(),animations:doc.animations.draft.clone(),gestures:doc.gestures.draft.clone(),saved_json:false,legacy:Some(doc)}),
+        Some("json")=>Draft::from_json(&captured.content,&catalogue).map(|draft|Imported{migration:None,graph:None,draft,source:None,legacy:None,legacy_include_files:None,origin:None,monitors:vec![],devices:vec![],bindings:Default::default(),workspace_rules:vec![],rules:vec![],animations:Default::default(),gestures:Default::default(),session:Default::default(),message:"Validated value-only draft loaded".into(),saved_json:true}),
+        Some("conf")=>super::legacy_source::Document::new(captured.content,&catalogue).map(|doc|Imported{migration:None,graph:None,message:format!("Retained {} scalar overrides, {} session entries and {} monitor declarations and {} binding operations and {} workspace declarations and {} animation declarations and {} gestures and {} devices; {} lines unresolved; {} repeated keys. Known local shortcut values are projected; includes and other variable uses remain unresolved. Review Source Copy includes supported scalar, session, monitor, workspace, animation, gesture, device, rule and binding edits.",doc.report.draft.values.len(),doc.session.draft.entries.len(),doc.monitors.rules.len(),doc.bindings.draft.entries.len(),doc.workspaces.rules.len(),doc.animations.draft.declarations.len(),doc.gestures.draft.declarations.len(),doc.devices.devices.len(),doc.report.skipped.len(),doc.report.duplicate_keys.len()),draft:doc.report.draft.clone(),session:doc.session.draft.clone(),monitors:doc.monitors.rules.clone(),source:None,origin:Some(captured.identity),devices:doc.devices.devices.clone(),bindings:hyprland_editor_core::binding::Draft{legacy:Some(doc.bindings.draft.clone()),..Default::default()},workspace_rules:doc.workspaces.rules.clone(),rules:doc.rules.rules.clone(),animations:doc.animations.draft.clone(),gestures:doc.gestures.draft.clone(),saved_json:false,legacy:Some(doc),legacy_include_files:None}),
         Some("lua")=>{
             let doc=parse_source(captured.content,version,&catalogue)?;
             let mut message=format!("Imported {} scalar declarations, {} monitor rules and {} device rules; {} diagnostics. Effective values are not inferred by executing Lua.",doc.report.draft.values.len(),doc.report.monitors.len(),doc.report.devices.len(),doc.report.diagnostics.len());
             if doc.report.opaque_effects{message.push_str(" Opaque code remains in the source; this is a partial projection.");}
-            Ok(Imported{migration:None,graph:None,draft:doc.report.draft.clone(),monitors:doc.report.monitors.clone(),devices:doc.report.devices.clone(),bindings:doc.report.bindings.clone(),workspace_rules:doc.report.workspace_rules.clone(),rules:doc.report.rules.clone(),animations:doc.report.animations.clone(),gestures:doc.report.gestures.clone(),session:doc.report.session.clone(),source:Some(doc),legacy:None,origin:Some(captured.identity),message,saved_json:false})
+            Ok(Imported{migration:None,graph:None,draft:doc.report.draft.clone(),monitors:doc.report.monitors.clone(),devices:doc.report.devices.clone(),bindings:doc.report.bindings.clone(),workspace_rules:doc.report.workspace_rules.clone(),rules:doc.report.rules.clone(),animations:doc.report.animations.clone(),gestures:doc.report.gestures.clone(),session:doc.report.session.clone(),source:Some(doc),legacy:None,legacy_include_files:None,origin:Some(captured.identity),message,saved_json:false})
         },_=>Err("Select saved .hye workspace, draft JSON, legacy .conf or Lua .lua source".into()),
     }
 }
@@ -357,6 +361,7 @@ pub(super) fn check_workspace(path: PathBuf) -> Result<serde_json::Value, String
         "opaque_effects":imported.source.as_ref().is_some_and(|s|s.report.opaque_effects),
         "source_diagnostics":imported.source.as_ref().map_or(0,|s|s.report.diagnostics.len()),
         "legacy_source_retained":imported.legacy.is_some(),
+        "legacy_include_snapshots":imported.legacy_include_files.as_ref().map_or(0,|snapshot|snapshot.files.len()),
         "source_graph_replayed":imported.graph.is_some(),
         "source_graph_documents":imported.graph.as_ref().map_or(0,|g|g.bundle.sources.len()),
         "source_graph_bindings":imported.graph.as_ref().map_or(0,|g|g.bundle.graph.bindings.len()),
@@ -461,6 +466,9 @@ pub(super) fn captured_workspace(s: &super::State) -> Result<Workspace, String> 
                 &original.content,
                 doc.content.clone(),
             )?);
+        }
+        if let Some(files) = &s.legacy_include_files {
+            snapshot.legacy_include_files = files.files.clone();
         }
         snapshot.root_source = Some("root".into());
         snapshot.sources.push(workspace::SourceSnapshot {
@@ -768,6 +776,16 @@ fn apply_import(
             .insert(imported.draft.version.clone(), std::sync::Arc::new(doc));
     } else {
         s.sources.remove(&imported.draft.version);
+    }
+    if imported.draft.version == BASELINE {
+        s.legacy_include_files = imported.legacy_include_files;
+        s.saved_legacy_include_files = if imported.saved_json {
+            s.legacy_include_files
+                .as_ref()
+                .map(|snapshot| snapshot.fingerprint.clone())
+        } else {
+            None
+        };
     }
     if let Some(doc) = imported.legacy {
         s.legacy_sources
@@ -1416,6 +1434,7 @@ pub(super) fn test_source_persistence(window: &adw::ApplicationWindow) {
             draft,
             source: Some(doc),
             legacy: None,
+            legacy_include_files: None,
             origin: Some(captured.identity.clone()),
             saved_json: false,
             monitors: vec![],
@@ -3219,6 +3238,77 @@ pub(super) fn test_legacy_variable_editing(parent: &adw::ApplicationWindow) {
     assert_eq!(
         state.borrow().legacy_sources[BASELINE].content,
         kept.content
+    );
+    let linked = root.path().join("missing.conf");
+    let nested = root.path().join("palette.conf");
+    let linked_content = "source = palette.conf\n";
+    let nested_content = "general:border_size = 6\nsource = original.conf\n";
+    std::fs::write(&linked, linked_content).unwrap();
+    std::fs::write(&nested, nested_content).unwrap();
+    let picked = super::capture_worker::read_selected(&linked).unwrap();
+    super::legacy_capture::accept(&mut state.borrow_mut(), &linked, picked).unwrap();
+    let picked = super::capture_worker::read_selected(&nested).unwrap();
+    super::legacy_capture::accept(&mut state.borrow_mut(), &nested, picked).unwrap();
+    assert!(state.borrow().dirty());
+    let include_editor = super::legacy_includes::open(parent, &state, &status).unwrap();
+    let files = super::legacy_capture::open(&include_editor, &state, &status).unwrap();
+    let picker: gtk::DropDown = named(files.upcast_ref(), "include-capture-picker");
+    let view: gtk::TextView = named(files.upcast_ref(), "include-capture-preview");
+    assert_eq!(picker.model().unwrap().n_items(), 3);
+    picker.set_selected(1);
+    let buffer = view.buffer();
+    assert_eq!(
+        buffer.text(&buffer.start_iter(), &buffer.end_iter(), true),
+        nested_content
+    );
+    let snapshot = captured_workspace(&state.borrow()).unwrap();
+    assert_eq!(snapshot.legacy_include_files.len(), 2);
+    assert_eq!(
+        snapshot.draft.values["general:border_size"],
+        hyprland_editor_core::Value::Int(5)
+    );
+    button(files.upcast_ref(), "Remove Snapshot").emit_clicked();
+    assert_eq!(
+        state
+            .borrow()
+            .legacy_include_files
+            .as_ref()
+            .unwrap()
+            .files
+            .len(),
+        1
+    );
+    state.borrow_mut().undo_last();
+    assert_eq!(
+        state
+            .borrow()
+            .legacy_include_files
+            .as_ref()
+            .unwrap()
+            .files
+            .len(),
+        2
+    );
+    files.destroy();
+    include_editor.destroy();
+    std::fs::remove_file(&linked).unwrap();
+    std::fs::remove_file(&nested).unwrap();
+    let path = root.path().join("captured-includes.hye");
+    std::fs::write(&path, snapshot.to_json(&catalogue).unwrap()).unwrap();
+    let reopened = read_import(path, catalogue.clone(), BASELINE.into()).unwrap();
+    let preserved = reopened.legacy_include_files.unwrap();
+    assert_eq!(preserved.files[0].content, linked_content);
+    assert_eq!(preserved.files[1].content, nested_content);
+    let report = hyprland_editor_core::legacy_includes::captures::inspect(
+        &reopened.origin.unwrap().selected_path,
+        &reopened.legacy.unwrap().content,
+        &preserved.files,
+    )
+    .unwrap();
+    assert_eq!(report.reached.len(), 2);
+    assert_eq!(
+        report.rows[2].outcome,
+        hyprland_editor_core::legacy_includes::captures::Outcome::RootCycle
     );
     assert!(!marker.exists());
     assert!(!original.exists());

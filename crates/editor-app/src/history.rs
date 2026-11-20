@@ -14,6 +14,9 @@ pub(super) struct SourceInverse {
     document_bytes: usize,
 }
 pub(super) enum Undo {
+    LegacyIncludeFiles {
+        previous: Option<Arc<super::legacy_capture::Snapshot>>,
+    },
     LegacyRevision {
         previous: Box<super::legacy_variables::Snapshot>,
         retained_bytes: usize,
@@ -356,6 +359,9 @@ impl Undo {
     fn bytes(&self) -> usize {
         size_of::<Self>()
             + match self {
+                Self::LegacyIncludeFiles { previous } => previous
+                    .as_ref()
+                    .map_or(0, |snapshot| snapshot.retained_cost),
                 Self::Field { id, previous } => {
                     id.capacity() + previous.as_ref().map_or(0, value_bytes)
                 }
@@ -531,6 +537,12 @@ impl History {
             })
             .sum::<usize>()
             + self.entries.capacity() * size_of::<Undo>()
+    }
+    pub fn legacy_include_files(
+        &mut self,
+        previous: Option<Arc<super::legacy_capture::Snapshot>>,
+    ) -> Result<(), String> {
+        self.push(Undo::LegacyIncludeFiles { previous })
     }
     pub fn legacy_revision(
         &mut self,

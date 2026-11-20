@@ -63,6 +63,24 @@ pub(super) fn open(
             "{unresolved} include directives use syntax that this editor preserves as source text."
         )));
     }
+    let snapshots = gtk::Button::with_label("Linked File Snapshots…");
+    panel.append(&snapshots);
+    {
+        let (win, state, status) = (win.downgrade(), state.clone(), status.clone());
+        snapshots.connect_clicked(move |_| {
+            if let Some(win) = win.upgrade() {
+                if let Err(error) = super::legacy_capture::open(&win, &state, &status) {
+                    let dialog = adw::MessageDialog::builder()
+                        .transient_for(&win)
+                        .heading("Cannot show linked files")
+                        .body(&error)
+                        .build();
+                    dialog.add_response("close", "Close");
+                    dialog.present();
+                }
+            }
+        });
+    }
     let model = gtk::StringList::new(&[]);
     let picker = gtk::DropDown::builder().model(&model).hexpand(true).build();
     super::monitors::compact(&picker);

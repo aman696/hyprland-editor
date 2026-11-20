@@ -18,6 +18,7 @@ mod graph_migration;
 mod graph_transaction_tests;
 mod history;
 mod legacy_binding_editor;
+mod legacy_capture;
 mod legacy_includes;
 mod legacy_source;
 mod legacy_variables;
@@ -76,6 +77,8 @@ struct State {
     sources: BTreeMap<String, Arc<hyprland_editor_core::lua::LuaDocument>>,
     legacy_sources: BTreeMap<String, Arc<legacy_source::Document>>,
     saved_legacy_sources: BTreeMap<String, Option<String>>,
+    legacy_include_files: Option<Arc<legacy_capture::Snapshot>>,
+    saved_legacy_include_files: Option<String>,
     source_origins: BTreeMap<String, SourceIdentity>,
     source_graphs: BTreeMap<String, Arc<source_graph::Saved>>,
     saved_source_graphs: BTreeMap<String, Option<String>>,
@@ -193,6 +196,12 @@ impl State {
                     .saved_legacy_sources
                     .get(version)
                     .and_then(Option::as_deref)
+            || (version == BASELINE
+                && self
+                    .legacy_include_files
+                    .as_ref()
+                    .map(|snapshot| snapshot.fingerprint.as_str())
+                    != self.saved_legacy_include_files.as_deref())
             || monitors != saved_monitors
             || self.devices.get(version).map(Vec::as_slice).unwrap_or(&[])
                 != self
@@ -394,6 +403,7 @@ impl State {
             return;
         };
         match operation {
+            history::Undo::LegacyIncludeFiles { previous } => self.legacy_include_files = previous,
             history::Undo::LegacyRevision { previous, .. } => {
                 legacy_variables::restore(self, *previous)
             }
@@ -1017,6 +1027,8 @@ fn initial_state() -> Shared {
         sources: BTreeMap::new(),
         legacy_sources: BTreeMap::new(),
         saved_legacy_sources: BTreeMap::new(),
+        legacy_include_files: None,
+        saved_legacy_include_files: None,
         source_origins: BTreeMap::new(),
         source_graphs: BTreeMap::new(),
         saved_source_graphs: BTreeMap::new(),
