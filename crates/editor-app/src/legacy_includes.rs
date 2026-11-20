@@ -29,6 +29,15 @@ pub(super) fn open(
     state: &Shared,
     status: &gtk::Label,
 ) -> Result<adw::Window, String> {
+    open_for_file(parent, state, status, true)
+}
+
+pub(super) fn open_for_file(
+    parent: &impl IsA<gtk::Window>,
+    state: &Shared,
+    status: &gtk::Label,
+    show_snapshots: bool,
+) -> Result<adw::Window, String> {
     let source = {
         let state = state.borrow();
         state.legacy_sources.get(&state.draft.version).cloned()
@@ -65,6 +74,7 @@ pub(super) fn open(
     }
     let snapshots = gtk::Button::with_label("Linked File Snapshots…");
     panel.append(&snapshots);
+    snapshots.set_visible(show_snapshots);
     {
         let (win, state, status) = (win.downgrade(), state.clone(), status.clone());
         snapshots.connect_clicked(move |_| {

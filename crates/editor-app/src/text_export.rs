@@ -75,6 +75,10 @@ pub(super) fn review_legacy(parent: &impl IsA<gtk::Window>, text: String) -> adw
     review_format(parent,"Review edited legacy source copy","Supported scalar, session, monitor and legacy binding edits are included; unknown directives and comments are preserved. Includes and variable expansion remain unresolved. Save with a new filename. Other structured draft groups are not exported here.","hyprland-edited.conf",text,true)
 }
 
+pub(super) fn review_linked_file(parent: &impl IsA<gtk::Window>, text: String) -> adw::Window {
+    review_format(parent, "Review Linked File Copy", "Save this file as a new copy. Include paths are preserved and remain relative to their source file.", "linked-file-edited.conf", text, true)
+}
+
 pub(super) fn review_legacy_bindings(parent: &impl IsA<gtk::Window>, text: String) -> adw::Window {
     review_format(parent,"Review legacy binding fragment","This literal fragment contains the current shortcut, submap and unbind values. Use Review Source Copy to preserve local variable references. This must not replace a whole configuration. No action has been executed.","hyprland-bindings.conf",text,true)
 }

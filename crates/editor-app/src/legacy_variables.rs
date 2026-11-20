@@ -474,7 +474,7 @@ pub(super) fn connect(
     });
 }
 pub(super) fn show(
-    parent: &adw::ApplicationWindow,
+    parent: &impl IsA<gtk::Window>,
     state: &Shared,
     status: &gtk::Label,
 ) -> Option<adw::Window> {

@@ -2,7 +2,7 @@
 use super::{capture_worker, workflow, Shared, State};
 use adw::prelude::*;
 use hyprland_editor_core::{
-    legacy_includes::captures::{self, Outcome, References},
+    legacy_includes::captures::{self, LinkedRevision, Outcome, References},
     source::{self, CapturedSource},
     BASELINE,
 };
@@ -16,18 +16,33 @@ use std::{
 
 pub(super) struct Snapshot {
     pub files: Vec<CapturedSource>,
+    pub revisions: Vec<LinkedRevision>,
     pub fingerprint: String,
     pub retained_cost: usize,
 }
 
 impl Snapshot {
-    pub fn new(files: Vec<CapturedSource>) -> Result<Option<Arc<Self>>, String> {
+    pub fn new(
+        files: Vec<CapturedSource>,
+        revisions: Vec<LinkedRevision>,
+    ) -> Result<Option<Arc<Self>>, String> {
+        captures::validate_revisions(&files, &revisions)?;
         if files.is_empty() {
             return Ok(None);
         }
         captures::validate(&files)?;
         let identities: Vec<_> = files.iter().map(|file| &file.identity).collect();
-        let identity_text = serde_json::to_string(&identities).map_err(|e| e.to_string())?;
+        let revisions_by_path: Vec<_> = revisions
+            .iter()
+            .map(|r| {
+                (
+                    &r.path,
+                    hyprland_editor_core::lua::source_hash(&r.revision.content),
+                )
+            })
+            .collect();
+        let identity_text =
+            serde_json::to_string(&(identities, revisions_by_path)).map_err(|e| e.to_string())?;
         let mut retained_cost = 0usize;
         for file in &files {
             let identity = serde_json::to_vec(&file.identity).map_err(|e| e.to_string())?;
@@ -37,22 +52,38 @@ impl Snapshot {
                     + identity.len() * 4,
             );
         }
+        for revision in &revisions {
+            retained_cost = retained_cost.saturating_add(
+                std::mem::size_of::<LinkedRevision>()
+                    + revision.path.capacity()
+                    + revision.revision.content.capacity()
+                    + 192,
+            );
+        }
         Ok(Some(Arc::new(Self {
             files,
+            revisions,
             fingerprint: hyprland_editor_core::lua::source_hash(&identity_text),
             retained_cost,
         })))
     }
 }
 
-fn replace(state: &mut State, files: Vec<CapturedSource>) -> Result<(), String> {
-    let proposed = Snapshot::new(files)?;
+fn replace(
+    state: &mut State,
+    files: Vec<CapturedSource>,
+    revisions: Vec<LinkedRevision>,
+) -> Result<(), String> {
+    let proposed = Snapshot::new(files, revisions)?;
     let fingerprint = |snapshot: &Arc<Snapshot>| snapshot.fingerprint.clone();
     if proposed.as_ref().map(fingerprint) == state.legacy_include_files.as_ref().map(fingerprint) {
         return Ok(());
     }
     let mut workspace = workflow::captured_workspace(state)?;
     workspace.legacy_include_files = proposed.as_ref().map_or_else(Vec::new, |s| s.files.clone());
+    workspace.legacy_include_revisions = proposed
+        .as_ref()
+        .map_or_else(Vec::new, |s| s.revisions.clone());
     workspace.to_json(&state.catalogue)?;
     state
         .undo
@@ -76,7 +107,11 @@ fn inspect(state: &State) -> Result<References, String> {
         .legacy_include_files
         .as_ref()
         .map_or(&[][..], |s| s.files.as_slice());
-    captures::inspect(&origin.selected_path, &doc.content, files)
+    let revisions = state
+        .legacy_include_files
+        .as_ref()
+        .map_or(&[][..], |s| s.revisions.as_slice());
+    captures::inspect(&origin.selected_path, &doc.content, files, revisions)
 }
 
 #[derive(Clone, Debug)]
@@ -186,7 +221,13 @@ pub(super) fn open(
     let capture = gtk::Button::with_label("Choose Linked File…");
     capture.add_css_class("suggested-action");
     let forget = gtk::Button::with_label("Remove Snapshot");
+    let edit = gtk::Button::with_label("Edit Linked File…");
+    let export = gtk::Button::with_label("Export Linked File Copy…");
+    let restore = gtk::Button::with_label("Restore Captured Version");
     actions.insert(&capture, -1);
+    actions.insert(&edit, -1);
+    actions.insert(&export, -1);
+    actions.insert(&restore, -1);
     actions.insert(&forget, -1);
     body.append(&actions);
     let feedback = super::label("");
@@ -219,6 +260,7 @@ pub(super) fn open(
             capture.downgrade(),
             forget.downgrade(),
         );
+        let (edit, export, restore) = (edit.downgrade(), export.downgrade(), restore.downgrade());
         move || {
             let Some(selected) = selected.upgrade() else {
                 return;
@@ -229,9 +271,10 @@ pub(super) fn open(
             let file = row
                 .and_then(|r| r.captured)
                 .and_then(|i| state.legacy_include_files.as_ref()?.files.get(i));
-            preview
-                .buffer()
-                .set_text(file.map_or("", |f| f.content.as_str()));
+            let text = file.map_or("", |f| {
+                captures::effective_text(f, &state.legacy_include_files.as_ref().unwrap().revisions)
+            });
+            preview.buffer().set_text(text);
             let expected = row.and_then(|r| r.expected.as_ref());
             expected_label.set_text(&expected.map_or_else(
                 || {
@@ -246,6 +289,23 @@ pub(super) fn open(
             if let Some(capture) = capture.upgrade() {
                 capture.set_sensitive(expected.is_some());
             }
+            if let Some(edit) = edit.upgrade() {
+                edit.set_sensitive(file.is_some());
+            }
+            if let Some(export) = export.upgrade() {
+                export.set_sensitive(file.is_some());
+            }
+            if let Some(restore) = restore.upgrade() {
+                restore.set_sensitive(file.is_some_and(|file| {
+                    state
+                        .legacy_include_files
+                        .as_ref()
+                        .unwrap()
+                        .revisions
+                        .iter()
+                        .any(|r| r.path == file.identity.selected_path)
+                }));
+            }
             if let Some(forget) = forget.upgrade() {
                 forget.set_sensitive(file.is_some());
             }
@@ -255,7 +315,7 @@ pub(super) fn open(
         let update = update_selection.clone();
         selected.connect_selected_notify(move |_| update());
     }
-    let refresh = {
+    let refresh = Rc::new({
         let row_generation = row_generation.clone();
         let (catalogue, state, selected, count_label) = (
             catalogue.clone(),
@@ -289,7 +349,7 @@ pub(super) fn open(
             }
             update_selection();
         }
-    };
+    });
 
     {
         let (window, catalogue, state, status, selected, refresh, feedback, body) = (
@@ -381,13 +441,14 @@ pub(super) fn open(
     }
     {
         let (catalogue, state, status, selected, refresh, feedback) = (
-            catalogue,
+            catalogue.clone(),
             state.clone(),
             status.clone(),
             selected.downgrade(),
             refresh.clone(),
             feedback.clone(),
         );
+        let row_generation = row_generation.clone();
         forget.connect_clicked(move |_| {
             if state.borrow().generation != row_generation.get() {
                 refresh();
@@ -408,8 +469,16 @@ pub(super) fn open(
             if index >= files.len() {
                 return;
             }
+            let revisions = current_revisions(&state.borrow());
+            if revisions
+                .iter()
+                .any(|r| r.path == files[index].identity.selected_path)
+            {
+                feedback.set_text("Restore the captured version before removing this snapshot.");
+                return;
+            }
             files.remove(index);
-            let result = replace(&mut state.borrow_mut(), files);
+            let result = replace(&mut state.borrow_mut(), files, revisions);
             match result {
                 Ok(()) => {
                     feedback.set_text("Snapshot removed from the private draft.");
@@ -417,6 +486,117 @@ pub(super) fn open(
                     refresh();
                 }
                 Err(error) => feedback.set_text(&error),
+            }
+        });
+    }
+    let selected_file = {
+        let (selected, catalogue, state, generation) = (
+            selected.downgrade(),
+            catalogue,
+            state.clone(),
+            row_generation,
+        );
+        move || -> Option<(CapturedSource, String)> {
+            let selected = selected.upgrade()?;
+            let state = state.borrow();
+            if generation.get() != state.generation {
+                return None;
+            }
+            let index = catalogue
+                .borrow()
+                .get(selected.selected() as usize)?
+                .captured?;
+            let snapshots = state.legacy_include_files.as_ref()?;
+            let file = snapshots.files.get(index)?;
+            Some((
+                file.clone(),
+                captures::effective_text(file, &snapshots.revisions).to_owned(),
+            ))
+        }
+    };
+    {
+        let (selected_file, window, state, status, refresh, feedback) = (
+            selected_file.clone(),
+            window.downgrade(),
+            state.clone(),
+            status.clone(),
+            refresh.clone(),
+            feedback.clone(),
+        );
+        edit.connect_clicked(move |button| {
+            let Some((file, source)) = selected_file() else {
+                return;
+            };
+            let (generation, settings) = {
+                let state = state.borrow();
+                (state.generation, state.catalogue.clone())
+            };
+            button.set_sensitive(false);
+            feedback.set_text("Preparing the linked file draft…");
+            let (button, window, state, status, refresh, feedback) = (
+                button.downgrade(),
+                window.clone(),
+                state.clone(),
+                status.clone(),
+                refresh.clone(),
+                feedback.clone(),
+            );
+            workflow::background(
+                move || super::legacy_file_editor::load(file, source, &settings),
+                move |result| {
+                    if let Some(button) = button.upgrade() {
+                        button.set_sensitive(true);
+                    }
+                    let Some(window) = window.upgrade().filter(gtk::prelude::WidgetExt::is_visible)
+                    else {
+                        return;
+                    };
+                    if generation != state.borrow().generation {
+                        refresh();
+                        feedback.set_text("The project changed. Select the file again.");
+                        return;
+                    }
+                    if let Err(error) = result.and_then(|prepared| {
+                        super::legacy_file_editor::open(&window, &state, &status, prepared, refresh)
+                    }) {
+                        feedback.set_text(&error);
+                    } else {
+                        feedback.set_text("");
+                    }
+                },
+            );
+        });
+    }
+    {
+        let (selected_file, window) = (selected_file.clone(), window.downgrade());
+        export.connect_clicked(move |_| {
+            if let (Some(window), Some((_, source))) = (window.upgrade(), selected_file()) {
+                super::text_export::review_linked_file(&window, source);
+            }
+        });
+    }
+    {
+        let (state, status, refresh, feedback) = (
+            state.clone(),
+            status.clone(),
+            refresh.clone(),
+            feedback.clone(),
+        );
+        restore.connect_clicked(move |_| {
+            let Some((file, _)) = selected_file() else {
+                return;
+            };
+            let result = keep_revision(
+                &mut state.borrow_mut(),
+                &file.identity.selected_path,
+                file.content,
+            );
+            if let Err(error) = result {
+                feedback.set_text(&error);
+            } else {
+                feedback.set_text("Captured version restored. Undo can recover your edits.");
+                super::summary(&state, &status);
+                refresh();
             }
         });
     }
@@ -457,9 +637,49 @@ pub(super) fn accept(
             Path::new(OsStr::from_bytes(&existing.identity.selected_path)),
         )
     }) {
+        if files[index].identity.sha256 == file.identity.sha256 {
+            return Ok(());
+        }
+        if current_revisions(state)
+            .iter()
+            .any(|r| r.path == files[index].identity.selected_path)
+        {
+            return Err(
+                "Restore the captured version before replacing the edited snapshot.".into(),
+            );
+        }
         files[index] = file;
     } else {
         files.push(file);
     }
-    replace(state, files)
+    let revisions = current_revisions(state);
+    replace(state, files, revisions)
+}
+
+fn current_revisions(state: &State) -> Vec<LinkedRevision> {
+    state
+        .legacy_include_files
+        .as_ref()
+        .map_or_else(Vec::new, |s| s.revisions.clone())
+}
+
+pub(super) fn keep_revision(state: &mut State, path: &[u8], source: String) -> Result<(), String> {
+    if state.draft.version != BASELINE {
+        return Err("Open a native source project first.".into());
+    }
+    let files = current_files(state);
+    let file = files
+        .iter()
+        .find(|f| f.identity.selected_path == path)
+        .ok_or("The linked file snapshot has been removed.")?;
+    let mut revisions = current_revisions(state);
+    revisions.retain(|entry| entry.path != path);
+    if file.content != source {
+        revisions.push(LinkedRevision {
+            path: path.to_vec(),
+            revision: hyprland_editor_core::legacy_variables::Revision::new(&file.content, source)?,
+        });
+    }
+    revisions.sort_by(|a, b| a.path.cmp(&b.path));
+    replace(state, files, revisions)
 }

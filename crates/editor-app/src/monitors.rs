@@ -627,7 +627,7 @@ pub(super) fn connect(
     });
 }
 pub(super) fn show(
-    window: &adw::ApplicationWindow,
+    window: &impl IsA<gtk::Window>,
     state: &Shared,
     status: &gtk::Label,
 ) -> adw::Window {
@@ -639,7 +639,7 @@ pub(super) fn show(
     )
 }
 fn show_with_outputs(
-    window: &adw::ApplicationWindow,
+    window: &impl IsA<gtk::Window>,
     state: &Shared,
     status: &gtk::Label,
     provider: super::detected_outputs::Provider,
@@ -1023,12 +1023,16 @@ fn show_with_outputs(
         super::summary(&state_c, &status_c);
         refresh_c();
     });
-    let parent = window.downgrade();
+    let parent = window.as_ref().downgrade();
     let save = gtk::Button::with_label("Save Draft");
+    save.set_visible(window.as_ref().is::<adw::ApplicationWindow>());
     content.append(&save);
     save.connect_clicked(move |_| {
         if let Some(parent) = parent.upgrade() {
-            if let Some(action) = parent.lookup_action("save-draft") {
+            if let Some(action) = parent
+                .downcast_ref::<adw::ApplicationWindow>()
+                .and_then(|w| w.lookup_action("save-draft"))
+            {
                 action.activate(None);
             }
         }

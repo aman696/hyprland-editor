@@ -60,7 +60,7 @@ Choose **Edit Included Files…** after importing a `.conf` project. Add, duplic
 
 Removing a directive clears its selected source slot and retains its comment. Reordering fills the surviving slots in the requested order, with comments attached to their original positions. New directives go before the next surviving slot or after the last original directive. On a file with no editable include directives, new ones start at the top. The review shows the full materialized source before and after the change, including other staged edits. Inspect the positions when a directive moves across a definition or setting. The editor preserves unsupported include contexts in the source.
 
-**Keep Private Changes** records the proposal in the project's current source revision. Undo restores the previous source and typed drafts together. Save and reopen work from captured bytes. Editing linked files, resolving wildcard and variable templates, and verifying effective cross-file settings remain open.
+**Keep Private Changes** records the proposal in the project's current source revision. Undo restores the previous source and typed drafts together. Save and reopen work from captured bytes. Resolving wildcard and variable templates and verifying effective cross-file settings remain open.
 
 
 ### Linked file snapshots
@@ -69,4 +69,13 @@ From **Edit Included Files…**, open **Linked File Snapshots…**. This view us
 
 The reference list follows the include directives in source order. Captured children contribute their own references, repeated includes stay visible, and path cycles are marked. Files detached by a root edit remain available as retained snapshots until removed. Variable and wildcard templates, home expansion, parent traversal and unsupported contexts remain unresolved. The view reports when it reaches its reference or nesting limit. The draft can hold 31 linked snapshots and 2 MiB of linked text in total, within the ordinary project size limit.
 
-Typed controls and **Review Source Copy** still work on the root file. For the next milestone, each linked file needs its own editing context and the project needs reviewed tree export and a cross-file settings projection. The capture list uses recorded path matching and leaves runtime include behavior to the compositor. [Pinned Hyprland source handler](https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/legacy/ConfigManager.cpp#L1670-L1717)
+The main settings editor and **Review Source Copy** operate on the root file. Full project tree export and cross-file settings projection remain open. The capture list uses recorded path matching and leaves runtime include behavior to the compositor. [Pinned Hyprland source handler](https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/legacy/ConfigManager.cpp#L1670-L1717)
+
+
+### Edit a linked file
+
+Select a captured file in **Linked File Snapshots…** and choose **Edit Linked File…**. Find a scalar setting or open a group such as Monitors, Bindings, Rules, Variables or Included Files. Stage changes inside that file's draft. **Undo File Edit** runs inside the file editor. **Review File Changes** shows the before and proposed source. **Keep Linked File Changes** stores the revision in the project and closes the file editor. The main project Undo reverses that keep operation.
+
+The snapshot browser previews the revised text and uses it to find outgoing include references. **Export Linked File Copy…** saves the selected file to a new location. Relative references keep their original spelling, so check the destination layout before using the copy. **Restore Captured Version** recovers the original snapshot and is undoable. Restore the captured version before replacing a snapshot with different bytes or removing an edited file. Reopening a project preserves both the original and the kept revision.
+
+Source fields outside the supported native codecs remain as text. Each linked file is edited independently, so a value in the file editor may be overridden later in the full configuration. Include template expansion, portable export of the whole tree, and effective cross-file values remain open.

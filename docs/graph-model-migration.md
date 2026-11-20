@@ -1,6 +1,8 @@
 # Reviewed saved-graph migration
 
-The current target is `471c4f9768a0236ee65f7e11969204b892dba58f8ae648b1c4f910cb06ad4585` (123 inputs), with 39 reviewed predecessors. The previous 122-input model is frozen in `data/migrations/graph-model-before-legacy-include-capture.json`. This transition adds native linked-file snapshot validation and bounded reference inspection. Lua graph migration retains its original capture and compiler inputs.
+The current target is `c35772a1fc736871e78778ed6d22e2271b93c19c30fde2583d83d8ab37c2641f` (123 inputs), with 40 reviewed predecessors. `data/migrations/graph-model-before-linked-file-edits.json` freezes the preceding model. The transition adds validation for linked revisions against captured file identity and bytes, and uses their revised contents in reference inspection. Lua graph migration retains its original capture and compiler inputs.
+
+The preceding target is `471c4f9768a0236ee65f7e11969204b892dba58f8ae648b1c4f910cb06ad4585` (123 inputs), with 39 reviewed predecessors. The previous 122-input model is frozen in `data/migrations/graph-model-before-legacy-include-capture.json`. This transition adds native linked-file snapshot validation and bounded reference inspection. Lua graph migration retains its original capture and compiler inputs.
 
 The preceding target is `4dbdd7807eadc06054fc3770db52816ab62c1c268306efc82752944edb58c568` (122 inputs), with 38 reviewed predecessors. The previous 121-input model is frozen at `data/migrations/graph-model-before-legacy-includes.json`. The transition adds the native include codec, shares native draft materialization with the variable editor and extends the restricted worker. Old graph projects retain their captured inputs and compiler observations.
 

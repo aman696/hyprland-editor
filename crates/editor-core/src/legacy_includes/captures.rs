@@ -1,6 +1,9 @@
 //! Ordered references derived from retained native source bytes.
 use super::scan;
-use crate::{legacy_syntax, source::CapturedSource, MAX_DOCUMENT_BYTES};
+use crate::{
+    legacy_syntax, legacy_variables::Revision, source::CapturedSource, MAX_DOCUMENT_BYTES,
+};
+use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, BTreeSet},
     ffi::OsStr,
@@ -38,6 +41,46 @@ pub struct References {
     pub reached: BTreeSet<usize>,
     pub opaque_directives: usize,
     pub truncated: bool,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct LinkedRevision {
+    pub path: Vec<u8>,
+    pub revision: Revision,
+}
+
+pub fn effective_text<'a>(file: &'a CapturedSource, revisions: &'a [LinkedRevision]) -> &'a str {
+    revisions
+        .iter()
+        .find(|r| r.path == file.identity.selected_path)
+        .map_or(file.content.as_str(), |r| r.revision.content.as_str())
+}
+
+pub fn validate_revisions(
+    files: &[CapturedSource],
+    revisions: &[LinkedRevision],
+) -> Result<(), String> {
+    if revisions.len() > files.len() {
+        return Err("Linked revisions exceed captured files.".into());
+    }
+    let mut paths = BTreeSet::new();
+    let mut total = 0;
+    for r in revisions {
+        if !paths.insert(r.path.as_slice()) {
+            return Err("Duplicate linked file revision.".into());
+        }
+        let file = files
+            .iter()
+            .find(|f| f.identity.selected_path == r.path)
+            .ok_or("A linked revision has no original snapshot.")?;
+        r.revision.validate(&file.content)?;
+        total += r.revision.content.len();
+        if total > MAX_BYTES {
+            return Err("Linked file revisions exceed 2 MiB.".into());
+        }
+    }
+    Ok(())
 }
 
 pub fn validate(files: &[CapturedSource]) -> Result<(), String> {
@@ -133,6 +176,7 @@ pub fn inspect(
     root_path: &[u8],
     root_content: &str,
     files: &[CapturedSource],
+    revisions: &[LinkedRevision],
 ) -> Result<References, String> {
     let root_path = absolute_components(Path::new(OsStr::from_bytes(root_path)))
         .ok_or("Invalid including path.")?;
@@ -144,7 +188,11 @@ pub fn inspect(
         let path = absolute_components(path).ok_or("Invalid snapshot path.")?;
         by_path.insert(path, index);
         indexed.push(
-            index_file(&file.identity.selected_path, &file.content).unwrap_or(File {
+            index_file(
+                &file.identity.selected_path,
+                effective_text(file, revisions),
+            )
+            .unwrap_or(File {
                 targets: Vec::new(),
                 opaque: 1,
             }),
@@ -245,6 +293,7 @@ mod tests {
             b"/virtual/root.conf",
             "source = parts//colors.conf\nsource = $theme/*.conf\nsource = ../elsewhere.conf\nsource = parts/colors.conf\nsource = missing.conf\n",
             &files,
+            &[],
         ).unwrap();
         assert_eq!(report.reached, BTreeSet::from([0, 1]));
         assert_eq!(
@@ -271,6 +320,35 @@ mod tests {
             report.rows.last().unwrap().expected.as_deref(),
             Some(Path::new("/virtual/missing.conf"))
         );
+    }
+
+    #[test]
+    fn linked_edits_change_outgoing_references_and_are_tied_to_original_bytes() {
+        let captured = file("/virtual/child.conf", "source = original.conf\n");
+        let revised = LinkedRevision {
+            path: captured.identity.selected_path.clone(),
+            revision: Revision::new(&captured.content, "source = changed.conf\n".into()).unwrap(),
+        };
+        let files = [captured.clone()];
+        validate_revisions(&files, std::slice::from_ref(&revised)).unwrap();
+        let inspected = inspect(
+            b"/virtual/root.conf",
+            "source = child.conf\n",
+            &files,
+            std::slice::from_ref(&revised),
+        )
+        .unwrap();
+        assert_eq!(
+            inspected.rows[1].expected.as_deref(),
+            Some(Path::new("/virtual/changed.conf"))
+        );
+        assert_eq!(files[0].content, "source = original.conf\n");
+        assert!(validate_revisions(
+            &[file("/virtual/child.conf", "source = replacement.conf\n")],
+            std::slice::from_ref(&revised)
+        )
+        .is_err());
+        assert!(validate_revisions(&[], &[revised]).is_err());
     }
 
     #[test]

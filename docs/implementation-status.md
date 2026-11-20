@@ -1,5 +1,13 @@
 # Execution plan and acceptance gates
 
+## Native linked-file editing
+
+**Edit Linked File…** opens a captured native include in its own graphical draft. It reuses the supported setting and declaration forms, including the variable and include editors. **Review File Changes** shows the previously saved text and proposed source before the revision can be kept. The private project retains the original bytes, and a kept revision controls subsequent inspection, editing and single-file export. Root settings stay independent until effective settings across files can be resolved.
+
+The private GTK workflow changes a child setting, checks the root setting, saves and reopens after deleting both linked originals, and exercises undo. The workspace suite passed 616 tests with nine ignored. Strict Clippy and the model and register checks passed. Model 123 has 40 reviewed predecessors.
+
+The next editing milestone is one reviewed export for the root and its captured linked files. Effective values across files, template expansion, current-state discovery, isolated compositor preview and guarded apply/recovery remain open. [Native source editor guide](legacy-source-editor.md#linked-file-snapshots)
+
 ## Native linked-file snapshots
 
 **Linked File Snapshots…** attaches explicitly selected files to literal include paths in a native project. It checks the captured identity and bytes, derives an ordered reference list with nested and repeated links, and marks cycles and unresolved templates. Files detached by a root edit remain available for inspection and removal. The private draft supports save, reopen without original files and undoable capture, refresh and removal. Typed root settings and linked-file contents remain separate until cross-file settings projection is implemented.

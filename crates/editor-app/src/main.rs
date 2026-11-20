@@ -19,6 +19,7 @@ mod graph_transaction_tests;
 mod history;
 mod legacy_binding_editor;
 mod legacy_capture;
+mod legacy_file_editor;
 mod legacy_includes;
 mod legacy_source;
 mod legacy_variables;
@@ -777,7 +778,7 @@ fn summary(state: &Shared, status: &gtk::Label) {
         }
     ));
 }
-fn notice(window: &adw::ApplicationWindow, title: &str, body: &str) {
+fn notice(window: &impl IsA<gtk::Window>, title: &str, body: &str) {
     // Error text may contain untrusted JSON keys; bound it before constructing GTK labels.
     let bounded: String = body.chars().take(4096).collect();
     let dialog = adw::MessageDialog::new(Some(window), Some(title), Some(&bounded));

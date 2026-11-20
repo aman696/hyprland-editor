@@ -52,6 +52,8 @@ pub struct Workspace {
     pub legacy_revision: Option<crate::legacy_variables::Revision>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub legacy_include_files: Vec<crate::source::CapturedSource>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub legacy_include_revisions: Vec<crate::legacy_includes::captures::LinkedRevision>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub source_graph: Option<crate::workspace_graph::Graph>,
     pub format: String,
@@ -130,6 +132,7 @@ impl Workspace {
             source_graph: None,
             legacy_revision: None,
             legacy_include_files: Vec::new(),
+            legacy_include_revisions: Vec::new(),
             format: WORKSPACE_FORMAT.into(),
             schema: SchemaPin::for_version(&draft.version),
             draft,
@@ -202,6 +205,10 @@ impl Workspace {
             }
             crate::legacy_includes::captures::validate(&self.legacy_include_files)?;
         }
+        crate::legacy_includes::captures::validate_revisions(
+            &self.legacy_include_files,
+            &self.legacy_include_revisions,
+        )?;
         if let Some(revision) = &self.legacy_revision {
             let root = self.root().ok_or("Native revision needs a captured root")?;
             if root.language != SourceLanguage::Legacy

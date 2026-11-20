@@ -14,6 +14,21 @@
   },
   "foundations": [
     {
+      "area": "graphical per-file editing of captured native includes",
+      "code": [
+        "crates/editor-core/src/legacy_includes/captures.rs",
+        "crates/editor-core/src/workspace.rs",
+        "crates/editor-app/src/legacy_file_editor.rs",
+        "crates/editor-app/src/legacy_capture.rs"
+      ],
+      "test_references": [
+        "linked_edits_change_outgoing_references_and_are_tied_to_original_bytes",
+        "test_legacy_variable_editing",
+        "native_forms_and_draft_workflow"
+      ],
+      "limits": "Independent linked-file draft using standard scalar and group editors, restricted before-and-after source review, immutable original with revision validation, preview from revised bytes and outgoing references, private undo and reopen, and reviewed export of a single file. Full tree export, cross-file projection, template expansion and runtime acceptance remain open"
+    },
+    {
       "area": "persistent native linked-file snapshots with ordered reference inspection",
       "code": [
         "crates/editor-core/src/legacy_includes/captures.rs",

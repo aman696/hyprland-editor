@@ -309,9 +309,10 @@ fn read_import_for_review(
             }
         }
         let saved_json = migration.is_none() && !legacy_projection_changed;
-        let legacy_include_files = super::legacy_capture::Snapshot::new(std::mem::take(
-            &mut workspace.legacy_include_files,
-        ))?;
+        let legacy_include_files = super::legacy_capture::Snapshot::new(
+            std::mem::take(&mut workspace.legacy_include_files),
+            std::mem::take(&mut workspace.legacy_include_revisions),
+        )?;
         return Ok(Imported { migration,graph,draft:workspace.draft,source,legacy,legacy_include_files,origin,saved_json,monitors:workspace.monitors,devices:workspace.devices,bindings:workspace.bindings,workspace_rules:workspace.workspace_rules,rules:workspace.rules,animations:workspace.animations,gestures:workspace.gestures,session:workspace.session,
             message:format!("{} with {diagnostics} source diagnostics. Source snapshots were reparsed; recorded original paths were not opened. Desktop state is separate.", if saved_json { "Saved draft reopened" } else if legacy_projection_changed {"Legacy views rebuilt from retained source; older separate drafts appended for review. Save a new project copy"} else { "Rebuilt copy loaded; save it as a new private workspace" }) });
     }
@@ -469,6 +470,7 @@ pub(super) fn captured_workspace(s: &super::State) -> Result<Workspace, String> 
         }
         if let Some(files) = &s.legacy_include_files {
             snapshot.legacy_include_files = files.files.clone();
+            snapshot.legacy_include_revisions = files.revisions.clone();
         }
         snapshot.root_source = Some("root".into());
         snapshot.sources.push(workspace::SourceSnapshot {
@@ -3261,6 +3263,63 @@ pub(super) fn test_legacy_variable_editing(parent: &adw::ApplicationWindow) {
         buffer.text(&buffer.start_iter(), &buffer.end_iter(), true),
         nested_content
     );
+    button(files.upcast_ref(), "Edit Linked File…").emit_clicked();
+    let find_window = |title: &str| {
+        gtk::Window::list_toplevels()
+            .into_iter()
+            .filter_map(|w| w.downcast::<gtk::Window>().ok())
+            .find(|w| w.title().as_deref() == Some(title) && w.is_visible())
+    };
+    wait(|| find_window("Edit Linked File").is_some());
+    let child = find_window("Edit Linked File").unwrap();
+    let search: gtk::SearchEntry = named(child.upcast_ref(), "linked-setting-search");
+    search.set_text("general:border_size");
+    search.emit_by_name::<()>("search-changed", &[]);
+    let spin = widgets(child.upcast_ref())
+        .into_iter()
+        .find_map(|w| w.downcast::<gtk::SpinButton>().ok())
+        .unwrap();
+    spin.set_value(9.0);
+    button(child.upcast_ref(), "Update Draft").emit_clicked();
+    button(child.upcast_ref(), "Review File Changes").emit_clicked();
+    wait(|| find_window("Review Linked File Changes").is_some());
+    button(
+        find_window("Review Linked File Changes")
+            .unwrap()
+            .upcast_ref(),
+        "Keep Linked File Changes",
+    )
+    .emit_clicked();
+    let kept_edit = "general:border_size = 9\nsource = original.conf\n";
+    assert_eq!(
+        buffer.text(&buffer.start_iter(), &buffer.end_iter(), true),
+        kept_edit
+    );
+    let edited = captured_workspace(&state.borrow()).unwrap();
+    assert_eq!(edited.legacy_include_files[1].content, nested_content);
+    assert_eq!(
+        edited.legacy_include_revisions[0].revision.content,
+        kept_edit
+    );
+    assert_eq!(
+        edited.draft.values["general:border_size"],
+        hyprland_editor_core::Value::Int(5)
+    );
+    let edited_path = root.path().join("edited-linked-file.hye");
+    std::fs::write(&edited_path, edited.to_json(&catalogue).unwrap()).unwrap();
+    state.borrow_mut().undo_last();
+    assert!(state
+        .borrow()
+        .legacy_include_files
+        .as_ref()
+        .unwrap()
+        .revisions
+        .is_empty());
+    // Reopen the stale snapshot browser before testing removal and Undo.
+    files.destroy();
+    let files = super::legacy_capture::open(&include_editor, &state, &status).unwrap();
+    let picker: gtk::DropDown = named(files.upcast_ref(), "include-capture-picker");
+    picker.set_selected(1);
     let snapshot = captured_workspace(&state.borrow()).unwrap();
     assert_eq!(snapshot.legacy_include_files.len(), 2);
     assert_eq!(
@@ -3299,10 +3358,16 @@ pub(super) fn test_legacy_variable_editing(parent: &adw::ApplicationWindow) {
     let preserved = reopened.legacy_include_files.unwrap();
     assert_eq!(preserved.files[0].content, linked_content);
     assert_eq!(preserved.files[1].content, nested_content);
+    let reopened_edit = read_import(edited_path, catalogue.clone(), BASELINE.into()).unwrap();
+    let reopened_edit = reopened_edit.legacy_include_files.unwrap();
+    assert_eq!(reopened_edit.files[1].content, nested_content);
+    assert_eq!(reopened_edit.revisions[0].revision.content, kept_edit);
+
     let report = hyprland_editor_core::legacy_includes::captures::inspect(
         &reopened.origin.unwrap().selected_path,
         &reopened.legacy.unwrap().content,
         &preserved.files,
+        &preserved.revisions,
     )
     .unwrap();
     assert_eq!(report.reached.len(), 2);
