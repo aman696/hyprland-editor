@@ -1,12 +1,20 @@
 # Execution plan and acceptance gates
 
+## Native configuration folder export
+
+**Review Entire Configuration Folder…** materializes staged native root changes and shows one proposed file at a time, including kept revisions of reachable captured files. It rewrites supported literal include paths within their original source slots. Numbered filenames distinguish matching basenames, and repeated and nested includes retain their order. The shared folder writer creates private files in an unused destination. Missing captures, cycles, unresolved paths and stale reviews stop the export.
+
+The workspace suite passed 619 tests with nine ignored. Strict Clippy and the private GTK workflow passed. The graphical workflow reviewed root and child edits after their original paths were removed, reported a cycle with its source line, measured the review at a 360 px layout and refused a stale review. An independent hyprlang 0.6.8 fixture loaded all five nested and repeated includes from the moved export in order and read the expected final value. Model 124 has 41 reviewed predecessors.
+
+Include expansion, effective values and assignment ownership across files remain open. Other resource paths and commands retain their original text. The parser fixture does not cover real isolated compositor preview, live configuration discovery or apply and recovery. [Native folder export guide](legacy-source-editor.md#export-the-configuration-folder)
+
 ## Native linked-file editing
 
 **Edit Linked File…** opens a captured native include in its own graphical draft. It reuses the supported setting and declaration forms, including the variable and include editors. **Review File Changes** shows the previously saved text and proposed source before the revision can be kept. The private project retains the original bytes, and a kept revision controls subsequent inspection, editing and single-file export. Root settings stay independent until effective settings across files can be resolved.
 
 The private GTK workflow changes a child setting, checks the root setting, saves and reopens after deleting both linked originals, and exercises undo. The workspace suite passed 616 tests with nine ignored. Strict Clippy and the model and register checks passed. Model 123 has 40 reviewed predecessors.
 
-The next editing milestone is one reviewed export for the root and its captured linked files. Effective values across files, template expansion, current-state discovery, isolated compositor preview and guarded apply/recovery remain open. [Native source editor guide](legacy-source-editor.md#linked-file-snapshots)
+Effective values across files, template expansion, current-state discovery, isolated compositor preview and guarded apply and recovery remain open. [Native source editor guide](legacy-source-editor.md#linked-file-snapshots)
 
 ## Native linked-file snapshots
 

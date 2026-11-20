@@ -65,6 +65,8 @@ Edit ordered native shared definitions through **Edit Shared Variables…**, wit
 
 Use **Edit Included Files…** to change the paths and order of top-level `source` directives in a native configuration. Review and keep the result as a private revision with undo, save, reopen and separate source export. Open **Linked File Snapshots…** to select files named by literal includes, inspect nested references, and edit a selected file using the same graphical controls. Save the revisions in the project or export a separate copy of a selected file. [Native source editor guide](docs/legacy-source-editor.md)
 
+Use **Review Entire Configuration Folder…** in **Linked File Snapshots…** to export a native root and its reachable captured files. Review every proposed file before saving to a new folder. Supported literal includes are rewritten to point to their copies in load order. [Native folder export](docs/legacy-source-editor.md#export-the-configuration-folder)
+
 ## Not available yet
 
 Complete Lua interpretation/include graphs, general multi-file source-field insertion/deletion, complete editable multi-file source graphs and reconciliation, event-based live refresh, multi-instance selection, complete rule semantics/builders, complete animation and gesture semantics/builders and other structured editors, complete workspace/layout/workflow codecs, complete binding selectors/workflows and live behavior, complete device/monitor source editing and hardware inspection, plugins, live apply, display recovery, sandboxed compositor preview, distribution packages and release certification. Unknown defaults stay visibly unresolved. Bounds are literal source metadata, not a guarantee that combinations are valid on your system. Hardware behavior has not been tested.

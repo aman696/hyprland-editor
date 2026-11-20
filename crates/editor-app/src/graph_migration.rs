@@ -126,7 +126,10 @@ const LEGACY_CAPTURE_MODEL: &str =
 const LINKED_EDIT_FROM: &str = "471c4f9768a0236ee65f7e11969204b892dba58f8ae648b1c4f910cb06ad4585";
 const LINKED_EDIT_MODEL: &str =
     include_str!("../../../data/migrations/graph-model-before-linked-file-edits.json");
-const TO: &str = "c35772a1fc736871e78778ed6d22e2271b93c19c30fde2583d83d8ab37c2641f";
+const LEGACY_TREE_FROM: &str = "c35772a1fc736871e78778ed6d22e2271b93c19c30fde2583d83d8ab37c2641f";
+const LEGACY_TREE_MODEL: &str =
+    include_str!("../../../data/migrations/graph-model-before-legacy-tree-export.json");
+const TO: &str = "90751352aee549158c892ecc9607bb01d4a7787478a4f27615ea8fbd4fb8461d";
 const OLD: &str = include_str!("../../../data/migrations/graph-model-before-projection.json");
 const FROM_PROJECTION: &str = "046fb098cb5c1f38d6922f37274cfcba56818ec35c68dbcd5d78fc1e5e4d7371";
 const PROJECTION: &str = include_str!("../../../data/migrations/graph-model-projection.json");
@@ -1875,8 +1878,10 @@ fn before_linked_edit_transition(from: &str) -> Result<(), String> {
     }
     Ok(())
 }
-fn transition(from: &str) -> Result<(), String> {
-    if lua::source_hash(LINKED_EDIT_MODEL) != LINKED_EDIT_FROM || lua::source_hash(CURRENT) != TO {
+fn before_legacy_tree_transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(LINKED_EDIT_MODEL) != LINKED_EDIT_FROM
+        || lua::source_hash(LEGACY_TREE_MODEL) != LEGACY_TREE_FROM
+    {
         return Err("No reviewed native linked file transition to this model is available".into());
     }
     if from != LINKED_EDIT_FROM {
@@ -1884,7 +1889,8 @@ fn transition(from: &str) -> Result<(), String> {
     }
     let old: serde_json::Value =
         serde_json::from_str(LINKED_EDIT_MODEL).map_err(|e| e.to_string())?;
-    let new: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let new: serde_json::Value =
+        serde_json::from_str(LEGACY_TREE_MODEL).map_err(|e| e.to_string())?;
     let old = old["inputs"]
         .as_object()
         .ok_or("Invalid preceding capture model")?;
@@ -1909,6 +1915,37 @@ fn transition(from: &str) -> Result<(), String> {
             ]
     {
         return Err("The linked-file revision model differs from its reviewed transition.".into());
+    }
+    Ok(())
+}
+fn transition(from: &str) -> Result<(), String> {
+    if lua::source_hash(LEGACY_TREE_MODEL) != LEGACY_TREE_FROM || lua::source_hash(CURRENT) != TO {
+        return Err("No reviewed native folder export transition is available".into());
+    }
+    if from != LEGACY_TREE_FROM {
+        before_legacy_tree_transition(from)?;
+    }
+    let old: serde_json::Value =
+        serde_json::from_str(LEGACY_TREE_MODEL).map_err(|e| e.to_string())?;
+    let new: serde_json::Value = serde_json::from_str(CURRENT).map_err(|e| e.to_string())?;
+    let old = old["inputs"].as_object().ok_or("Invalid prior model")?;
+    let new = new["inputs"].as_object().ok_or("Invalid current model")?;
+    let added: Vec<_> = new
+        .keys()
+        .filter(|k| !old.contains_key(*k))
+        .map(String::as_str)
+        .collect();
+    let changed: Vec<_> = old
+        .keys()
+        .filter(|k| new.get(*k) != Some(&old[*k]))
+        .map(String::as_str)
+        .collect();
+    if old.len() != 123
+        || new.len() != 124
+        || added != ["crates/editor-core/src/legacy_includes/project_copy.rs"]
+        || changed != ["crates/editor-core/src/legacy_includes.rs"]
+    {
+        return Err("The native folder export model differs from its reviewed transition.".into());
     }
     Ok(())
 }
@@ -1951,6 +1988,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != LEGACY_INCLUDE_FROM
         && previous != LEGACY_CAPTURE_FROM
         && previous != LINKED_EDIT_FROM
+        && previous != LEGACY_TREE_FROM
         && previous != LEGACY_GESTURE_FROM
         && previous != LEGACY_ANIMATION_FROM
         && previous != LEGACY_WORKSPACE_FROM
@@ -1978,6 +2016,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != LEGACY_INCLUDE_FROM
         && previous != LEGACY_CAPTURE_FROM
         && previous != LINKED_EDIT_FROM
+        && previous != LEGACY_TREE_FROM
         && previous != LEGACY_GESTURE_FROM
         && previous != LEGACY_ANIMATION_FROM
         && previous != LEGACY_WORKSPACE_FROM
@@ -2020,6 +2059,7 @@ pub(super) fn prepare(text: &str, catalogue: &[Setting]) -> Result<Prepared, Str
         && previous != LEGACY_INCLUDE_FROM
         && previous != LEGACY_CAPTURE_FROM
         && previous != LINKED_EDIT_FROM
+        && previous != LEGACY_TREE_FROM
         && previous != LEGACY_GESTURE_FROM
         && previous != LEGACY_ANIMATION_FROM
         && previous != LEGACY_WORKSPACE_FROM
@@ -2154,6 +2194,7 @@ mod tests {
         transition(LEGACY_INCLUDE_FROM).unwrap();
         transition(LEGACY_CAPTURE_FROM).unwrap();
         transition(LINKED_EDIT_FROM).unwrap();
+        transition(LEGACY_TREE_FROM).unwrap();
         assert!(transition(&"0".repeat(64)).is_err());
         assert_ne!(FROM, TO);
         assert_eq!(lua::source_hash(CURRENT), TO);

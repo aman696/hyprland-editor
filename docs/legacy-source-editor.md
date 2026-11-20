@@ -69,7 +69,7 @@ From **Edit Included Files…**, open **Linked File Snapshots…**. This view us
 
 The reference list follows the include directives in source order. Captured children contribute their own references, repeated includes stay visible, and path cycles are marked. Files detached by a root edit remain available as retained snapshots until removed. Variable and wildcard templates, home expansion, parent traversal and unsupported contexts remain unresolved. The view reports when it reaches its reference or nesting limit. The draft can hold 31 linked snapshots and 2 MiB of linked text in total, within the ordinary project size limit.
 
-The main settings editor and **Review Source Copy** operate on the root file. Full project tree export and cross-file settings projection remain open. The capture list uses recorded path matching and leaves runtime include behavior to the compositor. [Pinned Hyprland source handler](https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/legacy/ConfigManager.cpp#L1670-L1717)
+The main settings editor and **Review Source Copy** operate on the root file. The capture list uses recorded path matching. [Pinned Hyprland source handler](https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/legacy/ConfigManager.cpp#L1802-L1855)
 
 
 ### Edit a linked file
@@ -78,4 +78,12 @@ Select a captured file in **Linked File Snapshots…** and choose **Edit Linked 
 
 The snapshot browser previews the revised text and uses it to find outgoing include references. **Export Linked File Copy…** saves the selected file to a new location. Relative references keep their original spelling, so check the destination layout before using the copy. **Restore Captured Version** recovers the original snapshot and is undoable. Restore the captured version before replacing a snapshot with different bytes or removing an edited file. Reopening a project preserves both the original and the kept revision.
 
-Source fields outside the supported native codecs remain as text. Each linked file is edited independently, so a value in the file editor may be overridden later in the full configuration. Include template expansion, portable export of the whole tree, and effective cross-file values remain open.
+Source fields outside the supported native codecs remain as text. Each linked file is edited independently, so a value in the file editor may be overridden later in the full configuration.
+
+### Export the configuration folder
+
+In **Linked File Snapshots…**, choose **Review Entire Configuration Folder…**. The review includes staged root settings and kept revisions of every reachable captured file. Select a filename to see its original path and the full proposed text. The root is named `hyprland.conf`. Linked files get numbered names in first-include order so different files with the same name stay distinct. Nested and repeated literal `source` directives point to the exported copies. Their positions, comments and line endings are preserved. Detached files stay in the private project and are omitted from the export.
+
+**Save New Folder…** creates a private folder with the reviewed files. Choose an unused name and a path without wildcard characters or backslashes, since Hyprland applies globbing to the full resolved include path. The editor reads only captured project data to prepare the copy. Other paths and commands stay as written and can still reference external resources.
+
+Folder export reports missing captures and cycles. Variable, home and wildcard expansion, parent traversal, continued lines, computed directive names and unsupported include contexts still require separate review. For an individual file, **Review Source Copy** and **Export Linked File Copy…** preserve its original include spelling. Effective values across files are a separate pending feature. [Pinned hyprlang parser](https://github.com/hyprwm/hyprlang/blob/090117506ddc3d7f26e650ff344d378c2ec329cc/src/config.cpp#L683-L888)

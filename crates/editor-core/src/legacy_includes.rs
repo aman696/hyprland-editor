@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::{collections::BTreeSet, ops::Range};
 
 pub mod captures;
+pub mod project_copy;
 
 pub const MAX_ROWS: usize = 1024;
 pub const MAX_PATH: usize = 4096;
@@ -26,6 +27,7 @@ struct Scan {
     sites: Vec<Range<usize>>,
     lines: Vec<usize>,
     unresolved: usize,
+    first_unresolved: Option<usize>,
 }
 
 fn scan(content: &str) -> Result<Scan, String> {
@@ -34,6 +36,7 @@ fn scan(content: &str) -> Result<Scan, String> {
         sites: Vec::new(),
         lines: Vec::new(),
         unresolved: 0,
+        first_unresolved: None,
     };
     let mut total = 0;
     walk(content, |statement| {
@@ -54,6 +57,7 @@ fn scan(content: &str) -> Result<Scan, String> {
             result.lines.push(statement.line);
         } else {
             result.unresolved += 1;
+            result.first_unresolved.get_or_insert(statement.line);
         }
     })?;
     Ok(result)

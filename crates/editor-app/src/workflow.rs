@@ -404,9 +404,9 @@ pub(super) fn connect_save(
         .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".local/state")));
     connect_save_at(button, window, state, status, root);
 }
-pub(super) fn captured_workspace(s: &super::State) -> Result<Workspace, String> {
+pub(super) fn draft_workspace(s: &super::State) -> Workspace {
     let version = &s.draft.version;
-    let mut snapshot = Workspace::new(s.draft.clone())
+    Workspace::new(s.draft.clone())
         .with_monitors(s.monitors.get(version).cloned().unwrap_or_default())
         .with_devices(s.devices.get(version).cloned().unwrap_or_default())
         .with_bindings(s.bindings.get(version).cloned().unwrap_or_default())
@@ -414,7 +414,12 @@ pub(super) fn captured_workspace(s: &super::State) -> Result<Workspace, String> 
         .with_rules(s.rules.get(version).cloned().unwrap_or_default())
         .with_animations(s.animations.get(version).cloned().unwrap_or_default())
         .with_gestures(s.gestures.get(version).cloned().unwrap_or_default())
-        .with_session(s.session.get(version).cloned().unwrap_or_default());
+        .with_session(s.session.get(version).cloned().unwrap_or_default())
+}
+
+pub(super) fn captured_workspace(s: &super::State) -> Result<Workspace, String> {
+    let version = &s.draft.version;
+    let mut snapshot = draft_workspace(s);
     if let Some(graph) = s.source_graphs.get(version) {
         snapshot = snapshot.with_graph(&graph.bundle);
     } else if let Some(doc) = s.sources.get(version) {
@@ -714,10 +719,7 @@ pub(super) fn connect_source_copy(
         let Some(window)=win.upgrade()else{return;};let s=state.borrow();
         if s.source_graphs.contains_key(&s.draft.version) {drop(s);super::project_copy::show(&window,&state);return;}
         if let Some(doc)=s.legacy_sources.get(&s.draft.version).cloned(){
-            let snapshot=match captured_workspace(&s){Ok(snapshot)=>snapshot,Err(error)=>{drop(s);notice(&window,"Cannot prepare legacy copy",&error);return;}};
-            if snapshot.devices.iter().any(|d|!d.legacy) || (!snapshot.bindings.binds.is_empty() || !snapshot.bindings.submaps.is_empty() || !snapshot.bindings.order.is_empty()) || snapshot.workspace_rules.iter().any(|r| !r.legacy) || snapshot.rules.iter().any(|r|r.legacy.is_none()) || snapshot.animations.declarations.iter().any(|d|!d.legacy) || snapshot.gestures.declarations.iter().any(|s|!s.legacy) {
-                drop(s);notice(&window,"Structured legacy export pending","This source copy includes supported scalar, session, monitor, workspace, animation, gesture, device and legacy binding edits. Separate Lua bindings and other structured draft groups need their legacy codecs; save the project to retain them.");return;
-            }
+            let snapshot=draft_workspace(&s);
             let generation=s.generation;drop(s);let state=state.clone();let win=window.downgrade();let button=button.downgrade();if let Some(button)=button.upgrade(){button.set_sensitive(false);}
             background(move||doc.edited_copy(&snapshot),move|result|{
                 if let Some(button)=button.upgrade(){button.set_sensitive(true);}let Some(win)=win.upgrade()else{return;};if state.borrow().generation!=generation{notice(&win,"Draft changed","The draft changed while the copy was prepared. Review again to use the current edits.");return;}
@@ -3375,6 +3377,67 @@ pub(super) fn test_legacy_variable_editing(parent: &adw::ApplicationWindow) {
         report.rows[2].outcome,
         hyprland_editor_core::legacy_includes::captures::Outcome::RootCycle
     );
+
+    // Review a just-reopened linked revision with all original paths gone.
+    state.borrow_mut().legacy_include_files = Some(reopened_edit);
+    let include_editor = super::legacy_includes::open(parent, &state, &status).unwrap();
+    let files = super::legacy_capture::open(&include_editor, &state, &status).unwrap();
+    let export = button(files.upcast_ref(), "Review Entire Configuration Folder…");
+    let feedback: gtk::Label = named(files.upcast_ref(), "include-capture-feedback");
+    export.emit_clicked();
+    wait(|| feedback.text().contains("Remove the cycle"));
+    assert!(feedback.text().contains("palette.conf:2"));
+    assert!(find_window("Review Native Configuration Folder").is_none());
+    let state_before = state.borrow().generation;
+    super::legacy_capture::keep_revision(
+        &mut state.borrow_mut(),
+        std::os::unix::ffi::OsStrExt::as_bytes(nested.as_os_str()),
+        "general:border_size = 9\n# retained nested edit\n".into(),
+    )
+    .unwrap();
+    assert!(state.borrow().generation > state_before);
+    {
+        let mut s = state.borrow_mut();
+        s.draft.values.insert(
+            "general:border_size".into(),
+            hyprland_editor_core::Value::Int(7),
+        );
+        s.generation += 1;
+    }
+    export.emit_clicked();
+    let review = || find_window("Review Native Configuration Folder");
+    wait(|| review().is_some());
+    let review = review().unwrap();
+    let picker: gtk::DropDown = named(review.upcast_ref(), "native-folder-copy-files");
+    let view: gtk::TextView = named(review.upcast_ref(), "native-folder-copy-source");
+    assert_eq!(picker.model().unwrap().n_items(), 3);
+    let output = || {
+        let buffer = view.buffer();
+        buffer.text(&buffer.start_iter(), &buffer.end_iter(), true)
+    };
+    assert!(output().contains("general:border_size = 7"));
+    assert!(output().ends_with("source = 01-missing.conf\r\n"));
+    picker.set_selected(1);
+    assert_eq!(output(), "source = 02-palette.conf\n");
+    picker.set_selected(2);
+    assert_eq!(
+        output(),
+        "general:border_size = 9\n# retained nested edit\n"
+    );
+    let panel = review.child().unwrap();
+    let (min, _, _, _) = panel.measure(gtk::Orientation::Horizontal, -1);
+    assert!(min <= 360, "Native folder review requires {min}px");
+    button(review.upcast_ref(), "Save New Folder…").emit_clicked();
+    let destination = find_window("Save Combined Copy").unwrap();
+    destination.destroy();
+    state.borrow_mut().generation += 1;
+    button(review.upcast_ref(), "Save New Folder…").emit_clicked();
+    let export_status: gtk::Label = named(review.upcast_ref(), "native-folder-copy-status");
+    assert!(export_status.text().contains("draft changed"));
+    review.destroy();
+    files.destroy();
+    include_editor.destroy();
+
     assert!(!marker.exists());
     assert!(!original.exists());
 }

@@ -22,6 +22,7 @@ mod legacy_capture;
 mod legacy_file_editor;
 mod legacy_includes;
 mod legacy_source;
+mod legacy_tree_export;
 mod legacy_variables;
 mod monitors;
 mod native_build;

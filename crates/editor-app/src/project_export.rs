@@ -1,5 +1,8 @@
 //! Save a reviewed bundle into a new directory, using held directory descriptors.
-use hyprland_editor_core::{lua, lua::replay::project_copy::Prepared, MAX_DOCUMENT_BYTES};
+use hyprland_editor_core::{
+    legacy_includes::project_copy as native, lua, lua::replay::project_copy::Prepared,
+    MAX_DOCUMENT_BYTES,
+};
 use std::{
     collections::BTreeSet,
     ffi::CString,
@@ -111,7 +114,58 @@ fn mkdir_at(parent: &File, name: &CString) -> Result<(), String> {
 }
 
 pub(super) fn save(parent: &Path, folder: &str, copy: &Prepared) -> Result<PathBuf, String> {
-    let paths = layout(copy)?;
+    let files = layout(copy)?
+        .into_iter()
+        .zip(copy.files.iter().map(|file| file.content.as_str()))
+        .collect();
+    save_files(parent, folder, files)
+}
+
+pub(super) fn save_native(
+    parent: &Path,
+    folder: &str,
+    copy: &native::Prepared,
+) -> Result<PathBuf, String> {
+    if !parent.is_absolute()
+        || parent
+            .as_os_str()
+            .as_bytes()
+            .iter()
+            .chain(folder.as_bytes())
+            .any(|byte| matches!(byte, b'\\' | b'*' | b'?' | b'[' | b']'))
+    {
+        return Err("Choose an absolute destination without wildcard characters or backslashes. Hyprland expands the full include path.".into());
+    }
+    if !(1..=32).contains(&copy.files.len()) || copy.files[0].name != "hyprland.conf" {
+        return Err("The reviewed copy has an invalid native file list.".into());
+    }
+    let mut names = BTreeSet::new();
+    let mut files = Vec::with_capacity(copy.files.len());
+    let mut bytes = 0;
+    for file in &copy.files {
+        bytes += file.content.len();
+        if file.name.len() > 64
+            || !file.name.ends_with(".conf")
+            || !file
+                .name
+                .bytes()
+                .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.'))
+            || !names.insert(&file.name)
+            || file.content.len() > MAX_DOCUMENT_BYTES
+            || bytes > native::MAX_COPY_BYTES
+            || file.content.contains('\0')
+            || lua::source_hash(&file.content) != file.sha256
+        {
+            return Err(
+                "The reviewed native copy failed its filename, size or hash checks.".into(),
+            );
+        }
+        files.push((PathBuf::from(&file.name), file.content.as_str()));
+    }
+    save_files(parent, folder, files)
+}
+
+fn save_files(parent: &Path, folder: &str, files: Vec<(PathBuf, &str)>) -> Result<PathBuf, String> {
     if folder.is_empty()
         || folder.len() > 128
         || folder == "."
@@ -141,7 +195,7 @@ pub(super) fn save(parent: &Path, folder: &str, copy: &Prepared) -> Result<PathB
     let result = (|| {
         let root = open_at(&parent_fd, &name, libc::O_RDONLY | libc::O_DIRECTORY)?;
         let mut created = BTreeSet::new();
-        for (source, path) in copy.files.iter().zip(paths) {
+        for (path, content) in files {
             let components = path.components().map(|c| c.as_os_str()).collect::<Vec<_>>();
             let mut dir = root.try_clone().map_err(|e| e.to_string())?;
             let mut walked = PathBuf::new();
@@ -156,7 +210,7 @@ pub(super) fn save(parent: &Path, folder: &str, copy: &Prepared) -> Result<PathB
             let name = c_name(components.last().unwrap())?;
             let mut output = open_at(&dir, &name, libc::O_WRONLY | libc::O_CREAT | libc::O_EXCL)?;
             output
-                .write_all(source.content.as_bytes())
+                .write_all(content.as_bytes())
                 .map_err(|e| e.to_string())?;
             output.sync_all().map_err(|e| e.to_string())?;
             dir.sync_all().map_err(|e| e.to_string())?;
@@ -203,6 +257,45 @@ mod tests {
             before_complete: true,
             after_complete: true,
         }
+    }
+    #[test]
+    fn native_folder_is_private_create_only_and_checks_reviewed_bytes_before_writing() {
+        let temp = super::super::test_support::TempDir::new("native-project-export");
+        let original = temp.path().join("colors.conf");
+        fs::write(&original, "# exact capture\r\ngeneral:border_size = 4\r\n").unwrap();
+        let captured = hyprland_editor_core::storage::read_source(&original).unwrap();
+        let root = temp.path().join("root.conf");
+        let mut copy = native::prepare(
+            root.as_os_str().as_bytes(),
+            "source = colors.conf\n",
+            &[captured],
+            &[],
+        )
+        .unwrap();
+        fs::remove_file(original).unwrap();
+
+        assert!(save_native(temp.path(), "wild[card]", &copy).is_err());
+        assert!(!temp.path().join("wild[card]").exists());
+        let saved = save_native(temp.path(), "reviewed", &copy).unwrap();
+        assert_eq!(
+            fs::metadata(&saved).unwrap().permissions().mode() & 0o777,
+            0o700
+        );
+        for file in &copy.files {
+            let path = saved.join(&file.name);
+            assert_eq!(fs::read(&path).unwrap(), file.content.as_bytes());
+            assert_eq!(
+                fs::metadata(path).unwrap().permissions().mode() & 0o777,
+                0o600
+            );
+        }
+        assert_eq!(copy.files[0].content, "source = 01-colors.conf\n");
+        assert!(save_native(temp.path(), "reviewed", &copy).is_err());
+        symlink(&saved, temp.path().join("existing-link")).unwrap();
+        assert!(save_native(temp.path(), "existing-link", &copy).is_err());
+        copy.files[1].content.push('#');
+        assert!(save_native(temp.path(), "tampered", &copy).is_err());
+        assert!(!temp.path().join("tampered").exists());
     }
     #[test]
     fn folder_copy_preserves_tree_bytes_and_refuses_existing_targets() {

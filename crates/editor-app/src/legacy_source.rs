@@ -184,6 +184,25 @@ impl Document {
         &self,
         workspace: &hyprland_editor_core::workspace::Workspace,
     ) -> Result<String, String> {
+        if workspace.devices.iter().any(|item| !item.legacy)
+            || !workspace.bindings.binds.is_empty()
+            || !workspace.bindings.submaps.is_empty()
+            || !workspace.bindings.order.is_empty()
+            || workspace.workspace_rules.iter().any(|item| !item.legacy)
+            || workspace.rules.iter().any(|item| item.legacy.is_none())
+            || workspace
+                .animations
+                .declarations
+                .iter()
+                .any(|item| !item.legacy)
+            || workspace
+                .gestures
+                .declarations
+                .iter()
+                .any(|item| !item.legacy)
+        {
+            return Err("This draft also contains separate Lua declarations. Save the private project to retain them before preparing a native copy.".into());
+        }
         match super::worker::run(super::worker::Request::CopyLegacy {
             source: self.content.clone(),
             draft: workspace.draft.clone(),

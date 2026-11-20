@@ -230,9 +230,12 @@ pub(super) fn open(
     actions.insert(&restore, -1);
     actions.insert(&forget, -1);
     body.append(&actions);
+    let export_tree = gtk::Button::with_label("Review Entire Configuration Folder…");
+    body.append(&export_tree);
     let feedback = super::label("");
     feedback.set_widget_name("include-capture-feedback");
     body.append(&feedback);
+    super::legacy_tree_export::connect(&export_tree, &window, state, &feedback);
     let preview = gtk::TextView::builder()
         .editable(false)
         .monospace(true)

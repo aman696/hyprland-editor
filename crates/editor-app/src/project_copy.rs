@@ -2,7 +2,12 @@
 use super::{label, worker, workflow, Shared};
 use adw::prelude::*;
 use hyprland_editor_core::lua::replay::project_copy::{Family, Mode, Prepared};
-use std::{cell::RefCell, rc::Rc};
+use std::{
+    cell::RefCell,
+    path::{Path, PathBuf},
+    rc::Rc,
+    sync::Arc,
+};
 
 fn finding_label(kind: &hyprland_editor_core::lua::replay::edits::DifferenceKind) -> &'static str {
     use hyprland_editor_core::lua::replay::edits::DifferenceKind::*;
@@ -258,13 +263,26 @@ pub(super) fn show(parent: &adw::ApplicationWindow, state: &Shared) -> adw::Wind
             feedback.set_text(&error);
             return;
         }
-        export_dialog(&parent, copy, &feedback);
+        let state = state.clone();
+        let reviewed_at = generation.get();
+        let copy = (*copy).clone();
+        export_dialog(
+            &parent,
+            &feedback,
+            move || state.borrow().generation == reviewed_at,
+            move |path, name| super::project_export::save(path, name, &copy),
+        );
     });
     window.present();
     window
 }
 
-fn export_dialog(parent: &adw::Window, copy: Rc<Prepared>, feedback: &gtk::Label) {
+pub(super) fn export_dialog(
+    parent: &adw::Window,
+    feedback: &gtk::Label,
+    is_current: impl Fn() -> bool + 'static,
+    save: impl Fn(&Path, &str) -> Result<PathBuf, String> + Send + Sync + 'static,
+) {
     let dialog = adw::Window::builder()
         .title("Save Combined Copy")
         .transient_for(parent)
@@ -291,10 +309,17 @@ fn export_dialog(parent: &adw::Window, copy: Rc<Prepared>, feedback: &gtk::Label
     dialog.set_content(Some(&content));
     let win = dialog.downgrade();
     let feedback = feedback.downgrade();
+    let save = Arc::new(save);
+    let is_current = Rc::new(is_current);
     choose.connect_clicked(move |button| {
         let Some(parent) = win.upgrade() else {
             return;
         };
+        if !is_current() {
+            status.set_text("The draft changed. Close this window and review the current draft.");
+            return;
+        }
+        button.set_sensitive(false);
         let name = name.text().to_string();
         let chooser = gtk::FileDialog::builder()
             .title("Choose Parent for New Config Folder")
@@ -302,12 +327,16 @@ fn export_dialog(parent: &adw::Window, copy: Rc<Prepared>, feedback: &gtk::Label
             .build();
         let button = button.downgrade();
         let status = status.downgrade();
-        let copy = copy.clone();
+        let save = save.clone();
+        let is_current = is_current.clone();
         let feedback = feedback.clone();
         gtk::glib::MainContext::default().spawn_local(async move {
             let selected = chooser.select_folder_future(Some(&parent)).await;
             if !parent.is_visible() {
                 return;
+            }
+            if let Some(button) = button.upgrade() {
+                button.set_sensitive(true);
             }
             let file = match selected {
                 Ok(file) => file,
@@ -330,15 +359,20 @@ fn export_dialog(parent: &adw::Window, copy: Rc<Prepared>, feedback: &gtk::Label
                 }
                 return;
             };
+            if !is_current() {
+                if let Some(status) = status.upgrade() {
+                    status.set_text("The draft changed. Review the current draft before saving.");
+                }
+                return;
+            }
             if let Some(button) = button.upgrade() {
                 button.set_sensitive(false);
             }
             if let Some(status) = status.upgrade() {
                 status.set_text("Saving the reviewed files…");
             }
-            let copy = (*copy).clone();
             workflow::background(
-                move || super::project_export::save(&path, &name, &copy),
+                move || save(&path, &name),
                 move |result| {
                     if let Some(button) = button.upgrade() {
                         button.set_sensitive(true);

@@ -14,6 +14,21 @@
   },
   "foundations": [
     {
+      "area": "graphical folder export for captured literal native includes",
+      "code": [
+        "crates/editor-core/src/legacy_includes/project_copy.rs",
+        "crates/editor-app/src/legacy_tree_export.rs",
+        "crates/editor-app/src/project_export.rs"
+      ],
+      "test_references": [
+        "rewrites_nested_absolute_and_repeated_includes_without_losing_their_slots",
+        "reports_incomplete_or_ambiguous_relocations_at_their_source",
+        "native_folder_is_private_create_only_and_checks_reviewed_bytes_before_writing",
+        "test_legacy_variable_editing"
+      ],
+      "limits": "One per-file review and private create-only folder for the materialized root and reachable captured revisions, numbered filenames and in-place include path changes, preserved nesting and repeated load order, refusal of incomplete supported graphs and stale reviews. Other resource paths and commands stay as written. Template and parent-path resolution, continued or indirect directives, effective values and runtime acceptance remain open"
+    },
+    {
       "area": "graphical per-file editing of captured native includes",
       "code": [
         "crates/editor-core/src/legacy_includes/captures.rs",
@@ -26,7 +41,7 @@
         "test_legacy_variable_editing",
         "native_forms_and_draft_workflow"
       ],
-      "limits": "Independent linked-file draft using standard scalar and group editors, restricted before-and-after source review, immutable original with revision validation, preview from revised bytes and outgoing references, private undo and reopen, and reviewed export of a single file. Full tree export, cross-file projection, template expansion and runtime acceptance remain open"
+      "limits": "Independent linked-file draft using standard scalar and group editors, restricted before-and-after source review, immutable original with revision validation, preview from revised bytes and outgoing references, private undo and reopen, and reviewed export of a single file. Cross-file projection, template expansion and runtime acceptance remain open"
     },
     {
       "area": "persistent native linked-file snapshots with ordered reference inspection",
