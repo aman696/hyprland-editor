@@ -33,6 +33,9 @@ struct Review {
 fn input(state: &Shared) -> Result<Input, String> {
     let s = state.borrow();
     let version = &s.draft.version;
+    if s.source_graphs.contains_key(version) {
+        return Err("Saved graph reconciliation must include every file. Single-root comparison would invalidate its resolution inputs.".into());
+    }
     Ok(Input {
         base: s
             .sources
@@ -50,7 +53,7 @@ fn input(state: &Shared) -> Result<Input, String> {
     })
 }
 fn compare(path: PathBuf, input: Input) -> Result<Review, String> {
-    let captured = hyprland_editor_core::source_path::read_selected(&path)?;
+    let captured = super::capture_worker::read_selected(&path)?;
     let incoming = Arc::new(workflow::parse_source(
         captured.content,
         input.draft.version.clone(),

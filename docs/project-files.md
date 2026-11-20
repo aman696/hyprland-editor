@@ -1,0 +1,11 @@
+# Saving and reopening projects
+
+Choose **Save Project As…** in the main menu, or press **Ctrl+Shift+S**, to choose a folder and a new `.hye` filename. This saves the selected version's complete editor workspace: its scalar and structured drafts, retained source files, private source revisions, import observations and inactive archived captures. A project can be reopened using **Import Configuration…**. Original source files do not need to remain available.
+
+The existing **Save Draft** button and **Ctrl+S** create a new backup in the editor's state folder. Its tooltip now explains that location. Both save actions share the same saved-revision accounting: a completed older snapshot cannot mark later edits or an intervening undo as saved.
+
+Project saving validates and serializes in the background, then writes the captured snapshot asynchronously. Only new local `.hye` files are accepted, with the existing 8 MiB workspace limit and private file permissions. Existing files and symlinks are refused; choose a new filename for another named copy. Closing or cancelling the chooser leaves the draft unchanged. A failed write may leave a partial new copy, and the error explains this. Success is reported after writing and closing the file.
+
+Project files contain captured configuration text and path evidence, so consider their contents before sharing them. Reopening does not restore folder access or write to the original paths. Saving a project does not apply configuration, reload the desktop or make a portable replacement for `hyprland.lua` or `hyprland.conf`. Use the separate source/draft review actions for configuration copies. Complete multi-file configuration relocation and combined source/draft publication remain unfinished.
+
+Validation covers exact output bytes, a project larger than the single-source export limit, private permissions, wrong extensions, oversized output and existing-file refusal. The private graphical fixture drives the selected-file save callback for Lua, legacy and retained multi-file/private-revision projects, compares the complete saved bytes and reopens them through the normal workspace checker. The operating system's chooser interaction itself is not automated by that fixture. Existing save/undo and saved-generation checks run through the shared implementation.

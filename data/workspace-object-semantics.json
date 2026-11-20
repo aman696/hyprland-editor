@@ -1,0 +1,32 @@
+{
+  "format": "hye-workspace-object-semantics-1",
+  "scope": "Original metatable and member routing; native rule lifetime, state/refresh effects and generic registration/protection remain unverified",
+  "snapshots": [
+    {
+      "version": "baseline",
+      "source": {
+        "version": "baseline",
+        "url": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/objects/LuaWorkspaceRule.cpp",
+        "sha256": "ba53f1f5ec0ac46a7bb5a132cfdb351b3afc77018cdc5ff16adfe4ba3059abfb"
+      },
+      "metatable": "HL.WorkspaceRule",
+      "methods": {
+        "set_enabled": "workspaceRuleSetEnabled",
+        "is_enabled": "workspaceRuleIsEnabled"
+      }
+    },
+    {
+      "version": "current",
+      "source": {
+        "version": "current",
+        "url": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/objects/LuaWorkspaceRule.cpp",
+        "sha256": "98306b2d781d25dca8a0f81385b2ac7b4b1558ff91eab72a07c434d34b36e8f5"
+      },
+      "metatable": "HL.WorkspaceRule",
+      "methods": {
+        "set_enabled": "workspaceRuleSetEnabled",
+        "is_enabled": "workspaceRuleIsEnabled"
+      }
+    }
+  ]
+}

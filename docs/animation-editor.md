@@ -1,5 +1,23 @@
 # Animation draft editor
 
+## Existing `.conf` animations
+
+![Native animation controls in the compact editor](screenshots/legacy-animations.png)
+
+Literal `bezier` and `animation` declarations at the top level or inside a flat `animations { … }` category now populate the graphical editor. Use the declaration picker to change a curve or branch. **Manage Animations** contains add, duplicate, remove, reorder and undo controls that wrap on small windows. The first declaration receives initial selection.
+
+Native Bézier coordinates and positive speeds use the native float32 domain rather than the Lua API's coordinate and speed limits. Native values are shown in their short float32 spelling, while unchanged source statements retain their original bytes. Sliders include imported values beyond the common range and the control-point diagram expands to show them. Source numeric acceptance follows the pinned decimal predicate; exponent and leading-plus spellings remain unresolved in imported native syntax. New graphical numeric input is emitted using native-compatible decimal spelling. Non-finite, overflow and underflow values are refused.
+
+A disabled native branch ignores timing, curve and style arguments. Those optional arguments remain stored, including otherwise invalid ignored text. Enabling it requires valid timing and an earlier native Bézier reference. Native and separate Lua drafts have independent registries. There is no native spring declaration handler; new spring authoring is unavailable in a `.conf` project, while older separate Lua spring drafts remain retained for explicit review.
+
+**Review Source Copy** includes native animation edits alongside scalar, session, monitor, binding and workspace edits. Changed statements use canonical native arguments; untouched statements, comments, category braces, unresolved lines and line endings remain. The complete copy is reparsed before review. Native comma arguments have no escaped-comma form; unrepresentable values can remain private drafts but cannot produce a misleading copy.
+
+Save Draft records captured-source/codec identities even for an intentional empty animation target. Older projects rebuild recognized native source declarations and retain their separate Lua drafts with distinct identities. Old files and recorded original paths stay untouched. Native declarations require explicit conversion before Lua/preview emission; ordinary preview preparation records their omission without curve-name or style payloads. Editing does not activate animations or reload the compositor.
+
+Variables, includes, expressions, conditional/continued/qualified syntax, other category placements, arbitrary native numeric aliases, complete effective-state discovery and native renderer/interpolation behavior remain unverified. The diagram remains a geometry aid. Actual isolated compositor preview, live apply/recovery and full resource/accessibility/security/release acceptance remain required. The native profile pins the handler, lexer and argument-splitter sources in `data/legacy-animations.json`.
+
+## Lua drafts
+
 The 0.11 editor authors ordered private `hl.curve` and `hl.animation` drafts for the two audited Hyprland source snapshots. It includes all 34 public animation nodes per snapshot and labels the separately discovered internal `__internal_fadeCTM` node. Internal names are unstable implementation details. This milestone does not certify any complete animation contract or desktop behavior.
 
 ## Editing and inheritance

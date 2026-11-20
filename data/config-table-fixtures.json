@@ -1,0 +1,3414 @@
+{
+  "format": "hye-config-table-fixtures-1",
+  "source_files": [
+    {
+      "version": "baseline",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsConfigRules.cpp",
+      "sha256": "157c3e45b364f3e41b6fd7cf13fd19e7477e8c03a6a75c6c46fde5e2b5715be9"
+    },
+    {
+      "version": "current",
+      "source": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsConfigRules.cpp",
+      "sha256": "789b1425c25b5a26c82f25e4d5d0b8176a6f56481573fc6e658662d1de7ea5ae"
+    }
+  ],
+  "evidence_scope": "Original hlConfig C-API traversal with inert registry/value-parser/refresh/source-location adapters. Delegation only; no scalar acceptance, real runtime state, portable iteration order, ownership or effect certification.",
+  "cases": [
+    {
+      "version": "baseline",
+      "name": "nested_scalar",
+      "lua": "hl.config{general={border_size=3}}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        98,
+                        111,
+                        114,
+                        100,
+                        101,
+                        114,
+                        95,
+                        115,
+                        105,
+                        122,
+                        101
+                      ]
+                    },
+                    {
+                      "type": "int",
+                      "value": 3
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "integer",
+          "3"
+        ]
+      ],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 1
+    },
+    {
+      "version": "baseline",
+      "name": "flat_scalar",
+      "lua": "hl.config{['general.border_size']=3}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108,
+                  46,
+                  98,
+                  111,
+                  114,
+                  100,
+                  101,
+                  114,
+                  95,
+                  115,
+                  105,
+                  122,
+                  101
+                ]
+              },
+              {
+                "type": "int",
+                "value": 3
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "integer",
+          "3"
+        ]
+      ],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 1
+    },
+    {
+      "version": "baseline",
+      "name": "nil_argument",
+      "lua": "hl.config(nil)",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "nil"
+        }
+      ],
+      "delegations": [],
+      "errors_hex": [
+        "686c2e636f6e6669673a20617267756d656e74206d7573742062652061207461626c65"
+      ],
+      "pairs_calls": 0,
+      "refresh_requests": 0
+    },
+    {
+      "version": "baseline",
+      "name": "number_argument",
+      "lua": "hl.config(3)",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "int",
+          "value": 3
+        }
+      ],
+      "delegations": [],
+      "errors_hex": [
+        "686c2e636f6e6669673a20617267756d656e74206d7573742062652061207461626c65"
+      ],
+      "pairs_calls": 0,
+      "refresh_requests": 0
+    },
+    {
+      "version": "baseline",
+      "name": "string_argument",
+      "lua": "hl.config('table')",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "bytes",
+          "value": [
+            116,
+            97,
+            98,
+            108,
+            101
+          ]
+        }
+      ],
+      "delegations": [],
+      "errors_hex": [
+        "686c2e636f6e6669673a20617267756d656e74206d7573742062652061207461626c65"
+      ],
+      "pairs_calls": 0,
+      "refresh_requests": 0
+    },
+    {
+      "version": "baseline",
+      "name": "no_argument",
+      "lua": "hl.config()",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [],
+      "delegations": [],
+      "errors_hex": [
+        "686c2e636f6e6669673a20617267756d656e74206d7573742062652061207461626c65"
+      ],
+      "pairs_calls": 0,
+      "refresh_requests": 0
+    },
+    {
+      "version": "baseline",
+      "name": "extra_arguments",
+      "lua": "hl.config({general={border_size=3}},{general={border_size=9}})",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        98,
+                        111,
+                        114,
+                        100,
+                        101,
+                        114,
+                        95,
+                        115,
+                        105,
+                        122,
+                        101
+                      ]
+                    },
+                    {
+                      "type": "int",
+                      "value": 3
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        98,
+                        111,
+                        114,
+                        100,
+                        101,
+                        114,
+                        95,
+                        115,
+                        105,
+                        122,
+                        101
+                      ]
+                    },
+                    {
+                      "type": "int",
+                      "value": 9
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "integer",
+          "3"
+        ]
+      ],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 1
+    },
+    {
+      "version": "baseline",
+      "name": "known_table_value",
+      "lua": "hl.config{general={['col.active_border']={colors={'red'},angle=45}}}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        99,
+                        111,
+                        108,
+                        46,
+                        97,
+                        99,
+                        116,
+                        105,
+                        118,
+                        101,
+                        95,
+                        98,
+                        111,
+                        114,
+                        100,
+                        101,
+                        114
+                      ]
+                    },
+                    {
+                      "type": "table",
+                      "value": [
+                        [
+                          {
+                            "type": "bytes",
+                            "value": [
+                              97,
+                              110,
+                              103,
+                              108,
+                              101
+                            ]
+                          },
+                          {
+                            "type": "int",
+                            "value": 45
+                          }
+                        ],
+                        [
+                          {
+                            "type": "bytes",
+                            "value": [
+                              99,
+                              111,
+                              108,
+                              111,
+                              114,
+                              115
+                            ]
+                          },
+                          {
+                            "type": "table",
+                            "value": [
+                              [
+                                {
+                                  "type": "int",
+                                  "value": 1
+                                },
+                                {
+                                  "type": "bytes",
+                                  "value": [
+                                    114,
+                                    101,
+                                    100
+                                  ]
+                                }
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e636f6c2e6163746976655f626f72646572",
+          "table",
+          ""
+        ]
+      ],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 1
+    },
+    {
+      "version": "baseline",
+      "name": "known_scalar_table_value",
+      "lua": "hl.config{general={border_size={nested=9}}}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        98,
+                        111,
+                        114,
+                        100,
+                        101,
+                        114,
+                        95,
+                        115,
+                        105,
+                        122,
+                        101
+                      ]
+                    },
+                    {
+                      "type": "table",
+                      "value": [
+                        [
+                          {
+                            "type": "bytes",
+                            "value": [
+                              110,
+                              101,
+                              115,
+                              116,
+                              101,
+                              100
+                            ]
+                          },
+                          {
+                            "type": "int",
+                            "value": 9
+                          }
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "table",
+          ""
+        ]
+      ],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 1
+    },
+    {
+      "version": "baseline",
+      "name": "unknown_scalar",
+      "lua": "hl.config{outside=4}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  111,
+                  117,
+                  116,
+                  115,
+                  105,
+                  100,
+                  101
+                ]
+              },
+              {
+                "type": "int",
+                "value": 4
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [],
+      "errors_hex": [
+        "666978747572653a20756e6b6e6f776e20636f6e666967206b657920276f75747369646527"
+      ],
+      "pairs_calls": 0,
+      "refresh_requests": 0
+    },
+    {
+      "version": "baseline",
+      "name": "unknown_nested",
+      "lua": "hl.config{outside={a=1,b={c=2}}}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  111,
+                  117,
+                  116,
+                  115,
+                  105,
+                  100,
+                  101
+                ]
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        97
+                      ]
+                    },
+                    {
+                      "type": "int",
+                      "value": 1
+                    }
+                  ],
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        98
+                      ]
+                    },
+                    {
+                      "type": "table",
+                      "value": [
+                        [
+                          {
+                            "type": "bytes",
+                            "value": [
+                              99
+                            ]
+                          },
+                          {
+                            "type": "int",
+                            "value": 2
+                          }
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [],
+      "errors_hex": [
+        "666978747572653a20756e6b6e6f776e20636f6e666967206b657920276f7574736964652e6127",
+        "666978747572653a20756e6b6e6f776e20636f6e666967206b657920276f7574736964652e622e6327"
+      ],
+      "pairs_calls": 0,
+      "refresh_requests": 0
+    },
+    {
+      "version": "baseline",
+      "name": "empty_unknown_table",
+      "lua": "hl.config{outside={}}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  111,
+                  117,
+                  116,
+                  115,
+                  105,
+                  100,
+                  101
+                ]
+              },
+              {
+                "type": "table",
+                "value": []
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 0
+    },
+    {
+      "version": "baseline",
+      "name": "nonstring_keys",
+      "lua": "hl.config{[1]={general={border_size=7}},[true]=8,[function()end]=9}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bool",
+                "value": true
+              },
+              {
+                "type": "int",
+                "value": 8
+              }
+            ],
+            [
+              {
+                "type": "function",
+                "value": "fixture-function"
+              },
+              {
+                "type": "int",
+                "value": 9
+              }
+            ],
+            [
+              {
+                "type": "int",
+                "value": 1
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        103,
+                        101,
+                        110,
+                        101,
+                        114,
+                        97,
+                        108
+                      ]
+                    },
+                    {
+                      "type": "table",
+                      "value": [
+                        [
+                          {
+                            "type": "bytes",
+                            "value": [
+                              98,
+                              111,
+                              114,
+                              100,
+                              101,
+                              114,
+                              95,
+                              115,
+                              105,
+                              122,
+                              101
+                            ]
+                          },
+                          {
+                            "type": "int",
+                            "value": 7
+                          }
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 0
+    },
+    {
+      "version": "baseline",
+      "name": "nul_key_alias",
+      "lua": "hl.config{['general.border_size\\0suffix']=9}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108,
+                  46,
+                  98,
+                  111,
+                  114,
+                  100,
+                  101,
+                  114,
+                  95,
+                  115,
+                  105,
+                  122,
+                  101,
+                  0,
+                  115,
+                  117,
+                  102,
+                  102,
+                  105,
+                  120
+                ]
+              },
+              {
+                "type": "int",
+                "value": 9
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "integer",
+          "9"
+        ]
+      ],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 1
+    },
+    {
+      "version": "baseline",
+      "name": "nul_category_alias",
+      "lua": "hl.config{['general\\0suffix']={border_size=9}}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108,
+                  0,
+                  115,
+                  117,
+                  102,
+                  102,
+                  105,
+                  120
+                ]
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        98,
+                        111,
+                        114,
+                        100,
+                        101,
+                        114,
+                        95,
+                        115,
+                        105,
+                        122,
+                        101
+                      ]
+                    },
+                    {
+                      "type": "int",
+                      "value": 9
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "integer",
+          "9"
+        ]
+      ],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 1
+    },
+    {
+      "version": "baseline",
+      "name": "nul_key_collision",
+      "lua": "hl.config{['general.border_size\\0suffix']=9,['general.border_size']=3}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108,
+                  46,
+                  98,
+                  111,
+                  114,
+                  100,
+                  101,
+                  114,
+                  95,
+                  115,
+                  105,
+                  122,
+                  101,
+                  0,
+                  115,
+                  117,
+                  102,
+                  102,
+                  105,
+                  120
+                ]
+              },
+              {
+                "type": "int",
+                "value": 9
+              }
+            ],
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108,
+                  46,
+                  98,
+                  111,
+                  114,
+                  100,
+                  101,
+                  114,
+                  95,
+                  115,
+                  105,
+                  122,
+                  101
+                ]
+              },
+              {
+                "type": "int",
+                "value": 3
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "integer",
+          "3"
+        ],
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "integer",
+          "9"
+        ]
+      ],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 2
+    },
+    {
+      "version": "baseline",
+      "name": "dotted_nested_collision",
+      "lua": "hl.config{general={border_size=3},['general.border_size']=9}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108,
+                  46,
+                  98,
+                  111,
+                  114,
+                  100,
+                  101,
+                  114,
+                  95,
+                  115,
+                  105,
+                  122,
+                  101
+                ]
+              },
+              {
+                "type": "int",
+                "value": 9
+              }
+            ],
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        98,
+                        111,
+                        114,
+                        100,
+                        101,
+                        114,
+                        95,
+                        115,
+                        105,
+                        122,
+                        101
+                      ]
+                    },
+                    {
+                      "type": "int",
+                      "value": 3
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "integer",
+          "3"
+        ],
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "integer",
+          "9"
+        ]
+      ],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 2
+    },
+    {
+      "version": "baseline",
+      "name": "empty_root_category",
+      "lua": "hl.config{['']={general={border_size=3}}}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": []
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        103,
+                        101,
+                        110,
+                        101,
+                        114,
+                        97,
+                        108
+                      ]
+                    },
+                    {
+                      "type": "table",
+                      "value": [
+                        [
+                          {
+                            "type": "bytes",
+                            "value": [
+                              98,
+                              111,
+                              114,
+                              100,
+                              101,
+                              114,
+                              95,
+                              115,
+                              105,
+                              122,
+                              101
+                            ]
+                          },
+                          {
+                            "type": "int",
+                            "value": 3
+                          }
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "integer",
+          "3"
+        ]
+      ],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 1
+    },
+    {
+      "version": "baseline",
+      "name": "empty_nested_category",
+      "lua": "hl.config{general={['']={border_size=3}}}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": []
+                    },
+                    {
+                      "type": "table",
+                      "value": [
+                        [
+                          {
+                            "type": "bytes",
+                            "value": [
+                              98,
+                              111,
+                              114,
+                              100,
+                              101,
+                              114,
+                              95,
+                              115,
+                              105,
+                              122,
+                              101
+                            ]
+                          },
+                          {
+                            "type": "int",
+                            "value": 3
+                          }
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [],
+      "errors_hex": [
+        "666978747572653a20756e6b6e6f776e20636f6e666967206b6579202767656e6572616c2e2e626f726465725f73697a6527"
+      ],
+      "pairs_calls": 0,
+      "refresh_requests": 0
+    },
+    {
+      "version": "baseline",
+      "name": "nul_leading_key",
+      "lua": "hl.config{['\\0general.border_size']=3}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  0,
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108,
+                  46,
+                  98,
+                  111,
+                  114,
+                  100,
+                  101,
+                  114,
+                  95,
+                  115,
+                  105,
+                  122,
+                  101
+                ]
+              },
+              {
+                "type": "int",
+                "value": 3
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [],
+      "errors_hex": [
+        "666978747572653a20756e6b6e6f776e20636f6e666967206b6579202727"
+      ],
+      "pairs_calls": 0,
+      "refresh_requests": 0
+    },
+    {
+      "version": "baseline",
+      "name": "raw_iteration_ignores_pairs",
+      "lua": "local t=setmetatable({general={border_size=3}},{__pairs=function()__pairs_calls=__pairs_calls+1;return next,{},nil end});hl.config(t)",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        98,
+                        111,
+                        114,
+                        100,
+                        101,
+                        114,
+                        95,
+                        115,
+                        105,
+                        122,
+                        101
+                      ]
+                    },
+                    {
+                      "type": "int",
+                      "value": 3
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "integer",
+          "3"
+        ]
+      ],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 1
+    },
+    {
+      "version": "baseline",
+      "name": "nil_fields_not_stored",
+      "lua": "hl.config{general={border_size=nil}}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "type": "table",
+                "value": []
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 0
+    },
+    {
+      "version": "baseline",
+      "name": "string_value_bytes",
+      "lua": "hl.config{general={border_size='3\\0suffix'}}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        98,
+                        111,
+                        114,
+                        100,
+                        101,
+                        114,
+                        95,
+                        115,
+                        105,
+                        122,
+                        101
+                      ]
+                    },
+                    {
+                      "type": "bytes",
+                      "value": [
+                        51,
+                        0,
+                        115,
+                        117,
+                        102,
+                        102,
+                        105,
+                        120
+                      ]
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "string",
+          "3300737566666978"
+        ]
+      ],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 1
+    },
+    {
+      "version": "baseline",
+      "name": "float_value_delegation",
+      "lua": "hl.config{general={border_size=3.0}}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        98,
+                        111,
+                        114,
+                        100,
+                        101,
+                        114,
+                        95,
+                        115,
+                        105,
+                        122,
+                        101
+                      ]
+                    },
+                    {
+                      "type": "float",
+                      "value": 3
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "float",
+          "4008000000000000"
+        ]
+      ],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 1
+    },
+    {
+      "version": "baseline",
+      "name": "failed_parse_continues",
+      "lua": "hl.config{general={border_size=3,gaps_out=7}}",
+      "dynamic": true,
+      "inert_parser_failure": true,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        103,
+                        97,
+                        112,
+                        115,
+                        95,
+                        111,
+                        117,
+                        116
+                      ]
+                    },
+                    {
+                      "type": "int",
+                      "value": 7
+                    }
+                  ],
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        98,
+                        111,
+                        114,
+                        100,
+                        101,
+                        114,
+                        95,
+                        115,
+                        105,
+                        122,
+                        101
+                      ]
+                    },
+                    {
+                      "type": "int",
+                      "value": 3
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "integer",
+          "3"
+        ],
+        [
+          "67656e6572616c2e676170735f6f7574",
+          "integer",
+          "7"
+        ]
+      ],
+      "errors_hex": [
+        "666978747572653a206572726f722073657474696e67202767656e6572616c2e626f726465725f73697a65273a20666978747572652072656a656374696f6e"
+      ],
+      "pairs_calls": 0,
+      "refresh_requests": 1
+    },
+    {
+      "version": "baseline",
+      "name": "static_parse_no_refresh",
+      "lua": "hl.config{general={border_size=3,gaps_out=7}}",
+      "dynamic": false,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        103,
+                        97,
+                        112,
+                        115,
+                        95,
+                        111,
+                        117,
+                        116
+                      ]
+                    },
+                    {
+                      "type": "int",
+                      "value": 7
+                    }
+                  ],
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        98,
+                        111,
+                        114,
+                        100,
+                        101,
+                        114,
+                        95,
+                        115,
+                        105,
+                        122,
+                        101
+                      ]
+                    },
+                    {
+                      "type": "int",
+                      "value": 3
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "integer",
+          "3"
+        ],
+        [
+          "67656e6572616c2e676170735f6f7574",
+          "integer",
+          "7"
+        ]
+      ],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 0
+    },
+    {
+      "version": "current",
+      "name": "nested_scalar",
+      "lua": "hl.config{general={border_size=3}}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        98,
+                        111,
+                        114,
+                        100,
+                        101,
+                        114,
+                        95,
+                        115,
+                        105,
+                        122,
+                        101
+                      ]
+                    },
+                    {
+                      "type": "int",
+                      "value": 3
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "integer",
+          "3"
+        ]
+      ],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 1
+    },
+    {
+      "version": "current",
+      "name": "flat_scalar",
+      "lua": "hl.config{['general.border_size']=3}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108,
+                  46,
+                  98,
+                  111,
+                  114,
+                  100,
+                  101,
+                  114,
+                  95,
+                  115,
+                  105,
+                  122,
+                  101
+                ]
+              },
+              {
+                "type": "int",
+                "value": 3
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "integer",
+          "3"
+        ]
+      ],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 1
+    },
+    {
+      "version": "current",
+      "name": "nil_argument",
+      "lua": "hl.config(nil)",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "nil"
+        }
+      ],
+      "delegations": [],
+      "errors_hex": [
+        "686c2e636f6e6669673a20617267756d656e74206d7573742062652061207461626c65"
+      ],
+      "pairs_calls": 0,
+      "refresh_requests": 0
+    },
+    {
+      "version": "current",
+      "name": "number_argument",
+      "lua": "hl.config(3)",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "int",
+          "value": 3
+        }
+      ],
+      "delegations": [],
+      "errors_hex": [
+        "686c2e636f6e6669673a20617267756d656e74206d7573742062652061207461626c65"
+      ],
+      "pairs_calls": 0,
+      "refresh_requests": 0
+    },
+    {
+      "version": "current",
+      "name": "string_argument",
+      "lua": "hl.config('table')",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "bytes",
+          "value": [
+            116,
+            97,
+            98,
+            108,
+            101
+          ]
+        }
+      ],
+      "delegations": [],
+      "errors_hex": [
+        "686c2e636f6e6669673a20617267756d656e74206d7573742062652061207461626c65"
+      ],
+      "pairs_calls": 0,
+      "refresh_requests": 0
+    },
+    {
+      "version": "current",
+      "name": "no_argument",
+      "lua": "hl.config()",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [],
+      "delegations": [],
+      "errors_hex": [
+        "686c2e636f6e6669673a20617267756d656e74206d7573742062652061207461626c65"
+      ],
+      "pairs_calls": 0,
+      "refresh_requests": 0
+    },
+    {
+      "version": "current",
+      "name": "extra_arguments",
+      "lua": "hl.config({general={border_size=3}},{general={border_size=9}})",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        98,
+                        111,
+                        114,
+                        100,
+                        101,
+                        114,
+                        95,
+                        115,
+                        105,
+                        122,
+                        101
+                      ]
+                    },
+                    {
+                      "type": "int",
+                      "value": 3
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        },
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        98,
+                        111,
+                        114,
+                        100,
+                        101,
+                        114,
+                        95,
+                        115,
+                        105,
+                        122,
+                        101
+                      ]
+                    },
+                    {
+                      "type": "int",
+                      "value": 9
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "integer",
+          "3"
+        ]
+      ],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 1
+    },
+    {
+      "version": "current",
+      "name": "known_table_value",
+      "lua": "hl.config{general={['col.active_border']={colors={'red'},angle=45}}}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        99,
+                        111,
+                        108,
+                        46,
+                        97,
+                        99,
+                        116,
+                        105,
+                        118,
+                        101,
+                        95,
+                        98,
+                        111,
+                        114,
+                        100,
+                        101,
+                        114
+                      ]
+                    },
+                    {
+                      "type": "table",
+                      "value": [
+                        [
+                          {
+                            "type": "bytes",
+                            "value": [
+                              97,
+                              110,
+                              103,
+                              108,
+                              101
+                            ]
+                          },
+                          {
+                            "type": "int",
+                            "value": 45
+                          }
+                        ],
+                        [
+                          {
+                            "type": "bytes",
+                            "value": [
+                              99,
+                              111,
+                              108,
+                              111,
+                              114,
+                              115
+                            ]
+                          },
+                          {
+                            "type": "table",
+                            "value": [
+                              [
+                                {
+                                  "type": "int",
+                                  "value": 1
+                                },
+                                {
+                                  "type": "bytes",
+                                  "value": [
+                                    114,
+                                    101,
+                                    100
+                                  ]
+                                }
+                              ]
+                            ]
+                          }
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e636f6c2e6163746976655f626f72646572",
+          "table",
+          ""
+        ]
+      ],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 1
+    },
+    {
+      "version": "current",
+      "name": "known_scalar_table_value",
+      "lua": "hl.config{general={border_size={nested=9}}}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        98,
+                        111,
+                        114,
+                        100,
+                        101,
+                        114,
+                        95,
+                        115,
+                        105,
+                        122,
+                        101
+                      ]
+                    },
+                    {
+                      "type": "table",
+                      "value": [
+                        [
+                          {
+                            "type": "bytes",
+                            "value": [
+                              110,
+                              101,
+                              115,
+                              116,
+                              101,
+                              100
+                            ]
+                          },
+                          {
+                            "type": "int",
+                            "value": 9
+                          }
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "table",
+          ""
+        ]
+      ],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 1
+    },
+    {
+      "version": "current",
+      "name": "unknown_scalar",
+      "lua": "hl.config{outside=4}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  111,
+                  117,
+                  116,
+                  115,
+                  105,
+                  100,
+                  101
+                ]
+              },
+              {
+                "type": "int",
+                "value": 4
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [],
+      "errors_hex": [
+        "666978747572653a20756e6b6e6f776e20636f6e666967206b657920276f75747369646527"
+      ],
+      "pairs_calls": 0,
+      "refresh_requests": 0
+    },
+    {
+      "version": "current",
+      "name": "unknown_nested",
+      "lua": "hl.config{outside={a=1,b={c=2}}}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  111,
+                  117,
+                  116,
+                  115,
+                  105,
+                  100,
+                  101
+                ]
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        97
+                      ]
+                    },
+                    {
+                      "type": "int",
+                      "value": 1
+                    }
+                  ],
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        98
+                      ]
+                    },
+                    {
+                      "type": "table",
+                      "value": [
+                        [
+                          {
+                            "type": "bytes",
+                            "value": [
+                              99
+                            ]
+                          },
+                          {
+                            "type": "int",
+                            "value": 2
+                          }
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [],
+      "errors_hex": [
+        "666978747572653a20756e6b6e6f776e20636f6e666967206b657920276f7574736964652e6127",
+        "666978747572653a20756e6b6e6f776e20636f6e666967206b657920276f7574736964652e622e6327"
+      ],
+      "pairs_calls": 0,
+      "refresh_requests": 0
+    },
+    {
+      "version": "current",
+      "name": "empty_unknown_table",
+      "lua": "hl.config{outside={}}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  111,
+                  117,
+                  116,
+                  115,
+                  105,
+                  100,
+                  101
+                ]
+              },
+              {
+                "type": "table",
+                "value": []
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 0
+    },
+    {
+      "version": "current",
+      "name": "nonstring_keys",
+      "lua": "hl.config{[1]={general={border_size=7}},[true]=8,[function()end]=9}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bool",
+                "value": true
+              },
+              {
+                "type": "int",
+                "value": 8
+              }
+            ],
+            [
+              {
+                "type": "function",
+                "value": "fixture-function"
+              },
+              {
+                "type": "int",
+                "value": 9
+              }
+            ],
+            [
+              {
+                "type": "int",
+                "value": 1
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        103,
+                        101,
+                        110,
+                        101,
+                        114,
+                        97,
+                        108
+                      ]
+                    },
+                    {
+                      "type": "table",
+                      "value": [
+                        [
+                          {
+                            "type": "bytes",
+                            "value": [
+                              98,
+                              111,
+                              114,
+                              100,
+                              101,
+                              114,
+                              95,
+                              115,
+                              105,
+                              122,
+                              101
+                            ]
+                          },
+                          {
+                            "type": "int",
+                            "value": 7
+                          }
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 0
+    },
+    {
+      "version": "current",
+      "name": "nul_key_alias",
+      "lua": "hl.config{['general.border_size\\0suffix']=9}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108,
+                  46,
+                  98,
+                  111,
+                  114,
+                  100,
+                  101,
+                  114,
+                  95,
+                  115,
+                  105,
+                  122,
+                  101,
+                  0,
+                  115,
+                  117,
+                  102,
+                  102,
+                  105,
+                  120
+                ]
+              },
+              {
+                "type": "int",
+                "value": 9
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "integer",
+          "9"
+        ]
+      ],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 1
+    },
+    {
+      "version": "current",
+      "name": "nul_category_alias",
+      "lua": "hl.config{['general\\0suffix']={border_size=9}}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108,
+                  0,
+                  115,
+                  117,
+                  102,
+                  102,
+                  105,
+                  120
+                ]
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        98,
+                        111,
+                        114,
+                        100,
+                        101,
+                        114,
+                        95,
+                        115,
+                        105,
+                        122,
+                        101
+                      ]
+                    },
+                    {
+                      "type": "int",
+                      "value": 9
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "integer",
+          "9"
+        ]
+      ],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 1
+    },
+    {
+      "version": "current",
+      "name": "nul_key_collision",
+      "lua": "hl.config{['general.border_size\\0suffix']=9,['general.border_size']=3}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108,
+                  46,
+                  98,
+                  111,
+                  114,
+                  100,
+                  101,
+                  114,
+                  95,
+                  115,
+                  105,
+                  122,
+                  101,
+                  0,
+                  115,
+                  117,
+                  102,
+                  102,
+                  105,
+                  120
+                ]
+              },
+              {
+                "type": "int",
+                "value": 9
+              }
+            ],
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108,
+                  46,
+                  98,
+                  111,
+                  114,
+                  100,
+                  101,
+                  114,
+                  95,
+                  115,
+                  105,
+                  122,
+                  101
+                ]
+              },
+              {
+                "type": "int",
+                "value": 3
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "integer",
+          "3"
+        ],
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "integer",
+          "9"
+        ]
+      ],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 2
+    },
+    {
+      "version": "current",
+      "name": "dotted_nested_collision",
+      "lua": "hl.config{general={border_size=3},['general.border_size']=9}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108,
+                  46,
+                  98,
+                  111,
+                  114,
+                  100,
+                  101,
+                  114,
+                  95,
+                  115,
+                  105,
+                  122,
+                  101
+                ]
+              },
+              {
+                "type": "int",
+                "value": 9
+              }
+            ],
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        98,
+                        111,
+                        114,
+                        100,
+                        101,
+                        114,
+                        95,
+                        115,
+                        105,
+                        122,
+                        101
+                      ]
+                    },
+                    {
+                      "type": "int",
+                      "value": 3
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "integer",
+          "3"
+        ],
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "integer",
+          "9"
+        ]
+      ],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 2
+    },
+    {
+      "version": "current",
+      "name": "empty_root_category",
+      "lua": "hl.config{['']={general={border_size=3}}}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": []
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        103,
+                        101,
+                        110,
+                        101,
+                        114,
+                        97,
+                        108
+                      ]
+                    },
+                    {
+                      "type": "table",
+                      "value": [
+                        [
+                          {
+                            "type": "bytes",
+                            "value": [
+                              98,
+                              111,
+                              114,
+                              100,
+                              101,
+                              114,
+                              95,
+                              115,
+                              105,
+                              122,
+                              101
+                            ]
+                          },
+                          {
+                            "type": "int",
+                            "value": 3
+                          }
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "integer",
+          "3"
+        ]
+      ],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 1
+    },
+    {
+      "version": "current",
+      "name": "empty_nested_category",
+      "lua": "hl.config{general={['']={border_size=3}}}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": []
+                    },
+                    {
+                      "type": "table",
+                      "value": [
+                        [
+                          {
+                            "type": "bytes",
+                            "value": [
+                              98,
+                              111,
+                              114,
+                              100,
+                              101,
+                              114,
+                              95,
+                              115,
+                              105,
+                              122,
+                              101
+                            ]
+                          },
+                          {
+                            "type": "int",
+                            "value": 3
+                          }
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [],
+      "errors_hex": [
+        "666978747572653a20756e6b6e6f776e20636f6e666967206b6579202767656e6572616c2e2e626f726465725f73697a6527"
+      ],
+      "pairs_calls": 0,
+      "refresh_requests": 0
+    },
+    {
+      "version": "current",
+      "name": "nul_leading_key",
+      "lua": "hl.config{['\\0general.border_size']=3}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  0,
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108,
+                  46,
+                  98,
+                  111,
+                  114,
+                  100,
+                  101,
+                  114,
+                  95,
+                  115,
+                  105,
+                  122,
+                  101
+                ]
+              },
+              {
+                "type": "int",
+                "value": 3
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [],
+      "errors_hex": [
+        "666978747572653a20756e6b6e6f776e20636f6e666967206b6579202727"
+      ],
+      "pairs_calls": 0,
+      "refresh_requests": 0
+    },
+    {
+      "version": "current",
+      "name": "raw_iteration_ignores_pairs",
+      "lua": "local t=setmetatable({general={border_size=3}},{__pairs=function()__pairs_calls=__pairs_calls+1;return next,{},nil end});hl.config(t)",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        98,
+                        111,
+                        114,
+                        100,
+                        101,
+                        114,
+                        95,
+                        115,
+                        105,
+                        122,
+                        101
+                      ]
+                    },
+                    {
+                      "type": "int",
+                      "value": 3
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "integer",
+          "3"
+        ]
+      ],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 1
+    },
+    {
+      "version": "current",
+      "name": "nil_fields_not_stored",
+      "lua": "hl.config{general={border_size=nil}}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "type": "table",
+                "value": []
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 0
+    },
+    {
+      "version": "current",
+      "name": "string_value_bytes",
+      "lua": "hl.config{general={border_size='3\\0suffix'}}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        98,
+                        111,
+                        114,
+                        100,
+                        101,
+                        114,
+                        95,
+                        115,
+                        105,
+                        122,
+                        101
+                      ]
+                    },
+                    {
+                      "type": "bytes",
+                      "value": [
+                        51,
+                        0,
+                        115,
+                        117,
+                        102,
+                        102,
+                        105,
+                        120
+                      ]
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "string",
+          "3300737566666978"
+        ]
+      ],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 1
+    },
+    {
+      "version": "current",
+      "name": "float_value_delegation",
+      "lua": "hl.config{general={border_size=3.0}}",
+      "dynamic": true,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        98,
+                        111,
+                        114,
+                        100,
+                        101,
+                        114,
+                        95,
+                        115,
+                        105,
+                        122,
+                        101
+                      ]
+                    },
+                    {
+                      "type": "float",
+                      "value": 3
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "float",
+          "4008000000000000"
+        ]
+      ],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 1
+    },
+    {
+      "version": "current",
+      "name": "failed_parse_continues",
+      "lua": "hl.config{general={border_size=3,gaps_out=7}}",
+      "dynamic": true,
+      "inert_parser_failure": true,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        103,
+                        97,
+                        112,
+                        115,
+                        95,
+                        111,
+                        117,
+                        116
+                      ]
+                    },
+                    {
+                      "type": "int",
+                      "value": 7
+                    }
+                  ],
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        98,
+                        111,
+                        114,
+                        100,
+                        101,
+                        114,
+                        95,
+                        115,
+                        105,
+                        122,
+                        101
+                      ]
+                    },
+                    {
+                      "type": "int",
+                      "value": 3
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "integer",
+          "3"
+        ],
+        [
+          "67656e6572616c2e676170735f6f7574",
+          "integer",
+          "7"
+        ]
+      ],
+      "errors_hex": [
+        "666978747572653a206572726f722073657474696e67202767656e6572616c2e626f726465725f73697a65273a20666978747572652072656a656374696f6e"
+      ],
+      "pairs_calls": 0,
+      "refresh_requests": 1
+    },
+    {
+      "version": "current",
+      "name": "static_parse_no_refresh",
+      "lua": "hl.config{general={border_size=3,gaps_out=7}}",
+      "dynamic": false,
+      "inert_parser_failure": false,
+      "arguments": [
+        {
+          "type": "table",
+          "value": [
+            [
+              {
+                "type": "bytes",
+                "value": [
+                  103,
+                  101,
+                  110,
+                  101,
+                  114,
+                  97,
+                  108
+                ]
+              },
+              {
+                "type": "table",
+                "value": [
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        103,
+                        97,
+                        112,
+                        115,
+                        95,
+                        111,
+                        117,
+                        116
+                      ]
+                    },
+                    {
+                      "type": "int",
+                      "value": 7
+                    }
+                  ],
+                  [
+                    {
+                      "type": "bytes",
+                      "value": [
+                        98,
+                        111,
+                        114,
+                        100,
+                        101,
+                        114,
+                        95,
+                        115,
+                        105,
+                        122,
+                        101
+                      ]
+                    },
+                    {
+                      "type": "int",
+                      "value": 3
+                    }
+                  ]
+                ]
+              }
+            ]
+          ]
+        }
+      ],
+      "delegations": [
+        [
+          "67656e6572616c2e626f726465725f73697a65",
+          "integer",
+          "3"
+        ],
+        [
+          "67656e6572616c2e676170735f6f7574",
+          "integer",
+          "7"
+        ]
+      ],
+      "errors_hex": [],
+      "pairs_calls": 0,
+      "refresh_requests": 0
+    }
+  ]
+}

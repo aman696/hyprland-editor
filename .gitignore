@@ -2,3 +2,5 @@
 /.dev/
 *.swp
 *.draft.json
+__pycache__/
+*.pyc

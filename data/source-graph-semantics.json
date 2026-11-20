@@ -1,0 +1,118 @@
+{
+  "format": "hye-source-graph-semantics-1",
+  "source_files": [
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/lua/ConfigManager.cpp",
+      "git_blob": "047203bf14e415988ed733d7a7d37be1161686dc",
+      "sha256": "94b5c6891326e7a3e490019d26fd9d6f5b3137fb5318a94dff0a6cb6dfdaf502",
+      "cache": "baseline-ConfigManager.cpp",
+      "repo": "hyprwm/Hyprland"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/lua/ConfigManager.hpp",
+      "git_blob": "30c5a0d815d72799a66c0cac2ead05ef275fa2ab",
+      "sha256": "762cb890f89f32fe3d62ffbf65b25068d5aa56f7b8c377ad8887f5ad9c752968",
+      "cache": "baseline-ConfigManager.hpp",
+      "repo": "hyprwm/Hyprland"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/lua/bindings/LuaBindingsInternal.cpp",
+      "git_blob": "01604a92e2093e3ce972339e7938f94766bfb995",
+      "sha256": "5f6534641d58073bbcbd3e004b168659d497072596cf10c9f2b189c55c2233e9",
+      "cache": "baseline-LuaBindingsInternal.cpp",
+      "repo": "hyprwm/Hyprland"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/config/lua/bindings/LuaBindingsToplevel.cpp",
+      "git_blob": "9bacdeffef7f19db7587daa589912a42d8ea0498",
+      "sha256": "706b29eb52de087c1d6e64770cf85fb3ebc0f2fbe9ddcff086905499bcd332f5",
+      "cache": "baseline-LuaBindingsToplevel.cpp",
+      "repo": "hyprwm/Hyprland"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/lua/ConfigManager.cpp",
+      "git_blob": "3466873070222ed995b5a695e416030b0135ff33",
+      "sha256": "dfd1cb14c59d0cb67aa5236abf20e513e6f6e4da2e696a46c4a4510d152b7964",
+      "cache": "current-ConfigManager.cpp",
+      "repo": "hyprwm/Hyprland"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/lua/ConfigManager.hpp",
+      "git_blob": "01396eed415d8c3cd5d85ccbdc65afa860d248e9",
+      "sha256": "2038a7fea563970f46c82c3b6ac86f6778ba1bed3b2b646a57ddbfd5fa19b329",
+      "cache": "current-ConfigManager.hpp",
+      "repo": "hyprwm/Hyprland"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/lua/bindings/LuaBindingsInternal.cpp",
+      "git_blob": "0efebd607cc12d70621ccf47fa2f6bc667c88bba",
+      "sha256": "896a8a793a5373baa64c66ff0dac986a3ba2a5c90e3f71c466b841f95f5d3a16",
+      "cache": "current-LuaBindingsInternal.cpp",
+      "repo": "hyprwm/Hyprland"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/config/lua/bindings/LuaBindingsToplevel.cpp",
+      "git_blob": "0969478ddac8ea64a6e5e536529617ae3fecd374",
+      "sha256": "9b43410a1bd04174d0b6fb4d6844af0dfba426cd9341153de5cbf9481f6f8138",
+      "cache": "current-LuaBindingsToplevel.cpp",
+      "repo": "hyprwm/Hyprland"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/helpers/MiscFunctions.cpp",
+      "git_blob": "be4f033abe3495d3209763a83fe4278ccb7d8dc9",
+      "sha256": "065418241a3b40e21273bca1fd29036221942554cddb61e08422d86f0a13c1d9",
+      "cache": "baseline-MiscFunctions.cpp",
+      "repo": "hyprwm/Hyprland"
+    },
+    {
+      "version": "baseline",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/helpers/MiscFunctions.hpp",
+      "git_blob": "cca62a65a98bcb5506496cf02baead46fac8a131",
+      "sha256": "084844f04b5be8ca1e9d7c6e49f94a4b6fc9cd3e387a060d6f70dcc0b68c7c79",
+      "cache": "baseline-MiscFunctions.hpp",
+      "repo": "hyprwm/Hyprland"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/helpers/MiscFunctions.cpp",
+      "git_blob": "299d2199cec36326c23abf902cf5a9c84e0e11cf",
+      "sha256": "34a677cb6f99442ecdbe1ae4b77391625bd55298ae739412ede63614f6bc5060",
+      "cache": "current-MiscFunctions.cpp",
+      "repo": "hyprwm/Hyprland"
+    },
+    {
+      "version": "current",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/helpers/MiscFunctions.hpp",
+      "git_blob": "48270a678fd9e75adb736806526045de75418f84",
+      "sha256": "334f9d66ed8c09cf4be23da67eb9ef2f58c7d5bf6f74261b807bd86ebb2ec97b",
+      "cache": "current-MiscFunctions.hpp",
+      "repo": "hyprwm/Hyprland"
+    }
+  ],
+  "scope": "Pinned initial path and require/cache helper observations. Static dependency-site inspection is not module replay or read authorization; full source graph implementation remains in progress.",
+  "require_modes": {
+    "safe": "Safe wrapper expands explicit wildcard patterns before original require. Uses global package.loaded for wildcard caching and fallback tables.",
+    "original": "Original Lua require still uses the custom file searcher but bypasses wildcard expansion and safe error fallback. Glob metacharacters can name literal files."
+  }
+}

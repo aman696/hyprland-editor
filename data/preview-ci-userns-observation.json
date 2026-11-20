@@ -1,0 +1,112 @@
+{
+  "format": 1,
+  "measured_source_head": "57958e2802de38c189006ab6b6aee58d494858a2",
+  "scope": "Two exact privileged ephemeral CI setups of trusted synthetic roles, exercising the production pidfs channel with translated user/group credentials and private PID/proc views. No ordinary rootless runtime or compositor certificate.",
+  "sources": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "038466470c0a3f2712fa418e22dc624adb3dd7ab589a49c3213d9a6cb1e8e457"
+    },
+    {
+      "path": "scripts/cgroup_kernel_probe.py",
+      "sha256": "5dbfa63dcfcb81266bb8972f0fbcd72e6c2eea769bb8987ecbb99c7bb2068d59"
+    },
+    {
+      "path": "crates/editor-preview/src/channel/namespace_tests.rs",
+      "sha256": "94a8d2ca5e7770183f7b584e04639d97ab05bce36c2340709d9dbf18ac886488"
+    },
+    {
+      "path": "crates/editor-preview/src/channel.rs",
+      "sha256": "627dde99abfd025e112520980722db59996d91bddf0bf25c8cbb339d5a0702f3"
+    },
+    {
+      "path": "crates/editor-preview/src/channel/identity.rs",
+      "sha256": "cb4b6641da497ecd4defcb56ba2e48c8eade45d83c830364248d820fd165e7b7"
+    },
+    {
+      "path": "crates/editor-preview/src/frame.rs",
+      "sha256": "628bf9d7d175447c8fe5c9b618bd64dc7177d09253d6cfe1b04ef217dd6ce58c"
+    },
+    {
+      "path": "Cargo.lock",
+      "sha256": "4758e39ac71a306c11649bd9503daaf3210a6e4bf62cc74319d58c1a4f94b947"
+    }
+  ],
+  "observations": [
+    {
+      "job_url": "https://github.com/aman696/hyprland-editor/actions/runs/39415677294/job/118603970247",
+      "conclusion": "success",
+      "source_head": "57958e2802de38c189006ab6b6aee58d494858a2",
+      "raw_log_sha256": "89d5a0c9987045ba8ec317edbac7c81c79f4ac5202801e1856aa94dbab2be7d4",
+      "kernel": "6.17.0-1022-azure",
+      "tool_sha256": {
+        "/usr/bin/unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c",
+        "/usr/bin/setpriv": "62ec0120791f3afcfb689fed52384ec2b0accc6e118a6b9a1d6fcfa7450aaf37"
+      },
+      "maps": {
+        "uid_map": [
+          1000,
+          1001,
+          1
+        ],
+        "gid_map": [
+          1000,
+          1001,
+          1
+        ]
+      },
+      "asserted_markers": [
+        "HYE_USERNS_RESULT translated UID/GID1000 verified; exact sealed frame and outer GUI receipt accepted",
+        "HYE_USERNS_PROVIDER mapped channel passed; setup user/mount/PID namespaces unchanged"
+      ],
+      "provider_removals": 4
+    },
+    {
+      "job_url": "https://github.com/aman696/hyprland-editor/actions/runs/39415685281/job/118603996983",
+      "conclusion": "success",
+      "source_head": "57958e2802de38c189006ab6b6aee58d494858a2",
+      "raw_log_sha256": "60ec2e9c4ad4eeb2c514bbcaeda33210248a91ae7767be51c3b634b7333f13e3",
+      "kernel": "6.17.0-1022-azure",
+      "tool_sha256": {
+        "/usr/bin/unshare": "a23c8863860669003dc4660039fe642f5795c8c2195898ebc5d01afa1ac3d11c",
+        "/usr/bin/setpriv": "62ec0120791f3afcfb689fed52384ec2b0accc6e118a6b9a1d6fcfa7450aaf37"
+      },
+      "maps": {
+        "uid_map": [
+          1000,
+          1001,
+          1
+        ],
+        "gid_map": [
+          1000,
+          1001,
+          1
+        ]
+      },
+      "asserted_markers": [
+        "HYE_USERNS_RESULT translated UID/GID1000 verified; exact sealed frame and outer GUI receipt accepted",
+        "HYE_USERNS_PROVIDER mapped channel passed; setup user/mount/PID namespaces unchanged"
+      ],
+      "provider_removals": 4
+    }
+  ],
+  "user_namespace_channel_translation_observed": true,
+  "trusted_fixture_private_proc_observed": true,
+  "setup_privilege_scope": "Only fixed system setup tools receive initial-namespace SYS_ADMIN in the dedicated CI child. Repository roles execute with no capabilities, empty supplementary groups and no-new-privileges.",
+  "full_workflow_record_scope": "Only the two named completed kernel jobs are recorded here. Enclosing workflow status is tracked separately.",
+  "production_launch_verified": false,
+  "combined_runtime_image_profile_verified": false,
+  "compositor_verified": false,
+  "renderer_verified": false,
+  "capture_input_verified": false,
+  "malicious_peer_and_crash_supervision_verified": false,
+  "lab_profile_certified": false,
+  "limitations": [
+    "Trusted synthetic pixels and expected kernel credentials/process anchors only",
+    "No host security policy, subordinate-ID database or ancestor-controller modification",
+    "This root-assisted CI mechanism does not change the rootless Ubuntu24 constructor refusal",
+    "Full host root remains visible to trusted test roles; private proc is not an immutable runtime image",
+    "Executable/projection attestation, process/descriptor policy, malicious-peer containment and lifecycle remain required",
+    "All original source editing, reconciliation, history, export, discovery, recovery/apply, hardware, accessibility/localization, resource and packaging/release gates remain in scope"
+  ]
+}

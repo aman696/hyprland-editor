@@ -1,0 +1,174 @@
+{
+  "format": "hye-lua55-compiler-worker-observation-1",
+  "scope": "Private official Lua builds, ten actual compiler-worker process cases per release including kernel-entropy refusal, strict role lint and optimized image/profile/dependency checks. No GUI selection, native evaluator, production launcher/dependency approval or full security/release acceptance. Sources and private build products removed.",
+  "profiles": [
+    {
+      "release": "5.5.0",
+      "archive_url": "https://www.lua.org/ftp/lua-5.5.0.tar.gz",
+      "archive_sha256": "57ccc32bbbd005cab75bcc52444052535af691789dba2b9016d5c50640d68b3d",
+      "library_sha256": "2c9fe9b5c7c047e18d0d2cc099de4636f5cd710e7f9bb313c22bc7f76c93558a",
+      "compiler_worker": {
+        "source_inputs": {
+          "crates/editor-lua55/Cargo.toml": "b7a3c3dbdb028d933034993cbc92ec7ff4620e39113ca9d56ff15fbe5dec71d5",
+          "crates/editor-lua55/build.rs": "474ac27cb0c9d648c722cfa186d89447947759c8c49d8ced91bf907e2f8e66e4",
+          "crates/editor-lua55/native/bridge.inc": "aa6581b158036486cd563f029f41f7497f92ca94ff6282a6d7c06358b502ea53",
+          "crates/editor-lua55/native/lua55.cpp": "cce1cbed35f614334cbfac4d71b293f53241c73ca8a98530afa44851575a8d82",
+          "crates/editor-lua55/src/protocol.rs": "b53a82c9966270b09575148bd19d2ab815c92ad59c855b95b0185be0f0d9b92a",
+          "crates/editor-lua55/src/native.rs": "7b94e86cfa1f7263082660111388495af926579ac3de88abcddf8311fa01d917",
+          "crates/editor-lua55/src/main.rs": "b461a58f4134d6e35b40141ce5a58bbe65c4a9b0b5120f0da13a9d47d306c1c5",
+          "crates/editor-lua55/tests/worker.rs": "bfc517c401db82add348eae454e6ed4a84210cb324881b8ecf15d8d30727cef8",
+          "Cargo.toml": "7d654efdc2dfa4b6f607f6f339b6fe60d353b1c2599c943193b111c02609742c",
+          "Cargo.lock": "0c828e50e9642a4820734dac526146def1279139d3d00558558f76014f6db86f",
+          "crates/editor-app/src/process_policy.rs": "3037d45b87095c6aa3b07cb1067cdc3fec153bfc166f7757ef7271a5e6738a45"
+        },
+        "image_sha256": "3a05e62d08b7e298fc9d2e84702cfd22260a229cb6ac24e1048ae6e4ed2cdbda",
+        "shared_dependencies": [
+          "libstdc++.so.6",
+          "libm.so.6",
+          "libgcc_s.so.1",
+          "libc.so.6",
+          "ld-linux-x86-64.so.2"
+        ],
+        "profile_reply": {
+          "protocol": "hye-lua55-compiler-1",
+          "request_sha256": "eed8e0cb5bdf7842f233a5ff627f24f158f8174e333a27fc4c3e346e94bc11b1",
+          "nonce": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "profile": {
+            "release": "5.5.0",
+            "library_identity": "$LuaVersion: Lua 5.5.0  Copyright (C) 1994-2025 Lua.org, PUC-Rio $$LuaAuthors: R. Ierusalimschy, L. H. de Figueiredo, W. Celes $",
+            "family": 505,
+            "numeric_locale": "C",
+            "private_seed": "kernel_random",
+            "global_declaration_compiles": true,
+            "global_identifier_compiles": true,
+            "imported_code_executed": false,
+            "complete_language_verified": false,
+            "selected_compositor_verified": false
+          },
+          "outcome": {
+            "kind": "profile"
+          }
+        },
+        "gui_selection_verified": false,
+        "source_evaluator_verified": false
+      }
+    },
+    {
+      "release": "5.5.1",
+      "archive_url": "https://www.lua.org/ftp/lua-5.5.1.tar.gz",
+      "archive_sha256": "1c4b4068d67061f2a2231ad2b5422e77acea1487ea9890f6320af614f4373dce",
+      "library_sha256": "a369bcfd5800bb52d4332d7be6e0e57dd4a83a8a454ee541383beda6622cc36d",
+      "compiler_worker": {
+        "source_inputs": {
+          "crates/editor-lua55/Cargo.toml": "b7a3c3dbdb028d933034993cbc92ec7ff4620e39113ca9d56ff15fbe5dec71d5",
+          "crates/editor-lua55/build.rs": "474ac27cb0c9d648c722cfa186d89447947759c8c49d8ced91bf907e2f8e66e4",
+          "crates/editor-lua55/native/bridge.inc": "aa6581b158036486cd563f029f41f7497f92ca94ff6282a6d7c06358b502ea53",
+          "crates/editor-lua55/native/lua55.cpp": "cce1cbed35f614334cbfac4d71b293f53241c73ca8a98530afa44851575a8d82",
+          "crates/editor-lua55/src/protocol.rs": "b53a82c9966270b09575148bd19d2ab815c92ad59c855b95b0185be0f0d9b92a",
+          "crates/editor-lua55/src/native.rs": "7b94e86cfa1f7263082660111388495af926579ac3de88abcddf8311fa01d917",
+          "crates/editor-lua55/src/main.rs": "b461a58f4134d6e35b40141ce5a58bbe65c4a9b0b5120f0da13a9d47d306c1c5",
+          "crates/editor-lua55/tests/worker.rs": "bfc517c401db82add348eae454e6ed4a84210cb324881b8ecf15d8d30727cef8",
+          "Cargo.toml": "7d654efdc2dfa4b6f607f6f339b6fe60d353b1c2599c943193b111c02609742c",
+          "Cargo.lock": "0c828e50e9642a4820734dac526146def1279139d3d00558558f76014f6db86f",
+          "crates/editor-app/src/process_policy.rs": "3037d45b87095c6aa3b07cb1067cdc3fec153bfc166f7757ef7271a5e6738a45"
+        },
+        "image_sha256": "58b59b83dede5cfb560bbf796f4990991f67d63adbde0edc95a1c51b5735008c",
+        "shared_dependencies": [
+          "libstdc++.so.6",
+          "libm.so.6",
+          "libgcc_s.so.1",
+          "libc.so.6",
+          "ld-linux-x86-64.so.2"
+        ],
+        "profile_reply": {
+          "protocol": "hye-lua55-compiler-1",
+          "request_sha256": "f8b4b7d203c10ebb6f59a98a872568e225ba03979410d207e1080f98c0f4bdc7",
+          "nonce": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "profile": {
+            "release": "5.5.1",
+            "library_identity": "$LuaVersion: Lua 5.5.1  Copyright (C) 1994-2026 Lua.org, PUC-Rio $$LuaAuthors: R. Ierusalimschy, L. H. de Figueiredo, W. Celes $",
+            "family": 505,
+            "numeric_locale": "C",
+            "private_seed": "kernel_random",
+            "global_declaration_compiles": true,
+            "global_identifier_compiles": true,
+            "imported_code_executed": false,
+            "complete_language_verified": false,
+            "selected_compositor_verified": false
+          },
+          "outcome": {
+            "kind": "profile"
+          }
+        },
+        "gui_selection_verified": false,
+        "source_evaluator_verified": false
+      }
+    }
+  ]
+}

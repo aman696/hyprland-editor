@@ -1,0 +1,264 @@
+{
+  "format": "hye-lua-release-admission-1",
+  "scope": "Six official releases, 36 header/library pairs; instrumented version/constructor calls. No state creation, imported execution, full ABI/build conformance or security certificate. Temporary sources/builds removed.",
+  "observations": [
+    {
+      "header_release": "5.4.6",
+      "library_release": "5.4.6",
+      "archive_sha256": "7d5ea1b9cb6aa0b59ca3dde1c6adcb57ef83a1ba8e5432c0ecd06bf439b3ad88",
+      "constructors": 3,
+      "version_calls": 4
+    },
+    {
+      "header_release": "5.4.6",
+      "library_release": "5.4.7",
+      "archive_sha256": "9fbf5e28ef86c69858f6d3d34eccc32e911c1a28b4120ff3e84aaa70cfbf1e30",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.4.6",
+      "library_release": "5.4.8",
+      "archive_sha256": "4f18ddae154e793e46eeab727c59ef1c0c0c2b744e7b94219710d76f530629ae",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.4.6",
+      "library_release": "5.4.9",
+      "archive_sha256": "2335b6c582a52654f94612bf10d2f4672805d05329aa6568b1d8cd9e5c6fb8e6",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.4.6",
+      "library_release": "5.5.0",
+      "archive_sha256": "57ccc32bbbd005cab75bcc52444052535af691789dba2b9016d5c50640d68b3d",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.4.6",
+      "library_release": "5.5.1",
+      "archive_sha256": "1c4b4068d67061f2a2231ad2b5422e77acea1487ea9890f6320af614f4373dce",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.4.7",
+      "library_release": "5.4.6",
+      "archive_sha256": "7d5ea1b9cb6aa0b59ca3dde1c6adcb57ef83a1ba8e5432c0ecd06bf439b3ad88",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.4.7",
+      "library_release": "5.4.7",
+      "archive_sha256": "9fbf5e28ef86c69858f6d3d34eccc32e911c1a28b4120ff3e84aaa70cfbf1e30",
+      "constructors": 3,
+      "version_calls": 4
+    },
+    {
+      "header_release": "5.4.7",
+      "library_release": "5.4.8",
+      "archive_sha256": "4f18ddae154e793e46eeab727c59ef1c0c0c2b744e7b94219710d76f530629ae",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.4.7",
+      "library_release": "5.4.9",
+      "archive_sha256": "2335b6c582a52654f94612bf10d2f4672805d05329aa6568b1d8cd9e5c6fb8e6",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.4.7",
+      "library_release": "5.5.0",
+      "archive_sha256": "57ccc32bbbd005cab75bcc52444052535af691789dba2b9016d5c50640d68b3d",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.4.7",
+      "library_release": "5.5.1",
+      "archive_sha256": "1c4b4068d67061f2a2231ad2b5422e77acea1487ea9890f6320af614f4373dce",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.4.8",
+      "library_release": "5.4.6",
+      "archive_sha256": "7d5ea1b9cb6aa0b59ca3dde1c6adcb57ef83a1ba8e5432c0ecd06bf439b3ad88",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.4.8",
+      "library_release": "5.4.7",
+      "archive_sha256": "9fbf5e28ef86c69858f6d3d34eccc32e911c1a28b4120ff3e84aaa70cfbf1e30",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.4.8",
+      "library_release": "5.4.8",
+      "archive_sha256": "4f18ddae154e793e46eeab727c59ef1c0c0c2b744e7b94219710d76f530629ae",
+      "constructors": 3,
+      "version_calls": 4
+    },
+    {
+      "header_release": "5.4.8",
+      "library_release": "5.4.9",
+      "archive_sha256": "2335b6c582a52654f94612bf10d2f4672805d05329aa6568b1d8cd9e5c6fb8e6",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.4.8",
+      "library_release": "5.5.0",
+      "archive_sha256": "57ccc32bbbd005cab75bcc52444052535af691789dba2b9016d5c50640d68b3d",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.4.8",
+      "library_release": "5.5.1",
+      "archive_sha256": "1c4b4068d67061f2a2231ad2b5422e77acea1487ea9890f6320af614f4373dce",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.4.9",
+      "library_release": "5.4.6",
+      "archive_sha256": "7d5ea1b9cb6aa0b59ca3dde1c6adcb57ef83a1ba8e5432c0ecd06bf439b3ad88",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.4.9",
+      "library_release": "5.4.7",
+      "archive_sha256": "9fbf5e28ef86c69858f6d3d34eccc32e911c1a28b4120ff3e84aaa70cfbf1e30",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.4.9",
+      "library_release": "5.4.8",
+      "archive_sha256": "4f18ddae154e793e46eeab727c59ef1c0c0c2b744e7b94219710d76f530629ae",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.4.9",
+      "library_release": "5.4.9",
+      "archive_sha256": "2335b6c582a52654f94612bf10d2f4672805d05329aa6568b1d8cd9e5c6fb8e6",
+      "constructors": 3,
+      "version_calls": 4
+    },
+    {
+      "header_release": "5.4.9",
+      "library_release": "5.5.0",
+      "archive_sha256": "57ccc32bbbd005cab75bcc52444052535af691789dba2b9016d5c50640d68b3d",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.4.9",
+      "library_release": "5.5.1",
+      "archive_sha256": "1c4b4068d67061f2a2231ad2b5422e77acea1487ea9890f6320af614f4373dce",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.5.0",
+      "library_release": "5.4.6",
+      "archive_sha256": "7d5ea1b9cb6aa0b59ca3dde1c6adcb57ef83a1ba8e5432c0ecd06bf439b3ad88",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.5.0",
+      "library_release": "5.4.7",
+      "archive_sha256": "9fbf5e28ef86c69858f6d3d34eccc32e911c1a28b4120ff3e84aaa70cfbf1e30",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.5.0",
+      "library_release": "5.4.8",
+      "archive_sha256": "4f18ddae154e793e46eeab727c59ef1c0c0c2b744e7b94219710d76f530629ae",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.5.0",
+      "library_release": "5.4.9",
+      "archive_sha256": "2335b6c582a52654f94612bf10d2f4672805d05329aa6568b1d8cd9e5c6fb8e6",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.5.0",
+      "library_release": "5.5.0",
+      "archive_sha256": "57ccc32bbbd005cab75bcc52444052535af691789dba2b9016d5c50640d68b3d",
+      "constructors": 3,
+      "version_calls": 4
+    },
+    {
+      "header_release": "5.5.0",
+      "library_release": "5.5.1",
+      "archive_sha256": "1c4b4068d67061f2a2231ad2b5422e77acea1487ea9890f6320af614f4373dce",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.5.1",
+      "library_release": "5.4.6",
+      "archive_sha256": "7d5ea1b9cb6aa0b59ca3dde1c6adcb57ef83a1ba8e5432c0ecd06bf439b3ad88",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.5.1",
+      "library_release": "5.4.7",
+      "archive_sha256": "9fbf5e28ef86c69858f6d3d34eccc32e911c1a28b4120ff3e84aaa70cfbf1e30",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.5.1",
+      "library_release": "5.4.8",
+      "archive_sha256": "4f18ddae154e793e46eeab727c59ef1c0c0c2b744e7b94219710d76f530629ae",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.5.1",
+      "library_release": "5.4.9",
+      "archive_sha256": "2335b6c582a52654f94612bf10d2f4672805d05329aa6568b1d8cd9e5c6fb8e6",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.5.1",
+      "library_release": "5.5.0",
+      "archive_sha256": "57ccc32bbbd005cab75bcc52444052535af691789dba2b9016d5c50640d68b3d",
+      "constructors": 0,
+      "version_calls": 0
+    },
+    {
+      "header_release": "5.5.1",
+      "library_release": "5.5.1",
+      "archive_sha256": "1c4b4068d67061f2a2231ad2b5422e77acea1487ea9890f6320af614f4373dce",
+      "constructors": 3,
+      "version_calls": 4
+    }
+  ],
+  "source_inputs": {
+    "crates/editor-core/native/lua_syntax.cpp": "6437bc98c35486c9020890961d27b363d05abf106810483d83279eecfc4b4e07",
+    "crates/editor-lua55/native/lua55.cpp": "cce1cbed35f614334cbfac4d71b293f53241c73ca8a98530afa44851575a8d82",
+    "crates/editor-lua55/native/bridge.inc": "aa6581b158036486cd563f029f41f7497f92ca94ff6282a6d7c06358b502ea53",
+    "scripts/lua_admission_probe.py": "f055f70d2ffa52331e627d482d2635b187ef16e1d2669e3ed89347d2281f7d5d"
+  }
+}

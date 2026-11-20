@@ -1,0 +1,148 @@
+{
+  "format": "hye-preview-ci-resource-observation-1",
+  "scope": "Two ephemeral Ubuntu CI jobs for the same reported head; default cgroup mechanisms and trusted fixture placement/teardown only. Not a production runtime or compositor certificate.",
+  "observed_date": "2026-10-19",
+  "requested_runner": "ubuntu-24.04",
+  "rust_toolchain": "1.90.0",
+  "source_inputs": {
+    "Cargo.toml": "e221f58c4c4eb809c22989503923ef6fc6be1ebfaa8cd552f9512781feb95ff2",
+    "Cargo.lock": "4758e39ac71a306c11649bd9503daaf3210a6e4bf62cc74319d58c1a4f94b947",
+    "crates/editor-preview/Cargo.toml": "b48be87c85b3efaf031a1d55746909b7ff9c623ffd4768c9ca5c316f816a5a46",
+    "crates/editor-preview/src/lib.rs": "44817c50915b8b33675535025b7d0701ebc38f6f0b12c00952d025b8437da019",
+    "crates/editor-preview/src/cgroup.rs": "129247c32d005c0b9fef86b2cf48f1f035d587669d476f614e74e1599bef49e2",
+    "crates/editor-preview/src/cgroup/kernel_tests.rs": "eb1bce123191318e6adfd2013ad328e5a16d4fa90961b18b262c84723f071fa5",
+    "scripts/cgroup_kernel_probe.py": "d14cf12964138a83eb81fe23e5171484460039b299b1c92932fd722ba15651f4",
+    "scripts/test_cgroup_kernel_probe.py": "c0fe1dff543017bf0dde03a6accbe89a924bf9cd47425110f4c94da86b63ace2",
+    ".github/workflows/ci.yml": "cb10ec858d1c5a3583bcdb5db27d43a4400a34ca2a5222288b477d8dcdd34f05"
+  },
+  "trials": [
+    {
+      "event": "push",
+      "reported_head": "9dad8a55f5aa8b5a4b2198a4cf6443bcec2fcb23",
+      "run_id": 39253034293,
+      "job_id": 118061305442,
+      "job_url": "https://github.com/aman696/hyprland-editor/actions/runs/39253034293/job/118061305442",
+      "job_conclusion": "success",
+      "raw_job_log_sha256": "8136e05eba13b8a16dc3a0241bff0f381cb680c8c0adaacdde927fd02bfac4ab",
+      "kernel_release": "6.17.0-1022-azure",
+      "scenarios": [
+        {
+          "compositor_verified": false,
+          "counters": {
+            "nr_throttled": 31,
+            "usage_usec": 3104274
+          },
+          "elapsed_ms": 3083,
+          "empty_and_removed": true,
+          "mode": "cpu",
+          "profile": {
+            "cpu_max": "100000 100000",
+            "memory_max": 536870912,
+            "pids_max": 64,
+            "swap_max": 0
+          }
+        },
+        {
+          "compositor_verified": false,
+          "counters": {
+            "oom": 1,
+            "oom_kill": 2
+          },
+          "elapsed_ms": 125,
+          "empty_and_removed": true,
+          "mode": "memory",
+          "profile": {
+            "cpu_max": "100000 100000",
+            "memory_max": 536870912,
+            "pids_max": 64,
+            "swap_max": 0
+          }
+        },
+        {
+          "compositor_verified": false,
+          "counters": {
+            "current_tasks": 64,
+            "max_events": 1,
+            "processes": 63
+          },
+          "elapsed_ms": 33,
+          "empty_and_removed": true,
+          "mode": "pids",
+          "profile": {
+            "cpu_max": "100000 100000",
+            "memory_max": 536870912,
+            "pids_max": 64,
+            "swap_max": 0
+          }
+        }
+      ],
+      "provider_hierarchy_removed": true
+    },
+    {
+      "event": "pull_request",
+      "reported_head": "9dad8a55f5aa8b5a4b2198a4cf6443bcec2fcb23",
+      "run_id": 39253041230,
+      "job_id": 118061329418,
+      "job_url": "https://github.com/aman696/hyprland-editor/actions/runs/39253041230/job/118061329418",
+      "job_conclusion": "success",
+      "raw_job_log_sha256": "1ec1e0922563cbdffbb5ea1a505ac55978f6bef4b2e4f86fdd205d7333d14f2d",
+      "kernel_release": "6.17.0-1022-azure",
+      "scenarios": [
+        {
+          "compositor_verified": false,
+          "counters": {
+            "nr_throttled": 30,
+            "usage_usec": 3091955
+          },
+          "elapsed_ms": 3040,
+          "empty_and_removed": true,
+          "mode": "cpu",
+          "profile": {
+            "cpu_max": "100000 100000",
+            "memory_max": 536870912,
+            "pids_max": 64,
+            "swap_max": 0
+          }
+        },
+        {
+          "compositor_verified": false,
+          "counters": {
+            "oom": 1,
+            "oom_kill": 2
+          },
+          "elapsed_ms": 109,
+          "empty_and_removed": true,
+          "mode": "memory",
+          "profile": {
+            "cpu_max": "100000 100000",
+            "memory_max": 536870912,
+            "pids_max": 64,
+            "swap_max": 0
+          }
+        },
+        {
+          "compositor_verified": false,
+          "counters": {
+            "current_tasks": 64,
+            "max_events": 1,
+            "processes": 63
+          },
+          "elapsed_ms": 30,
+          "empty_and_removed": true,
+          "mode": "pids",
+          "profile": {
+            "cpu_max": "100000 100000",
+            "memory_max": 536870912,
+            "pids_max": 64,
+            "swap_max": 0
+          }
+        }
+      ],
+      "provider_hierarchy_removed": true
+    }
+  ],
+  "production_stopped_child_launch_verified": false,
+  "isolation_profile_certified": false,
+  "compositor_verified": false,
+  "all_security_gates_certified": false
+}

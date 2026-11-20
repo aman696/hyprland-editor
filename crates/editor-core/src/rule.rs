@@ -220,6 +220,8 @@ impl Effect {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Rule {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub legacy: Option<crate::legacy_rule::Native>,
     pub id: String,
     pub kind: Kind,
     pub name: Option<String>,
@@ -231,6 +233,7 @@ impl Rule {
     pub fn new(id: &str, kind: Kind) -> Self {
         Self {
             id: id.into(),
+            legacy: None,
             kind,
             name: None,
             enabled: None,
@@ -257,6 +260,9 @@ impl Rule {
         if self.predicates.len() > 18 || self.effects.len() > 64 {
             return Err("Too many rule predicates or effects".into());
         }
+        if self.legacy.is_some() {
+            return crate::legacy_rule::validate(self, version);
+        }
         let mut keys = BTreeSet::new();
         for p in &self.predicates {
             p.validate(self.kind)?;
@@ -277,6 +283,9 @@ impl Rule {
     }
     pub fn export_lua(&self, version: &str) -> Result<String, String> {
         self.validate(version)?;
+        if self.legacy.is_some() {
+            return Err("Native rule requires native source review".into());
+        }
         let mut fields = vec![];
         if let Some(name) = &self.name {
             fields.push(format!("name = {}", quote_lua(name)));
@@ -334,6 +343,13 @@ pub fn export_lua(rules: &[Rule], version: &str) -> Result<String, String> {
 pub fn same_declarations(a: &[Rule], b: &[Rule]) -> bool {
     a.len() == b.len()
         && a.iter().zip(b).all(|(a, b)| {
+            if a.legacy.is_some() || b.legacy.is_some() {
+                return a.legacy == b.legacy
+                    && crate::legacy_rule::encode(a)
+                        .ok()
+                        .zip(crate::legacy_rule::encode(b).ok())
+                        .is_some_and(|(a, b)| a == b);
+            }
             a.kind == b.kind
                 && a.name == b.name
                 && a.enabled == b.enabled
@@ -369,6 +385,9 @@ pub fn consolidate(rules: &[Rule]) -> Vec<Consolidated> {
     let mut result: Vec<Consolidated> = vec![];
     let mut names = BTreeMap::new();
     for r in rules {
+        if r.legacy.is_some() {
+            continue;
+        }
         let identity = r
             .name
             .as_ref()
@@ -406,6 +425,12 @@ pub fn findings(rules: &[Rule]) -> Vec<String> {
     let mut messages = vec![];
     let mut names = BTreeSet::new();
     for r in rules {
+        if r.legacy.is_some() {
+            if messages.len() < 256 {
+                messages.push(format!("{}: native strings, keyed blocks and inline order are retained; effective merge, match and activation remain unverified.",r.id));
+            }
+            continue;
+        }
         if let Some(name) = r.name.as_ref().filter(|n| !n.is_empty()) {
             if !names.insert((r.kind, name)) {
                 messages.push(format!("{}: this named declaration reuses the earlier rule, appends effects and resets enabled to {}. Omitted predicates remain.",r.id,r.enabled.unwrap_or(true)));

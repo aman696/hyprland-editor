@@ -1,0 +1,57 @@
+{
+  "format": "hye-preview-ci-pidfs-observation-1",
+  "observed_date": "2026-10-19",
+  "scope": "Two ephemeral CI jobs; exact synthetic raw pixels and receipt across a fresh PID namespace with live process-object anchors. Unchanged user namespace and host procfs retained; no full sandbox/compositor certificate.",
+  "requested_runner": "ubuntu-24.04",
+  "rust_toolchain": "1.90.0",
+  "source_inputs": {
+    "Cargo.lock": "4758e39ac71a306c11649bd9503daaf3210a6e4bf62cc74319d58c1a4f94b947",
+    "crates/editor-preview/Cargo.toml": "b48be87c85b3efaf031a1d55746909b7ff9c623ffd4768c9ca5c316f816a5a46",
+    "crates/editor-preview/src/channel.rs": "627dde99abfd025e112520980722db59996d91bddf0bf25c8cbb339d5a0702f3",
+    "crates/editor-preview/src/channel/identity.rs": "cb4b6641da497ecd4defcb56ba2e48c8eade45d83c830364248d820fd165e7b7",
+    "crates/editor-preview/src/channel/namespace_tests.rs": "5e7fc4f353bc4be26201d7c20afc3b2e9cd18c68be95e6179fd7fcb7bf760aaf",
+    "scripts/cgroup_kernel_probe.py": "12b9bef02d759f3f87431f88d19e75aa35cbc3da6f1764589bb5d75e7c3814a3",
+    ".github/workflows/ci.yml": "52c43e79007f347cb6f10b934f56a1d2ec52969f822803bdac3c1606562f2607"
+  },
+  "trials": [
+    {
+      "event": "push",
+      "reported_head": "d0851f3132c1171cd992ccf15688f771e821bb73",
+      "run_id": 39260795933,
+      "job_id": 118087580861,
+      "job_url": "https://github.com/aman696/hyprland-editor/actions/runs/39260795933/job/118087580861",
+      "job_conclusion": "success",
+      "downloaded_job_log_sha256": "4f052f7d4eb5a042f33b8598c34cdf8f69cfcb299433f8e23ee8388aa8f79084",
+      "kernel_release": "6.17.0-1022-azure",
+      "observed_markers": [
+        "HYE_PIDNS_RESULT Broker PID1/parent0 accepted outer-namespace receipt",
+        "HYE_PIDNS_RESULT GUI accepted exact pixels and released buffers",
+        "Private PID namespace channel passed; current setup namespace unchanged"
+      ],
+      "provider_hierarchies_removed": 2
+    },
+    {
+      "event": "pull_request",
+      "reported_head": "d0851f3132c1171cd992ccf15688f771e821bb73",
+      "run_id": 39260805207,
+      "job_id": 118087610606,
+      "job_url": "https://github.com/aman696/hyprland-editor/actions/runs/39260805207/job/118087610606",
+      "job_conclusion": "success",
+      "downloaded_job_log_sha256": "ea208fdcf16929e5c49c6d25014a3239cb8c8d223883cd20f8e53c83bded8796",
+      "kernel_release": "6.17.0-1022-azure",
+      "observed_markers": [
+        "HYE_PIDNS_RESULT Broker PID1/parent0 accepted outer-namespace receipt",
+        "HYE_PIDNS_RESULT GUI accepted exact pixels and released buffers",
+        "Private PID namespace channel passed; current setup namespace unchanged"
+      ],
+      "provider_hierarchies_removed": 2
+    }
+  ],
+  "pid_namespace_identity_exchange_observed": true,
+  "user_namespace_mapping_verified": false,
+  "private_proc_verified": false,
+  "mount_network_ipc_uts_policy_verified": false,
+  "runtime_image_verified": false,
+  "compositor_verified": false,
+  "lab_profile_certified": false
+}

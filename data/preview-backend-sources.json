@@ -1,0 +1,77 @@
+{
+  "format": "hye-preview-backend-sources-1",
+  "sources": [
+    {
+      "package": "aquamarine",
+      "version": "0.15.0",
+      "commit": "783bfd9ae441d1d0519b979ac68b73ddd6e81df0",
+      "path": "src/backend/Backend.cpp",
+      "url": "https://raw.githubusercontent.com/hyprwm/aquamarine/783bfd9ae441d1d0519b979ac68b73ddd6e81df0/src/backend/Backend.cpp",
+      "sha256": "4908c6f81e8183274c906eff4e0545555a7ac5842ba5a96df54c2383ec2620f7",
+      "bytes": 12836
+    },
+    {
+      "package": "aquamarine",
+      "version": "0.15.0",
+      "commit": "783bfd9ae441d1d0519b979ac68b73ddd6e81df0",
+      "path": "src/backend/Headless.cpp",
+      "url": "https://raw.githubusercontent.com/hyprwm/aquamarine/783bfd9ae441d1d0519b979ac68b73ddd6e81df0/src/backend/Headless.cpp",
+      "sha256": "2ecc7f54d033a85f6a7c5fa0e4eb14fc9e5e563be2146488e47b82a6358cbf02",
+      "bytes": 9575
+    },
+    {
+      "package": "aquamarine",
+      "version": "0.15.0",
+      "commit": "783bfd9ae441d1d0519b979ac68b73ddd6e81df0",
+      "path": "include/aquamarine/backend/Backend.hpp",
+      "url": "https://raw.githubusercontent.com/hyprwm/aquamarine/783bfd9ae441d1d0519b979ac68b73ddd6e81df0/include/aquamarine/backend/Backend.hpp",
+      "sha256": "48c5f2e8d9d20112de335f720e083b62dfd4217c28641ef0534b7f3a2697a6d8",
+      "bytes": 8569
+    },
+    {
+      "package": "aquamarine",
+      "version": "0.15.1",
+      "commit": "f31c47a1b9d300847d8fc3108ad959448103dfc1",
+      "path": "src/backend/Backend.cpp",
+      "url": "https://raw.githubusercontent.com/hyprwm/aquamarine/f31c47a1b9d300847d8fc3108ad959448103dfc1/src/backend/Backend.cpp",
+      "sha256": "4908c6f81e8183274c906eff4e0545555a7ac5842ba5a96df54c2383ec2620f7",
+      "bytes": 12836
+    },
+    {
+      "package": "aquamarine",
+      "version": "0.15.1",
+      "commit": "f31c47a1b9d300847d8fc3108ad959448103dfc1",
+      "path": "src/backend/Headless.cpp",
+      "url": "https://raw.githubusercontent.com/hyprwm/aquamarine/f31c47a1b9d300847d8fc3108ad959448103dfc1/src/backend/Headless.cpp",
+      "sha256": "2ecc7f54d033a85f6a7c5fa0e4eb14fc9e5e563be2146488e47b82a6358cbf02",
+      "bytes": 9575
+    },
+    {
+      "package": "aquamarine",
+      "version": "0.15.1",
+      "commit": "f31c47a1b9d300847d8fc3108ad959448103dfc1",
+      "path": "include/aquamarine/backend/Backend.hpp",
+      "url": "https://raw.githubusercontent.com/hyprwm/aquamarine/f31c47a1b9d300847d8fc3108ad959448103dfc1/include/aquamarine/backend/Backend.hpp",
+      "sha256": "48c5f2e8d9d20112de335f720e083b62dfd4217c28641ef0534b7f3a2697a6d8",
+      "bytes": 8569
+    },
+    {
+      "package": "hyprland",
+      "version": "0.56.2",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+      "path": "src/Compositor.cpp",
+      "url": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/src/Compositor.cpp",
+      "sha256": "74833ecbf0e2b6f8ad84345ac0716a3295a0e347420a188be0ab4f6a684af7c0",
+      "bytes": 38550
+    },
+    {
+      "package": "hyprland",
+      "version": "audited-main",
+      "commit": "6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7",
+      "path": "src/Compositor.cpp",
+      "url": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/Compositor.cpp",
+      "sha256": "c5b94181ca1955e7de9e0b3ff7fbf9d17f544409343f8a2d47816ba0b0d53a13",
+      "bytes": 38675
+    }
+  ]
+}

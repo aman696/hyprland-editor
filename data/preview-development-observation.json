@@ -1,0 +1,48 @@
+{
+  "format": "hye-preview-development-observation-1",
+  "observed_date": "2026-10-18",
+  "scope": "One development environment; trusted read-only version and namespace capability commands only. Not a sandbox runtime image or lab certificate.",
+  "compositor": {
+    "sha256": "289d2076a538b6c22cc9bee4a6e5059d48d8c926508ede11858140b212a344c1",
+    "version": "0.56.2",
+    "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+    "aquamarine_compiled": "0.15.0",
+    "aquamarine_runtime": "0.15.1"
+  },
+  "namespace_probe": {
+    "returncode": 0,
+    "separate_namespace_observed": {
+      "user": true,
+      "mnt": true,
+      "pid": true,
+      "net": true,
+      "ipc": true,
+      "uts": true,
+      "cgroup": true
+    },
+    "private_root_image_verified": false,
+    "private_proc_verified": false
+  },
+  "delegation_observation": {
+    "domain_type": "domain",
+    "available": [
+      "cpu",
+      "memory",
+      "pids"
+    ],
+    "enabled_for_children": [
+      "memory",
+      "pids"
+    ],
+    "missing": [
+      "cpu"
+    ],
+    "live_limits_verified": false,
+    "compositor_verified": false
+  },
+  "compositor_launched": false,
+  "hardware_access_performed": false,
+  "frame_input_verified": false,
+  "live_resource_limits_verified": false,
+  "lab_profile_certified": false
+}

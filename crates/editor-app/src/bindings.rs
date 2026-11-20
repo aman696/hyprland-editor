@@ -78,7 +78,25 @@ pub(super) fn connect(
         }
     });
 }
-fn show(parent: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) -> adw::Window {
+pub(super) fn show(
+    parent: &impl IsA<gtk::Window>,
+    state: &Shared,
+    status: &gtk::Label,
+) -> adw::Window {
+    let legacy = {
+        let s = state.borrow();
+        s.legacy_sources.contains_key(&s.draft.version)
+    };
+    if legacy {
+        return super::legacy_binding_editor::show(parent, state, status);
+    }
+    show_lua(parent, state, status)
+}
+pub(super) fn show_lua(
+    parent: &impl IsA<gtk::Window>,
+    state: &Shared,
+    status: &gtk::Label,
+) -> adw::Window {
     let win = adw::Window::builder()
         .title("Binding Drafts")
         .transient_for(parent)
@@ -138,6 +156,11 @@ fn show(parent: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
     let review = gtk::Button::with_label("Review Binding Lua");
     content.append(&review);
     let save = gtk::Button::with_label("Save Draft");
+    save.set_visible(
+        parent
+            .upcast_ref::<gtk::Window>()
+            .is::<adw::ApplicationWindow>(),
+    );
     content.append(&save);
     root.append(
         &gtk::ScrolledWindow::builder()
@@ -179,7 +202,11 @@ fn show(parent: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
             return;
         }
         if let Some(parent) = parent.upgrade() {
-            if let Some(a) = parent.lookup_action("save-draft") {
+            if let Some(a) = parent
+                .upcast_ref::<gtk::Window>()
+                .downcast_ref::<adw::ApplicationWindow>()
+                .and_then(|window| window.lookup_action("save-draft"))
+            {
                 a.activate(None);
             }
         }
@@ -362,7 +389,7 @@ fn show(parent: &adw::ApplicationWindow, state: &Shared, status: &gtk::Label) ->
     let win_c = win.downgrade();
     let flush_c = flush.clone();
     let feedback_c = feedback.clone();
-    review.connect_clicked(move |_|{if let Err(e)=flush_c(){feedback_c.set_text(&e);return;}let text=match current(&state_c).export_lua(&state_c.borrow().draft.version){Ok(t)=>t,Err(_)=>return};let Some(parent)=win_c.upgrade()else{return;};let review=adw::Window::builder().title("Review Binding Lua").transient_for(&parent).modal(true).default_width(720).default_height(560).build();let box_=gtk::Box::new(gtk::Orientation::Vertical,12);box_.append(&label("This is a binding draft fragment. It does not apply shortcuts and must not replace a full configuration."));let view=gtk::TextView::builder().editable(false).monospace(true).wrap_mode(gtk::WrapMode::WordChar).build();view.buffer().set_text(&text);box_.append(&gtk::ScrolledWindow::builder().child(&view).vexpand(true).build());let copy=gtk::Button::with_label("Copy Reviewed Binding Lua");box_.append(&copy);let w=review.downgrade();copy.connect_clicked(move |_|{if let Some(w)=w.upgrade(){w.clipboard().set_text(&text);}});review.set_content(Some(&box_));review.present();});
+    review.connect_clicked(move |_|{if let Err(e)=flush_c(){feedback_c.set_text(&e);return;}let mut lua_draft=current(&state_c);lua_draft.legacy=None;let text=match lua_draft.export_lua(&state_c.borrow().draft.version){Ok(t)=>t,Err(_)=>return};let Some(parent)=win_c.upgrade()else{return;};let review=adw::Window::builder().title("Review Binding Lua").transient_for(&parent).modal(true).default_width(720).default_height(560).build();let box_=gtk::Box::new(gtk::Orientation::Vertical,12);box_.append(&label("This is a binding draft fragment. It does not apply shortcuts and must not replace a full configuration."));let view=gtk::TextView::builder().editable(false).monospace(true).wrap_mode(gtk::WrapMode::WordChar).build();view.buffer().set_text(&text);box_.append(&gtk::ScrolledWindow::builder().child(&view).vexpand(true).build());let copy=gtk::Button::with_label("Copy Reviewed Binding Lua");box_.append(&copy);let w=review.downgrade();copy.connect_clicked(move |_|{if let Some(w)=w.upgrade(){w.clipboard().set_text(&text);}});review.set_content(Some(&box_));review.present();});
     let flush_c = flush.clone();
     win.connect_close_request(move |win| match flush_c() {
         Ok(()) => gtk::glib::Propagation::Proceed,

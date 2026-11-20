@@ -1,0 +1,7810 @@
+{
+  "format": "hye-monitor-source-fixtures-1",
+  "scope": "Original hl.monitor routing/output coercion/continuation with inert field parser, apply, manager and refresh adapters. Delegation multisets only; no native field acceptance, parser/helper effects, real replacement/order, runtime/hardware or source ownership certificate.",
+  "sources": [
+    {
+      "version": "baseline",
+      "url": "https://raw.githubusercontent.com/hyprwm/Hyprland/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/lua/bindings/LuaBindingsConfigRules.cpp",
+      "sha256": "157c3e45b364f3e41b6fd7cf13fd19e7477e8c03a6a75c6c46fde5e2b5715be9"
+    },
+    {
+      "version": "current",
+      "url": "https://raw.githubusercontent.com/hyprwm/Hyprland/6a1b5f0fbfa169d4e6cf2f49a5f919a273aeaec7/src/config/lua/bindings/LuaBindingsConfigRules.cpp",
+      "sha256": "789b1425c25b5a26c82f25e4d5d0b8176a6f56481573fc6e658662d1de7ea5ae"
+    }
+  ],
+  "cases": [
+    {
+      "version": "baseline",
+      "case": "missing_argument",
+      "lua": "return select('#',hl.monitor())",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [],
+        "applied_keys_hex": [],
+        "added": [],
+        "errors_hex": [
+          "686c2e6d6f6e69746f723a20617267756d656e74206d7573742062652061207461626c65"
+        ],
+        "refresh_requests": 0,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "nil_argument",
+      "lua": "return select('#',hl.monitor(nil))",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "nil"
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [],
+        "applied_keys_hex": [],
+        "added": [],
+        "errors_hex": [
+          "686c2e6d6f6e69746f723a20617267756d656e74206d7573742062652061207461626c65"
+        ],
+        "refresh_requests": 0,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "number_argument",
+      "lua": "return select('#',hl.monitor(3))",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "int",
+            "value": 3
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [],
+        "applied_keys_hex": [],
+        "added": [],
+        "errors_hex": [
+          "686c2e6d6f6e69746f723a20617267756d656e74206d7573742062652061207461626c65"
+        ],
+        "refresh_requests": 0,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "missing_output",
+      "lua": "return select('#',hl.monitor{})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": []
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [],
+        "applied_keys_hex": [],
+        "added": [],
+        "errors_hex": [
+          "666978747572653a20686c2e6d6f6e69746f723a20276f757470757427206669656c6420697320726571756972656420616e64206d757374206265206120737472696e67"
+        ],
+        "refresh_requests": 0,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "boolean_output",
+      "lua": "return select('#',hl.monitor{output=true})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bool",
+                  "value": true
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [],
+        "applied_keys_hex": [],
+        "added": [],
+        "errors_hex": [
+          "666978747572653a20686c2e6d6f6e69746f723a20276f757470757427206669656c6420697320726571756972656420616e64206d757374206265206120737472696e67"
+        ],
+        "refresh_requests": 0,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "empty_output",
+      "lua": "return select('#',hl.monitor{output=''})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": []
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [],
+        "applied_keys_hex": [],
+        "added": [
+          {
+            "output_hex": "",
+            "inherited_seed": 0,
+            "fields_hex": []
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "number_output",
+      "lua": "return select('#',hl.monitor{output=123})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 123
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [],
+        "applied_keys_hex": [],
+        "added": [
+          {
+            "output_hex": "313233",
+            "inherited_seed": 0,
+            "fields_hex": []
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "float_output",
+      "lua": "return select('#',hl.monitor{output=123.25})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "float",
+                  "value": 123.25
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [],
+        "applied_keys_hex": [],
+        "added": [
+          {
+            "output_hex": "3132332e3235",
+            "inherited_seed": 0,
+            "fields_hex": []
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "nul_output",
+      "lua": "return select('#',hl.monitor{output='DP-1\\0suffix'})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49,
+                    0,
+                    115,
+                    117,
+                    102,
+                    102,
+                    105,
+                    120
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [],
+        "applied_keys_hex": [],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": []
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "nul_output_key_is_not_required_output",
+      "lua": "return select('#',hl.monitor{['output\\0tail']='DP-1'})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116,
+                    0,
+                    116,
+                    97,
+                    105,
+                    108
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [],
+        "applied_keys_hex": [],
+        "added": [],
+        "errors_hex": [
+          "666978747572653a20686c2e6d6f6e69746f723a20276f757470757427206669656c6420697320726571756972656420616e64206d757374206265206120737472696e67"
+        ],
+        "refresh_requests": 0,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "extra_arguments",
+      "lua": "return select('#',hl.monitor({output='DP-1',mode='preferred'},{output='IGNORED'}))",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    109,
+                    111,
+                    100,
+                    101
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    112,
+                    114,
+                    101,
+                    102,
+                    101,
+                    114,
+                    114,
+                    101,
+                    100
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ]
+            ]
+          },
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    73,
+                    71,
+                    78,
+                    79,
+                    82,
+                    69,
+                    68
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "6d6f6465",
+            "input": {
+              "type": "bytes",
+              "value": [
+                112,
+                114,
+                101,
+                102,
+                101,
+                114,
+                114,
+                101,
+                100
+              ]
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "6d6f6465"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "6d6f6465"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "unknown_and_nonstring_fields",
+      "lua": "return select('#',hl.monitor{output='DP-1',outside=1,[1]=2,[false]=3})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bool",
+                  "value": false
+                },
+                {
+                  "type": "int",
+                  "value": 3
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    115,
+                    105,
+                    100,
+                    101
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "int",
+                  "value": 1
+                },
+                {
+                  "type": "int",
+                  "value": 2
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [],
+        "applied_keys_hex": [],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": []
+          }
+        ],
+        "errors_hex": [
+          "666978747572653a20686c2e6d6f6e69746f723a20756e6b6e6f776e206669656c6420276f75747369646527"
+        ],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "nul_known_key",
+      "lua": "return select('#',hl.monitor{output='DP-1',['mode\\0tail']='preferred'})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    109,
+                    111,
+                    100,
+                    101,
+                    0,
+                    116,
+                    97,
+                    105,
+                    108
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    112,
+                    114,
+                    101,
+                    102,
+                    101,
+                    114,
+                    114,
+                    101,
+                    100
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "6d6f6465007461696c",
+            "input": {
+              "type": "bytes",
+              "value": [
+                112,
+                114,
+                101,
+                102,
+                101,
+                114,
+                114,
+                101,
+                100
+              ]
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "6d6f6465"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "6d6f6465"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "nul_known_collision",
+      "lua": "return select('#',hl.monitor{output='DP-1',mode='preferred',['mode\\0tail']='highrr'})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    109,
+                    111,
+                    100,
+                    101,
+                    0,
+                    116,
+                    97,
+                    105,
+                    108
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    104,
+                    105,
+                    103,
+                    104,
+                    114,
+                    114
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    109,
+                    111,
+                    100,
+                    101
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    112,
+                    114,
+                    101,
+                    102,
+                    101,
+                    114,
+                    114,
+                    101,
+                    100
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "6d6f6465",
+            "input": {
+              "type": "bytes",
+              "value": [
+                112,
+                114,
+                101,
+                102,
+                101,
+                114,
+                114,
+                101,
+                100
+              ]
+            }
+          },
+          {
+            "key_hex": "6d6f6465007461696c",
+            "input": {
+              "type": "bytes",
+              "value": [
+                104,
+                105,
+                103,
+                104,
+                114,
+                114
+              ]
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "6d6f6465",
+          "6d6f6465"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "6d6f6465",
+              "6d6f6465"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "reserved_aliases",
+      "lua": "return select('#',hl.monitor{output='DP-1',reserved=-1,reserved_area=2})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    114,
+                    101,
+                    115,
+                    101,
+                    114,
+                    118,
+                    101,
+                    100,
+                    95,
+                    97,
+                    114,
+                    101,
+                    97
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 2
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    114,
+                    101,
+                    115,
+                    101,
+                    114,
+                    118,
+                    101,
+                    100
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": -1
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "7265736572766564",
+            "input": {
+              "type": "int",
+              "value": -1
+            }
+          },
+          {
+            "key_hex": "72657365727665645f61726561",
+            "input": {
+              "type": "int",
+              "value": 2
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "7265736572766564",
+          "72657365727665645f61726561"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "7265736572766564",
+              "72657365727665645f61726561"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "seeded_existing_rule",
+      "lua": "return select('#',hl.monitor{output='SEED',disabled=true})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    100,
+                    105,
+                    115,
+                    97,
+                    98,
+                    108,
+                    101,
+                    100
+                  ]
+                },
+                {
+                  "type": "bool",
+                  "value": true
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    83,
+                    69,
+                    69,
+                    68
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "64697361626c6564",
+            "input": {
+              "type": "bool",
+              "value": true
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "64697361626c6564"
+        ],
+        "added": [
+          {
+            "output_hex": "53454544",
+            "inherited_seed": 77,
+            "fields_hex": [
+              "64697361626c6564",
+              "73656564"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "unknown_field_does_not_abort",
+      "lua": "return select('#',hl.monitor{output='DP-1',outside=1,transform=2})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    115,
+                    105,
+                    100,
+                    101
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    116,
+                    114,
+                    97,
+                    110,
+                    115,
+                    102,
+                    111,
+                    114,
+                    109
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 2
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "7472616e73666f726d",
+            "input": {
+              "type": "int",
+              "value": 2
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "7472616e73666f726d"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "7472616e73666f726d"
+            ]
+          }
+        ],
+        "errors_hex": [
+          "666978747572653a20686c2e6d6f6e69746f723a20756e6b6e6f776e206669656c6420276f75747369646527"
+        ],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "output_index_lookup",
+      "lua": "local t=setmetatable({mode='preferred'},{__index=function(_,key)__index_calls=__index_calls+1;if key=='output' then return 'DP-1' end end});return select('#',hl.monitor(t))",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    109,
+                    111,
+                    100,
+                    101
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    112,
+                    114,
+                    101,
+                    102,
+                    101,
+                    114,
+                    114,
+                    101,
+                    100
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "6d6f6465",
+            "input": {
+              "type": "bytes",
+              "value": [
+                112,
+                114,
+                101,
+                102,
+                101,
+                114,
+                114,
+                101,
+                100
+              ]
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "6d6f6465"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "6d6f6465"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 1,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "pairs_is_ignored",
+      "lua": "local t=setmetatable({output='DP-1',mode='preferred'},{__pairs=function()__pairs_calls=__pairs_calls+1;return next,{},nil end});return select('#',hl.monitor(t))",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    109,
+                    111,
+                    100,
+                    101
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    112,
+                    114,
+                    101,
+                    102,
+                    101,
+                    114,
+                    114,
+                    101,
+                    100
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "6d6f6465",
+            "input": {
+              "type": "bytes",
+              "value": [
+                112,
+                114,
+                101,
+                102,
+                101,
+                114,
+                114,
+                101,
+                100
+              ]
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "6d6f6465"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "6d6f6465"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "field_mode",
+      "lua": "return select('#',hl.monitor{output='DP-1',mode='sample'})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    109,
+                    111,
+                    100,
+                    101
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    97,
+                    109,
+                    112,
+                    108,
+                    101
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "6d6f6465",
+            "input": {
+              "type": "bytes",
+              "value": [
+                115,
+                97,
+                109,
+                112,
+                108,
+                101
+              ]
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "6d6f6465"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "6d6f6465"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "field_position",
+      "lua": "return select('#',hl.monitor{output='DP-1',position='sample'})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    112,
+                    111,
+                    115,
+                    105,
+                    116,
+                    105,
+                    111,
+                    110
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    97,
+                    109,
+                    112,
+                    108,
+                    101
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "706f736974696f6e",
+            "input": {
+              "type": "bytes",
+              "value": [
+                115,
+                97,
+                109,
+                112,
+                108,
+                101
+              ]
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "706f736974696f6e"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "706f736974696f6e"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "field_scale",
+      "lua": "return select('#',hl.monitor{output='DP-1',scale='sample'})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    99,
+                    97,
+                    108,
+                    101
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    97,
+                    109,
+                    112,
+                    108,
+                    101
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "7363616c65",
+            "input": {
+              "type": "bytes",
+              "value": [
+                115,
+                97,
+                109,
+                112,
+                108,
+                101
+              ]
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "7363616c65"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "7363616c65"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "field_reserved",
+      "lua": "return select('#',hl.monitor{output='DP-1',reserved={top=-1,left=2}})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    114,
+                    101,
+                    115,
+                    101,
+                    114,
+                    118,
+                    101,
+                    100
+                  ]
+                },
+                {
+                  "type": "table",
+                  "value": [
+                    [
+                      {
+                        "type": "bytes",
+                        "value": [
+                          108,
+                          101,
+                          102,
+                          116
+                        ]
+                      },
+                      {
+                        "type": "int",
+                        "value": 2
+                      }
+                    ],
+                    [
+                      {
+                        "type": "bytes",
+                        "value": [
+                          116,
+                          111,
+                          112
+                        ]
+                      },
+                      {
+                        "type": "int",
+                        "value": -1
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "7265736572766564",
+            "input": {
+              "type": "table",
+              "value": [
+                [
+                  {
+                    "type": "bytes",
+                    "value": [
+                      108,
+                      101,
+                      102,
+                      116
+                    ]
+                  },
+                  {
+                    "type": "int",
+                    "value": 2
+                  }
+                ],
+                [
+                  {
+                    "type": "bytes",
+                    "value": [
+                      116,
+                      111,
+                      112
+                    ]
+                  },
+                  {
+                    "type": "int",
+                    "value": -1
+                  }
+                ]
+              ]
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "7265736572766564"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "7265736572766564"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "field_reserved_area",
+      "lua": "return select('#',hl.monitor{output='DP-1',reserved_area={top=-1,left=2}})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    114,
+                    101,
+                    115,
+                    101,
+                    114,
+                    118,
+                    101,
+                    100,
+                    95,
+                    97,
+                    114,
+                    101,
+                    97
+                  ]
+                },
+                {
+                  "type": "table",
+                  "value": [
+                    [
+                      {
+                        "type": "bytes",
+                        "value": [
+                          108,
+                          101,
+                          102,
+                          116
+                        ]
+                      },
+                      {
+                        "type": "int",
+                        "value": 2
+                      }
+                    ],
+                    [
+                      {
+                        "type": "bytes",
+                        "value": [
+                          116,
+                          111,
+                          112
+                        ]
+                      },
+                      {
+                        "type": "int",
+                        "value": -1
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "72657365727665645f61726561",
+            "input": {
+              "type": "table",
+              "value": [
+                [
+                  {
+                    "type": "bytes",
+                    "value": [
+                      108,
+                      101,
+                      102,
+                      116
+                    ]
+                  },
+                  {
+                    "type": "int",
+                    "value": 2
+                  }
+                ],
+                [
+                  {
+                    "type": "bytes",
+                    "value": [
+                      116,
+                      111,
+                      112
+                    ]
+                  },
+                  {
+                    "type": "int",
+                    "value": -1
+                  }
+                ]
+              ]
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "72657365727665645f61726561"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "72657365727665645f61726561"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "field_disabled",
+      "lua": "return select('#',hl.monitor{output='DP-1',disabled=true})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    100,
+                    105,
+                    115,
+                    97,
+                    98,
+                    108,
+                    101,
+                    100
+                  ]
+                },
+                {
+                  "type": "bool",
+                  "value": true
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "64697361626c6564",
+            "input": {
+              "type": "bool",
+              "value": true
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "64697361626c6564"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "64697361626c6564"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "field_transform",
+      "lua": "return select('#',hl.monitor{output='DP-1',transform=2})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    116,
+                    114,
+                    97,
+                    110,
+                    115,
+                    102,
+                    111,
+                    114,
+                    109
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 2
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "7472616e73666f726d",
+            "input": {
+              "type": "int",
+              "value": 2
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "7472616e73666f726d"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "7472616e73666f726d"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "field_mirror",
+      "lua": "return select('#',hl.monitor{output='DP-1',mirror='sample'})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    109,
+                    105,
+                    114,
+                    114,
+                    111,
+                    114
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    97,
+                    109,
+                    112,
+                    108,
+                    101
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "6d6972726f72",
+            "input": {
+              "type": "bytes",
+              "value": [
+                115,
+                97,
+                109,
+                112,
+                108,
+                101
+              ]
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "6d6972726f72"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "6d6972726f72"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "field_bitdepth",
+      "lua": "return select('#',hl.monitor{output='DP-1',bitdepth=2})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    98,
+                    105,
+                    116,
+                    100,
+                    101,
+                    112,
+                    116,
+                    104
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 2
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "6269746465707468",
+            "input": {
+              "type": "int",
+              "value": 2
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "6269746465707468"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "6269746465707468"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "field_cm",
+      "lua": "return select('#',hl.monitor{output='DP-1',cm='sample'})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    99,
+                    109
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    97,
+                    109,
+                    112,
+                    108,
+                    101
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "636d",
+            "input": {
+              "type": "bytes",
+              "value": [
+                115,
+                97,
+                109,
+                112,
+                108,
+                101
+              ]
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "636d"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "636d"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "field_sdr_eotf",
+      "lua": "return select('#',hl.monitor{output='DP-1',sdr_eotf='sample'})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    100,
+                    114,
+                    95,
+                    101,
+                    111,
+                    116,
+                    102
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    97,
+                    109,
+                    112,
+                    108,
+                    101
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "7364725f656f7466",
+            "input": {
+              "type": "bytes",
+              "value": [
+                115,
+                97,
+                109,
+                112,
+                108,
+                101
+              ]
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "7364725f656f7466"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "7364725f656f7466"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "field_sdrbrightness",
+      "lua": "return select('#',hl.monitor{output='DP-1',sdrbrightness=1.5})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    100,
+                    114,
+                    98,
+                    114,
+                    105,
+                    103,
+                    104,
+                    116,
+                    110,
+                    101,
+                    115,
+                    115
+                  ]
+                },
+                {
+                  "type": "float",
+                  "value": 1.5
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "7364726272696768746e657373",
+            "input": {
+              "type": "float",
+              "value": 1.5
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "7364726272696768746e657373"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "7364726272696768746e657373"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "field_sdrsaturation",
+      "lua": "return select('#',hl.monitor{output='DP-1',sdrsaturation=1.5})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    100,
+                    114,
+                    115,
+                    97,
+                    116,
+                    117,
+                    114,
+                    97,
+                    116,
+                    105,
+                    111,
+                    110
+                  ]
+                },
+                {
+                  "type": "float",
+                  "value": 1.5
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "73647273617475726174696f6e",
+            "input": {
+              "type": "float",
+              "value": 1.5
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "73647273617475726174696f6e"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "73647273617475726174696f6e"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "field_vrr",
+      "lua": "return select('#',hl.monitor{output='DP-1',vrr=2})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    118,
+                    114,
+                    114
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 2
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "767272",
+            "input": {
+              "type": "int",
+              "value": 2
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "767272"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "767272"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "field_icc",
+      "lua": "return select('#',hl.monitor{output='DP-1',icc='sample'})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    105,
+                    99,
+                    99
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    97,
+                    109,
+                    112,
+                    108,
+                    101
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "696363",
+            "input": {
+              "type": "bytes",
+              "value": [
+                115,
+                97,
+                109,
+                112,
+                108,
+                101
+              ]
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "696363"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "696363"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "field_supports_wide_color",
+      "lua": "return select('#',hl.monitor{output='DP-1',supports_wide_color=2})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    117,
+                    112,
+                    112,
+                    111,
+                    114,
+                    116,
+                    115,
+                    95,
+                    119,
+                    105,
+                    100,
+                    101,
+                    95,
+                    99,
+                    111,
+                    108,
+                    111,
+                    114
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 2
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "737570706f7274735f776964655f636f6c6f72",
+            "input": {
+              "type": "int",
+              "value": 2
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "737570706f7274735f776964655f636f6c6f72"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "737570706f7274735f776964655f636f6c6f72"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "field_supports_hdr",
+      "lua": "return select('#',hl.monitor{output='DP-1',supports_hdr=2})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    117,
+                    112,
+                    112,
+                    111,
+                    114,
+                    116,
+                    115,
+                    95,
+                    104,
+                    100,
+                    114
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 2
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "737570706f7274735f686472",
+            "input": {
+              "type": "int",
+              "value": 2
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "737570706f7274735f686472"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "737570706f7274735f686472"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "field_sdr_min_luminance",
+      "lua": "return select('#',hl.monitor{output='DP-1',sdr_min_luminance=1.5})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    100,
+                    114,
+                    95,
+                    109,
+                    105,
+                    110,
+                    95,
+                    108,
+                    117,
+                    109,
+                    105,
+                    110,
+                    97,
+                    110,
+                    99,
+                    101
+                  ]
+                },
+                {
+                  "type": "float",
+                  "value": 1.5
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "7364725f6d696e5f6c756d696e616e6365",
+            "input": {
+              "type": "float",
+              "value": 1.5
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "7364725f6d696e5f6c756d696e616e6365"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "7364725f6d696e5f6c756d696e616e6365"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "field_sdr_max_luminance",
+      "lua": "return select('#',hl.monitor{output='DP-1',sdr_max_luminance=2})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    100,
+                    114,
+                    95,
+                    109,
+                    97,
+                    120,
+                    95,
+                    108,
+                    117,
+                    109,
+                    105,
+                    110,
+                    97,
+                    110,
+                    99,
+                    101
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 2
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "7364725f6d61785f6c756d696e616e6365",
+            "input": {
+              "type": "int",
+              "value": 2
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "7364725f6d61785f6c756d696e616e6365"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "7364725f6d61785f6c756d696e616e6365"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "field_min_luminance",
+      "lua": "return select('#',hl.monitor{output='DP-1',min_luminance=1.5})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    109,
+                    105,
+                    110,
+                    95,
+                    108,
+                    117,
+                    109,
+                    105,
+                    110,
+                    97,
+                    110,
+                    99,
+                    101
+                  ]
+                },
+                {
+                  "type": "float",
+                  "value": 1.5
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "6d696e5f6c756d696e616e6365",
+            "input": {
+              "type": "float",
+              "value": 1.5
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "6d696e5f6c756d696e616e6365"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "6d696e5f6c756d696e616e6365"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "field_max_luminance",
+      "lua": "return select('#',hl.monitor{output='DP-1',max_luminance=2})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    109,
+                    97,
+                    120,
+                    95,
+                    108,
+                    117,
+                    109,
+                    105,
+                    110,
+                    97,
+                    110,
+                    99,
+                    101
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 2
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "6d61785f6c756d696e616e6365",
+            "input": {
+              "type": "int",
+              "value": 2
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "6d61785f6c756d696e616e6365"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "6d61785f6c756d696e616e6365"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "field_max_avg_luminance",
+      "lua": "return select('#',hl.monitor{output='DP-1',max_avg_luminance=2})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    109,
+                    97,
+                    120,
+                    95,
+                    97,
+                    118,
+                    103,
+                    95,
+                    108,
+                    117,
+                    109,
+                    105,
+                    110,
+                    97,
+                    110,
+                    99,
+                    101
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 2
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "6d61785f6176675f6c756d696e616e6365",
+            "input": {
+              "type": "int",
+              "value": 2
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "6d61785f6176675f6c756d696e616e6365"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "6d61785f6176675f6c756d696e616e6365"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "fixture_parse_failure_continues",
+      "lua": "return select('#',hl.monitor{output='DP-1',mode='preferred',transform=2})",
+      "fixture_reject_parse": "mode",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    109,
+                    111,
+                    100,
+                    101
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    112,
+                    114,
+                    101,
+                    102,
+                    101,
+                    114,
+                    114,
+                    101,
+                    100
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    116,
+                    114,
+                    97,
+                    110,
+                    115,
+                    102,
+                    111,
+                    114,
+                    109
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 2
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "6d6f6465",
+            "input": {
+              "type": "bytes",
+              "value": [
+                112,
+                114,
+                101,
+                102,
+                101,
+                114,
+                114,
+                101,
+                100
+              ]
+            }
+          },
+          {
+            "key_hex": "7472616e73666f726d",
+            "input": {
+              "type": "int",
+              "value": 2
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "7472616e73666f726d"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "7472616e73666f726d"
+            ]
+          }
+        ],
+        "errors_hex": [
+          "666978747572653a20686c2e6d6f6e69746f723a206669656c6420276d6f6465273a206669787475726520706172736572207265667573616c"
+        ],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "baseline",
+      "case": "fixture_apply_failure_continues",
+      "lua": "return select('#',hl.monitor{output='DP-1',mode='preferred',transform=2})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "mode",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    109,
+                    111,
+                    100,
+                    101
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    112,
+                    114,
+                    101,
+                    102,
+                    101,
+                    114,
+                    114,
+                    101,
+                    100
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    116,
+                    114,
+                    97,
+                    110,
+                    115,
+                    102,
+                    111,
+                    114,
+                    109
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 2
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "6d6f6465",
+            "input": {
+              "type": "bytes",
+              "value": [
+                112,
+                114,
+                101,
+                102,
+                101,
+                114,
+                114,
+                101,
+                100
+              ]
+            }
+          },
+          {
+            "key_hex": "7472616e73666f726d",
+            "input": {
+              "type": "int",
+              "value": 2
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "6d6f6465",
+          "7472616e73666f726d"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "7472616e73666f726d"
+            ]
+          }
+        ],
+        "errors_hex": [
+          "666978747572653a20686c2e6d6f6e69746f723a206572726f72206170706c79696e67206669656c6420276d6f646527"
+        ],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "missing_argument",
+      "lua": "return select('#',hl.monitor())",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [],
+        "applied_keys_hex": [],
+        "added": [],
+        "errors_hex": [
+          "686c2e6d6f6e69746f723a20617267756d656e74206d7573742062652061207461626c65"
+        ],
+        "refresh_requests": 0,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "nil_argument",
+      "lua": "return select('#',hl.monitor(nil))",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "nil"
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [],
+        "applied_keys_hex": [],
+        "added": [],
+        "errors_hex": [
+          "686c2e6d6f6e69746f723a20617267756d656e74206d7573742062652061207461626c65"
+        ],
+        "refresh_requests": 0,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "number_argument",
+      "lua": "return select('#',hl.monitor(3))",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "int",
+            "value": 3
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [],
+        "applied_keys_hex": [],
+        "added": [],
+        "errors_hex": [
+          "686c2e6d6f6e69746f723a20617267756d656e74206d7573742062652061207461626c65"
+        ],
+        "refresh_requests": 0,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "missing_output",
+      "lua": "return select('#',hl.monitor{})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": []
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [],
+        "applied_keys_hex": [],
+        "added": [],
+        "errors_hex": [
+          "666978747572653a20686c2e6d6f6e69746f723a20276f757470757427206669656c6420697320726571756972656420616e64206d757374206265206120737472696e67"
+        ],
+        "refresh_requests": 0,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "boolean_output",
+      "lua": "return select('#',hl.monitor{output=true})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bool",
+                  "value": true
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [],
+        "applied_keys_hex": [],
+        "added": [],
+        "errors_hex": [
+          "666978747572653a20686c2e6d6f6e69746f723a20276f757470757427206669656c6420697320726571756972656420616e64206d757374206265206120737472696e67"
+        ],
+        "refresh_requests": 0,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "empty_output",
+      "lua": "return select('#',hl.monitor{output=''})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": []
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [],
+        "applied_keys_hex": [],
+        "added": [
+          {
+            "output_hex": "",
+            "inherited_seed": 0,
+            "fields_hex": []
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "number_output",
+      "lua": "return select('#',hl.monitor{output=123})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 123
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [],
+        "applied_keys_hex": [],
+        "added": [
+          {
+            "output_hex": "313233",
+            "inherited_seed": 0,
+            "fields_hex": []
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "float_output",
+      "lua": "return select('#',hl.monitor{output=123.25})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "float",
+                  "value": 123.25
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [],
+        "applied_keys_hex": [],
+        "added": [
+          {
+            "output_hex": "3132332e3235",
+            "inherited_seed": 0,
+            "fields_hex": []
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "nul_output",
+      "lua": "return select('#',hl.monitor{output='DP-1\\0suffix'})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49,
+                    0,
+                    115,
+                    117,
+                    102,
+                    102,
+                    105,
+                    120
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [],
+        "applied_keys_hex": [],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": []
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "nul_output_key_is_not_required_output",
+      "lua": "return select('#',hl.monitor{['output\\0tail']='DP-1'})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116,
+                    0,
+                    116,
+                    97,
+                    105,
+                    108
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [],
+        "applied_keys_hex": [],
+        "added": [],
+        "errors_hex": [
+          "666978747572653a20686c2e6d6f6e69746f723a20276f757470757427206669656c6420697320726571756972656420616e64206d757374206265206120737472696e67"
+        ],
+        "refresh_requests": 0,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "extra_arguments",
+      "lua": "return select('#',hl.monitor({output='DP-1',mode='preferred'},{output='IGNORED'}))",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    109,
+                    111,
+                    100,
+                    101
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    112,
+                    114,
+                    101,
+                    102,
+                    101,
+                    114,
+                    114,
+                    101,
+                    100
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ]
+            ]
+          },
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    73,
+                    71,
+                    78,
+                    79,
+                    82,
+                    69,
+                    68
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "6d6f6465",
+            "input": {
+              "type": "bytes",
+              "value": [
+                112,
+                114,
+                101,
+                102,
+                101,
+                114,
+                114,
+                101,
+                100
+              ]
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "6d6f6465"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "6d6f6465"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "unknown_and_nonstring_fields",
+      "lua": "return select('#',hl.monitor{output='DP-1',outside=1,[1]=2,[false]=3})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bool",
+                  "value": false
+                },
+                {
+                  "type": "int",
+                  "value": 3
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    115,
+                    105,
+                    100,
+                    101
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "int",
+                  "value": 1
+                },
+                {
+                  "type": "int",
+                  "value": 2
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [],
+        "applied_keys_hex": [],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": []
+          }
+        ],
+        "errors_hex": [
+          "666978747572653a20686c2e6d6f6e69746f723a20756e6b6e6f776e206669656c6420276f75747369646527"
+        ],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "nul_known_key",
+      "lua": "return select('#',hl.monitor{output='DP-1',['mode\\0tail']='preferred'})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    109,
+                    111,
+                    100,
+                    101,
+                    0,
+                    116,
+                    97,
+                    105,
+                    108
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    112,
+                    114,
+                    101,
+                    102,
+                    101,
+                    114,
+                    114,
+                    101,
+                    100
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "6d6f6465007461696c",
+            "input": {
+              "type": "bytes",
+              "value": [
+                112,
+                114,
+                101,
+                102,
+                101,
+                114,
+                114,
+                101,
+                100
+              ]
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "6d6f6465"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "6d6f6465"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "nul_known_collision",
+      "lua": "return select('#',hl.monitor{output='DP-1',mode='preferred',['mode\\0tail']='highrr'})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    109,
+                    111,
+                    100,
+                    101,
+                    0,
+                    116,
+                    97,
+                    105,
+                    108
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    104,
+                    105,
+                    103,
+                    104,
+                    114,
+                    114
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    109,
+                    111,
+                    100,
+                    101
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    112,
+                    114,
+                    101,
+                    102,
+                    101,
+                    114,
+                    114,
+                    101,
+                    100
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "6d6f6465",
+            "input": {
+              "type": "bytes",
+              "value": [
+                112,
+                114,
+                101,
+                102,
+                101,
+                114,
+                114,
+                101,
+                100
+              ]
+            }
+          },
+          {
+            "key_hex": "6d6f6465007461696c",
+            "input": {
+              "type": "bytes",
+              "value": [
+                104,
+                105,
+                103,
+                104,
+                114,
+                114
+              ]
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "6d6f6465",
+          "6d6f6465"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "6d6f6465",
+              "6d6f6465"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "reserved_aliases",
+      "lua": "return select('#',hl.monitor{output='DP-1',reserved=-1,reserved_area=2})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    114,
+                    101,
+                    115,
+                    101,
+                    114,
+                    118,
+                    101,
+                    100,
+                    95,
+                    97,
+                    114,
+                    101,
+                    97
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 2
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    114,
+                    101,
+                    115,
+                    101,
+                    114,
+                    118,
+                    101,
+                    100
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": -1
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "7265736572766564",
+            "input": {
+              "type": "int",
+              "value": -1
+            }
+          },
+          {
+            "key_hex": "72657365727665645f61726561",
+            "input": {
+              "type": "int",
+              "value": 2
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "7265736572766564",
+          "72657365727665645f61726561"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "7265736572766564",
+              "72657365727665645f61726561"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "seeded_existing_rule",
+      "lua": "return select('#',hl.monitor{output='SEED',disabled=true})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    100,
+                    105,
+                    115,
+                    97,
+                    98,
+                    108,
+                    101,
+                    100
+                  ]
+                },
+                {
+                  "type": "bool",
+                  "value": true
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    83,
+                    69,
+                    69,
+                    68
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "64697361626c6564",
+            "input": {
+              "type": "bool",
+              "value": true
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "64697361626c6564"
+        ],
+        "added": [
+          {
+            "output_hex": "53454544",
+            "inherited_seed": 77,
+            "fields_hex": [
+              "64697361626c6564",
+              "73656564"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "unknown_field_does_not_abort",
+      "lua": "return select('#',hl.monitor{output='DP-1',outside=1,transform=2})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    115,
+                    105,
+                    100,
+                    101
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 1
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    116,
+                    114,
+                    97,
+                    110,
+                    115,
+                    102,
+                    111,
+                    114,
+                    109
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 2
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "7472616e73666f726d",
+            "input": {
+              "type": "int",
+              "value": 2
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "7472616e73666f726d"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "7472616e73666f726d"
+            ]
+          }
+        ],
+        "errors_hex": [
+          "666978747572653a20686c2e6d6f6e69746f723a20756e6b6e6f776e206669656c6420276f75747369646527"
+        ],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "output_index_lookup",
+      "lua": "local t=setmetatable({mode='preferred'},{__index=function(_,key)__index_calls=__index_calls+1;if key=='output' then return 'DP-1' end end});return select('#',hl.monitor(t))",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    109,
+                    111,
+                    100,
+                    101
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    112,
+                    114,
+                    101,
+                    102,
+                    101,
+                    114,
+                    114,
+                    101,
+                    100
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "6d6f6465",
+            "input": {
+              "type": "bytes",
+              "value": [
+                112,
+                114,
+                101,
+                102,
+                101,
+                114,
+                114,
+                101,
+                100
+              ]
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "6d6f6465"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "6d6f6465"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 1,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "pairs_is_ignored",
+      "lua": "local t=setmetatable({output='DP-1',mode='preferred'},{__pairs=function()__pairs_calls=__pairs_calls+1;return next,{},nil end});return select('#',hl.monitor(t))",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    109,
+                    111,
+                    100,
+                    101
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    112,
+                    114,
+                    101,
+                    102,
+                    101,
+                    114,
+                    114,
+                    101,
+                    100
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "6d6f6465",
+            "input": {
+              "type": "bytes",
+              "value": [
+                112,
+                114,
+                101,
+                102,
+                101,
+                114,
+                114,
+                101,
+                100
+              ]
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "6d6f6465"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "6d6f6465"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "field_mode",
+      "lua": "return select('#',hl.monitor{output='DP-1',mode='sample'})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    109,
+                    111,
+                    100,
+                    101
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    97,
+                    109,
+                    112,
+                    108,
+                    101
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "6d6f6465",
+            "input": {
+              "type": "bytes",
+              "value": [
+                115,
+                97,
+                109,
+                112,
+                108,
+                101
+              ]
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "6d6f6465"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "6d6f6465"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "field_position",
+      "lua": "return select('#',hl.monitor{output='DP-1',position='sample'})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    112,
+                    111,
+                    115,
+                    105,
+                    116,
+                    105,
+                    111,
+                    110
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    97,
+                    109,
+                    112,
+                    108,
+                    101
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "706f736974696f6e",
+            "input": {
+              "type": "bytes",
+              "value": [
+                115,
+                97,
+                109,
+                112,
+                108,
+                101
+              ]
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "706f736974696f6e"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "706f736974696f6e"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "field_scale",
+      "lua": "return select('#',hl.monitor{output='DP-1',scale='sample'})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    99,
+                    97,
+                    108,
+                    101
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    97,
+                    109,
+                    112,
+                    108,
+                    101
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "7363616c65",
+            "input": {
+              "type": "bytes",
+              "value": [
+                115,
+                97,
+                109,
+                112,
+                108,
+                101
+              ]
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "7363616c65"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "7363616c65"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "field_reserved",
+      "lua": "return select('#',hl.monitor{output='DP-1',reserved={top=-1,left=2}})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    114,
+                    101,
+                    115,
+                    101,
+                    114,
+                    118,
+                    101,
+                    100
+                  ]
+                },
+                {
+                  "type": "table",
+                  "value": [
+                    [
+                      {
+                        "type": "bytes",
+                        "value": [
+                          108,
+                          101,
+                          102,
+                          116
+                        ]
+                      },
+                      {
+                        "type": "int",
+                        "value": 2
+                      }
+                    ],
+                    [
+                      {
+                        "type": "bytes",
+                        "value": [
+                          116,
+                          111,
+                          112
+                        ]
+                      },
+                      {
+                        "type": "int",
+                        "value": -1
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "7265736572766564",
+            "input": {
+              "type": "table",
+              "value": [
+                [
+                  {
+                    "type": "bytes",
+                    "value": [
+                      108,
+                      101,
+                      102,
+                      116
+                    ]
+                  },
+                  {
+                    "type": "int",
+                    "value": 2
+                  }
+                ],
+                [
+                  {
+                    "type": "bytes",
+                    "value": [
+                      116,
+                      111,
+                      112
+                    ]
+                  },
+                  {
+                    "type": "int",
+                    "value": -1
+                  }
+                ]
+              ]
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "7265736572766564"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "7265736572766564"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "field_reserved_area",
+      "lua": "return select('#',hl.monitor{output='DP-1',reserved_area={top=-1,left=2}})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    114,
+                    101,
+                    115,
+                    101,
+                    114,
+                    118,
+                    101,
+                    100,
+                    95,
+                    97,
+                    114,
+                    101,
+                    97
+                  ]
+                },
+                {
+                  "type": "table",
+                  "value": [
+                    [
+                      {
+                        "type": "bytes",
+                        "value": [
+                          108,
+                          101,
+                          102,
+                          116
+                        ]
+                      },
+                      {
+                        "type": "int",
+                        "value": 2
+                      }
+                    ],
+                    [
+                      {
+                        "type": "bytes",
+                        "value": [
+                          116,
+                          111,
+                          112
+                        ]
+                      },
+                      {
+                        "type": "int",
+                        "value": -1
+                      }
+                    ]
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "72657365727665645f61726561",
+            "input": {
+              "type": "table",
+              "value": [
+                [
+                  {
+                    "type": "bytes",
+                    "value": [
+                      108,
+                      101,
+                      102,
+                      116
+                    ]
+                  },
+                  {
+                    "type": "int",
+                    "value": 2
+                  }
+                ],
+                [
+                  {
+                    "type": "bytes",
+                    "value": [
+                      116,
+                      111,
+                      112
+                    ]
+                  },
+                  {
+                    "type": "int",
+                    "value": -1
+                  }
+                ]
+              ]
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "72657365727665645f61726561"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "72657365727665645f61726561"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "field_disabled",
+      "lua": "return select('#',hl.monitor{output='DP-1',disabled=true})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    100,
+                    105,
+                    115,
+                    97,
+                    98,
+                    108,
+                    101,
+                    100
+                  ]
+                },
+                {
+                  "type": "bool",
+                  "value": true
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "64697361626c6564",
+            "input": {
+              "type": "bool",
+              "value": true
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "64697361626c6564"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "64697361626c6564"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "field_transform",
+      "lua": "return select('#',hl.monitor{output='DP-1',transform=2})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    116,
+                    114,
+                    97,
+                    110,
+                    115,
+                    102,
+                    111,
+                    114,
+                    109
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 2
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "7472616e73666f726d",
+            "input": {
+              "type": "int",
+              "value": 2
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "7472616e73666f726d"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "7472616e73666f726d"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "field_mirror",
+      "lua": "return select('#',hl.monitor{output='DP-1',mirror='sample'})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    109,
+                    105,
+                    114,
+                    114,
+                    111,
+                    114
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    97,
+                    109,
+                    112,
+                    108,
+                    101
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "6d6972726f72",
+            "input": {
+              "type": "bytes",
+              "value": [
+                115,
+                97,
+                109,
+                112,
+                108,
+                101
+              ]
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "6d6972726f72"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "6d6972726f72"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "field_bitdepth",
+      "lua": "return select('#',hl.monitor{output='DP-1',bitdepth=2})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    98,
+                    105,
+                    116,
+                    100,
+                    101,
+                    112,
+                    116,
+                    104
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 2
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "6269746465707468",
+            "input": {
+              "type": "int",
+              "value": 2
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "6269746465707468"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "6269746465707468"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "field_cm",
+      "lua": "return select('#',hl.monitor{output='DP-1',cm='sample'})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    99,
+                    109
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    97,
+                    109,
+                    112,
+                    108,
+                    101
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "636d",
+            "input": {
+              "type": "bytes",
+              "value": [
+                115,
+                97,
+                109,
+                112,
+                108,
+                101
+              ]
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "636d"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "636d"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "field_sdr_eotf",
+      "lua": "return select('#',hl.monitor{output='DP-1',sdr_eotf='sample'})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    100,
+                    114,
+                    95,
+                    101,
+                    111,
+                    116,
+                    102
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    97,
+                    109,
+                    112,
+                    108,
+                    101
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "7364725f656f7466",
+            "input": {
+              "type": "bytes",
+              "value": [
+                115,
+                97,
+                109,
+                112,
+                108,
+                101
+              ]
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "7364725f656f7466"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "7364725f656f7466"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "field_sdrbrightness",
+      "lua": "return select('#',hl.monitor{output='DP-1',sdrbrightness=1.5})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    100,
+                    114,
+                    98,
+                    114,
+                    105,
+                    103,
+                    104,
+                    116,
+                    110,
+                    101,
+                    115,
+                    115
+                  ]
+                },
+                {
+                  "type": "float",
+                  "value": 1.5
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "7364726272696768746e657373",
+            "input": {
+              "type": "float",
+              "value": 1.5
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "7364726272696768746e657373"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "7364726272696768746e657373"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "field_sdrsaturation",
+      "lua": "return select('#',hl.monitor{output='DP-1',sdrsaturation=1.5})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    100,
+                    114,
+                    115,
+                    97,
+                    116,
+                    117,
+                    114,
+                    97,
+                    116,
+                    105,
+                    111,
+                    110
+                  ]
+                },
+                {
+                  "type": "float",
+                  "value": 1.5
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "73647273617475726174696f6e",
+            "input": {
+              "type": "float",
+              "value": 1.5
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "73647273617475726174696f6e"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "73647273617475726174696f6e"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "field_vrr",
+      "lua": "return select('#',hl.monitor{output='DP-1',vrr=2})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    118,
+                    114,
+                    114
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 2
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "767272",
+            "input": {
+              "type": "int",
+              "value": 2
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "767272"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "767272"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "field_icc",
+      "lua": "return select('#',hl.monitor{output='DP-1',icc='sample'})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    105,
+                    99,
+                    99
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    97,
+                    109,
+                    112,
+                    108,
+                    101
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "696363",
+            "input": {
+              "type": "bytes",
+              "value": [
+                115,
+                97,
+                109,
+                112,
+                108,
+                101
+              ]
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "696363"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "696363"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "field_supports_wide_color",
+      "lua": "return select('#',hl.monitor{output='DP-1',supports_wide_color=2})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    117,
+                    112,
+                    112,
+                    111,
+                    114,
+                    116,
+                    115,
+                    95,
+                    119,
+                    105,
+                    100,
+                    101,
+                    95,
+                    99,
+                    111,
+                    108,
+                    111,
+                    114
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 2
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "737570706f7274735f776964655f636f6c6f72",
+            "input": {
+              "type": "int",
+              "value": 2
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "737570706f7274735f776964655f636f6c6f72"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "737570706f7274735f776964655f636f6c6f72"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "field_supports_hdr",
+      "lua": "return select('#',hl.monitor{output='DP-1',supports_hdr=2})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    117,
+                    112,
+                    112,
+                    111,
+                    114,
+                    116,
+                    115,
+                    95,
+                    104,
+                    100,
+                    114
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 2
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "737570706f7274735f686472",
+            "input": {
+              "type": "int",
+              "value": 2
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "737570706f7274735f686472"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "737570706f7274735f686472"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "field_sdr_min_luminance",
+      "lua": "return select('#',hl.monitor{output='DP-1',sdr_min_luminance=1.5})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    100,
+                    114,
+                    95,
+                    109,
+                    105,
+                    110,
+                    95,
+                    108,
+                    117,
+                    109,
+                    105,
+                    110,
+                    97,
+                    110,
+                    99,
+                    101
+                  ]
+                },
+                {
+                  "type": "float",
+                  "value": 1.5
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "7364725f6d696e5f6c756d696e616e6365",
+            "input": {
+              "type": "float",
+              "value": 1.5
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "7364725f6d696e5f6c756d696e616e6365"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "7364725f6d696e5f6c756d696e616e6365"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "field_sdr_max_luminance",
+      "lua": "return select('#',hl.monitor{output='DP-1',sdr_max_luminance=2})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    115,
+                    100,
+                    114,
+                    95,
+                    109,
+                    97,
+                    120,
+                    95,
+                    108,
+                    117,
+                    109,
+                    105,
+                    110,
+                    97,
+                    110,
+                    99,
+                    101
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 2
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "7364725f6d61785f6c756d696e616e6365",
+            "input": {
+              "type": "int",
+              "value": 2
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "7364725f6d61785f6c756d696e616e6365"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "7364725f6d61785f6c756d696e616e6365"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "field_min_luminance",
+      "lua": "return select('#',hl.monitor{output='DP-1',min_luminance=1.5})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    109,
+                    105,
+                    110,
+                    95,
+                    108,
+                    117,
+                    109,
+                    105,
+                    110,
+                    97,
+                    110,
+                    99,
+                    101
+                  ]
+                },
+                {
+                  "type": "float",
+                  "value": 1.5
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "6d696e5f6c756d696e616e6365",
+            "input": {
+              "type": "float",
+              "value": 1.5
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "6d696e5f6c756d696e616e6365"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "6d696e5f6c756d696e616e6365"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "field_max_luminance",
+      "lua": "return select('#',hl.monitor{output='DP-1',max_luminance=2})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    109,
+                    97,
+                    120,
+                    95,
+                    108,
+                    117,
+                    109,
+                    105,
+                    110,
+                    97,
+                    110,
+                    99,
+                    101
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 2
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "6d61785f6c756d696e616e6365",
+            "input": {
+              "type": "int",
+              "value": 2
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "6d61785f6c756d696e616e6365"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "6d61785f6c756d696e616e6365"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "field_max_avg_luminance",
+      "lua": "return select('#',hl.monitor{output='DP-1',max_avg_luminance=2})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    109,
+                    97,
+                    120,
+                    95,
+                    97,
+                    118,
+                    103,
+                    95,
+                    108,
+                    117,
+                    109,
+                    105,
+                    110,
+                    97,
+                    110,
+                    99,
+                    101
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 2
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "6d61785f6176675f6c756d696e616e6365",
+            "input": {
+              "type": "int",
+              "value": 2
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "6d61785f6176675f6c756d696e616e6365"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "6d61785f6176675f6c756d696e616e6365"
+            ]
+          }
+        ],
+        "errors_hex": [],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "fixture_parse_failure_continues",
+      "lua": "return select('#',hl.monitor{output='DP-1',mode='preferred',transform=2})",
+      "fixture_reject_parse": "mode",
+      "fixture_reject_apply": "",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    109,
+                    111,
+                    100,
+                    101
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    112,
+                    114,
+                    101,
+                    102,
+                    101,
+                    114,
+                    114,
+                    101,
+                    100
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    116,
+                    114,
+                    97,
+                    110,
+                    115,
+                    102,
+                    111,
+                    114,
+                    109
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 2
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "6d6f6465",
+            "input": {
+              "type": "bytes",
+              "value": [
+                112,
+                114,
+                101,
+                102,
+                101,
+                114,
+                114,
+                101,
+                100
+              ]
+            }
+          },
+          {
+            "key_hex": "7472616e73666f726d",
+            "input": {
+              "type": "int",
+              "value": 2
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "7472616e73666f726d"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "7472616e73666f726d"
+            ]
+          }
+        ],
+        "errors_hex": [
+          "666978747572653a20686c2e6d6f6e69746f723a206669656c6420276d6f6465273a206669787475726520706172736572207265667573616c"
+        ],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    },
+    {
+      "version": "current",
+      "case": "fixture_apply_failure_continues",
+      "lua": "return select('#',hl.monitor{output='DP-1',mode='preferred',transform=2})",
+      "fixture_reject_parse": "",
+      "fixture_reject_apply": "mode",
+      "observation": {
+        "arguments": [
+          {
+            "type": "table",
+            "value": [
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    109,
+                    111,
+                    100,
+                    101
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    112,
+                    114,
+                    101,
+                    102,
+                    101,
+                    114,
+                    114,
+                    101,
+                    100
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    111,
+                    117,
+                    116,
+                    112,
+                    117,
+                    116
+                  ]
+                },
+                {
+                  "type": "bytes",
+                  "value": [
+                    68,
+                    80,
+                    45,
+                    49
+                  ]
+                }
+              ],
+              [
+                {
+                  "type": "bytes",
+                  "value": [
+                    116,
+                    114,
+                    97,
+                    110,
+                    115,
+                    102,
+                    111,
+                    114,
+                    109
+                  ]
+                },
+                {
+                  "type": "int",
+                  "value": 2
+                }
+              ]
+            ]
+          }
+        ],
+        "returns": [
+          {
+            "type": "int",
+            "value": 0
+          }
+        ],
+        "delegated": [
+          {
+            "key_hex": "6d6f6465",
+            "input": {
+              "type": "bytes",
+              "value": [
+                112,
+                114,
+                101,
+                102,
+                101,
+                114,
+                114,
+                101,
+                100
+              ]
+            }
+          },
+          {
+            "key_hex": "7472616e73666f726d",
+            "input": {
+              "type": "int",
+              "value": 2
+            }
+          }
+        ],
+        "applied_keys_hex": [
+          "6d6f6465",
+          "7472616e73666f726d"
+        ],
+        "added": [
+          {
+            "output_hex": "44502d31",
+            "inherited_seed": 0,
+            "fields_hex": [
+              "7472616e73666f726d"
+            ]
+          }
+        ],
+        "errors_hex": [
+          "666978747572653a20686c2e6d6f6e69746f723a206572726f72206170706c79696e67206669656c6420276d6f646527"
+        ],
+        "refresh_requests": 1,
+        "index_calls": 0,
+        "pairs_calls": 0
+      }
+    }
+  ]
+}

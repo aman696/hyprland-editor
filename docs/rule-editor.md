@@ -1,4 +1,4 @@
-# Window and layer rule draft editor — 0.9 foundation / 0.10 controls
+# Window and layer rule editor
 
 This milestone adds focused controls for all 57 baseline / 60 current window effects, ten layer effects in each pack, the 17 consumed window predicates and the layer namespace predicate. Name, enabled/unset, ordered declaration management, independent named duplication, removal, bounded undo, static Lua import/export, schema-pinned private storage and original-source omission guards are integrated into the application. It does not close the 94 complete RULE contracts.
 
@@ -32,4 +32,25 @@ Imported rules participate in draft dirty state, save/reopen, reviewed combined 
 
 RE2 development headers and a C++17 compiler are application build dependencies. The optional source probe additionally needs Lua 5.4 development headers and C++23. Ubuntu: `libre2-dev liblua5.4-dev`; Arch: `re2 lua`. The application links RE2, not Lua.
 
-Actual effective rule discovery, plugin packs, named-object lifecycle, complete semantic builders, source editing, compositor conformance, isolated preview, live apply/recovery, accessibility and repeatable resource acceptance remain required. The completion register keeps every full contract unproven.
+Actual effective rule discovery, plugin packs, named-object lifecycle, complete semantic builders, general dynamic source editing, compositor conformance, isolated preview, live apply/recovery, accessibility and repeatable resource acceptance remain required. The completion register keeps every full contract unproven.
+
+
+## Native configuration rules
+
+The native schema records hashes for the pinned [configuration loader](https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/config/legacy/ConfigManager.cpp), [match-property registration](https://github.com/hyprwm/Hyprland/blob/efb50993780079460b0cbed1363e2166a2de1d9f/src/desktop/rule/Rule.cpp) and effect containers. Research used in-memory source reads; no upstream tree is retained.
+
+Literal flat `windowrule` and `layerrule` blocks and top-level inline declarations now populate graphical rule controls. The baseline registration profile covers 57 window effects, ten layer effects and all 18 registered match names. Names/values depending on variables, nested/conditional syntax and unknown fields remain unresolved. The older `windowrulev2` grammar is not silently converted.
+
+Native values retain their string representation independently of Lua tables. **Edit Native Text** preserves values outside a guided builder; unchanged guided controls retain the exact imported spelling. Native conditions also expose registered fields that the selected modeled matcher does not consume, with an explanation. Raw text is saved without certifying runtime acceptance. Regex sample checks remain samples, not inspection of real windows.
+
+Inline effects retain order and repeated effects. Editing a selected effect changes the last occurrence; unsetting removes every occurrence of that key. Named blocks retain the last value per field. Source updates change the last duplicate assignment and preserve earlier assignments/comments; unsetting removes all assignments within that block. An earlier block with the same name can still supply an omitted field. Native named blocks load separately before inline rules; the displayed declaration order is not certified effective compositor ordering.
+
+**Named Rule** explicitly chooses a block rather than an inline declaration. A block requires a nonempty name. Converting repeated inline effect keys into a single block is refused because it would collapse the sequence. The Lua-specific **Order Named Effects Explicitly** operation is unavailable for native rules. Duplication, reordering, remove, undo and existing pending-form guards remain available.
+
+The pinned loader uses an integer `enable`: explicit zero suppresses a window block; explicit nonzero suppresses a layer block. The GUI labels these version-specific loader choices and retains other signed integers. Unspecified enable remains distinct from an explicit value. These semantics describe the pinned source, not a claim about later Hyprland releases or a correction to upstream behavior.
+
+**Review Source Copy** includes all nine native groups: scalar settings, session directives, monitors, bindings, workspace rules, animations, gestures, devices and window/layer rules. The combined copy preserves comments/unresolved statements and reparses all supported projections. Export remains a reviewed separate file; it does not reload Hyprland. Captured source/codec markers preserve intentional empty rule targets; older projects rebuild recognized native declarations without discarding separate Lua drafts or rewriting old files. Original configuration paths need not exist when reopening.
+
+Native rule names, conditions and effect payloads are omitted from ordinary preview preparation. Native keyed-block merging, runtime matcher/effect acceptance, plugins, complete expression/selector builders, old dialect conversion, effective-state discovery, actual isolated preview and live apply/recovery remain required work. This increment does not close the full RULE audit contracts.
+
+![Native rule text editing in the compact graphical workflow](screenshots/legacy-rules.png)

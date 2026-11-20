@@ -1,0 +1,3744 @@
+{
+  "cases": [
+    {
+      "attempted": [],
+      "explicit": false,
+      "main": "<root>/config/hyprland.lua",
+      "module": "colors",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config/colors.lua",
+            "<root>/config/colors/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config/colors.lua",
+            "<root>/config/colors/init.lua",
+            "/not-present/colors.lua",
+            "",
+            "/other/colors/colors.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config/colors.lua",
+            "<root>/config/colors/init.lua",
+            "",
+            "/before/colors.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [],
+      "explicit": false,
+      "main": "<root>/config/hyprland.lua",
+      "module": "colors.lua",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config/colors/lua.lua",
+            "<root>/config/colors/lua/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config/colors/lua.lua",
+            "<root>/config/colors/lua/init.lua",
+            "/not-present/colors/lua.lua",
+            "",
+            "/other/colors/lua/colors/lua.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config/colors/lua.lua",
+            "<root>/config/colors/lua/init.lua",
+            "",
+            "/before/colors/lua.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [],
+      "explicit": false,
+      "main": "<root>/config/hyprland.lua",
+      "module": "colors.theme",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config/colors/theme.lua",
+            "<root>/config/colors/theme/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config/colors/theme.lua",
+            "<root>/config/colors/theme/init.lua",
+            "/not-present/colors/theme.lua",
+            "",
+            "/other/colors/theme/colors/theme.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config/colors/theme.lua",
+            "<root>/config/colors/theme/init.lua",
+            "",
+            "/before/colors/theme.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [],
+      "explicit": false,
+      "main": "<root>/config/hyprland.lua",
+      "module": "nested/colors",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config/nested/colors.lua",
+            "<root>/config/nested/colors/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config/nested/colors.lua",
+            "<root>/config/nested/colors/init.lua",
+            "/not-present/nested/colors.lua",
+            "",
+            "/other/nested/colors/nested/colors.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config/nested/colors.lua",
+            "<root>/config/nested/colors/init.lua",
+            "",
+            "/before/nested/colors.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [],
+      "explicit": false,
+      "main": "<root>/config/hyprland.lua",
+      "module": "",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config/.lua",
+            "<root>/config//init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config/.lua",
+            "<root>/config//init.lua",
+            "/not-present/.lua",
+            "",
+            "/other//.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config/.lua",
+            "<root>/config//init.lua",
+            "",
+            "/before/.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [],
+      "explicit": false,
+      "main": "<root>/config/hyprland.lua",
+      "module": ".",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config//.lua",
+            "<root>/config///init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config//.lua",
+            "<root>/config///init.lua",
+            "/not-present//.lua",
+            "",
+            "/other////.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config//.lua",
+            "<root>/config///init.lua",
+            "",
+            "/before//.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [],
+      "explicit": false,
+      "main": "<root>/config/hyprland.lua",
+      "module": "..",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///.lua",
+            "<root>/config////init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///.lua",
+            "<root>/config////init.lua",
+            "/not-present///.lua",
+            "",
+            "/other//////.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///.lua",
+            "<root>/config////init.lua",
+            "",
+            "/before///.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [],
+      "explicit": false,
+      "main": "<root>/config/hyprland.lua",
+      "module": "~someone/config",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config/~someone/config.lua",
+            "<root>/config/~someone/config/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config/~someone/config.lua",
+            "<root>/config/~someone/config/init.lua",
+            "/not-present/~someone/config.lua",
+            "",
+            "/other/~someone/config/~someone/config.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config/~someone/config.lua",
+            "<root>/config/~someone/config/init.lua",
+            "",
+            "/before/~someone/config.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config/exact"
+      ],
+      "base": "<root>/config/exact",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "module": "./exact",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": null,
+          "selected": "<root>/config///exact.lua"
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": null,
+          "selected": "<root>/config///exact.lua"
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": null,
+          "selected": "<root>/config///exact.lua"
+        }
+      ],
+      "selected": "<root>/config/exact",
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config/choice",
+        "<root>/config/choice.lua"
+      ],
+      "base": "<root>/config/choice",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "module": "./choice",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": null,
+          "selected": "<root>/config///choice.lua"
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": null,
+          "selected": "<root>/config///choice.lua"
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": null,
+          "selected": "<root>/config///choice.lua"
+        }
+      ],
+      "selected": "<root>/config/choice.lua",
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config/suffixed.lua"
+      ],
+      "base": "<root>/config/suffixed.lua",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "module": "./suffixed.lua",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///suffixed/lua.lua",
+            "<root>/config///suffixed/lua/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///suffixed/lua.lua",
+            "<root>/config///suffixed/lua/init.lua",
+            "/not-present///suffixed/lua.lua",
+            "",
+            "/other///suffixed/lua///suffixed/lua.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///suffixed/lua.lua",
+            "<root>/config///suffixed/lua/init.lua",
+            "",
+            "/before///suffixed/lua.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "selected": "<root>/config/suffixed.lua",
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config/directory",
+        "<root>/config/directory.lua",
+        "<root>/config/directory/init.lua"
+      ],
+      "base": "<root>/config/directory",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "module": "./directory",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": null,
+          "selected": "<root>/config///directory/init.lua"
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": null,
+          "selected": "<root>/config///directory/init.lua"
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": null,
+          "selected": "<root>/config///directory/init.lua"
+        }
+      ],
+      "selected": "<root>/config/directory/init.lua",
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config/missing",
+        "<root>/config/missing.lua",
+        "<root>/config/missing/init.lua"
+      ],
+      "base": "<root>/config/missing",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "module": "./missing",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///missing.lua",
+            "<root>/config///missing/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///missing.lua",
+            "<root>/config///missing/init.lua",
+            "/not-present///missing.lua",
+            "",
+            "/other///missing///missing.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///missing.lua",
+            "<root>/config///missing/init.lua",
+            "",
+            "/before///missing.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "selected": null,
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config/directory/",
+        "<root>/config/directory/.lua",
+        "<root>/config/directory/init.lua"
+      ],
+      "base": "<root>/config/directory/",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "module": "./directory/",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": null,
+          "selected": "<root>/config///directory//init.lua"
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": null,
+          "selected": "<root>/config///directory//init.lua"
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": null,
+          "selected": "<root>/config///directory//init.lua"
+        }
+      ],
+      "selected": "<root>/config/directory/init.lua",
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/shared",
+        "<root>/shared.lua"
+      ],
+      "base": "<root>/shared",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "module": "../shared",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config////shared.lua",
+            "<root>/config////shared/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config////shared.lua",
+            "<root>/config////shared/init.lua",
+            "/not-present////shared.lua",
+            "",
+            "/other////shared////shared.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config////shared.lua",
+            "<root>/config////shared/init.lua",
+            "",
+            "/before////shared.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "selected": "<root>/shared.lua",
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config/nested/../exact"
+      ],
+      "base": "<root>/config/nested/../exact",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "module": "./nested/../exact",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///nested////exact.lua",
+            "<root>/config///nested////exact/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///nested////exact.lua",
+            "<root>/config///nested////exact/init.lua",
+            "/not-present///nested////exact.lua",
+            "",
+            "/other///nested////exact///nested////exact.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///nested////exact.lua",
+            "<root>/config///nested////exact/init.lua",
+            "",
+            "/before///nested////exact.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "selected": "<root>/config/exact",
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config/nested//color.lua"
+      ],
+      "base": "<root>/config/nested//color.lua",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "module": "./nested//color.lua",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///nested//color/lua.lua",
+            "<root>/config///nested//color/lua/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///nested//color/lua.lua",
+            "<root>/config///nested//color/lua/init.lua",
+            "/not-present///nested//color/lua.lua",
+            "",
+            "/other///nested//color/lua///nested//color/lua.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///nested//color/lua.lua",
+            "<root>/config///nested//color/lua/init.lua",
+            "",
+            "/before///nested//color/lua.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "selected": "<root>/config/nested/color.lua",
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/home/theme",
+        "<root>/home/theme.lua"
+      ],
+      "base": "<root>/home/theme",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "module": "~/theme",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config/~/theme.lua",
+            "<root>/config/~/theme/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config/~/theme.lua",
+            "<root>/config/~/theme/init.lua",
+            "/not-present/~/theme.lua",
+            "",
+            "/other/~/theme/~/theme.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config/~/theme.lua",
+            "<root>/config/~/theme/init.lua",
+            "",
+            "/before/~/theme.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "selected": "<root>/home/theme.lua",
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/home/theme.lua"
+      ],
+      "base": "<root>/home/theme.lua",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "module": "~/theme.lua",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config/~/theme/lua.lua",
+            "<root>/config/~/theme/lua/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config/~/theme/lua.lua",
+            "<root>/config/~/theme/lua/init.lua",
+            "/not-present/~/theme/lua.lua",
+            "",
+            "/other/~/theme/lua/~/theme/lua.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config/~/theme/lua.lua",
+            "<root>/config/~/theme/lua/init.lua",
+            "",
+            "/before/~/theme/lua.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "selected": "<root>/home/theme.lua",
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config/parts",
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/aa.lua",
+        "<root>/config/parts/alias.lua",
+        "<root>/config/parts/b.lua",
+        "<root>/config/parts/broken.lua"
+      ],
+      "base": "<root>/config/parts/*.lua",
+      "error": null,
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "matches": [
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/aa.lua",
+        "<root>/config/parts/alias.lua",
+        "<root>/config/parts/b.lua"
+      ],
+      "module": "./parts/*.lua",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///parts/*/lua.lua",
+            "<root>/config///parts/*/lua/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///parts/*/lua.lua",
+            "<root>/config///parts/*/lua/init.lua",
+            "/not-present///parts/*/lua.lua",
+            "",
+            "/other///parts/*/lua///parts/*/lua.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///parts/*/lua.lua",
+            "<root>/config///parts/*/lua/init.lua",
+            "",
+            "/before///parts/*/lua.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/parts"
+      ],
+      "wildcard": true
+    },
+    {
+      "attempted": [
+        "<root>/config/parts",
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/aa.lua",
+        "<root>/config/parts/alias.lua",
+        "<root>/config/parts/b.lua",
+        "<root>/config/parts/broken.lua",
+        "<root>/config/parts/no-extension"
+      ],
+      "base": "<root>/config/parts/*",
+      "error": null,
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "matches": [
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/aa.lua",
+        "<root>/config/parts/alias.lua",
+        "<root>/config/parts/b.lua",
+        "<root>/config/parts/no-extension"
+      ],
+      "module": "./parts/*",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///parts/*.lua",
+            "<root>/config///parts/*/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///parts/*.lua",
+            "<root>/config///parts/*/init.lua",
+            "/not-present///parts/*.lua",
+            "",
+            "/other///parts/*///parts/*.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///parts/*.lua",
+            "<root>/config///parts/*/init.lua",
+            "",
+            "/before///parts/*.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/parts"
+      ],
+      "wildcard": true
+    },
+    {
+      "attempted": [
+        "<root>/config/parts",
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/b.lua"
+      ],
+      "base": "<root>/config/parts/?.lua",
+      "error": null,
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "matches": [
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/b.lua"
+      ],
+      "module": "./parts/?.lua",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///parts/?/lua.lua",
+            "<root>/config///parts/?/lua/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///parts/?/lua.lua",
+            "<root>/config///parts/?/lua/init.lua",
+            "/not-present///parts/?/lua.lua",
+            "",
+            "/other///parts/?/lua///parts/?/lua.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///parts/?/lua.lua",
+            "<root>/config///parts/?/lua/init.lua",
+            "",
+            "/before///parts/?/lua.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/parts"
+      ],
+      "wildcard": true
+    },
+    {
+      "attempted": [
+        "<root>/config/parts",
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/b.lua"
+      ],
+      "base": "<root>/config/parts/[ab].lua",
+      "error": null,
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "matches": [
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/b.lua"
+      ],
+      "module": "./parts/[ab].lua",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///parts/[ab]/lua.lua",
+            "<root>/config///parts/[ab]/lua/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///parts/[ab]/lua.lua",
+            "<root>/config///parts/[ab]/lua/init.lua",
+            "/not-present///parts/[ab]/lua.lua",
+            "",
+            "/other///parts/[ab]/lua///parts/[ab]/lua.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///parts/[ab]/lua.lua",
+            "<root>/config///parts/[ab]/lua/init.lua",
+            "",
+            "/before///parts/[ab]/lua.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/parts"
+      ],
+      "wildcard": true
+    },
+    {
+      "attempted": [
+        "<root>/config/empty"
+      ],
+      "base": "<root>/config/empty/*.lua",
+      "error": "found no match",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "matches": null,
+      "module": "./empty/*.lua",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///empty/*/lua.lua",
+            "<root>/config///empty/*/lua/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///empty/*/lua.lua",
+            "<root>/config///empty/*/lua/init.lua",
+            "/not-present///empty/*/lua.lua",
+            "",
+            "/other///empty/*/lua///empty/*/lua.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///empty/*/lua.lua",
+            "<root>/config///empty/*/lua/init.lua",
+            "",
+            "/before///empty/*/lua.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/empty"
+      ],
+      "wildcard": true
+    },
+    {
+      "attempted": [
+        "<root>/config/absent"
+      ],
+      "base": "<root>/config/absent/*.lua",
+      "error": "found no match",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "matches": null,
+      "module": "./absent/*.lua",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///absent/*/lua.lua",
+            "<root>/config///absent/*/lua/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///absent/*/lua.lua",
+            "<root>/config///absent/*/lua/init.lua",
+            "/not-present///absent/*/lua.lua",
+            "",
+            "/other///absent/*/lua///absent/*/lua.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///absent/*/lua.lua",
+            "<root>/config///absent/*/lua/init.lua",
+            "",
+            "/before///absent/*/lua.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "baseline",
+      "watched": [],
+      "wildcard": true
+    },
+    {
+      "attempted": [
+        "<root>/config/directories",
+        "<root>/config/directories/sub"
+      ],
+      "base": "<root>/config/directories/*",
+      "error": "found no regular file matches",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "matches": null,
+      "module": "./directories/*",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///directories/*.lua",
+            "<root>/config///directories/*/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///directories/*.lua",
+            "<root>/config///directories/*/init.lua",
+            "/not-present///directories/*.lua",
+            "",
+            "/other///directories/*///directories/*.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///directories/*.lua",
+            "<root>/config///directories/*/init.lua",
+            "",
+            "/before///directories/*.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/directories"
+      ],
+      "wildcard": true
+    },
+    {
+      "attempted": [
+        "<root>/config/parts/../parts",
+        "<root>/config/parts/../parts/a.lua",
+        "<root>/config/parts/../parts/aa.lua",
+        "<root>/config/parts/../parts/alias.lua",
+        "<root>/config/parts/../parts/b.lua",
+        "<root>/config/parts/../parts/broken.lua"
+      ],
+      "base": "<root>/config/parts/../parts/*.lua",
+      "error": null,
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "matches": [
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/aa.lua",
+        "<root>/config/parts/alias.lua",
+        "<root>/config/parts/b.lua"
+      ],
+      "module": "./parts/../parts/*.lua",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///parts////parts/*/lua.lua",
+            "<root>/config///parts////parts/*/lua/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///parts////parts/*/lua.lua",
+            "<root>/config///parts////parts/*/lua/init.lua",
+            "/not-present///parts////parts/*/lua.lua",
+            "",
+            "/other///parts////parts/*/lua///parts////parts/*/lua.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///parts////parts/*/lua.lua",
+            "<root>/config///parts////parts/*/lua/init.lua",
+            "",
+            "/before///parts////parts/*/lua.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/parts"
+      ],
+      "wildcard": true
+    },
+    {
+      "attempted": [
+        "<root>/config/link",
+        "<root>/config/link/a.lua",
+        "<root>/config/link/aa.lua",
+        "<root>/config/link/alias.lua",
+        "<root>/config/link/b.lua",
+        "<root>/config/link/broken.lua"
+      ],
+      "base": "<root>/config/link/*.lua",
+      "error": null,
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "matches": [
+        "<root>/config/link/a.lua",
+        "<root>/config/link/aa.lua",
+        "<root>/config/link/alias.lua",
+        "<root>/config/link/b.lua"
+      ],
+      "module": "./link/*.lua",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///link/*/lua.lua",
+            "<root>/config///link/*/lua/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///link/*/lua.lua",
+            "<root>/config///link/*/lua/init.lua",
+            "/not-present///link/*/lua.lua",
+            "",
+            "/other///link/*/lua///link/*/lua.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///link/*/lua.lua",
+            "<root>/config///link/*/lua/init.lua",
+            "",
+            "/before///link/*/lua.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/link"
+      ],
+      "wildcard": true
+    },
+    {
+      "attempted": [
+        "<root>/config/escape/../target.lua"
+      ],
+      "base": "<root>/config/escape/../target.lua",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "module": "./escape/../target.lua",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///escape////target/lua.lua",
+            "<root>/config///escape////target/lua/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///escape////target/lua.lua",
+            "<root>/config///escape////target/lua/init.lua",
+            "/not-present///escape////target/lua.lua",
+            "",
+            "/other///escape////target/lua///escape////target/lua.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///escape////target/lua.lua",
+            "<root>/config///escape////target/lua/init.lua",
+            "",
+            "/before///escape////target/lua.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "selected": "<root>/config/target.lua",
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config/parts"
+      ],
+      "base": "<root>/config/parts/[",
+      "error": "found no match",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "matches": null,
+      "module": "./parts/[",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///parts/[.lua",
+            "<root>/config///parts/[/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///parts/[.lua",
+            "<root>/config///parts/[/init.lua",
+            "/not-present///parts/[.lua",
+            "",
+            "/other///parts/[///parts/[.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///parts/[.lua",
+            "<root>/config///parts/[/init.lua",
+            "",
+            "/before///parts/[.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/parts"
+      ],
+      "wildcard": true
+    },
+    {
+      "attempted": [
+        "<root>/config/parts/.hidden.lua"
+      ],
+      "base": "<root>/config/parts/.hidden.lua",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "module": "./parts/.hidden.lua",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///parts//hidden/lua.lua",
+            "<root>/config///parts//hidden/lua/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///parts//hidden/lua.lua",
+            "<root>/config///parts//hidden/lua/init.lua",
+            "/not-present///parts//hidden/lua.lua",
+            "",
+            "/other///parts//hidden/lua///parts//hidden/lua.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///parts//hidden/lua.lua",
+            "<root>/config///parts//hidden/lua/init.lua",
+            "",
+            "/before///parts//hidden/lua.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "selected": "<root>/config/parts/.hidden.lua",
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/shared",
+        "<root>/shared.lua"
+      ],
+      "base": "<root>/shared",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "module": "<root>/shared",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config/<root>/shared.lua",
+            "<root>/config/<root>/shared/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config/<root>/shared.lua",
+            "<root>/config/<root>/shared/init.lua",
+            "/not-present/<root>/shared.lua",
+            "",
+            "/other/<root>/shared/<root>/shared.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config/<root>/shared.lua",
+            "<root>/config/<root>/shared/init.lua",
+            "",
+            "/before/<root>/shared.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "selected": "<root>/shared.lua",
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config/parts",
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/aa.lua",
+        "<root>/config/parts/alias.lua",
+        "<root>/config/parts/b.lua",
+        "<root>/config/parts/broken.lua"
+      ],
+      "base": "<root>/config/parts/*.lua",
+      "error": null,
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "matches": [
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/aa.lua",
+        "<root>/config/parts/alias.lua",
+        "<root>/config/parts/b.lua"
+      ],
+      "module": "<root>/config/parts/*.lua",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config/<root>/config/parts/*/lua.lua",
+            "<root>/config/<root>/config/parts/*/lua/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config/<root>/config/parts/*/lua.lua",
+            "<root>/config/<root>/config/parts/*/lua/init.lua",
+            "/not-present/<root>/config/parts/*/lua.lua",
+            "",
+            "/other/<root>/config/parts/*/lua/<root>/config/parts/*/lua.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config/<root>/config/parts/*/lua.lua",
+            "<root>/config/<root>/config/parts/*/lua/init.lua",
+            "",
+            "/before/<root>/config/parts/*/lua.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "baseline",
+      "watched": [
+        "<root>/config/parts"
+      ],
+      "wildcard": true
+    },
+    {
+      "attempted": [],
+      "explicit": false,
+      "main": "<root>/config//hyprland.lua",
+      "module": "theme",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config/theme.lua",
+            "<root>/config/theme/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config/theme.lua",
+            "<root>/config/theme/init.lua",
+            "/not-present/theme.lua",
+            "",
+            "/other/theme/theme.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config/theme.lua",
+            "<root>/config/theme/init.lua",
+            "",
+            "/before/theme.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config//exact"
+      ],
+      "base": "<root>/config//exact",
+      "explicit": true,
+      "main": "<root>/config//hyprland.lua",
+      "module": "./exact",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": null,
+          "selected": "<root>/config///exact.lua"
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": null,
+          "selected": "<root>/config///exact.lua"
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": null,
+          "selected": "<root>/config///exact.lua"
+        }
+      ],
+      "selected": "<root>/config/exact",
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [],
+      "explicit": false,
+      "main": "<root>/config/./hyprland.lua",
+      "module": "theme",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config/./theme.lua",
+            "<root>/config/./theme/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config/./theme.lua",
+            "<root>/config/./theme/init.lua",
+            "/not-present/theme.lua",
+            "",
+            "/other/theme/theme.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config/./theme.lua",
+            "<root>/config/./theme/init.lua",
+            "",
+            "/before/theme.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config/./exact"
+      ],
+      "base": "<root>/config/./exact",
+      "explicit": true,
+      "main": "<root>/config/./hyprland.lua",
+      "module": "./exact",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": null,
+          "selected": "<root>/config/.///exact.lua"
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": null,
+          "selected": "<root>/config/.///exact.lua"
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": null,
+          "selected": "<root>/config/.///exact.lua"
+        }
+      ],
+      "selected": "<root>/config/exact",
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [],
+      "explicit": false,
+      "main": "<root>/config/nested/../hyprland.lua",
+      "module": "theme",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config/nested/../theme.lua",
+            "<root>/config/nested/../theme/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config/nested/../theme.lua",
+            "<root>/config/nested/../theme/init.lua",
+            "/not-present/theme.lua",
+            "",
+            "/other/theme/theme.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config/nested/../theme.lua",
+            "<root>/config/nested/../theme/init.lua",
+            "",
+            "/before/theme.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config/nested/../exact"
+      ],
+      "base": "<root>/config/nested/../exact",
+      "explicit": true,
+      "main": "<root>/config/nested/../hyprland.lua",
+      "module": "./exact",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": null,
+          "selected": "<root>/config/nested/..///exact.lua"
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": null,
+          "selected": "<root>/config/nested/..///exact.lua"
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": null,
+          "selected": "<root>/config/nested/..///exact.lua"
+        }
+      ],
+      "selected": "<root>/config/exact",
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [],
+      "explicit": false,
+      "main": "<root>/main.lua",
+      "module": "theme",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/theme.lua",
+            "<root>/theme/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/theme.lua",
+            "<root>/theme/init.lua",
+            "/not-present/theme.lua",
+            "",
+            "/other/theme/theme.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/theme.lua",
+            "<root>/theme/init.lua",
+            "",
+            "/before/theme.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/exact",
+        "<root>/exact.lua",
+        "<root>/exact/init.lua"
+      ],
+      "base": "<root>/exact",
+      "explicit": true,
+      "main": "<root>/main.lua",
+      "module": "./exact",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>///exact.lua",
+            "<root>///exact/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>///exact.lua",
+            "<root>///exact/init.lua",
+            "/not-present///exact.lua",
+            "",
+            "/other///exact///exact.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>///exact.lua",
+            "<root>///exact/init.lua",
+            "",
+            "/before///exact.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "selected": null,
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [],
+      "explicit": false,
+      "main": "<root>/config/nested//../hyprland.lua",
+      "module": "theme",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config/nested//../theme.lua",
+            "<root>/config/nested//../theme/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config/nested//../theme.lua",
+            "<root>/config/nested//../theme/init.lua",
+            "/not-present/theme.lua",
+            "",
+            "/other/theme/theme.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config/nested//../theme.lua",
+            "<root>/config/nested//../theme/init.lua",
+            "",
+            "/before/theme.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config/nested//../exact"
+      ],
+      "base": "<root>/config/nested//../exact",
+      "explicit": true,
+      "main": "<root>/config/nested//../hyprland.lua",
+      "module": "./exact",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": null,
+          "selected": "<root>/config/nested//..///exact.lua"
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": null,
+          "selected": "<root>/config/nested//..///exact.lua"
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": null,
+          "selected": "<root>/config/nested//..///exact.lua"
+        }
+      ],
+      "selected": "<root>/config/exact",
+      "version": "baseline",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [],
+      "explicit": false,
+      "main": "<root>/config/hyprland.lua",
+      "module": "colors",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config/colors.lua",
+            "<root>/config/colors/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config/colors.lua",
+            "<root>/config/colors/init.lua",
+            "/not-present/colors.lua",
+            "",
+            "/other/colors/colors.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config/colors.lua",
+            "<root>/config/colors/init.lua",
+            "",
+            "/before/colors.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [],
+      "explicit": false,
+      "main": "<root>/config/hyprland.lua",
+      "module": "colors.lua",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config/colors/lua.lua",
+            "<root>/config/colors/lua/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config/colors/lua.lua",
+            "<root>/config/colors/lua/init.lua",
+            "/not-present/colors/lua.lua",
+            "",
+            "/other/colors/lua/colors/lua.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config/colors/lua.lua",
+            "<root>/config/colors/lua/init.lua",
+            "",
+            "/before/colors/lua.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [],
+      "explicit": false,
+      "main": "<root>/config/hyprland.lua",
+      "module": "colors.theme",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config/colors/theme.lua",
+            "<root>/config/colors/theme/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config/colors/theme.lua",
+            "<root>/config/colors/theme/init.lua",
+            "/not-present/colors/theme.lua",
+            "",
+            "/other/colors/theme/colors/theme.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config/colors/theme.lua",
+            "<root>/config/colors/theme/init.lua",
+            "",
+            "/before/colors/theme.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [],
+      "explicit": false,
+      "main": "<root>/config/hyprland.lua",
+      "module": "nested/colors",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config/nested/colors.lua",
+            "<root>/config/nested/colors/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config/nested/colors.lua",
+            "<root>/config/nested/colors/init.lua",
+            "/not-present/nested/colors.lua",
+            "",
+            "/other/nested/colors/nested/colors.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config/nested/colors.lua",
+            "<root>/config/nested/colors/init.lua",
+            "",
+            "/before/nested/colors.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [],
+      "explicit": false,
+      "main": "<root>/config/hyprland.lua",
+      "module": "",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config/.lua",
+            "<root>/config//init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config/.lua",
+            "<root>/config//init.lua",
+            "/not-present/.lua",
+            "",
+            "/other//.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config/.lua",
+            "<root>/config//init.lua",
+            "",
+            "/before/.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [],
+      "explicit": false,
+      "main": "<root>/config/hyprland.lua",
+      "module": ".",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config//.lua",
+            "<root>/config///init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config//.lua",
+            "<root>/config///init.lua",
+            "/not-present//.lua",
+            "",
+            "/other////.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config//.lua",
+            "<root>/config///init.lua",
+            "",
+            "/before//.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [],
+      "explicit": false,
+      "main": "<root>/config/hyprland.lua",
+      "module": "..",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///.lua",
+            "<root>/config////init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///.lua",
+            "<root>/config////init.lua",
+            "/not-present///.lua",
+            "",
+            "/other//////.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///.lua",
+            "<root>/config////init.lua",
+            "",
+            "/before///.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [],
+      "explicit": false,
+      "main": "<root>/config/hyprland.lua",
+      "module": "~someone/config",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config/~someone/config.lua",
+            "<root>/config/~someone/config/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config/~someone/config.lua",
+            "<root>/config/~someone/config/init.lua",
+            "/not-present/~someone/config.lua",
+            "",
+            "/other/~someone/config/~someone/config.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config/~someone/config.lua",
+            "<root>/config/~someone/config/init.lua",
+            "",
+            "/before/~someone/config.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config/exact"
+      ],
+      "base": "<root>/config/exact",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "module": "./exact",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": null,
+          "selected": "<root>/config///exact.lua"
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": null,
+          "selected": "<root>/config///exact.lua"
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": null,
+          "selected": "<root>/config///exact.lua"
+        }
+      ],
+      "selected": "<root>/config/exact",
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config/choice",
+        "<root>/config/choice.lua"
+      ],
+      "base": "<root>/config/choice",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "module": "./choice",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": null,
+          "selected": "<root>/config///choice.lua"
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": null,
+          "selected": "<root>/config///choice.lua"
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": null,
+          "selected": "<root>/config///choice.lua"
+        }
+      ],
+      "selected": "<root>/config/choice.lua",
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config/suffixed.lua"
+      ],
+      "base": "<root>/config/suffixed.lua",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "module": "./suffixed.lua",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///suffixed/lua.lua",
+            "<root>/config///suffixed/lua/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///suffixed/lua.lua",
+            "<root>/config///suffixed/lua/init.lua",
+            "/not-present///suffixed/lua.lua",
+            "",
+            "/other///suffixed/lua///suffixed/lua.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///suffixed/lua.lua",
+            "<root>/config///suffixed/lua/init.lua",
+            "",
+            "/before///suffixed/lua.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "selected": "<root>/config/suffixed.lua",
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config/directory",
+        "<root>/config/directory.lua",
+        "<root>/config/directory/init.lua"
+      ],
+      "base": "<root>/config/directory",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "module": "./directory",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": null,
+          "selected": "<root>/config///directory/init.lua"
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": null,
+          "selected": "<root>/config///directory/init.lua"
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": null,
+          "selected": "<root>/config///directory/init.lua"
+        }
+      ],
+      "selected": "<root>/config/directory/init.lua",
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config/missing",
+        "<root>/config/missing.lua",
+        "<root>/config/missing/init.lua"
+      ],
+      "base": "<root>/config/missing",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "module": "./missing",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///missing.lua",
+            "<root>/config///missing/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///missing.lua",
+            "<root>/config///missing/init.lua",
+            "/not-present///missing.lua",
+            "",
+            "/other///missing///missing.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///missing.lua",
+            "<root>/config///missing/init.lua",
+            "",
+            "/before///missing.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "selected": null,
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config/directory/",
+        "<root>/config/directory/.lua",
+        "<root>/config/directory/init.lua"
+      ],
+      "base": "<root>/config/directory/",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "module": "./directory/",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": null,
+          "selected": "<root>/config///directory//init.lua"
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": null,
+          "selected": "<root>/config///directory//init.lua"
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": null,
+          "selected": "<root>/config///directory//init.lua"
+        }
+      ],
+      "selected": "<root>/config/directory/init.lua",
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/shared",
+        "<root>/shared.lua"
+      ],
+      "base": "<root>/shared",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "module": "../shared",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config////shared.lua",
+            "<root>/config////shared/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config////shared.lua",
+            "<root>/config////shared/init.lua",
+            "/not-present////shared.lua",
+            "",
+            "/other////shared////shared.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config////shared.lua",
+            "<root>/config////shared/init.lua",
+            "",
+            "/before////shared.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "selected": "<root>/shared.lua",
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config/nested/../exact"
+      ],
+      "base": "<root>/config/nested/../exact",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "module": "./nested/../exact",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///nested////exact.lua",
+            "<root>/config///nested////exact/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///nested////exact.lua",
+            "<root>/config///nested////exact/init.lua",
+            "/not-present///nested////exact.lua",
+            "",
+            "/other///nested////exact///nested////exact.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///nested////exact.lua",
+            "<root>/config///nested////exact/init.lua",
+            "",
+            "/before///nested////exact.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "selected": "<root>/config/exact",
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config/nested//color.lua"
+      ],
+      "base": "<root>/config/nested//color.lua",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "module": "./nested//color.lua",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///nested//color/lua.lua",
+            "<root>/config///nested//color/lua/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///nested//color/lua.lua",
+            "<root>/config///nested//color/lua/init.lua",
+            "/not-present///nested//color/lua.lua",
+            "",
+            "/other///nested//color/lua///nested//color/lua.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///nested//color/lua.lua",
+            "<root>/config///nested//color/lua/init.lua",
+            "",
+            "/before///nested//color/lua.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "selected": "<root>/config/nested/color.lua",
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/home/theme",
+        "<root>/home/theme.lua"
+      ],
+      "base": "<root>/home/theme",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "module": "~/theme",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config/~/theme.lua",
+            "<root>/config/~/theme/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config/~/theme.lua",
+            "<root>/config/~/theme/init.lua",
+            "/not-present/~/theme.lua",
+            "",
+            "/other/~/theme/~/theme.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config/~/theme.lua",
+            "<root>/config/~/theme/init.lua",
+            "",
+            "/before/~/theme.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "selected": "<root>/home/theme.lua",
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/home/theme.lua"
+      ],
+      "base": "<root>/home/theme.lua",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "module": "~/theme.lua",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config/~/theme/lua.lua",
+            "<root>/config/~/theme/lua/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config/~/theme/lua.lua",
+            "<root>/config/~/theme/lua/init.lua",
+            "/not-present/~/theme/lua.lua",
+            "",
+            "/other/~/theme/lua/~/theme/lua.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config/~/theme/lua.lua",
+            "<root>/config/~/theme/lua/init.lua",
+            "",
+            "/before/~/theme/lua.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "selected": "<root>/home/theme.lua",
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config/parts",
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/aa.lua",
+        "<root>/config/parts/alias.lua",
+        "<root>/config/parts/b.lua",
+        "<root>/config/parts/broken.lua"
+      ],
+      "base": "<root>/config/parts/*.lua",
+      "error": null,
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "matches": [
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/aa.lua",
+        "<root>/config/parts/alias.lua",
+        "<root>/config/parts/b.lua"
+      ],
+      "module": "./parts/*.lua",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///parts/*/lua.lua",
+            "<root>/config///parts/*/lua/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///parts/*/lua.lua",
+            "<root>/config///parts/*/lua/init.lua",
+            "/not-present///parts/*/lua.lua",
+            "",
+            "/other///parts/*/lua///parts/*/lua.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///parts/*/lua.lua",
+            "<root>/config///parts/*/lua/init.lua",
+            "",
+            "/before///parts/*/lua.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/parts"
+      ],
+      "wildcard": true
+    },
+    {
+      "attempted": [
+        "<root>/config/parts",
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/aa.lua",
+        "<root>/config/parts/alias.lua",
+        "<root>/config/parts/b.lua",
+        "<root>/config/parts/broken.lua",
+        "<root>/config/parts/no-extension"
+      ],
+      "base": "<root>/config/parts/*",
+      "error": null,
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "matches": [
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/aa.lua",
+        "<root>/config/parts/alias.lua",
+        "<root>/config/parts/b.lua",
+        "<root>/config/parts/no-extension"
+      ],
+      "module": "./parts/*",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///parts/*.lua",
+            "<root>/config///parts/*/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///parts/*.lua",
+            "<root>/config///parts/*/init.lua",
+            "/not-present///parts/*.lua",
+            "",
+            "/other///parts/*///parts/*.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///parts/*.lua",
+            "<root>/config///parts/*/init.lua",
+            "",
+            "/before///parts/*.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/parts"
+      ],
+      "wildcard": true
+    },
+    {
+      "attempted": [
+        "<root>/config/parts",
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/b.lua"
+      ],
+      "base": "<root>/config/parts/?.lua",
+      "error": null,
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "matches": [
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/b.lua"
+      ],
+      "module": "./parts/?.lua",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///parts/?/lua.lua",
+            "<root>/config///parts/?/lua/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///parts/?/lua.lua",
+            "<root>/config///parts/?/lua/init.lua",
+            "/not-present///parts/?/lua.lua",
+            "",
+            "/other///parts/?/lua///parts/?/lua.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///parts/?/lua.lua",
+            "<root>/config///parts/?/lua/init.lua",
+            "",
+            "/before///parts/?/lua.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/parts"
+      ],
+      "wildcard": true
+    },
+    {
+      "attempted": [
+        "<root>/config/parts",
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/b.lua"
+      ],
+      "base": "<root>/config/parts/[ab].lua",
+      "error": null,
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "matches": [
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/b.lua"
+      ],
+      "module": "./parts/[ab].lua",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///parts/[ab]/lua.lua",
+            "<root>/config///parts/[ab]/lua/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///parts/[ab]/lua.lua",
+            "<root>/config///parts/[ab]/lua/init.lua",
+            "/not-present///parts/[ab]/lua.lua",
+            "",
+            "/other///parts/[ab]/lua///parts/[ab]/lua.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///parts/[ab]/lua.lua",
+            "<root>/config///parts/[ab]/lua/init.lua",
+            "",
+            "/before///parts/[ab]/lua.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/parts"
+      ],
+      "wildcard": true
+    },
+    {
+      "attempted": [
+        "<root>/config/empty"
+      ],
+      "base": "<root>/config/empty/*.lua",
+      "error": "found no match",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "matches": null,
+      "module": "./empty/*.lua",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///empty/*/lua.lua",
+            "<root>/config///empty/*/lua/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///empty/*/lua.lua",
+            "<root>/config///empty/*/lua/init.lua",
+            "/not-present///empty/*/lua.lua",
+            "",
+            "/other///empty/*/lua///empty/*/lua.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///empty/*/lua.lua",
+            "<root>/config///empty/*/lua/init.lua",
+            "",
+            "/before///empty/*/lua.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/empty"
+      ],
+      "wildcard": true
+    },
+    {
+      "attempted": [
+        "<root>/config/absent"
+      ],
+      "base": "<root>/config/absent/*.lua",
+      "error": "found no match",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "matches": null,
+      "module": "./absent/*.lua",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///absent/*/lua.lua",
+            "<root>/config///absent/*/lua/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///absent/*/lua.lua",
+            "<root>/config///absent/*/lua/init.lua",
+            "/not-present///absent/*/lua.lua",
+            "",
+            "/other///absent/*/lua///absent/*/lua.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///absent/*/lua.lua",
+            "<root>/config///absent/*/lua/init.lua",
+            "",
+            "/before///absent/*/lua.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "current",
+      "watched": [],
+      "wildcard": true
+    },
+    {
+      "attempted": [
+        "<root>/config/directories",
+        "<root>/config/directories/sub"
+      ],
+      "base": "<root>/config/directories/*",
+      "error": "found no regular file matches",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "matches": null,
+      "module": "./directories/*",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///directories/*.lua",
+            "<root>/config///directories/*/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///directories/*.lua",
+            "<root>/config///directories/*/init.lua",
+            "/not-present///directories/*.lua",
+            "",
+            "/other///directories/*///directories/*.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///directories/*.lua",
+            "<root>/config///directories/*/init.lua",
+            "",
+            "/before///directories/*.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/directories"
+      ],
+      "wildcard": true
+    },
+    {
+      "attempted": [
+        "<root>/config/parts/../parts",
+        "<root>/config/parts/../parts/a.lua",
+        "<root>/config/parts/../parts/aa.lua",
+        "<root>/config/parts/../parts/alias.lua",
+        "<root>/config/parts/../parts/b.lua",
+        "<root>/config/parts/../parts/broken.lua"
+      ],
+      "base": "<root>/config/parts/../parts/*.lua",
+      "error": null,
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "matches": [
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/aa.lua",
+        "<root>/config/parts/alias.lua",
+        "<root>/config/parts/b.lua"
+      ],
+      "module": "./parts/../parts/*.lua",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///parts////parts/*/lua.lua",
+            "<root>/config///parts////parts/*/lua/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///parts////parts/*/lua.lua",
+            "<root>/config///parts////parts/*/lua/init.lua",
+            "/not-present///parts////parts/*/lua.lua",
+            "",
+            "/other///parts////parts/*/lua///parts////parts/*/lua.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///parts////parts/*/lua.lua",
+            "<root>/config///parts////parts/*/lua/init.lua",
+            "",
+            "/before///parts////parts/*/lua.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/parts"
+      ],
+      "wildcard": true
+    },
+    {
+      "attempted": [
+        "<root>/config/link",
+        "<root>/config/link/a.lua",
+        "<root>/config/link/aa.lua",
+        "<root>/config/link/alias.lua",
+        "<root>/config/link/b.lua",
+        "<root>/config/link/broken.lua"
+      ],
+      "base": "<root>/config/link/*.lua",
+      "error": null,
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "matches": [
+        "<root>/config/link/a.lua",
+        "<root>/config/link/aa.lua",
+        "<root>/config/link/alias.lua",
+        "<root>/config/link/b.lua"
+      ],
+      "module": "./link/*.lua",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///link/*/lua.lua",
+            "<root>/config///link/*/lua/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///link/*/lua.lua",
+            "<root>/config///link/*/lua/init.lua",
+            "/not-present///link/*/lua.lua",
+            "",
+            "/other///link/*/lua///link/*/lua.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///link/*/lua.lua",
+            "<root>/config///link/*/lua/init.lua",
+            "",
+            "/before///link/*/lua.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/link"
+      ],
+      "wildcard": true
+    },
+    {
+      "attempted": [
+        "<root>/config/escape/../target.lua"
+      ],
+      "base": "<root>/config/escape/../target.lua",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "module": "./escape/../target.lua",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///escape////target/lua.lua",
+            "<root>/config///escape////target/lua/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///escape////target/lua.lua",
+            "<root>/config///escape////target/lua/init.lua",
+            "/not-present///escape////target/lua.lua",
+            "",
+            "/other///escape////target/lua///escape////target/lua.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///escape////target/lua.lua",
+            "<root>/config///escape////target/lua/init.lua",
+            "",
+            "/before///escape////target/lua.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "selected": "<root>/config/target.lua",
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config/parts"
+      ],
+      "base": "<root>/config/parts/[",
+      "error": "found no match",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "matches": null,
+      "module": "./parts/[",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///parts/[.lua",
+            "<root>/config///parts/[/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///parts/[.lua",
+            "<root>/config///parts/[/init.lua",
+            "/not-present///parts/[.lua",
+            "",
+            "/other///parts/[///parts/[.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///parts/[.lua",
+            "<root>/config///parts/[/init.lua",
+            "",
+            "/before///parts/[.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/parts"
+      ],
+      "wildcard": true
+    },
+    {
+      "attempted": [
+        "<root>/config/parts/.hidden.lua"
+      ],
+      "base": "<root>/config/parts/.hidden.lua",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "module": "./parts/.hidden.lua",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config///parts//hidden/lua.lua",
+            "<root>/config///parts//hidden/lua/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config///parts//hidden/lua.lua",
+            "<root>/config///parts//hidden/lua/init.lua",
+            "/not-present///parts//hidden/lua.lua",
+            "",
+            "/other///parts//hidden/lua///parts//hidden/lua.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config///parts//hidden/lua.lua",
+            "<root>/config///parts//hidden/lua/init.lua",
+            "",
+            "/before///parts//hidden/lua.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "selected": "<root>/config/parts/.hidden.lua",
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/shared",
+        "<root>/shared.lua"
+      ],
+      "base": "<root>/shared",
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "module": "<root>/shared",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config/<root>/shared.lua",
+            "<root>/config/<root>/shared/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config/<root>/shared.lua",
+            "<root>/config/<root>/shared/init.lua",
+            "/not-present/<root>/shared.lua",
+            "",
+            "/other/<root>/shared/<root>/shared.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config/<root>/shared.lua",
+            "<root>/config/<root>/shared/init.lua",
+            "",
+            "/before/<root>/shared.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "selected": "<root>/shared.lua",
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config/parts",
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/aa.lua",
+        "<root>/config/parts/alias.lua",
+        "<root>/config/parts/b.lua",
+        "<root>/config/parts/broken.lua"
+      ],
+      "base": "<root>/config/parts/*.lua",
+      "error": null,
+      "explicit": true,
+      "main": "<root>/config/hyprland.lua",
+      "matches": [
+        "<root>/config/parts/a.lua",
+        "<root>/config/parts/aa.lua",
+        "<root>/config/parts/alias.lua",
+        "<root>/config/parts/b.lua"
+      ],
+      "module": "<root>/config/parts/*.lua",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config/<root>/config/parts/*/lua.lua",
+            "<root>/config/<root>/config/parts/*/lua/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config/<root>/config/parts/*/lua.lua",
+            "<root>/config/<root>/config/parts/*/lua/init.lua",
+            "/not-present/<root>/config/parts/*/lua.lua",
+            "",
+            "/other/<root>/config/parts/*/lua/<root>/config/parts/*/lua.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config/<root>/config/parts/*/lua.lua",
+            "<root>/config/<root>/config/parts/*/lua/init.lua",
+            "",
+            "/before/<root>/config/parts/*/lua.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "current",
+      "watched": [
+        "<root>/config/parts"
+      ],
+      "wildcard": true
+    },
+    {
+      "attempted": [],
+      "explicit": false,
+      "main": "<root>/config//hyprland.lua",
+      "module": "theme",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config/theme.lua",
+            "<root>/config/theme/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config/theme.lua",
+            "<root>/config/theme/init.lua",
+            "/not-present/theme.lua",
+            "",
+            "/other/theme/theme.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config/theme.lua",
+            "<root>/config/theme/init.lua",
+            "",
+            "/before/theme.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config//exact"
+      ],
+      "base": "<root>/config//exact",
+      "explicit": true,
+      "main": "<root>/config//hyprland.lua",
+      "module": "./exact",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": null,
+          "selected": "<root>/config///exact.lua"
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": null,
+          "selected": "<root>/config///exact.lua"
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": null,
+          "selected": "<root>/config///exact.lua"
+        }
+      ],
+      "selected": "<root>/config/exact",
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [],
+      "explicit": false,
+      "main": "<root>/config/./hyprland.lua",
+      "module": "theme",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config/./theme.lua",
+            "<root>/config/./theme/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config/./theme.lua",
+            "<root>/config/./theme/init.lua",
+            "/not-present/theme.lua",
+            "",
+            "/other/theme/theme.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config/./theme.lua",
+            "<root>/config/./theme/init.lua",
+            "",
+            "/before/theme.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config/./exact"
+      ],
+      "base": "<root>/config/./exact",
+      "explicit": true,
+      "main": "<root>/config/./hyprland.lua",
+      "module": "./exact",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": null,
+          "selected": "<root>/config/.///exact.lua"
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": null,
+          "selected": "<root>/config/.///exact.lua"
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": null,
+          "selected": "<root>/config/.///exact.lua"
+        }
+      ],
+      "selected": "<root>/config/exact",
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [],
+      "explicit": false,
+      "main": "<root>/config/nested/../hyprland.lua",
+      "module": "theme",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config/nested/../theme.lua",
+            "<root>/config/nested/../theme/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config/nested/../theme.lua",
+            "<root>/config/nested/../theme/init.lua",
+            "/not-present/theme.lua",
+            "",
+            "/other/theme/theme.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config/nested/../theme.lua",
+            "<root>/config/nested/../theme/init.lua",
+            "",
+            "/before/theme.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config/nested/../exact"
+      ],
+      "base": "<root>/config/nested/../exact",
+      "explicit": true,
+      "main": "<root>/config/nested/../hyprland.lua",
+      "module": "./exact",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": null,
+          "selected": "<root>/config/nested/..///exact.lua"
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": null,
+          "selected": "<root>/config/nested/..///exact.lua"
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": null,
+          "selected": "<root>/config/nested/..///exact.lua"
+        }
+      ],
+      "selected": "<root>/config/exact",
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [],
+      "explicit": false,
+      "main": "<root>/main.lua",
+      "module": "theme",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/theme.lua",
+            "<root>/theme/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/theme.lua",
+            "<root>/theme/init.lua",
+            "/not-present/theme.lua",
+            "",
+            "/other/theme/theme.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/theme.lua",
+            "<root>/theme/init.lua",
+            "",
+            "/before/theme.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/exact",
+        "<root>/exact.lua",
+        "<root>/exact/init.lua"
+      ],
+      "base": "<root>/exact",
+      "explicit": true,
+      "main": "<root>/main.lua",
+      "module": "./exact",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>///exact.lua",
+            "<root>///exact/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>///exact.lua",
+            "<root>///exact/init.lua",
+            "/not-present///exact.lua",
+            "",
+            "/other///exact///exact.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>///exact.lua",
+            "<root>///exact/init.lua",
+            "",
+            "/before///exact.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "selected": null,
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [],
+      "explicit": false,
+      "main": "<root>/config/nested//../hyprland.lua",
+      "module": "theme",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": [
+            "<root>/config/nested//../theme.lua",
+            "<root>/config/nested//../theme/init.lua"
+          ],
+          "selected": null
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": [
+            "<root>/config/nested//../theme.lua",
+            "<root>/config/nested//../theme/init.lua",
+            "/not-present/theme.lua",
+            "",
+            "/other/theme/theme.lua",
+            ""
+          ],
+          "selected": null
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": [
+            "<root>/config/nested//../theme.lua",
+            "<root>/config/nested//../theme/init.lua",
+            "",
+            "/before/theme.lua"
+          ],
+          "selected": null
+        }
+      ],
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    },
+    {
+      "attempted": [
+        "<root>/config/nested//../exact"
+      ],
+      "base": "<root>/config/nested//../exact",
+      "explicit": true,
+      "main": "<root>/config/nested//../hyprland.lua",
+      "module": "./exact",
+      "search_cases": [
+        {
+          "inherited": "",
+          "missing_candidates": null,
+          "selected": "<root>/config/nested//..///exact.lua"
+        },
+        {
+          "inherited": "/not-present/?.lua;;/other/?/?.lua;",
+          "missing_candidates": null,
+          "selected": "<root>/config/nested//..///exact.lua"
+        },
+        {
+          "inherited": ";/before/?.lua",
+          "missing_candidates": null,
+          "selected": "<root>/config/nested//..///exact.lua"
+        }
+      ],
+      "selected": "<root>/config/exact",
+      "version": "current",
+      "watched": [],
+      "wildcard": false
+    }
+  ],
+  "format": "hye-module-path-fixtures-1",
+  "meaning": "Actual explicit-path/candidate/glob/watcher-prefix functions and absolutePath helper over private regular files, directories and symlinks. A minimal ConfigManager supplies only main path and tracked-path storage. A status adapter records queries and forwards to the original filesystem status implementation. Actual Lua 5.4 package.searchpath is queried directly through its C API with private candidate paths; no config Lua is executed. No package cache/custom-searcher, file-race, authorization, watcher-delivery or compositor certificate."
+}

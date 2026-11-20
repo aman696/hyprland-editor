@@ -248,6 +248,7 @@ impl Callbacks {
 )]
 pub enum GestureAction {
     Builtin(String),
+    NativeDispatcher { name: String, argument: String },
     Callbacks(Callbacks),
     LegacyFinish(Workflow),
 }
@@ -255,6 +256,8 @@ pub enum GestureAction {
 #[serde(deny_unknown_fields)]
 pub struct Spec {
     pub id: String,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub legacy: bool,
     pub fingers: Value,
     pub direction: String,
     pub action: GestureAction,
@@ -269,6 +272,7 @@ impl Spec {
     pub fn new(id: &str) -> Self {
         Self {
             id: id.into(),
+            legacy: false,
             fingers: Value::Int(3),
             direction: "horizontal".into(),
             action: GestureAction::Builtin("workspace".into()),
@@ -292,6 +296,9 @@ impl Spec {
                 .all(|c| c.is_ascii_alphanumeric() || c == b'-' || c == b'_')
         {
             return Err("Invalid gesture declaration identity".into());
+        }
+        if self.legacy {
+            return crate::legacy_gesture::validate_spec(self, version);
         }
         let Value::Int(fingers) = self.fingers else {
             return Err(
@@ -330,6 +337,9 @@ impl Spec {
         }
         match &self.action {
             GestureAction::Builtin(name) if BUILTINS.contains(&name.as_str()) => {}
+            GestureAction::NativeDispatcher { .. } => {
+                return Err("Native dispatcher gestures require captured native provenance".into())
+            }
             GestureAction::Builtin(_) => {
                 return Err("Gesture action is outside the pinned built-ins".into())
             }
@@ -354,13 +364,19 @@ impl Spec {
             fingers: fingers as u8,
             direction: Direction::parse(&self.direction)?,
             modifiers: modifier_mask(self.mods.as_ref())?,
-            scale_bits: (self
-                .scale
-                .as_ref()
-                .map(|v| animation::number(v, true))
-                .transpose()?
-                .unwrap_or(1.) as f32)
-                .to_bits(),
+            scale_bits: {
+                let scale = self
+                    .scale
+                    .as_ref()
+                    .map(|v| animation::number(v, true))
+                    .transpose()?
+                    .unwrap_or(1.) as f32;
+                if self.legacy {
+                    scale.clamp(0.1, 10.).to_bits()
+                } else {
+                    scale.to_bits()
+                }
+            },
             disable_inhibit: self
                 .disable_inhibit
                 .as_ref()
@@ -376,6 +392,9 @@ impl Spec {
     }
     pub fn export_lua(&self, version: &str) -> Result<String, String> {
         self.validate(version)?;
+        if self.legacy {
+            return Err("Native gesture declarations require explicit Lua conversion".into());
+        }
         let mut before = String::new();
         let mut index = 0;
         let mut callback = |w: &Workflow| -> Result<String, String> {
@@ -399,6 +418,11 @@ impl Spec {
         };
         let action = match &self.action {
             GestureAction::Builtin(s) => quote_lua(s),
+            GestureAction::NativeDispatcher { .. } => {
+                return Err(
+                    "Native dispatcher gestures cannot become Lua callbacks implicitly".into(),
+                )
+            }
             GestureAction::LegacyFinish(w) => callback(w)?,
             GestureAction::Callbacks(c) => {
                 let mut fields = vec![];
@@ -478,10 +502,33 @@ impl Draft {
             .collect()
     }
     pub fn same_declarations(&self, other: &Self, version: &str) -> bool {
-        match (self.export_lua(version), other.export_lua(version)) {
-            (Ok(a), Ok(b)) => a == b,
-            _ => false,
+        if self.validate(version).is_err() || other.validate(version).is_err() {
+            return false;
         }
+        self.declarations.len() == other.declarations.len()
+            && self
+                .declarations
+                .iter()
+                .zip(&other.declarations)
+                .all(|(a, b)| {
+                    if a.legacy != b.legacy {
+                        return false;
+                    }
+                    if a.legacy {
+                        match (
+                            crate::legacy_gesture::encode(a),
+                            crate::legacy_gesture::encode(b),
+                        ) {
+                            (Ok(a), Ok(b)) => a == b,
+                            _ => false,
+                        }
+                    } else {
+                        match (a.export_lua(version), b.export_lua(version)) {
+                            (Ok(a), Ok(b)) => a == b,
+                            _ => false,
+                        }
+                    }
+                })
     }
     /// Starts from an empty registry; opaque includes, plugins and existing runtime state are excluded.
     pub fn registrations(&self, version: &str) -> Result<Vec<Registration>, String> {
@@ -492,14 +539,17 @@ impl Draft {
             let identity = s.identity(version)?;
             let unset = matches!(&s.action,GestureAction::Builtin(n) if n=="unset");
             let result = if unset {
-                if let Some(i) = active.iter().position(|(_, id)| *id == identity) {
+                if let Some(i) = active.iter().position(|(prior, id)| {
+                    self.declarations[*prior].legacy == s.legacy && *id == identity
+                }) {
                     let (removed, _) = active.remove(i);
                     Ok(Some(removed))
                 } else {
                     Err("No preceding gesture has this full removal identity".into())
                 }
-            } else if let Some((prior, _)) = active.iter().find(|(_, id)| {
-                id.fingers == identity.fingers
+            } else if let Some((prior, _)) = active.iter().find(|(prior, id)| {
+                self.declarations[*prior].legacy == s.legacy
+                    && id.fingers == identity.fingers
                     && id.modifiers == identity.modifiers
                     && id.direction.shadows(identity.direction)
             }) {

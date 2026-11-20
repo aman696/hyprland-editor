@@ -1,0 +1,297 @@
+{
+  "format": "hye-legacy-device-schema-1",
+  "version": "0.56.2",
+  "commit": "efb50993780079460b0cbed1363e2166a2de1d9f",
+  "handler_sha256": "9db68cf44048d86557d8a53068dcc40b9bd7347c7d95f38edc501565f65be62b",
+  "hyprlang_commit": "090117506ddc3d7f26e650ff344d378c2ec329cc",
+  "hyprlang_sha256": "868ac5a7c5600b71283c92fb10e39faf9c0b3d4e8cbcd2a2fef6aaab8e716002",
+  "header_sha256": "65a09099a042c9e6f59f6af836d94df27817c330d65bfcf401f49cf3ffec63a6",
+  "category": "device",
+  "key": "name",
+  "fields": [
+    {
+      "key": "absolute_region_position",
+      "native_key": "absolute_region_position",
+      "kind": "Bool",
+      "native_kind": "Int"
+    },
+    {
+      "key": "accel_profile",
+      "native_key": "accel_profile",
+      "kind": "String",
+      "native_kind": "String"
+    },
+    {
+      "key": "active_area_position",
+      "native_key": "active_area_position",
+      "kind": "Vec2",
+      "native_kind": "Vec2"
+    },
+    {
+      "key": "active_area_size",
+      "native_key": "active_area_size",
+      "kind": "Vec2",
+      "native_kind": "Vec2"
+    },
+    {
+      "key": "clickfinger_behavior",
+      "native_key": "clickfinger_behavior",
+      "kind": "Bool",
+      "native_kind": "Int"
+    },
+    {
+      "key": "disable_while_typing",
+      "native_key": "disable_while_typing",
+      "kind": "Bool",
+      "native_kind": "Int"
+    },
+    {
+      "key": "drag_3fg",
+      "native_key": "drag_3fg",
+      "kind": "Int",
+      "native_kind": "Int"
+    },
+    {
+      "key": "drag_lock",
+      "native_key": "drag_lock",
+      "kind": "Int",
+      "native_kind": "Int"
+    },
+    {
+      "key": "enabled",
+      "native_key": "enabled",
+      "kind": "Bool",
+      "native_kind": "Int"
+    },
+    {
+      "key": "flip_x",
+      "native_key": "flip_x",
+      "kind": "Bool",
+      "native_kind": "Int"
+    },
+    {
+      "key": "flip_y",
+      "native_key": "flip_y",
+      "kind": "Bool",
+      "native_kind": "Int"
+    },
+    {
+      "key": "kb_file",
+      "native_key": "kb_file",
+      "kind": "String",
+      "native_kind": "String"
+    },
+    {
+      "key": "kb_layout",
+      "native_key": "kb_layout",
+      "kind": "String",
+      "native_kind": "String"
+    },
+    {
+      "key": "kb_model",
+      "native_key": "kb_model",
+      "kind": "String",
+      "native_kind": "String"
+    },
+    {
+      "key": "kb_options",
+      "native_key": "kb_options",
+      "kind": "String",
+      "native_kind": "String"
+    },
+    {
+      "key": "kb_rules",
+      "native_key": "kb_rules",
+      "kind": "String",
+      "native_kind": "String"
+    },
+    {
+      "key": "kb_variant",
+      "native_key": "kb_variant",
+      "kind": "String",
+      "native_kind": "String"
+    },
+    {
+      "key": "keybinds",
+      "native_key": "keybinds",
+      "kind": "Bool",
+      "native_kind": "Int"
+    },
+    {
+      "key": "left_handed",
+      "native_key": "left_handed",
+      "kind": "Bool",
+      "native_kind": "Int"
+    },
+    {
+      "key": "middle_button_emulation",
+      "native_key": "middle_button_emulation",
+      "kind": "Bool",
+      "native_kind": "Int"
+    },
+    {
+      "key": "natural_scroll",
+      "native_key": "natural_scroll",
+      "kind": "Bool",
+      "native_kind": "Int"
+    },
+    {
+      "key": "numlock_by_default",
+      "native_key": "numlock_by_default",
+      "kind": "Bool",
+      "native_kind": "Int"
+    },
+    {
+      "key": "output",
+      "native_key": "output",
+      "kind": "String",
+      "native_kind": "String"
+    },
+    {
+      "key": "region_position",
+      "native_key": "region_position",
+      "kind": "Vec2",
+      "native_kind": "Vec2"
+    },
+    {
+      "key": "region_size",
+      "native_key": "region_size",
+      "kind": "Vec2",
+      "native_kind": "Vec2"
+    },
+    {
+      "key": "relative_input",
+      "native_key": "relative_input",
+      "kind": "Bool",
+      "native_kind": "Int"
+    },
+    {
+      "key": "release_pressed_on_close",
+      "native_key": "release_pressed_on_close",
+      "kind": "Bool",
+      "native_kind": "Int"
+    },
+    {
+      "key": "repeat_delay",
+      "native_key": "repeat_delay",
+      "kind": "Int",
+      "native_kind": "Int"
+    },
+    {
+      "key": "repeat_rate",
+      "native_key": "repeat_rate",
+      "kind": "Int",
+      "native_kind": "Int"
+    },
+    {
+      "key": "resolve_binds_by_sym",
+      "native_key": "resolve_binds_by_sym",
+      "kind": "Bool",
+      "native_kind": "Int"
+    },
+    {
+      "key": "rotation",
+      "native_key": "rotation",
+      "kind": "Int",
+      "native_kind": "Int"
+    },
+    {
+      "key": "scroll_button",
+      "native_key": "scroll_button",
+      "kind": "Int",
+      "native_kind": "Int"
+    },
+    {
+      "key": "scroll_button_lock",
+      "native_key": "scroll_button_lock",
+      "kind": "Bool",
+      "native_kind": "Int"
+    },
+    {
+      "key": "scroll_factor",
+      "native_key": "scroll_factor",
+      "kind": "Float",
+      "native_kind": "Float"
+    },
+    {
+      "key": "scroll_method",
+      "native_key": "scroll_method",
+      "kind": "String",
+      "native_kind": "String"
+    },
+    {
+      "key": "scroll_points",
+      "native_key": "scroll_points",
+      "kind": "String",
+      "native_kind": "String"
+    },
+    {
+      "key": "sensitivity",
+      "native_key": "sensitivity",
+      "kind": "Float",
+      "native_kind": "Float"
+    },
+    {
+      "key": "share_states",
+      "native_key": "share_states",
+      "kind": "Int",
+      "native_kind": "Int"
+    },
+    {
+      "key": "tags",
+      "native_key": "tags",
+      "kind": "String",
+      "native_kind": "String"
+    },
+    {
+      "key": "tap_and_drag",
+      "native_key": "tap-and-drag",
+      "kind": "Bool",
+      "native_kind": "Int"
+    },
+    {
+      "key": "tap_button_map",
+      "native_key": "tap_button_map",
+      "kind": "String",
+      "native_kind": "String"
+    },
+    {
+      "key": "tap_to_click",
+      "native_key": "tap-to-click",
+      "kind": "Bool",
+      "native_kind": "Int"
+    },
+    {
+      "key": "transform",
+      "native_key": "transform",
+      "kind": "Int",
+      "native_kind": "Int"
+    },
+    {
+      "key": "eraser_button_mode",
+      "native_key": "eraser_button_mode",
+      "kind": "Int",
+      "native_kind": "Int"
+    },
+    {
+      "key": "eraser_button_override",
+      "native_key": "eraser_button_override",
+      "kind": "Int",
+      "native_kind": "Int"
+    },
+    {
+      "key": "pressure_range_max",
+      "native_key": "pressure_range_max",
+      "kind": "Float",
+      "native_kind": "Float"
+    },
+    {
+      "key": "pressure_range_min",
+      "native_key": "pressure_range_min",
+      "kind": "Float",
+      "native_kind": "Float"
+    }
+  ],
+  "semantics": "Literal flat named category declarations. All 47 native registrations mapped; native integer fields have no Lua descriptor bounds, including raw integers for boolean controls. Float and vector values use finite normal float32 components/zero. Native strings retain literal text without Lua device-shape validation. Unset means absence in this source block; repeated keyed blocks can expose earlier overrides. No effective/default/hardware certification, asset reads or implicit Lua conversion.",
+  "limits": "One first literal name, known flat fields only. Unknown/dynamic/nested/conditional/continued/qualified syntax and arbitrary native numeric aliases remain unresolved/retained. 128 devices, 128 captured fields per block, 1 MiB source/projection, 16 KiB field text. Source input does not grant access to keymap/output paths."
+}

@@ -1,0 +1,81 @@
+{
+  "format": "hye-preview-launch-ci-observation-1",
+  "source_commit": "aa4bef23244b16f4aaef9eaa822534ee81f65dab",
+  "source_sha256": {
+    "crates/editor-preview/src/cgroup.rs": "e1eeb6e09ddaa0da4805fceb27502ba9434814faed162faa6992c455efa76fab",
+    "crates/editor-preview/src/cgroup/launch.rs": "24efeba693f8359afbf09a16bdc6a31ac44d155eee0488f9199e9fdd02cbc430",
+    "crates/editor-preview/tests/fixtures/launch_probe.c": "85539b25e407ca627b8e2ca4ee2011749357a2c7732b9b17fd16d0e1390561f3",
+    "scripts/cgroup_kernel_probe.py": "df90f8f54d4dbff54b1fb26b428df23a1377e1cd38b5a1bd32543a143516d2ff",
+    ".github/workflows/ci.yml": "608c45805ea2ad183d230e1045dbef4ef396b22e90ac054b19fda5c535eda326",
+    "crates/editor-preview/Cargo.toml": "d64b1a45174edbd835722d81bfcb48cab34bed6ff1aa5e2db6a1e3c2d24c952d",
+    "Cargo.lock": "0ad0a165286c39f8a62b093f76cc8532ecbda118913e8eba2c46b257d39b5d20"
+  },
+  "scope": "Trusted static constructor gate only; no compositor or full isolation certificate",
+  "observations": [
+    {
+      "event": "push",
+      "run_id": 39638317144,
+      "job_id": 119354888310,
+      "job_url": "https://github.com/aman696/hyprland-editor/actions/runs/39638317144/job/119354888310",
+      "job_conclusion": "success",
+      "kernel": "7.0.0-1017-azure",
+      "log_sha256": "1fa216a408f8fefb0804fb3bd65505c82b959d992ace15104ba361324d3f6dcf",
+      "static_probe_sha256": "ec721e9d4e0e45cf1ef60d6de64370f563a2b4ba230e5da588eb00c070356960",
+      "rust_test_binary_sha256": null,
+      "observed_case_markers": [
+        "gated_launch exit membership_verified=true private_release=true reaped=true leaf_removed=true",
+        "gated_launch wait membership_verified=true private_release=true reaped=true leaf_removed=true",
+        "gated_launch cancel membership_verified=true private_release=true reaped=true leaf_removed=true",
+        "gated_launch changed-limits membership_verified=true private_release=true reaped=true leaf_removed=true",
+        "gated_launch bad-exec membership_verified=true private_release=true reaped=true leaf_removed=true"
+      ],
+      "provider_cleanup_observed": true,
+      "checkout_commit": "aa4bef23244b16f4aaef9eaa822534ee81f65dab",
+      "checkout_tree": "7c838b2a42a58eaa69f617068932039cea52f71b",
+      "tree_matches_source_head": true,
+      "enclosing_workflow_conclusion": "success"
+    },
+    {
+      "event": "pull_request",
+      "run_id": 39638325201,
+      "job_id": 119354913594,
+      "job_url": "https://github.com/aman696/hyprland-editor/actions/runs/39638325201/job/119354913594",
+      "job_conclusion": "success",
+      "kernel": "6.17.0-1022-azure",
+      "log_sha256": "4e61e5220651410f6c98798948c99d8ef0fa1fe3a0faf73fbbcce5a756d4de33",
+      "static_probe_sha256": "ec721e9d4e0e45cf1ef60d6de64370f563a2b4ba230e5da588eb00c070356960",
+      "rust_test_binary_sha256": null,
+      "observed_case_markers": [
+        "gated_launch exit membership_verified=true private_release=true reaped=true leaf_removed=true",
+        "gated_launch wait membership_verified=true private_release=true reaped=true leaf_removed=true",
+        "gated_launch cancel membership_verified=true private_release=true reaped=true leaf_removed=true",
+        "gated_launch changed-limits membership_verified=true private_release=true reaped=true leaf_removed=true",
+        "gated_launch bad-exec membership_verified=true private_release=true reaped=true leaf_removed=true"
+      ],
+      "provider_cleanup_observed": true,
+      "checkout_commit": "a19a122966d5d44cf79c21ec4a97ffbdbba828ce",
+      "checkout_tree": "7c838b2a42a58eaa69f617068932039cea52f71b",
+      "tree_matches_source_head": true,
+      "enclosing_workflow_conclusion": "success"
+    }
+  ],
+  "kernel_compatibility": {
+    "prior_heads": [
+      "d138656b019917ab7c81ca4173ef490bd064f297",
+      "9b633eb3903060320989c086aa54593dd1e104c0"
+    ],
+    "prior_result": "SIGKILL before child setup; provider cleanup succeeded",
+    "upstream_fix": "8e359920216689b3b79e0fe8961a77fe312a511f",
+    "reference": "https://kernel.googlesource.com/pub/scm/linux/kernel/git/tip/tip/+/8e359920216689b3b79e0fe8961a77fe312a511f",
+    "correction": "Fresh leaves are not killed as an empty preflight; real cleanup kill, membership/limit/emptiness guards and no-reuse remain",
+    "remaining_limit": "Different source/destination kill history on affected kernels can still refuse launch; no unrestricted fallback"
+  },
+  "unproven": [
+    "Exact Rust test executable digest (not logged by this fixture)",
+    "Approved production constructor and complete immutable dependency image",
+    "Combined namespace/filesystem/network/device/syscall isolation profile",
+    "Production supervisor/GUI loss, hostile races, orphan/stalled-process lifecycle",
+    "Actual Hyprland rendering, sample clients, frame capture and input",
+    "Representative resource acceptance and every original full-project contract"
+  ]
+}
